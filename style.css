@@ -1,0 +1,443 @@
+/* ================================
+   FILE: style.css
+   CHỨC NĂNG: Định dạng bố cục, màu sắc, hiệu ứng cho toàn bộ webapp
+   BƯỚC: MIG_03
+   ================================ */
+
+/* ----- Biến màu dùng chung (CSS Variables) ----- */
+:root {
+  --mau-chinh: #4a90d9;
+  --mau-chinh-dam: #2f6cad;
+  --mau-phu: #ffb703;
+  --mau-nen: #f4f7fb;
+  --mau-nen-khoi: #ffffff;
+  --mau-chu: #2c3e50;
+  --mau-thanh-cong: #2ecc71;
+  --mau-that-bai: #e74c3c;
+  --mau-vien: #d9e2ec;
+  --bo-tron: 14px;
+  --do-bong: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ----- Reset cơ bản ----- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Comic Sans MS", "Segoe UI", Verdana, sans-serif;
+  background-color: var(--mau-nen);
+  color: var(--mau-chu);
+  line-height: 1.5;
+}
+
+/* ================================================= */
+/* HEADER CHÍNH */
+/* ================================================= */
+#headerChinh {
+  background: linear-gradient(135deg, var(--mau-chinh), var(--mau-chinh-dam));
+  color: #ffffff;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  box-shadow: var(--do-bong);
+}
+
+#headerChinh h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+#trangThaiDangNhap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+}
+
+#trangThaiDangNhap button {
+  background-color: var(--mau-that-bai);
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+#trangThaiDangNhap button:hover {
+  opacity: 0.85;
+}
+
+/* ================================================= */
+/* THANH ĐIỀU HƯỚNG 4 TAB */
+/* ================================================= */
+#thanhDieuHuong {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--mau-nen-khoi);
+  padding: 10px;
+  flex-wrap: wrap;
+  border-bottom: 2px solid var(--mau-vien);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nutTab {
+  background-color: transparent;
+  border: 2px solid var(--mau-chinh);
+  color: var(--mau-chinh-dam);
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.nutTab:hover {
+  background-color: var(--mau-chinh);
+  color: #ffffff;
+}
+
+/* Tab đang được chọn, class "dangChon" do app.js gán thêm */
+.nutTab.dangChon {
+  background-color: var(--mau-chinh-dam);
+  color: #ffffff;
+  border-color: var(--mau-chinh-dam);
+}
+
+/* ================================================= */
+/* NỘI DUNG CÁC TAB */
+/* Mặc định ẩn hết, chỉ hiện Tab đang được chọn */
+/* app.js sẽ gán/xóa class "dangHien" để điều khiển */
+/* ================================================= */
+.noiDungTab {
+  display: none;
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px 24px;
+  background-color: var(--mau-nen-khoi);
+  border-radius: var(--bo-tron);
+  box-shadow: var(--do-bong);
+}
+
+.noiDungTab.dangHien {
+  display: block;
+  animation: hieuUngHienDan 0.3s ease-in-out;
+}
+
+@keyframes hieuUngHienDan {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.noiDungTab h2 {
+  color: var(--mau-chinh-dam);
+  border-bottom: 3px solid var(--mau-phu);
+  display: inline-block;
+  padding-bottom: 4px;
+  margin-top: 0;
+}
+
+/* ================================================= */
+/* TAB 1: AUTH - FORM ĐĂNG NHẬP / ĐĂNG KÝ */
+/* ================================================= */
+.khoiForm {
+  background-color: var(--mau-nen);
+  border: 1px solid var(--mau-vien);
+  border-radius: var(--bo-tron);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.khoiForm h3 {
+  margin-top: 0;
+  color: var(--mau-chinh-dam);
+}
+
+.khoiForm input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 2px solid var(--mau-vien);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.khoiForm input:focus {
+  outline: none;
+  border-color: var(--mau-chinh);
+}
+
+.khoiForm button {
+  width: 100%;
+  padding: 10px;
+  background-color: var(--mau-chinh);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.khoiForm button:hover {
+  background-color: var(--mau-chinh-dam);
+}
+
+#thongBaoAuth {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  min-height: 20px;
+}
+
+/* Class thêm bởi auth.js khi thành công/thất bại */
+#thongBaoAuth.thanhCong {
+  background-color: #d4f8e0;
+  color: var(--mau-thanh-cong);
+}
+
+#thongBaoAuth.thatBai {
+  background-color: #fbdcd8;
+  color: var(--mau-that-bai);
+}
+
+/* ================================================= */
+/* TAB 2: DASHBOARD - THÔNG TIN NGƯỜI CHƠI */
+/* ================================================= */
+#khoiThongTinNguoiChoi {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  background-color: var(--mau-nen);
+  border-radius: var(--bo-tron);
+  padding: 16px;
+}
+
+#dashboardAvatar {
+  width: 90px;
+  height: 90px;
+  min-width: 90px;
+  border-radius: 50%;
+  background-color: var(--mau-phu);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  border: 3px solid var(--mau-chinh);
+}
+
+#khoiThongTinNguoiChoi p {
+  margin: 4px 0;
+  font-size: 1.05rem;
+}
+
+#dashboardTrangThaiMoKhoa {
+  margin-top: 20px;
+}
+
+#dashboardTrangThaiMoKhoa ul {
+  list-style: none;
+  padding: 0;
+}
+
+#dashboardTrangThaiMoKhoa li {
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background-color: #eef1f5;
+  border-left: 6px solid #b0b8c1;
+  font-weight: bold;
+  color: #7a828b;
+}
+
+/* Class thêm bởi board.js/app.js khi mốc đã được mở khóa */
+#dashboardTrangThaiMoKhoa li.daMoKhoa {
+  background-color: #fff7e0;
+  border-left-color: var(--mau-phu);
+  color: var(--mau-chu);
+}
+
+/* ================================================= */
+/* TAB 3: PLAY - MÀN HÌNH CHƠI CỜ */
+/* ================================================= */
+#khoiChonDoiThu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+#khoiChonDoiThu select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid var(--mau-vien);
+  font-size: 1rem;
+}
+
+#khoiChonDoiThu button {
+  padding: 10px 18px;
+  background-color: var(--mau-phu);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#khoiChonDoiThu button:hover {
+  opacity: 0.9;
+}
+
+/* Khung chứa bàn cờ, kích thước thực tế do board.js quy định */
+#banCo {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  background-color: #eef1f5;
+  border: 4px solid var(--mau-chinh-dam);
+  border-radius: 8px;
+}
+
+#thongTinVanDau {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-weight: bold;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#thongBaoKetQuaVan {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: var(--bo-tron);
+  background-color: var(--mau-nen);
+  text-align: center;
+}
+
+#thongBaoKetQuaVan.thang {
+  background-color: #d4f8e0;
+}
+
+#thongBaoKetQuaVan.thua {
+  background-color: #fbdcd8;
+}
+
+#ketQuaThangThua {
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+/* Khu vực hiệu ứng khi đạt mốc Level mới (pháo hoa, sấm sét...) */
+/* Nội dung chi tiết do board.js điền vào */
+#hieuUngDatMocMoi {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ffe29f, #ffa99f);
+  font-weight: bold;
+  animation: hieuUngNhapNhay 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes hieuUngNhapNhay {
+  from { transform: scale(1); }
+  to { transform: scale(1.03); }
+}
+
+/* ================================================= */
+/* TAB 4: RANK - BẢNG XẾP HẠNG */
+/* ================================================= */
+#btnLamMoiXepHang {
+  padding: 10px 16px;
+  background-color: var(--mau-chinh);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 14px;
+}
+
+#btnLamMoiXepHang:hover {
+  background-color: var(--mau-chinh-dam);
+}
+
+#bangXepHang {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#bangXepHang thead {
+  background-color: var(--mau-chinh-dam);
+  color: #ffffff;
+}
+
+#bangXepHang th,
+#bangXepHang td {
+  padding: 10px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--mau-vien);
+}
+
+#bangXepHang tbody tr:nth-child(odd) {
+  background-color: #f8fafc;
+}
+
+#bangXepHang tbody tr:hover {
+  background-color: #eaf2fb;
+}
+
+/* Ba hạng đầu bảng được tô sáng (class do rank.js thêm) */
+#bangXepHang tbody tr.hangNhat {
+  background-color: #fff3cd;
+  font-weight: bold;
+}
+
+#bangXepHang tbody tr.hangNhi {
+  background-color: #f1f3f5;
+  font-weight: bold;
+}
+
+#bangXepHang tbody tr.hangBa {
+  background-color: #fbe8dd;
+  font-weight: bold;
+}
+
+/* ================================================= */
+/* RESPONSIVE - MÀN HÌNH NHỎ (ĐIỆN THOẠI) */
+/* ================================================= */
+@media (max-width: 600px) {
+  #headerChinh {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .nutTab {
+    flex: 1 1 40%;
+    text-align: center;
+  }
+
+  .noiDungTab {
+    margin: 10px;
+    padding: 16px;
+  }
+
+  #khoiThongTinNguoiChoi {
+    flex-direction: column;
+    text-align: center;
+  }
+}

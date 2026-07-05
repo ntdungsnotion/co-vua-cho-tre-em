@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cờ Vua Cho Trẻ Em</title>
+
+  <!-- File định dạng giao diện (đã tách khỏi thẻ <style>, dùng làm file .css thường) -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Thư viện ngoài: supabase-js để gọi API backend, chess.js để xử lý luật cờ -->
+  <!-- Ghi chú: stockfish.js (bộ não AI) sẽ được nạp lúc chạy bên trong board.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"></script>
+</head>
+<body>
+
+  <!-- ================================================= -->
+  <!-- KHUNG TIÊU ĐỀ CHÍNH CỦA TRANG -->
+  <!-- ================================================= -->
+  <header id="headerChinh">
+    <h1>Cờ Vua Cho Trẻ Em</h1>
+    <!-- Hiển thị nhanh trạng thái đăng nhập, điều khiển bởi app.js -->
+    <div id="trangThaiDangNhap">
+      <span id="hienThiTenDangNhap"></span>
+      <button id="btnDangXuat" style="display:none;">Đăng Xuất</button>
+    </div>
+  </header>
+
+  <!-- ================================================= -->
+  <!-- THANH ĐIỀU HƯỚNG 4 TAB: Auth, Dashboard, Play, Rank -->
+  <!-- Các nút này sẽ được gán sự kiện click trong app.js -->
+  <!-- ================================================= -->
+  <nav id="thanhDieuHuong">
+    <button class="nutTab" id="tabAuth" data-tab="auth">Đăng Nhập</button>
+    <button class="nutTab" id="tabDashboard" data-tab="dashboard">Bảng Điều Khiển</button>
+    <button class="nutTab" id="tabPlay" data-tab="play">Chơi Cờ</button>
+    <button class="nutTab" id="tabRank" data-tab="rank">Xếp Hạng</button>
+  </nav>
+
+  <!-- ================================================= -->
+  <!-- TAB 1: AUTH - ĐĂNG NHẬP / ĐĂNG KÝ -->
+  <!-- Đối ứng với api.js: apiDangNhap(), apiDangKy() -->
+  <!-- ================================================= -->
+  <section class="noiDungTab" id="section-auth">
+    <h2>Đăng Nhập / Đăng Ký</h2>
+
+    <!-- Khối Đăng Nhập -->
+    <div class="khoiForm" id="khoiDangNhap">
+      <h3>Đăng Nhập</h3>
+      <input type="text" id="inputTenDangNhapLogin" placeholder="Tên đăng nhập">
+      <input type="password" id="inputMatKhauLogin" placeholder="Mật khẩu">
+      <button id="btnDangNhap">Đăng Nhập</button>
+    </div>
+
+    <!-- Khối Đăng Ký -->
+    <div class="khoiForm" id="khoiDangKy">
+      <h3>Đăng Ký Tài Khoản Mới</h3>
+      <input type="text" id="inputTenDangNhapDangKy" placeholder="Tên đăng nhập">
+      <input type="password" id="inputMatKhauDangKy" placeholder="Mật khẩu">
+      <input type="password" id="inputXacNhanMatKhau" placeholder="Nhập lại mật khẩu">
+      <button id="btnDangKy">Đăng Ký</button>
+    </div>
+
+    <!-- Nơi hiển thị thông báo thành công/thất bại trả về từ api.js -->
+    <div id="thongBaoAuth"></div>
+  </section>
+
+  <!-- ================================================= -->
+  <!-- TAB 2: DASHBOARD - THÔNG TIN TÀI KHOẢN NGƯỜI CHƠI -->
+  <!-- ================================================= -->
+  <section class="noiDungTab" id="section-dashboard">
+    <h2>Bảng Điều Khiển Của Bạn</h2>
+
+    <div id="khoiThongTinNguoiChoi">
+      <!-- Avatar hiện tại -->
+      <div id="dashboardAvatar"></div>
+
+      <p>Tên đăng nhập: <span id="dashboardTenDangNhap">---</span></p>
+      <p>Level hiện tại: <span id="dashboardLevel">---</span></p>
+      <p>Điểm số: <span id="dashboardDiemSo">---</span></p>
+      <p>Danh hiệu: <span id="dashboardDanhHieu">---</span></p>
+    </div>
+
+    <!-- Khu vực hiển thị các mốc đã mở khóa -->
+    <div id="dashboardTrangThaiMoKhoa">
+      <h3>Phần Thưởng Đã Mở Khóa</h3>
+      <ul>
+        <li id="moKhoaMauBanCoMoi">Màu bàn cờ mới (Level 5): chưa mở</li>
+        <li id="moKhoaQuanCoDongVat">Bộ quân cờ động vật (Level 10): chưa mở</li>
+        <li id="moKhoaHieuUngSamSet">Hiệu ứng sấm sét (Level 15): chưa mở</li>
+        <li id="moKhoaRuongKhoBau">Rương kho báu đặc biệt (Level 20): chưa mở</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================================================= -->
+  <!-- TAB 3: PLAY - MÀN HÌNH CHƠI CỜ -->
+  <!-- Bàn cờ thực tế sẽ do board.js vẽ, dùng thư viện chess.js -->
+  <!-- ================================================= -->
+  <section class="noiDungTab" id="section-play">
+    <h2>Bàn Cờ Vua</h2>
+
+    <div id="khoiChonDoiThu">
+      <label for="chonLevelMay">Chọn Level Máy (Đối Thủ):</label>
+      <select id="chonLevelMay">
+        <!-- 20 lựa chọn Level sẽ được board.js điền vào -->
+      </select>
+      <button id="btnBatDauVan">Bắt Đầu Ván Mới</button>
+    </div>
+
+    <!-- Khung chứa bàn cờ -->
+    <div id="banCo"></div>
+
+    <!-- Thông tin ván đấu đang diễn ra -->
+    <div id="thongTinVanDau">
+      <p>Lượt đi: <span id="hienThiLuotDi">---</span></p>
+      <p>Trạng thái: <span id="hienThiTrangThaiVan">Chưa bắt đầu</span></p>
+    </div>
+
+    <!-- Khung hiển thị kết quả sau khi kết thúc ván -->
+    <div id="thongBaoKetQuaVan" style="display:none;">
+      <p id="ketQuaThangThua"></p>
+      <p>Điểm vừa cộng: <span id="ketQuaDiemVuaCong"></span></p>
+      <p>Level: <span id="ketQuaLevelCu"></span> → <span id="ketQuaLevelMoi"></span></p>
+      <div id="hieuUngDatMocMoi" style="display:none;"></div>
+    </div>
+  </section>
+
+  <!-- ================================================= -->
+  <!-- TAB 4: RANK - BẢNG XẾP HẠNG -->
+  <!-- ================================================= -->
+  <section class="noiDungTab" id="section-rank">
+    <h2>Bảng Xếp Hạng</h2>
+    <button id="btnLamMoiXepHang">Làm Mới Xếp Hạng</button>
+
+    <!-- rank.js sẽ điền dữ liệu danhSachXepHang vào bảng này -->
+    <table id="bangXepHang">
+      <thead>
+        <tr>
+          <th>Hạng</th>
+          <th>Tên Đăng Nhập</th>
+          <th>Level</th>
+          <th>Điểm Số</th>
+          <th>Danh Hiệu</th>
+        </tr>
+      </thead>
+      <tbody id="thanBangXepHang">
+        <!-- Các hàng dữ liệu sẽ được chèn bằng JavaScript trong rank.js -->
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ================================================= -->
+  <!-- CÁC FILE JAVASCRIPT CỦA DỰ ÁN -->
+  <!-- Thứ tự nạp BẮT BUỘC: config -> api -> app -> auth -> board -> rank -->
+  <!-- (config trước vì api cần supabase client; api trước các file gọi nó) -->
+  <!-- ================================================= -->
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script src="auth.js"></script>
+  <script src="board.js"></script>
+  <script src="rank.js"></script>
+
+</body>
+</html>
