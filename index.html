@@ -5,13 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cờ Vua Cho Trẻ Em</title>
 
+  <!-- NGÀY: 10/07/2026 10:00 - BƯỚC: NC_04 (thêm nút liên kết "2 Người") -->
+
   <!-- File định dạng giao diện (đã tách khỏi thẻ <style>, dùng làm file .css thường) -->
   <link rel="stylesheet" href="style.css">
 
-  <!-- Thư viện ngoài: supabase-js để gọi API backend, chess.js để xử lý luật cờ -->
-  <!-- Ghi chú: stockfish.js (bộ não AI) sẽ được nạp lúc chạy bên trong board.js -->
+  <!-- THƯ VIỆN NGOÀI -->
+  <!-- supabase-js: nạp qua CDN (luôn cần mạng để gọi Supabase nên CDN không thiệt gì) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"></script>
+
+  <!-- chess.js 0.12.0: THƯ VIỆN CỐT LÕI, nạp từ file trong repo (đường dẫn tương đối).
+       TUYỆT ĐỐI KHÔNG dùng bản 0.13.4 (cú pháp ES module, làm vỡ bàn cờ). -->
+  <script src="chess.min.js"></script>
+
+  <!-- Lưới an toàn: nếu vì lý do nào đó chess.min.js chưa có trong repo hoặc tải hỏng,
+       tự động nạp lại từ CDN để bàn cờ vẫn chạy được. -->
+  <script>
+    if (typeof Chess === "undefined") {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- Ghi chú: stockfish (bộ não AI) được nạp lúc chạy bên trong board.js,
+       ưu tiên file stockfish.wasm.js / stockfish.js trong repo, dự phòng CDN. -->
+
+  <!-- NC_04: định dạng riêng cho nút LIÊN KẾT sang trang khác trên thanh điều hướng.
+       Cố tình KHÔNG dùng class "nutTab" để app.js không gán sự kiện chuyển tab
+       (đây là thẻ <a> đi sang trang khác, không phải tab trong cùng trang). -->
+  <style>
+    .nutTabLienKet {
+      display: inline-block;
+      text-decoration: none;
+      background-color: transparent;
+      border: 2px solid var(--mau-chinh);
+      color: var(--mau-chinh-dam);
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      transition: all 0.2s ease-in-out;
+    }
+    .nutTabLienKet:hover {
+      background-color: var(--mau-chinh);
+      color: #ffffff;
+    }
+  </style>
 </head>
 <body>
 
@@ -28,13 +66,15 @@
   </header>
 
   <!-- ================================================= -->
-  <!-- THANH ĐIỀU HƯỚNG 4 TAB: Auth, Dashboard, Play, Rank -->
-  <!-- Các nút này sẽ được gán sự kiện click trong app.js -->
+  <!-- THANH ĐIỀU HƯỚNG: Auth, Dashboard, Play, Rank + liên kết "2 Người" -->
+  <!-- Các nút .nutTab được gán sự kiện click trong app.js -->
+  <!-- Riêng "2 Người" là thẻ <a> mở trang choi2nguoi_NC.html (NC_04) -->
   <!-- ================================================= -->
   <nav id="thanhDieuHuong">
     <button class="nutTab" id="tabAuth" data-tab="auth">Đăng Nhập</button>
     <button class="nutTab" id="tabDashboard" data-tab="dashboard">Bảng Điều Khiển</button>
     <button class="nutTab" id="tabPlay" data-tab="play">Chơi Cờ</button>
+    <a class="nutTabLienKet" id="tabHaiNguoi" href="choi2nguoi_NC.html">👫 2 Người</a>
     <button class="nutTab" id="tabRank" data-tab="rank">Xếp Hạng</button>
   </nav>
 
@@ -109,8 +149,41 @@
       <button id="btnBatDauVan">Bắt Đầu Ván Mới</button>
     </div>
 
-    <!-- Khung chứa bàn cờ -->
-    <div id="banCo"></div>
+    <!-- Khu vực bàn cờ + thẻ thông tin trận đấu (NC_02) -->
+    <!-- Màn hình rộng (ngang/máy tính): thẻ đặt bên phải bàn cờ (xem style.css) -->
+    <div id="khuVucBanCoVaThe">
+      <!-- Khung chứa bàn cờ -->
+      <div id="banCo"></div>
+
+      <!-- 2 thẻ thông tin: đối thủ ở trên, người chơi ở dưới -->
+      <div id="theThongTinTranDau">
+        <div id="theDoiThu" class="theNguoiChoi">
+          <div class="theAvatar">🤖</div>
+          <div class="theChiTiet">
+            <p class="theTen">Máy Tính</p>
+            <p class="theLevel" id="theDoiThuLevel">Cấp 1</p>
+          </div>
+          <span class="coHieuLuot">🚩</span>
+        </div>
+        <div id="theBanThan" class="theNguoiChoi">
+          <div class="theAvatar" id="theBanThanAvatar">❓</div>
+          <div class="theChiTiet">
+            <p class="theTen" id="theBanThanTen">Bạn</p>
+            <p class="theLevel" id="theBanThanLevel">Level 1</p>
+          </div>
+          <span class="coHieuLuot">🚩</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Khu vực nút Gợi Ý (NC_03).
+         NC_03B: khi trẻ lâu không đi, trợ lý CHỈ hỏi bằng giọng nói và nút này
+         NHẤP NHÁY để mời bấm (class "boardNutGoiYNhapNhay" do board.js gán).
+         Không còn hộp thoại/bong bóng che màn hình nữa. -->
+    <div id="khoiGoiY">
+      <button id="btnGoiY" type="button">💡 Gợi Ý</button>
+      <span id="ghiChuGoiY"></span>
+    </div>
 
     <!-- Thông tin ván đấu đang diễn ra -->
     <div id="thongTinVanDau">

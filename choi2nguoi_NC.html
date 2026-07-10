@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chơi 2 Người - Cờ Vua Cho Trẻ Em</title>
+
+  <!-- ================================================================
+       FILE: choi2nguoi_NC.html
+       CHỨC NĂNG: Trang chơi cờ 2 người ở 2 máy (sảnh phòng + bàn cờ)
+       NGÀY: 10/07/2026 10:00 - BƯỚC: NC_04
+       PHỤ THUỘC: style.css, chess.min.js, config.js, api.js, choi2nguoi_NC.js
+       GHI CHÚ: các định dạng RIÊNG của trang này nằm trong thẻ <style> bên
+                dưới để KHÔNG phải sửa style.css (file dùng chung).
+       ================================================================ -->
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- THƯ VIỆN NGOÀI - giống hệt index.html -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- chess.js 0.12.0 từ repo (TUYỆT ĐỐI KHÔNG dùng 0.13.4) -->
+  <script src="chess.min.js"></script>
+  <script>
+    if (typeof Chess === "undefined") {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"><\/script>');
+    }
+  </script>
+
+  <style>
+    /* ----- Nút liên kết quay về trang chính ----- */
+    .c2nNutLienKet {
+      display: inline-block;
+      text-decoration: none;
+      background-color: transparent;
+      border: 2px solid var(--mau-chinh);
+      color: var(--mau-chinh-dam);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      transition: all 0.2s ease-in-out;
+    }
+    .c2nNutLienKet:hover {
+      background-color: var(--mau-chinh);
+      color: #ffffff;
+    }
+
+    /* ----- 3 màn hình: Sảnh / Chờ / Chơi (mặc định ẩn hết) ----- */
+    .c2nManHinh { display: none; }
+    .c2nManHinh.dangHien { display: block; }
+
+    .c2nKhoi {
+      background-color: var(--mau-nen-khoi);
+      border: 2px solid var(--mau-vien);
+      border-radius: var(--bo-tron);
+      box-shadow: var(--do-bong);
+      padding: 16px;
+      margin: 0 auto 16px;
+      max-width: 640px;
+    }
+
+    .c2nKhoi h3 { margin-top: 0; }
+
+    /* ----- Các nút bấm chung của trang ----- */
+    .c2nNut {
+      background-color: var(--mau-chinh);
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 20px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease-in-out;
+      margin: 4px 4px 4px 0;
+    }
+    .c2nNut:hover:not(:disabled) { background-color: var(--mau-chinh-dam); }
+    .c2nNut:disabled { background-color: #b7c3cf; cursor: not-allowed; }
+    .c2nNut.c2nNutXanh { background-color: var(--mau-thanh-cong); }
+    .c2nNut.c2nNutDo   { background-color: var(--mau-that-bai); }
+    .c2nNut.c2nNutVang { background-color: var(--mau-phu); color: var(--mau-chu); }
+
+    .c2nONhap {
+      padding: 10px 12px;
+      border: 2px solid var(--mau-vien);
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 8px;
+    }
+    .c2nONhap:focus { outline: none; border-color: var(--mau-chinh); }
+
+    /* ----- Danh sách phòng ----- */
+    #c2nDanhSachPhong { display: flex; flex-direction: column; gap: 10px; }
+
+    .c2nTheP {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 2px solid var(--mau-vien);
+      border-radius: 12px;
+      padding: 10px 14px;
+      background-color: var(--mau-nen);
+    }
+    .c2nTheP .c2nThePChiTiet { flex: 1; }
+    .c2nTheP .c2nThePTen { font-weight: bold; }
+    .c2nTheP .c2nThePPhu { font-size: 0.85rem; color: #6b7684; }
+    .c2nTheP.c2nThePCuaToi { border-color: var(--mau-phu); }
+
+    .c2nHuyChuong {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    .c2nHuyChuongMo { background: #d6f5e3; color: #1e8449; }
+    .c2nHuyChuongCho { background: #ffe9b8; color: #8a6100; }
+
+    /* ----- Bàn cờ + thẻ 2 người chơi ----- */
+    #c2nKhuVucBanCo {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+    }
+    #c2nBanCo {
+      width: 100%;
+      max-width: 480px;
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+      background-color: #eef1f5;
+      border: 4px solid var(--mau-chinh-dam);
+      border-radius: 8px;
+    }
+    #c2nTheThongTin {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    /* Màn hình rộng: bàn cờ bên trái, thẻ bên phải */
+    @media (min-width: 900px) {
+      #c2nKhuVucBanCo {
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      #c2nTheThongTin { max-width: 300px; }
+    }
+
+    #c2nThongTinVan {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 1.05rem;
+    }
+    #c2nThongTinVan strong { color: var(--mau-chinh-dam); }
+
+    #c2nKhoiNutVan { text-align: center; margin-top: 10px; }
+
+    #c2nKetQua {
+      display: none;
+      max-width: 480px;
+      margin: 16px auto 0;
+      padding: 16px;
+      border-radius: var(--bo-tron);
+      text-align: center;
+      border: 3px solid var(--mau-vien);
+      background-color: var(--mau-nen-khoi);
+    }
+    #c2nKetQua.thang { border-color: var(--mau-thanh-cong); background-color: #eafaf1; }
+    #c2nKetQua.thua  { border-color: var(--mau-that-bai); background-color: #fdedec; }
+    #c2nKetQuaTieuDe { font-size: 1.4rem; font-weight: bold; margin: 0 0 8px; }
+
+    #c2nThongBao {
+      max-width: 640px;
+      margin: 0 auto 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: bold;
+      display: none;
+    }
+    #c2nThongBao.hien { display: block; }
+    #c2nThongBao.tot  { background: #d6f5e3; color: #1e8449; }
+    #c2nThongBao.xau  { background: #fadbd8; color: #a93226; }
+
+    #c2nChuaDangNhap { text-align: center; padding: 40px 16px; }
+  </style>
+</head>
+<body>
+
+  <header id="headerChinh">
+    <h1>👫 Chơi Cờ 2 Người</h1>
+    <div id="trangThaiDangNhap">
+      <span id="c2nTenNguoiChoi"></span>
+      <a class="c2nNutLienKet" href="index.html">⬅ Về Trang Chính</a>
+    </div>
+  </header>
+
+  <!-- Khi chưa đăng nhập (mở thẳng trang này) -->
+  <div id="c2nChuaDangNhap" style="display:none;">
+    <h2>Con hãy đăng nhập trước nhé!</h2>
+    <p>Chế độ 2 người cần biết con là ai để cộng kim cương và EXP.</p>
+    <a class="c2nNutLienKet" href="index.html">Đi tới trang Đăng Nhập</a>
+  </div>
+
+  <!-- Khu vực thông báo dùng chung cho cả 3 màn hình -->
+  <div id="c2nThongBao"></div>
+
+  <!-- ================================================= -->
+  <!-- MÀN HÌNH 1: SẢNH PHÒNG -->
+  <!-- ================================================= -->
+  <section class="c2nManHinh" id="c2nManHinhSanh">
+    <div class="c2nKhoi">
+      <h3>🏠 Tạo Phòng Mới</h3>
+      <p>Con tạo phòng rồi đợi bạn xin vào chơi cùng. Chủ phòng cầm quân Trắng và đi trước.</p>
+      <input type="text" id="c2nTenPhongMoi" class="c2nONhap" placeholder="Đặt tên phòng (ví dụ: Phòng của Bí)" maxlength="40">
+      <div>
+        <button type="button" class="c2nNut c2nNutXanh" id="c2nBtnTaoPhong">➕ Tạo Phòng</button>
+      </div>
+    </div>
+
+    <div class="c2nKhoi">
+      <h3>🔎 Danh Sách Phòng Đang Mở</h3>
+      <button type="button" class="c2nNut" id="c2nBtnLamMoiSanh">🔄 Làm Mới</button>
+      <div id="c2nDanhSachPhong">
+        <p>Đang tải danh sách phòng...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================= -->
+  <!-- MÀN HÌNH 2: PHÒNG CHỜ (dùng chung cho chủ phòng và khách) -->
+  <!-- ================================================= -->
+  <section class="c2nManHinh" id="c2nManHinhCho">
+    <div class="c2nKhoi" style="text-align:center;">
+      <h3 id="c2nChoTieuDe">Phòng chờ</h3>
+      <p id="c2nChoMoTa">Đang chờ...</p>
+
+      <!-- Chỉ hiện với CHỦ PHÒNG khi có bạn xin vào -->
+      <div id="c2nKhoiDuyet" style="display:none;">
+        <p><strong id="c2nTenKhachXinVao"></strong> muốn chơi cùng con!</p>
+        <button type="button" class="c2nNut c2nNutXanh" id="c2nBtnDongY">✅ Đồng Ý</button>
+        <button type="button" class="c2nNut c2nNutDo" id="c2nBtnTuChoi">❌ Từ Chối</button>
+      </div>
+
+      <div id="c2nKhoiRoiCho">
+        <button type="button" class="c2nNut c2nNutDo" id="c2nBtnHuyPhong">🚪 Rời Phòng</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================= -->
+  <!-- MÀN HÌNH 3: ĐANG CHƠI -->
+  <!-- ================================================= -->
+  <section class="c2nManHinh" id="c2nManHinhChoi">
+    <div id="c2nKhuVucBanCo">
+      <div id="c2nBanCo"></div>
+
+      <div id="c2nTheThongTin">
+        <!-- Thẻ đối thủ (luôn ở trên) -->
+        <div id="c2nTheDoiThu" class="theNguoiChoi">
+          <div class="theAvatar" id="c2nTheDoiThuAvatar">🙂</div>
+          <div class="theChiTiet">
+            <p class="theTen" id="c2nTheDoiThuTen">Đối thủ</p>
+            <p class="theLevel" id="c2nTheDoiThuLevel">Level 1</p>
+          </div>
+          <span class="coHieuLuot">🚩</span>
+        </div>
+
+        <!-- Thẻ của mình -->
+        <div id="c2nTheBanThan" class="theNguoiChoi">
+          <div class="theAvatar" id="c2nTheBanThanAvatar">❓</div>
+          <div class="theChiTiet">
+            <p class="theTen" id="c2nTheBanThanTen">Bạn</p>
+            <p class="theLevel" id="c2nTheBanThanLevel">Level 1</p>
+          </div>
+          <span class="coHieuLuot">🚩</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="c2nThongTinVan">
+      <p>Lượt đi: <strong id="c2nHienThiLuot">---</strong></p>
+      <p>Trạng thái: <span id="c2nHienThiTrangThai">---</span></p>
+    </div>
+
+    <div id="c2nKhoiNutVan">
+      <button type="button" class="c2nNut c2nNutDo" id="c2nBtnXinThua">🏳️ Xin Thua</button>
+      <button type="button" class="c2nNut" id="c2nBtnVeSanh" style="display:none;">⬅ Về Sảnh Phòng</button>
+    </div>
+
+    <div id="c2nKetQua">
+      <p id="c2nKetQuaTieuDe"></p>
+      <p id="c2nKetQuaThuong"></p>
+      <p id="c2nKetQuaTong"></p>
+    </div>
+  </section>
+
+  <!-- ================================================= -->
+  <!-- CÁC FILE JAVASCRIPT -->
+  <!-- Thứ tự bắt buộc: config -> api -> choi2nguoi_NC -->
+  <!-- (KHÔNG nạp app.js / board.js / rank.js: trang này tự đọc phiên -->
+  <!--  đăng nhập từ sessionStorage và tự vẽ bàn cờ riêng) -->
+  <!-- ================================================= -->
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="choi2nguoi_NC.js"></script>
+
+</body>
+</html>

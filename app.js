@@ -1,13 +1,62 @@
 // ================================
 // FILE: app.js
 // CHỨC NĂNG: Điều khiển ẩn/hiện 4 Tab (Auth, Dashboard, Play, Rank) và theo dõi trạng thái đăng nhập
-// BƯỚC: MIG_04
+// BƯỚC: MIG_04 (vá lỗi UX sau NC_02: giữ đăng nhập qua F5 + ẩn nút/tab Đăng Nhập khi đã đăng nhập)
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "app" để tránh xung đột
+//
+// BẢN VÁ: giữ đăng nhập qua F5 (làm mới trang)
+//   - Sau khi đăng nhập/đăng ký thành công và sau mỗi lần điểm/level thay đổi: lưu
+//     TOÀN BỘ duLieuTaiKhoan (kể cả maPhien) vào sessionStorage - KHÔNG lưu mật khẩu
+//     (mật khẩu chưa từng được giữ lại trong bộ nhớ, chỉ dùng 1 lần lúc gọi apiDangNhap).
+//   - Lúc tải trang: nếu sessionStorage có sẵn phiên -> khôi phục ngay, vào thẳng
+//     Dashboard, không bắt đăng nhập lại.
+//   - sessionStorage tự xóa khi đóng tab/trình duyệt (khác localStorage), vẫn an toàn.
+//   - GHI CHÚ CHO NC_05: khi có RPC lay_thong_tin_ca_nhan/lay_ho_so (xác thực bằng
+//     ten + maPhien, không cần mật khẩu), nên gọi lại máy chủ để LÀM MỚI + XÁC THỰC
+//     phiên lúc khôi phục (phát hiện phiên đã hết hạn do đăng nhập nơi khác), thay vì
+//     chỉ tin dữ liệu cũ lưu cục bộ như bản vá tạm thời này.
 // ================================
 
 // Biến lưu trạng thái tài khoản đang đăng nhập (null nếu chưa đăng nhập)
 // Cấu trúc giống duLieuTaiKhoan trả về từ api.js: { tenDangNhap, level, diemSo, avatarDaChon }
 var appTaiKhoanDangNhap = null;
+
+// Khóa dùng để lưu phiên đăng nhập vào sessionStorage (giữ đăng nhập qua F5)
+var APP_KHOA_LUU_PHIEN = "coVuaTaiKhoanDangNhap";
+
+/**
+ * Hàm lưu toàn bộ thông tin tài khoản đang đăng nhập vào sessionStorage.
+ * Gọi sau khi đăng nhập/đăng ký thành công và sau mỗi lần điểm/level thay đổi.
+ */
+function appLuuPhienDangNhap() {
+  if (!appTaiKhoanDangNhap) return;
+  try {
+    sessionStorage.setItem(APP_KHOA_LUU_PHIEN, JSON.stringify(appTaiKhoanDangNhap));
+  } catch (loi) {
+    // Một số trình duyệt/chế độ ẩn danh chặn sessionStorage -> bỏ qua, F5 sẽ phải
+    // đăng nhập lại như trước, không ảnh hưởng các chức năng khác
+  }
+}
+
+/** Hàm xóa phiên đăng nhập đã lưu, gọi khi Đăng Xuất */
+function appXoaPhienDangNhap() {
+  try {
+    sessionStorage.removeItem(APP_KHOA_LUU_PHIEN);
+  } catch (loi) {
+    // Bỏ qua nếu trình duyệt chặn sessionStorage
+  }
+}
+
+/** Hàm đọc lại phiên đăng nhập đã lưu (trả về null nếu chưa có hoặc lỗi) */
+function appKhoiPhucPhienDangNhap() {
+  try {
+    var chuoi = sessionStorage.getItem(APP_KHOA_LUU_PHIEN);
+    if (!chuoi) return null;
+    return JSON.parse(chuoi);
+  } catch (loi) {
+    return null;
+  }
+}
 
 /**
  * Hàm khởi tạo ứng dụng, chạy ngay khi trang tải xong
@@ -30,9 +79,18 @@ function appKhoiTao() {
     nutDangXuat.addEventListener("click", appXuLyDangXuat);
   }
 
-  // Trạng thái ban đầu: chưa đăng nhập -> hiện Tab Đăng Nhập
-  appChuyenTab("auth");
-  appCapNhatGiaoDienHeader();
+  // Thử khôi phục phiên đăng nhập đã lưu (giữ đăng nhập qua F5)
+  var phienDaLuu = appKhoiPhucPhienDangNhap();
+  if (phienDaLuu && phienDaLuu.tenDangNhap) {
+    appTaiKhoanDangNhap = phienDaLuu;
+    appCapNhatGiaoDienHeader();
+    appCapNhatDashboard(phienDaLuu);
+    appChuyenTab("dashboard");
+  } else {
+    // Trạng thái ban đầu: chưa đăng nhập -> hiện Tab Đăng Nhập
+    appChuyenTab("auth");
+    appCapNhatGiaoDienHeader();
+  }
 }
 
 /**
@@ -77,6 +135,7 @@ function appChuyenTab(tenTab) {
  */
 function appDangNhapThanhCong(duLieuTaiKhoan) {
   appTaiKhoanDangNhap = duLieuTaiKhoan;
+  appLuuPhienDangNhap();
   appCapNhatGiaoDienHeader();
   appCapNhatDashboard(duLieuTaiKhoan);
   appChuyenTab("dashboard");
@@ -88,6 +147,7 @@ function appDangNhapThanhCong(duLieuTaiKhoan) {
  */
 function appXuLyDangXuat() {
   appTaiKhoanDangNhap = null;
+  appXoaPhienDangNhap();
   appCapNhatGiaoDienHeader();
   appChuyenTab("auth");
 }
@@ -99,13 +159,18 @@ function appXuLyDangXuat() {
 function appCapNhatGiaoDienHeader() {
   var oHienTen = document.getElementById("hienThiTenDangNhap");
   var nutDangXuat = document.getElementById("btnDangXuat");
+  var tabDangNhap = document.getElementById("tabAuth");
 
   if (appTaiKhoanDangNhap) {
     if (oHienTen) oHienTen.textContent = "Xin chào, " + appTaiKhoanDangNhap.tenDangNhap;
     if (nutDangXuat) nutDangXuat.style.display = "inline-block";
+    // Đã đăng nhập: ẩn tab "Đăng Nhập" trên thanh điều hướng vì đã có nút Đăng Xuất
+    // ở header, tránh gây nhầm lẫn/không thân thiện khi thấy cả 2 cùng lúc
+    if (tabDangNhap) tabDangNhap.style.display = "none";
   } else {
     if (oHienTen) oHienTen.textContent = "";
     if (nutDangXuat) nutDangXuat.style.display = "none";
+    if (tabDangNhap) tabDangNhap.style.display = "inline-block";
   }
 }
 
@@ -184,6 +249,7 @@ function appLayTaiKhoanDangNhap() {
 function appCapNhatTaiKhoanSauVanCo(duLieuTaiKhoanMoi) {
   appTaiKhoanDangNhap.level = duLieuTaiKhoanMoi.levelMoi;
   appTaiKhoanDangNhap.diemSo = duLieuTaiKhoanMoi.diemMoi;
+  appLuuPhienDangNhap();
   appCapNhatDashboard(appTaiKhoanDangNhap);
 }
 
