@@ -6,6 +6,8 @@
 //            tô sáng nước vừa đi, thẻ thông tin trận đấu, lời khen theo Level,
 //            NÚT GỢI Ý (Stockfish) + ÁP DỤNG TRANG BỊ (bộ quân/bàn cờ/hiệu ứng)
 // BƯỚC: NC_03 (nâng cấp từ NC_02) - FILE NÀY CHỐT SỔ TẠI NC_03 (nguyên tắc gom
+// SỬA 11/07/2026 - NC_06B (SỬA LỖI - đúng ngoại lệ mở file đóng băng): thẻ trận
+//   đấu vẽ avatar cao cấp (URL) bằng <img> thay vì in URL thành chữ (mục 4.6).
 //        việc theo file - xem HƯỚNG DẪN mục 7). Sau bước này chỉ mở lại board.js
 //        khi SỬA LỖI, không thêm tính năng mới ở đây nữa.
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "board" để tránh xung đột
@@ -1415,7 +1417,18 @@ function boardCapNhatTheThongTinTranDau() {
   var oBanThanAvatar = document.getElementById("theBanThanAvatar");
   var oBanThanTen = document.getElementById("theBanThanTen");
   var oBanThanLevel = document.getElementById("theBanThanLevel");
-  if (oBanThanAvatar) oBanThanAvatar.textContent = (taiKhoan && taiKhoan.avatarDaChon) || "\u2753";
+  // SỬA 11/07/2026 - NC_06B (sửa lỗi, đúng ngoại lệ mở file đóng băng): avatar
+  // cao cấp là URL ảnh -> vẽ <img> tròn; emoji -> đặt chữ như cũ. Trước đây dùng
+  // textContent nên URL dài in ra thành chữ tràn thẻ (HƯỚNG DẪN 4.6).
+  if (oBanThanAvatar) {
+    var boardAvt = ((taiKhoan && taiKhoan.avatarDaChon) || "").trim();
+    if (boardAvt && (boardAvt.indexOf("http") === 0 || boardAvt.indexOf("/") >= 0)) {
+      oBanThanAvatar.innerHTML = '<img src="' + boardAvt.replace(/"/g, "&quot;") + '" alt="avatar" ' +
+        'style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+    } else {
+      oBanThanAvatar.textContent = boardAvt || "\u2753";
+    }
+  }
   if (oBanThanTen) oBanThanTen.textContent = (taiKhoan && taiKhoan.tenDangNhap) || "Bạn";
   if (oBanThanLevel) oBanThanLevel.textContent = "Level " + boardLayLevelNguoiChoi();
 
