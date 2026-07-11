@@ -8,10 +8,15 @@
   <!-- ================================================================
        FILE: choi2nguoi_NC.html
        CHỨC NĂNG: Trang chơi cờ 2 người ở 2 máy (sảnh phòng + bàn cờ)
-       NGÀY: 10/07/2026 10:00 - BƯỚC: NC_04
+       NGÀY: 10/07/2026 16:30 - BƯỚC: NC_04B (sửa lỗi hiển thị, không thêm tính năng)
        PHỤ THUỘC: style.css, chess.min.js, config.js, api.js, choi2nguoi_NC.js
        GHI CHÚ: các định dạng RIÊNG của trang này nằm trong thẻ <style> bên
                 dưới để KHÔNG phải sửa style.css (file dùng chung).
+       SỬA Ở NC_04B: nút "⬅ Về Trang Chính" vốn ĐÃ CÓ trong header nhưng chữ và
+                viền dùng màu xanh đậm nằm trên nền header cũng màu xanh -> gần
+                như tàng hình, trẻ tưởng không có nút quay về. Nay đổi thành
+                chữ + viền TRẮNG khi nút nằm trong #headerChinh. Nút cùng lớp
+                nằm ở khối "chưa đăng nhập" (nền trắng) vẫn giữ màu xanh cũ.
        ================================================================ -->
 
   <link rel="stylesheet" href="style.css">
@@ -44,6 +49,18 @@
     .c2nNutLienKet:hover {
       background-color: var(--mau-chinh);
       color: #ffffff;
+    }
+
+    /* NC_04B: trong header (nền xanh gradient) phải dùng chữ + viền TRẮNG,
+       nếu không nút sẽ chìm hẳn vào nền và trẻ không nhìn thấy. */
+    #headerChinh .c2nNutLienKet {
+      color: #ffffff;
+      border-color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+    #headerChinh .c2nNutLienKet:hover {
+      background-color: #ffffff;
+      color: var(--mau-chinh-dam);
     }
 
     /* ----- 3 màn hình: Sảnh / Chờ / Chơi (mặc định ẩn hết) ----- */

@@ -1,7 +1,10 @@
 /* ================================
    FILE: style.css
    CHỨC NĂNG: Định dạng bố cục, màu sắc, hiệu ứng cho toàn bộ webapp
-   BƯỚC: MIG_03
+   BƯỚC: NC_05 (nâng cấp từ MIG_03) - NGÀY: 10/07/2026
+   ĐIỂM MỚI NC_05: Thanh Thông Tin Trên Cùng, nút menu "sắp có" (Cửa Hàng/Học
+   Tập/Khám Phá/Quản Trị), Trang Tài Khoản (thay khối Dashboard cũ), điều khiển
+   sắp xếp Bảng Xếp Hạng.
    ================================ */
 
 /* ----- Biến màu dùng chung (CSS Variables) ----- */
@@ -74,7 +77,60 @@ body {
 }
 
 /* ================================================= */
-/* THANH ĐIỀU HƯỚNG 4 TAB */
+/* NC_05: THANH THÔNG TIN TRÊN CÙNG */
+/* Avatar + kim cương/EXP/level/hạng + danh hiệu. app.js bật display:flex khi */
+/* đã đăng nhập (mặc định display:none trong HTML). */
+/* ================================================= */
+#thanhThongTin {
+  background-color: var(--mau-nen-khoi);
+  border-bottom: 2px solid var(--mau-vien);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+#thanhThongTinAvatar {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background-color: var(--mau-nen);
+  border: 2px solid var(--mau-chinh);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+#thanhThongTinSo {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.thanhThongTinMuc {
+  background-color: var(--mau-nen);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-weight: bold;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+#thanhThongTinDanhHieu {
+  margin-left: auto;
+  background: linear-gradient(135deg, #ffe29f, #ffa99f);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* ================================================= */
+/* THANH ĐIỀU HƯỚNG */
 /* ================================================= */
 #thanhDieuHuong {
   display: flex;
@@ -111,6 +167,25 @@ body {
   background-color: var(--mau-chinh-dam);
   color: #ffffff;
   border-color: var(--mau-chinh-dam);
+}
+
+/* NC_05: nút menu "để chỗ sẵn" cho các trang CHƯA làm (Cửa Hàng/Học Tập/Khám
+   Phá/Quản Trị) - dáng giống .nutTab nhưng mờ + không bấm được, kèm ổ khóa nhỏ
+   qua ::after để trẻ hiểu ngay là "sắp có", không phải bị lỗi. */
+.nutTabSapCo {
+  background-color: transparent;
+  border: 2px dashed #b8c1cc;
+  color: #9aa4b0;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.nutTabSapCo::after {
+  content: " 🔒";
 }
 
 /* ================================================= */
@@ -212,9 +287,9 @@ body {
 }
 
 /* ================================================= */
-/* TAB 2: DASHBOARD - THÔNG TIN NGƯỜI CHƠI */
+/* TAB 2: TÀI KHOẢN (NC_05 - thay khối Dashboard cũ) */
 /* ================================================= */
-#khoiThongTinNguoiChoi {
+#taikhoanTongQuan {
   display: flex;
   align-items: center;
   gap: 20px;
@@ -222,9 +297,10 @@ body {
   background-color: var(--mau-nen);
   border-radius: var(--bo-tron);
   padding: 16px;
+  margin-bottom: 20px;
 }
 
-#dashboardAvatar {
+#taikhoanAvatarLon {
   width: 90px;
   height: 90px;
   min-width: 90px;
@@ -237,35 +313,244 @@ body {
   border: 3px solid var(--mau-chinh);
 }
 
-#khoiThongTinNguoiChoi p {
+#taikhoanThongTinChinh p {
   margin: 4px 0;
   font-size: 1.05rem;
 }
 
-#dashboardTrangThaiMoKhoa {
-  margin-top: 20px;
+/* Khối chức năng dùng chung trong Trang Tài Khoản (avatar/trang bị/thành
+   tích/thống kê/lịch sử...) - mỗi khối 1 khung viền nhẹ, tiêu đề rõ ràng */
+.taikhoanKhoi {
+  margin-bottom: 22px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--mau-vien);
 }
 
-#dashboardTrangThaiMoKhoa ul {
-  list-style: none;
-  padding: 0;
+.taikhoanKhoi:last-child {
+  border-bottom: none;
 }
 
-#dashboardTrangThaiMoKhoa li {
-  padding: 10px 14px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  background-color: #eef1f5;
-  border-left: 6px solid #b0b8c1;
-  font-weight: bold;
+.taikhoanKhoi h3 {
+  color: var(--mau-chinh-dam);
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.taikhoanRong {
   color: #7a828b;
+  font-style: italic;
+  margin: 6px 0;
 }
 
-/* Class thêm bởi board.js/app.js khi mốc đã được mở khóa */
-#dashboardTrangThaiMoKhoa li.daMoKhoa {
+/* --- Chọn Avatar --- */
+#luoiAvatarMienPhi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nutAvatarLuaChon {
+  width: 46px;
+  height: 46px;
+  font-size: 1.4rem;
+  border: 2px solid var(--mau-vien);
+  border-radius: 50%;
+  background-color: var(--mau-nen);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.nutAvatarLuaChon:hover {
+  border-color: var(--mau-chinh);
+  transform: scale(1.08);
+}
+
+.nutAvatarLuaChon.nutAvatarDangChon {
+  border-color: var(--mau-phu);
   background-color: #fff7e0;
-  border-left-color: var(--mau-phu);
-  color: var(--mau-chu);
+  box-shadow: 0 0 0 3px rgba(255, 183, 3, 0.35);
+}
+
+/* --- Vật Phẩm Đã Sở Hữu --- */
+#danhSachVatPhamSoHuu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.theVatPhamSoHuu {
+  width: 140px;
+  background-color: var(--mau-nen);
+  border: 1px solid var(--mau-vien);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.theVatPhamHinh {
+  width: 100%;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 6px;
+}
+
+.theVatPhamHinh img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+}
+
+.theVatPhamTen {
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin: 0 0 8px;
+  min-height: 34px;
+}
+
+.nutTrangBi,
+.nutDaTrangBi {
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.nutTrangBi {
+  background-color: var(--mau-chinh);
+  color: #ffffff;
+}
+
+.nutTrangBi:hover {
+  background-color: var(--mau-chinh-dam);
+}
+
+.nutDaTrangBi {
+  background-color: #d4f8e0;
+  color: var(--mau-thanh-cong);
+  cursor: default;
+}
+
+/* Nút "Đến Cửa Hàng" ở Trang Tài Khoản dùng chung dáng .nutTabLienKet nhưng
+   đang là placeholder (chưa có trang) -> phủ thêm dáng .nutTabSapCo */
+#lienKetCuaHang.nutTabSapCo {
+  display: inline-block;
+  border-style: dashed;
+  margin-top: 4px;
+}
+
+/* --- Thành Tích --- */
+#luoiThanhTich {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.theThanhTich {
+  flex: 1 1 130px;
+  background-color: var(--mau-nen);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.theThanhTichSo {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--mau-chinh-dam);
+}
+
+.theThanhTichNhan {
+  display: block;
+  font-size: 0.82rem;
+  color: #6b7684;
+  margin-top: 2px;
+}
+
+/* --- Bảng dùng chung trong Trang Tài Khoản (thống kê đối thủ + lịch sử trận) --- */
+.taikhoanBang {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.taikhoanBang thead {
+  background-color: var(--mau-chinh-dam);
+  color: #ffffff;
+}
+
+.taikhoanBang th,
+.taikhoanBang td {
+  padding: 8px 10px;
+  text-align: center;
+  border-bottom: 1px solid var(--mau-vien);
+}
+
+.taikhoanBang tbody tr:nth-child(odd) {
+  background-color: #f8fafc;
+}
+
+.taikhoanODong {
+  font-style: italic;
+  color: #7a828b;
+  padding: 14px !important;
+}
+
+.taikhoanKetQua-thang { color: var(--mau-thanh-cong); font-weight: bold; }
+.taikhoanKetQua-thua  { color: var(--mau-that-bai); font-weight: bold; }
+.taikhoanKetQua-hoa   { color: #b8860b; font-weight: bold; }
+
+#btnLamMoiLichSuTran {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--mau-chinh);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#btnLamMoiLichSuTran:hover {
+  background-color: var(--mau-chinh-dam);
+}
+
+/* --- Lịch Sử Đổi Thưởng --- */
+#danhSachLichSuDoiQua {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mucLichSuDoiQua {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--mau-nen);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.92rem;
+}
+
+.mucLichSuDoiQuaTrangThai.daTrao {
+  color: var(--mau-thanh-cong);
+  font-weight: bold;
+}
+
+.mucLichSuDoiQuaTrangThai.choTrao {
+  color: var(--mau-phu);
+  font-weight: bold;
 }
 
 /* ================================================= */
@@ -514,77 +799,23 @@ body {
 }
 
 /* ================================================= */
-/* HỘP THOẠI XÁC NHẬN GỢI Ý (NC_03) */
-/* board.js chỉ đổi style.display; toàn bộ giao diện nằm ở đây */
+/* HỘP THOẠI HỎI GỢI Ý CŨ (đã BỎ dùng từ NC_03B - HƯỚNG DẪN 4.9).
+   Khối CSS dưới đây không còn phần tử HTML tương ứng nào dùng tới, giữ lại vô
+   hại theo đúng ghi chú ở KẾ HOẠCH mục NC_03B ("dọn khi nào tiện tay sửa file
+   này"); NC_05 có sửa style.css nên dọn luôn cho gọn. */
 /* ================================================= */
-#hopThoaiHoiGoiY {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(44, 62, 80, 0.55);
-  z-index: 500;
-  align-items: center;
-  justify-content: center;
-}
 
-#hopThoaiHoiGoiYNoiDung {
-  background-color: var(--mau-nen-khoi);
-  border-radius: var(--bo-tron);
-  box-shadow: var(--do-bong);
-  padding: 24px 28px;
-  max-width: 320px;
-  width: 90%;
-  text-align: center;
-  animation: hieuUngHienDan 0.25s ease-in-out;
-}
-
-#hopThoaiHoiGoiYNoiDung p {
-  font-size: 1.15rem;
-  font-weight: bold;
-  margin: 0 0 18px;
-  color: var(--mau-chu);
-}
-
-#hopThoaiHoiGoiYNutBam {
+/* ================================================= */
+/* TAB 4: RANK - BẢNG XẾP HẠNG (NC_05: điều khiển sắp xếp) */
+/* ================================================= */
+#khoiDieuKhienXepHang {
   display: flex;
-  gap: 12px;
-  justify-content: center;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
+  margin-bottom: 14px;
 }
 
-#hopThoaiHoiGoiYNutBam button {
-  flex: 1 1 100px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-#btnHopThoaiDongY {
-  background-color: var(--mau-thanh-cong);
-  color: #ffffff;
-}
-
-#btnHopThoaiDongY:hover {
-  filter: brightness(1.08);
-}
-
-#btnHopThoaiThoi {
-  background-color: #eef1f5;
-  color: var(--mau-chu);
-}
-
-#btnHopThoaiThoi:hover {
-  background-color: #dfe4ea;
-}
-
-/* ================================================= */
-/* TAB 4: RANK - BẢNG XẾP HẠNG */
-/* ================================================= */
 #btnLamMoiXepHang {
   padding: 10px 16px;
   background-color: var(--mau-chinh);
@@ -593,11 +824,22 @@ body {
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
-  margin-bottom: 14px;
 }
 
 #btnLamMoiXepHang:hover {
   background-color: var(--mau-chinh-dam);
+}
+
+#khoiDieuKhienXepHang label {
+  font-weight: bold;
+  font-size: 0.92rem;
+}
+
+#chonKieuXepHang {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid var(--mau-vien);
+  font-size: 0.92rem;
 }
 
 #bangXepHang {
@@ -615,6 +857,16 @@ body {
   padding: 10px 12px;
   text-align: center;
   border-bottom: 1px solid var(--mau-vien);
+}
+
+/* NC_05: tiêu đề cột chính bấm được để đổi kiểu sắp xếp (rank.js) */
+#bangXepHang th.cotSapXepDuocBam {
+  cursor: pointer;
+  user-select: none;
+}
+
+#bangXepHang th.cotSapXepDuocBam:hover {
+  background-color: var(--mau-chinh);
 }
 
 #bangXepHang tbody tr:nth-child(odd) {
@@ -651,7 +903,20 @@ body {
     text-align: center;
   }
 
-  .nutTab {
+  #thanhThongTin {
+    justify-content: center;
+    text-align: center;
+    padding: 10px 12px;
+  }
+
+  #thanhThongTinDanhHieu {
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .nutTab,
+  .nutTabSapCo {
     flex: 1 1 40%;
     text-align: center;
   }
@@ -661,8 +926,17 @@ body {
     padding: 16px;
   }
 
-  #khoiThongTinNguoiChoi {
+  #taikhoanTongQuan {
     flex-direction: column;
     text-align: center;
+  }
+
+  .taikhoanBang {
+    font-size: 0.82rem;
+  }
+
+  .taikhoanBang th,
+  .taikhoanBang td {
+    padding: 6px 4px;
   }
 }

@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cờ Vua Cho Trẻ Em</title>
 
-  <!-- NGÀY: 10/07/2026 10:00 - BƯỚC: NC_04 (thêm nút liên kết "2 Người") -->
+  <!-- NGÀY: 11/07/2026 - BƯỚC: NC_06B (kích hoạt 2 nút "Cửa Hàng" -> trang
+       cuahang_NC.html: nút trên thanh điều hướng + link trong tab Tài Khoản).
+       LỊCH SỬ: NC_06A (kích hoạt nút "Quản Trị" -> admin_NC.html);
+       NC_05 (Thanh Thông Tin Trên Cùng + Trang Tài Khoản + Menu Theo Vai Trò -
+       thay Tab "Bảng Điều Khiển" cũ) -->
 
   <!-- File định dạng giao diện (đã tách khỏi thẻ <style>, dùng làm file .css thường) -->
   <link rel="stylesheet" href="style.css">
@@ -66,16 +70,44 @@
   </header>
 
   <!-- ================================================= -->
-  <!-- THANH ĐIỀU HƯỚNG: Auth, Dashboard, Play, Rank + liên kết "2 Người" -->
+  <!-- NC_05: THANH THÔNG TIN TRÊN CÙNG -->
+  <!-- Ẩn/hiện + điền dữ liệu do app.js đảm nhiệm (appVeThanhThongTin), lấy từ
+       RPC lay_thong_tin_ca_nhan, tự cập nhật sau mỗi ván/giao dịch. -->
+  <!-- ================================================= -->
+  <div id="thanhThongTin" style="display:none;">
+    <div id="thanhThongTinAvatar">❓</div>
+    <div id="thanhThongTinSo">
+      <span class="thanhThongTinMuc" id="ttKimCuong">💎 0</span>
+      <span class="thanhThongTinMuc" id="ttExp">⭐ EXP 0</span>
+      <span class="thanhThongTinMuc" id="ttLevel">🎚️ Lv 1</span>
+      <span class="thanhThongTinMuc" id="ttHang">🏅 Hạng —</span>
+    </div>
+    <div id="thanhThongTinDanhHieu">Chưa Xác Định</div>
+  </div>
+
+  <!-- ================================================= -->
+  <!-- THANH ĐIỀU HƯỚNG: MENU THEO VAI TRÒ (NC_05) -->
   <!-- Các nút .nutTab được gán sự kiện click trong app.js -->
-  <!-- Riêng "2 Người" là thẻ <a> mở trang choi2nguoi_NC.html (NC_04) -->
+  <!-- "2 Người" là thẻ <a> mở trang choi2nguoi_NC.html (NC_04) -->
+  <!-- NC_06A: "Quản Trị" nay là thẻ <a> mở trang admin_NC.html (hết "sắp có").
+       Vẫn giữ nguyên id="tabQuanTri" nên app.js (appCapNhatMenuTheoVaiTro) tiếp
+       tục điều khiển ẩn/hiện theo vai trò mà KHÔNG phải sửa app.js. Cố tình
+       KHÔNG dùng class "nutTab" để app.js không gán sự kiện chuyển tab. -->
+  <!-- NC_06B: "Cửa Hàng" nay là thẻ <a> mở trang cuahang_NC.html (hết "sắp có").
+       Cố tình KHÔNG dùng class "nutTab" để app.js không gán sự kiện chuyển tab
+       (giống "2 Người" và "Quản Trị"). Học Tập/Khám Phá: vẫn "để chỗ sẵn"
+       (disabled), kích hoạt ở NC_07. -->
   <!-- ================================================= -->
   <nav id="thanhDieuHuong">
     <button class="nutTab" id="tabAuth" data-tab="auth">Đăng Nhập</button>
-    <button class="nutTab" id="tabDashboard" data-tab="dashboard">Bảng Điều Khiển</button>
-    <button class="nutTab" id="tabPlay" data-tab="play">Chơi Cờ</button>
+    <button class="nutTab" id="tabTaiKhoan" data-tab="taikhoan">👤 Tài Khoản</button>
+    <button class="nutTab" id="tabPlay" data-tab="play">♟️ Chơi Cờ</button>
     <a class="nutTabLienKet" id="tabHaiNguoi" href="choi2nguoi_NC.html">👫 2 Người</a>
-    <button class="nutTab" id="tabRank" data-tab="rank">Xếp Hạng</button>
+    <button class="nutTab" id="tabRank" data-tab="rank">🏆 Xếp Hạng</button>
+    <a class="nutTabLienKet" id="tabCuaHang" href="cuahang_NC.html">🛍️ Cửa Hàng</a>
+    <button class="nutTabSapCo" id="tabHocTap" type="button" disabled title="Sắp ra mắt (NC_07)">📚 Học Tập</button>
+    <button class="nutTabSapCo" id="tabKhamPha" type="button" disabled title="Sắp ra mắt (NC_07)">🧭 Khám Phá</button>
+    <a class="nutTabLienKet" id="tabQuanTri" href="admin_NC.html" title="Trang Quản Trị (chỉ dành cho quản trị viên)" style="display:none;">🛠️ Quản Trị</a>
   </nav>
 
   <!-- ================================================= -->
@@ -107,30 +139,87 @@
   </section>
 
   <!-- ================================================= -->
-  <!-- TAB 2: DASHBOARD - THÔNG TIN TÀI KHOẢN NGƯỜI CHƠI -->
+  <!-- TAB 2: TÀI KHOẢN (NC_05 - thay "Bảng Điều Khiển" cũ) -->
+  <!-- Toàn bộ nội dung do taikhoan_NC.js điền (RPC lay_ho_so + lay_thong_ke_doi_thu) -->
   <!-- ================================================= -->
-  <section class="noiDungTab" id="section-dashboard">
-    <h2>Bảng Điều Khiển Của Bạn</h2>
+  <section class="noiDungTab" id="section-taikhoan">
+    <h2>Tài Khoản Của Con</h2>
 
-    <div id="khoiThongTinNguoiChoi">
-      <!-- Avatar hiện tại -->
-      <div id="dashboardAvatar"></div>
-
-      <p>Tên đăng nhập: <span id="dashboardTenDangNhap">---</span></p>
-      <p>Level hiện tại: <span id="dashboardLevel">---</span></p>
-      <p>Điểm số: <span id="dashboardDiemSo">---</span></p>
-      <p>Danh hiệu: <span id="dashboardDanhHieu">---</span></p>
+    <!-- Khối tổng quan: avatar lớn + kim cương/EXP/level/danh hiệu/hạng -->
+    <div id="taikhoanTongQuan">
+      <div id="taikhoanAvatarLon">❓</div>
+      <div id="taikhoanThongTinChinh">
+        <p>Tên đăng nhập: <strong id="taikhoanTen">---</strong></p>
+        <p>💎 Kim cương: <strong id="taikhoanKimCuong">---</strong></p>
+        <p>⭐ EXP: <strong id="taikhoanExp">---</strong></p>
+        <p>🎚️ Level: <strong id="taikhoanLevel">---</strong> — <span id="taikhoanDanhHieu">---</span></p>
+        <p>🏅 Hạng trên bảng xếp hạng: <strong id="taikhoanHang">---</strong></p>
+      </div>
     </div>
 
-    <!-- Khu vực hiển thị các mốc đã mở khóa -->
-    <div id="dashboardTrangThaiMoKhoa">
-      <h3>Phần Thưởng Đã Mở Khóa</h3>
-      <ul>
-        <li id="moKhoaMauBanCoMoi">Màu bàn cờ mới (Level 5): chưa mở</li>
-        <li id="moKhoaQuanCoDongVat">Bộ quân cờ động vật (Level 10): chưa mở</li>
-        <li id="moKhoaHieuUngSamSet">Hiệu ứng sấm sét (Level 15): chưa mở</li>
-        <li id="moKhoaRuongKhoBau">Rương kho báu đặc biệt (Level 20): chưa mở</li>
-      </ul>
+    <!-- Chọn avatar miễn phí (bộ emoji cố định trong taikhoan_NC.js) -->
+    <div class="taikhoanKhoi" id="khoiChonAvatar">
+      <h3>🖼️ Chọn Avatar</h3>
+      <div id="luoiAvatarMienPhi"><!-- taikhoan_NC.js điền --></div>
+    </div>
+
+    <!-- Trang bị vật phẩm số đã sở hữu (bộ quân cờ, bàn cờ, hiệu ứng, avatar cao cấp) -->
+    <div class="taikhoanKhoi" id="khoiTrangBi">
+      <h3>🎒 Vật Phẩm Đã Sở Hữu</h3>
+      <div id="danhSachVatPhamSoHuu"><p class="taikhoanRong">Đang tải...</p></div>
+      <a class="nutTabLienKet" id="lienKetCuaHang" href="cuahang_NC.html">Đến Cửa Hàng 🛍️</a>
+    </div>
+
+    <!-- Thành tích -->
+    <div class="taikhoanKhoi" id="khoiThanhTich">
+      <h3>🏆 Thành Tích</h3>
+      <div id="luoiThanhTich">
+        <div class="theThanhTich"><span class="theThanhTichSo" id="ttThangMay">0</span><span class="theThanhTichNhan">Thắng Đấu Máy</span></div>
+        <div class="theThanhTich"><span class="theThanhTichSo" id="ttKhacMay">0</span><span class="theThanhTichNhan">Ván Khác (Máy)</span></div>
+        <div class="theThanhTich"><span class="theThanhTichSo" id="tt2nThang">0</span><span class="theThanhTichNhan">Thắng 2 Người</span></div>
+        <div class="theThanhTich"><span class="theThanhTichSo" id="tt2nThua">0</span><span class="theThanhTichNhan">Thua 2 Người</span></div>
+        <div class="theThanhTich"><span class="theThanhTichSo" id="tt2nHoa">0</span><span class="theThanhTichNhan">Hòa 2 Người</span></div>
+      </div>
+    </div>
+
+    <!-- Thống kê theo đối thủ (RPC lay_thong_ke_doi_thu) -->
+    <div class="taikhoanKhoi" id="khoiThongKeDoiThu">
+      <h3>📊 Thống Kê Theo Đối Thủ</h3>
+      <table class="taikhoanBang" id="bangThongKeDoiThu">
+        <thead>
+          <tr>
+            <th>Đối Thủ</th>
+            <th>Chế Độ</th>
+            <th>Tổng Trận</th>
+            <th>Thắng</th>
+            <th>Thua</th>
+            <th>Hòa</th>
+          </tr>
+        </thead>
+        <tbody id="thanBangThongKeDoiThu"></tbody>
+      </table>
+    </div>
+
+    <!-- Lịch sử 50 trận gần nhất -->
+    <div class="taikhoanKhoi" id="khoiLichSuTran">
+      <h3>📜 50 Trận Gần Nhất <button id="btnLamMoiLichSuTran" type="button">🔄 Làm Mới</button></h3>
+      <table class="taikhoanBang" id="bangLichSuTran">
+        <thead>
+          <tr>
+            <th>Thời Gian</th>
+            <th>Đối Thủ</th>
+            <th>Chế Độ</th>
+            <th>Kết Quả</th>
+          </tr>
+        </thead>
+        <tbody id="thanBangLichSuTran"></tbody>
+      </table>
+    </div>
+
+    <!-- Lịch sử đổi thưởng (chỉ XEM - hành động đổi thuộc Cửa Hàng, NC_06B) -->
+    <div class="taikhoanKhoi" id="khoiLichSuDoiQua">
+      <h3>🎁 Lịch Sử Đổi Thưởng</h3>
+      <div id="danhSachLichSuDoiQua"><p class="taikhoanRong">Chưa có lịch sử đổi thưởng.</p></div>
     </div>
   </section>
 
@@ -201,11 +290,24 @@
   </section>
 
   <!-- ================================================= -->
-  <!-- TAB 4: RANK - BẢNG XẾP HẠNG -->
+  <!-- TAB 4: RANK - BẢNG XẾP HẠNG (NC_05: đổi cột EXP + tự sắp 7 kiểu) -->
   <!-- ================================================= -->
   <section class="noiDungTab" id="section-rank">
     <h2>Bảng Xếp Hạng</h2>
-    <button id="btnLamMoiXepHang">Làm Mới Xếp Hạng</button>
+
+    <div id="khoiDieuKhienXepHang">
+      <button id="btnLamMoiXepHang">🔄 Làm Mới Xếp Hạng</button>
+      <label for="chonKieuXepHang">Sắp theo:</label>
+      <select id="chonKieuXepHang">
+        <option value="kinhNghiem">⭐ EXP</option>
+        <option value="tongThang">🏆 Tổng Số Trận Thắng</option>
+        <option value="thangMay">🤖 Thắng Đấu Máy</option>
+        <option value="thangNguoi">👫 Thắng Đấu Người</option>
+        <option value="tyLeThang">📈 Tỷ Lệ Thắng Chung</option>
+        <option value="tyLeThangNguoi">📈 Tỷ Lệ Thắng Đấu Người</option>
+        <option value="tyLeThangMay">📈 Tỷ Lệ Thắng Đấu Máy</option>
+      </select>
+    </div>
 
     <!-- rank.js sẽ điền dữ liệu danhSachXepHang vào bảng này -->
     <table id="bangXepHang">
@@ -214,7 +316,8 @@
           <th>Hạng</th>
           <th>Tên Đăng Nhập</th>
           <th>Level</th>
-          <th>Điểm Số</th>
+          <th id="cotChinhTieuDe" class="cotSapXepDuocBam" title="Bấm để đổi kiểu sắp xếp">EXP ▼</th>
+          <th>Tổng Trận</th>
           <th>Danh Hiệu</th>
         </tr>
       </thead>
@@ -227,7 +330,7 @@
   <!-- ================================================= -->
   <!-- CÁC FILE JAVASCRIPT CỦA DỰ ÁN -->
   <!-- Thứ tự nạp BẮT BUỘC: config -> api -> app -> auth -> board -> rank -->
-  <!-- (config trước vì api cần supabase client; api trước các file gọi nó) -->
+  <!-- -> taikhoan_NC (file _NC nạp sau cùng - HƯỚNG DẪN mục 2) -->
   <!-- ================================================= -->
   <script src="config.js"></script>
   <script src="api.js"></script>
@@ -235,6 +338,7 @@
   <script src="auth.js"></script>
   <script src="board.js"></script>
   <script src="rank.js"></script>
+  <script src="taikhoan_NC.js"></script>
 
 </body>
 </html>

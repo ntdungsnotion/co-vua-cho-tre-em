@@ -1,20 +1,54 @@
 // ================================
 // FILE: rank.js
-// CHỨC NĂNG: Gọi API lấy bảng xếp hạng và vẽ dữ liệu thành các hàng trong bảng HTML
-// BƯỚC: MIG_04
+// CHỨC NĂNG: Gọi API lấy bảng xếp hạng, cho trẻ TỰ SẮP theo 7 kiểu NGAY TRÊN
+//            TRÌNH DUYỆT (không gọi lại máy chủ), vẽ dữ liệu thành các hàng
+//            trong bảng HTML.
+// BƯỚC: NC_05 (nâng cấp từ MIG_04) - NGÀY: 10/07/2026
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "rank" để tránh xung đột
 // PHỤ THUỘC:
 //   - api.js: apiLayXepHang() -> trả về { thanhCong, thongBao, danhSachXepHang }
+//     (RPC lay_xep_hang đã trả đủ 10 trường thô kể từ NC_00: kinhNghiem, thangMay,
+//     thangNguoi, tongThang, tongTranMay, tongTranNguoi, tongTran, tyLeThang,
+//     tyLeThangMay, tyLeThangNguoi)
 //   - app.js: appLayTaiKhoanDangNhap() (để tô sáng hàng của chính người đang đăng nhập)
+//
+// ĐIỂM MỚI NC_05 (HƯỚNG DẪN 4.4, KẾ HOẠCH mục NC_05):
+//   - Cột "Điểm Số" (kim cương) đổi thành "EXP" (kinh_nghiem) - đúng tiêu chí
+//     xếp hạng chính thức (KHÔNG còn dùng kim cương để xếp hạng).
+//   - Thêm <select id="chonKieuXepHang"> (7 kiểu) + bấm trực tiếp tiêu đề cột
+//     số liệu chính (#cotChinhTieuDe) cũng đổi được kiểu - CẢ 2 CÁCH đều KHÔNG
+//     gọi lại máy chủ, chỉ sắp lại mảng rankDanhSachGoc đã tải sẵn.
+//   - Bảng còn 6 cột: Hạng | Tên Đăng Nhập | Level | [cột chính đổi theo kiểu] |
+//     Tổng Trận (cột phụ CỐ ĐỊNH, cho trẻ thấy bối cảnh dù đang sắp theo kiểu nào) |
+//     Danh Hiệu.
 // ================================
 
-// Biến chặn gọi API liên tục khi đang tải (tránh bấm nút nhiều lần)
 var rankDangTai = false;
+var rankDanhSachGoc = [];       // Dữ liệu gốc tải từ máy chủ (chưa sắp lại)
+var rankKieuDangChon = "kinhNghiem"; // Mặc định: EXP (đúng tiêu chí xếp hạng chính)
+
+// 7 kiểu sắp xếp cho phép: khoa (đúng tên trường trả về từ lay_xep_hang),
+// nhan (tên hiển thị ở tiêu đề cột chính), laPhanTram (thêm dấu % khi hiển thị)
+var RANK_DS_KIEU = {
+  kinhNghiem:     { nhan: "EXP",                  laPhanTram: false },
+  tongThang:      { nhan: "Tổng Số Trận Thắng",    laPhanTram: false },
+  thangMay:       { nhan: "Thắng Đấu Máy",         laPhanTram: false },
+  thangNguoi:     { nhan: "Thắng Đấu Người",       laPhanTram: false },
+  tyLeThang:      { nhan: "Tỷ Lệ Thắng Chung",     laPhanTram: true },
+  tyLeThangNguoi: { nhan: "Tỷ Lệ Thắng Đấu Người", laPhanTram: true },
+  tyLeThangMay:   { nhan: "Tỷ Lệ Thắng Đấu Máy",   laPhanTram: true }
+};
+
+// Thứ tự cố định để nút "bấm tiêu đề cột" xoay vòng qua từng kiểu
+var RANK_THU_TU_KIEU = [
+  "kinhNghiem", "tongThang", "thangMay", "thangNguoi",
+  "tyLeThang", "tyLeThangNguoi", "tyLeThangMay"
+];
 
 /**
- * Hàm khởi tạo module xếp hạng, chạy khi trang tải xong
- * Gán sự kiện cho nút "Làm Mới Xếp Hạng" và cho cả nút Tab "Xếp Hạng"
- * (bấm vào Tab sẽ tự động tải lại bảng cho mới nhất)
+ * Hàm khởi tạo module xếp hạng, chạy khi trang tải xong.
+ * Gán sự kiện cho nút "Làm Mới", nút Tab "Xếp Hạng", ô chọn kiểu sắp xếp, và
+ * tiêu đề cột chính (bấm để xoay vòng kiểu sắp xếp).
  */
 function rankKhoiTao() {
   var nutLamMoi = document.getElementById("btnLamMoiXepHang");
@@ -27,11 +61,38 @@ function rankKhoiTao() {
   if (nutTabRank) {
     nutTabRank.addEventListener("click", rankTaiXepHang);
   }
+
+  var chonKieu = document.getElementById("chonKieuXepHang");
+  if (chonKieu) {
+    chonKieu.addEventListener("change", function () {
+      rankKieuDangChon = chonKieu.value;
+      rankVeBang(rankDanhSachGoc);
+    });
+  }
+
+  // NC_05: bấm trực tiếp vào tiêu đề cột chính cũng đổi được kiểu sắp xếp
+  // (đáp ứng "bấm tiêu đề cột HOẶC nút chọn" - HƯỚNG DẪN 4.4)
+  var cotChinh = document.getElementById("cotChinhTieuDe");
+  if (cotChinh) {
+    cotChinh.addEventListener("click", function () {
+      var viTri = RANK_THU_TU_KIEU.indexOf(rankKieuDangChon);
+      var kieuKeTiep = RANK_THU_TU_KIEU[(viTri + 1) % RANK_THU_TU_KIEU.length];
+      rankDoiKieuSapXep(kieuKeTiep);
+    });
+  }
+}
+
+/** Đổi kiểu sắp xếp: cập nhật biến, đồng bộ lại <select>, vẽ lại bảng (không gọi máy chủ) */
+function rankDoiKieuSapXep(kieuMoi) {
+  rankKieuDangChon = kieuMoi;
+  var chonKieu = document.getElementById("chonKieuXepHang");
+  if (chonKieu) chonKieu.value = kieuMoi;
+  rankVeBang(rankDanhSachGoc);
 }
 
 /**
- * Hàm gọi API lấy bảng xếp hạng và vẽ ra màn hình
- * Trong lúc chờ: hiện dòng "Đang tải...", khóa nút để tránh bấm liên tục
+ * Hàm gọi API lấy bảng xếp hạng (1 LẦN) rồi vẽ ra màn hình theo kiểu đang chọn.
+ * Trong lúc chờ: hiện dòng "Đang tải...", khóa nút để tránh bấm liên tục.
  */
 function rankTaiXepHang() {
   if (rankDangTai) return; // Đang tải rồi thì bỏ qua lần bấm thừa
@@ -45,9 +106,11 @@ function rankTaiXepHang() {
     rankDatTrangThaiNut(false, "Làm Mới Xếp Hạng");
 
     if (ketQua && ketQua.thanhCong && ketQua.danhSachXepHang) {
-      rankVeBang(ketQua.danhSachXepHang);
+      rankDanhSachGoc = ketQua.danhSachXepHang;
+      rankVeBang(rankDanhSachGoc);
     } else {
       // Máy chủ báo lỗi hoặc không có dữ liệu
+      rankDanhSachGoc = [];
       var loi = (ketQua && ketQua.thongBao) ? ketQua.thongBao : "Không tải được bảng xếp hạng";
       rankHienDongThongBao(loi);
     }
@@ -55,34 +118,58 @@ function rankTaiXepHang() {
 }
 
 /**
- * Hàm vẽ toàn bộ danh sách xếp hạng vào tbody #thanBangXepHang
- * Nhận vào: danhSach = mảng các người chơi trả về từ api.js
- * Mỗi hàng gồm 5 cột khớp tiêu đề: Hạng, Tên Đăng Nhập, Level, Điểm Số, Danh Hiệu
+ * Sắp 1 bản SAO của mảng theo kiểu chỉ định, giảm dần; phá hòa bằng tên đăng
+ * nhập tăng dần - ĐÚNG quy tắc "EXP -> tổng thắng -> tỷ lệ thắng -> tên" của
+ * HƯỚNG DẪN 4.4 khi kiểu = kinhNghiem (mặc định); các kiểu khác dùng chính kiểu
+ * đó làm tiêu chí DUY NHẤT rồi phá hòa bằng tên (đơn giản, dễ hiểu với trẻ).
  */
-function rankVeBang(danhSach) {
+function rankSapXep(danhSach, kieu) {
+  var ds = danhSach.slice(); // Không sửa mảng gốc rankDanhSachGoc
+  ds.sort(function (a, b) {
+    var giaTriA = a[kieu] || 0;
+    var giaTriB = b[kieu] || 0;
+    if (giaTriB !== giaTriA) return giaTriB - giaTriA;
+    return String(a.tenDangNhap).localeCompare(String(b.tenDangNhap));
+  });
+  return ds;
+}
+
+/**
+ * Hàm vẽ toàn bộ danh sách xếp hạng vào tbody #thanBangXepHang, sắp theo
+ * rankKieuDangChon. 6 cột: Hạng, Tên Đăng Nhập, Level, [cột chính], Tổng Trận,
+ * Danh Hiệu. "Hạng" luôn = vị trí trong danh sách ĐANG XEM (khớp hangThu gốc
+ * từ máy chủ khi xem theo kiểu mặc định EXP, vì máy chủ cũng sắp đúng thứ tự đó).
+ */
+function rankVeBang(danhSachGoc) {
   var than = document.getElementById("thanBangXepHang");
   if (!than) return;
 
-  than.innerHTML = "";
-
-  // Trường hợp chưa có người chơi nào
-  if (!danhSach || danhSach.length === 0) {
+  if (!danhSachGoc || danhSachGoc.length === 0) {
     rankHienDongThongBao("Chưa có người chơi nào trên bảng xếp hạng. Hãy là người đầu tiên!");
     return;
   }
+
+  var thongTinKieu = RANK_DS_KIEU[rankKieuDangChon] || RANK_DS_KIEU.kinhNghiem;
+  var oTieuDeChinh = document.getElementById("cotChinhTieuDe");
+  if (oTieuDeChinh) oTieuDeChinh.textContent = thongTinKieu.nhan + " ▼";
+
+  var danhSachDaSap = rankSapXep(danhSachGoc, rankKieuDangChon);
+
+  than.innerHTML = "";
 
   // Lấy tên người đang đăng nhập để tô sáng hàng của chính mình (nếu có)
   var taiKhoan = (typeof appLayTaiKhoanDangNhap === "function") ? appLayTaiKhoanDangNhap() : null;
   var tenMinh = taiKhoan ? taiKhoan.tenDangNhap : null;
 
-  for (var i = 0; i < danhSach.length; i++) {
-    var nguoiChoi = danhSach[i];
+  for (var i = 0; i < danhSachDaSap.length; i++) {
+    var nguoiChoi = danhSachDaSap[i];
     var hang = document.createElement("tr");
+    var hangThu = i + 1;
 
     // Gán class tô sáng cho 3 hàng đầu (style.css đã định nghĩa sẵn màu)
-    if (nguoiChoi.hangThu === 1) hang.classList.add("hangNhat");
-    else if (nguoiChoi.hangThu === 2) hang.classList.add("hangNhi");
-    else if (nguoiChoi.hangThu === 3) hang.classList.add("hangBa");
+    if (hangThu === 1) hang.classList.add("hangNhat");
+    else if (hangThu === 2) hang.classList.add("hangNhi");
+    else if (hangThu === 3) hang.classList.add("hangBa");
 
     // Tô đậm nhẹ hàng của chính người đang đăng nhập để dễ nhận biết
     if (tenMinh && nguoiChoi.tenDangNhap === tenMinh) {
@@ -91,7 +178,7 @@ function rankVeBang(danhSach) {
     }
 
     // Cột 1: Hạng (top 3 hiện huy chương, còn lại hiện số thứ tự)
-    hang.appendChild(rankTaoO(rankKyHieuHang(nguoiChoi.hangThu)));
+    hang.appendChild(rankTaoO(rankKyHieuHang(hangThu)));
 
     // Cột 2: Tên đăng nhập (kèm avatar nếu có)
     var chuTen = nguoiChoi.tenDangNhap;
@@ -103,10 +190,14 @@ function rankVeBang(danhSach) {
     // Cột 3: Level
     hang.appendChild(rankTaoO(nguoiChoi.level));
 
-    // Cột 4: Điểm Số
-    hang.appendChild(rankTaoO(nguoiChoi.diemSo));
+    // Cột 4: giá trị theo KIỂU ĐANG CHỌN (thêm % nếu là kiểu tỷ lệ)
+    var giaTriChinh = nguoiChoi[rankKieuDangChon];
+    hang.appendChild(rankTaoO(thongTinKieu.laPhanTram ? (giaTriChinh + "%") : giaTriChinh));
 
-    // Cột 5: Danh Hiệu
+    // Cột 5: Tổng Trận (cố định, cho trẻ thấy bối cảnh dù đang sắp theo kiểu nào)
+    hang.appendChild(rankTaoO(nguoiChoi.tongTran));
+
+    // Cột 6: Danh Hiệu
     hang.appendChild(rankTaoO(nguoiChoi.danhHieu));
 
     than.appendChild(hang);
@@ -136,7 +227,7 @@ function rankTaoO(noiDung) {
 
 /**
  * Hàm phụ trợ: hiện 1 dòng thông báo chiếm trọn chiều ngang bảng
- * (dùng cho trạng thái đang tải / lỗi / bảng trống)
+ * (dùng cho trạng thái đang tải / lỗi / bảng trống) - bảng có 6 cột (NC_05)
  */
 function rankHienDongThongBao(noiDung) {
   var than = document.getElementById("thanBangXepHang");
@@ -145,7 +236,7 @@ function rankHienDongThongBao(noiDung) {
   than.innerHTML = "";
   var hang = document.createElement("tr");
   var o = document.createElement("td");
-  o.setAttribute("colspan", "5"); // Trải dài hết 5 cột của bảng
+  o.setAttribute("colspan", "6"); // Trải dài hết 6 cột của bảng (NC_05)
   o.style.textAlign = "center";
   o.style.padding = "16px";
   o.style.fontStyle = "italic";

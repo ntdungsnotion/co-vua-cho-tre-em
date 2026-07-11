@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cửa Hàng - Cờ Vua Cho Trẻ Em</title>
+
+  <!-- ================================================================
+       FILE: cuahang_NC.html
+       CHỨC NĂNG: Cửa hàng đổi vật phẩm bằng kim cương cho trẻ
+       NGÀY: 11/07/2026 - BƯỚC: NC_06B
+       PHỤ THUỘC: style.css, config.js, api.js, cuahang_NC.js
+       GHI CHÚ: các định dạng RIÊNG của trang này nằm trong thẻ <style> bên
+                dưới để KHÔNG phải sửa style.css (file dùng chung).
+                Trang tự đọc phiên đăng nhập từ sessionStorage (khóa
+                "coVuaTaiKhoanDangNhap" do app.js ghi) - KHÔNG nạp app.js.
+                KHÔNG đụng board.js: vật phẩm số tự trang bị ngay ở máy chủ
+                (RPC doi_vat_pham), bàn cờ đã biết áp dụng trang bị từ NC_03.
+       ================================================================ -->
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- THƯ VIỆN NGOÀI - chỉ cần supabase-js (trang này không dùng chess.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ----- Nút liên kết quay về trang chính (giống choi2nguoi, prefix ch) ----- */
+    .chNutLienKet {
+      display: inline-block;
+      text-decoration: none;
+      background-color: transparent;
+      border: 2px solid var(--mau-chinh);
+      color: var(--mau-chinh-dam);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      transition: all 0.2s ease-in-out;
+    }
+    .chNutLienKet:hover {
+      background-color: var(--mau-chinh);
+      color: #ffffff;
+    }
+    /* Trong header (nền xanh gradient) phải dùng chữ + viền TRẮNG cho dễ thấy
+       (bài học từ NC_04B) */
+    #headerChinh .chNutLienKet {
+      color: #ffffff;
+      border-color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+    #headerChinh .chNutLienKet:hover {
+      background-color: #ffffff;
+      color: var(--mau-chinh-dam);
+    }
+
+    /* ----- Thanh số dư (kim cương / level / EXP) ----- */
+    #chThanhSoDu {
+      display: none;
+      max-width: 960px;
+      margin: 16px auto 8px;
+      padding: 0 16px;
+    }
+    #chThanhSoDu.hien { display: block; }
+    .chSoDuHop {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      background-color: var(--mau-nen-khoi);
+      border: 2px solid var(--mau-vien);
+      border-radius: var(--bo-tron);
+      box-shadow: var(--do-bong);
+      padding: 12px 16px;
+    }
+    .chSoDuO {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+      font-size: 1.05rem;
+      background-color: var(--mau-nen);
+      border-radius: 999px;
+      padding: 6px 16px;
+    }
+    .chSoDuO .chSoDuNhan { font-size: 0.8rem; color: #6b7684; font-weight: normal; }
+
+    /* ----- Thanh lọc theo loại ----- */
+    #chThanhLoc {
+      display: none;
+      max-width: 960px;
+      margin: 8px auto;
+      padding: 0 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    #chThanhLoc.hien { display: flex; }
+    .chNutLoc {
+      background-color: var(--mau-nen-khoi);
+      color: var(--mau-chinh-dam);
+      border: 2px solid var(--mau-vien);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s ease-in-out;
+    }
+    .chNutLoc:hover { border-color: var(--mau-chinh); }
+    .chNutLoc.dangChon {
+      background-color: var(--mau-chinh);
+      color: #ffffff;
+      border-color: var(--mau-chinh);
+    }
+
+    /* ----- Lưới vật phẩm ----- */
+    #chLuoiVatPham {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      max-width: 960px;
+      margin: 16px auto;
+      padding: 0 16px 24px;
+    }
+    .chThe {
+      display: flex;
+      flex-direction: column;
+      background-color: var(--mau-nen-khoi);
+      border: 2px solid var(--mau-vien);
+      border-radius: var(--bo-tron);
+      box-shadow: var(--do-bong);
+      overflow: hidden;
+    }
+    .chThe.chDaSoHuu { border-color: var(--mau-thanh-cong); }
+    .chThe.chHetHang { opacity: 0.7; }
+
+    .chTheHinh {
+      height: 130px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #eef4fb, #e3ecf7);
+      font-size: 3.4rem;
+    }
+    .chTheHinh img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .chHuyHieuLoai {
+      position: relative;
+    }
+    .chTheThan { padding: 12px 14px 14px; display: flex; flex-direction: column; flex: 1; }
+    .chTheLoai {
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #6b7684;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 2px;
+    }
+    .chTheTen { font-weight: bold; font-size: 1.05rem; color: var(--mau-chu); margin: 0 0 4px; }
+    .chTheMoTa { font-size: 0.85rem; color: #566573; margin: 0 0 10px; flex: 1; }
+
+    .chTheGia {
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+    .chGiaKimCuong { color: var(--mau-chinh-dam); }
+    .chGiaMienPhi  { color: var(--mau-thanh-cong); }
+
+    .chTheGhiChu {
+      font-size: 0.78rem;
+      color: #8a6100;
+      background: #fff5da;
+      border-radius: 8px;
+      padding: 4px 8px;
+      margin-bottom: 8px;
+    }
+    .chTheGhiChu.chGhiChuDo { color: #a93226; background: #fdecea; }
+
+    /* ----- Nút đổi ----- */
+    .chNutDoi {
+      background-color: var(--mau-chinh);
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease-in-out;
+      width: 100%;
+    }
+    .chNutDoi:hover:not(:disabled) { background-color: var(--mau-chinh-dam); }
+    .chNutDoi.chNutMienPhi { background-color: var(--mau-thanh-cong); }
+    .chNutDoi.chNutMienPhi:hover:not(:disabled) { background-color: #26a35d; }
+    .chNutDoi:disabled { background-color: #b7c3cf; cursor: not-allowed; }
+    .chNutDaCo {
+      background-color: transparent;
+      color: var(--mau-thanh-cong);
+      border: 2px solid var(--mau-thanh-cong);
+      cursor: default;
+    }
+
+    /* ----- Khu quà đang chờ trao ----- */
+    #chKhoiChoTrao {
+      display: none;
+      max-width: 960px;
+      margin: 0 auto 24px;
+      padding: 0 16px;
+    }
+    #chKhoiChoTrao.hien { display: block; }
+    .chChoTraoHop {
+      background-color: var(--mau-nen-khoi);
+      border: 2px solid var(--mau-phu);
+      border-radius: var(--bo-tron);
+      box-shadow: var(--do-bong);
+      padding: 14px 16px;
+    }
+    .chChoTraoHop h3 { margin: 0 0 8px; color: var(--mau-chinh-dam); }
+    .chChoTraoDong {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-top: 1px dashed var(--mau-vien);
+    }
+    .chChoTraoDong:first-of-type { border-top: none; }
+    .chChoTraoHinh { font-size: 1.6rem; width: 34px; text-align: center; }
+    .chChoTraoHinh img { width: 34px; height: 34px; object-fit: contain; vertical-align: middle; }
+    .chChoTraoTen { flex: 1; font-weight: bold; }
+    .chNhanTrangThai {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    .chNhanCho { background: #ffe9b8; color: #8a6100; }
+    .chNhanXong { background: #d6f5e3; color: #1e8449; }
+
+    /* ----- Thông báo (toast) ----- */
+    #chThongBao {
+      max-width: 640px;
+      margin: 0 auto 12px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: bold;
+      display: none;
+    }
+    #chThongBao.hien { display: block; }
+    #chThongBao.tot { background: #d6f5e3; color: #1e8449; }
+    #chThongBao.xau { background: #fadbd8; color: #a93226; }
+
+    /* ----- Trạng thái tải / rỗng / chưa đăng nhập ----- */
+    #chDangTai, #chRong { text-align: center; padding: 30px 16px; color: #6b7684; }
+    #chChuaDangNhap { text-align: center; padding: 40px 16px; }
+  </style>
+</head>
+<body>
+
+  <header id="headerChinh">
+    <h1>🛍️ Cửa Hàng</h1>
+    <div id="trangThaiDangNhap">
+      <span id="chTenNguoiChoi"></span>
+      <a class="chNutLienKet" href="index.html">⬅ Về Trang Chính</a>
+    </div>
+  </header>
+
+  <!-- Khi chưa đăng nhập (mở thẳng trang này) -->
+  <div id="chChuaDangNhap" style="display:none;">
+    <h2>Con hãy đăng nhập trước nhé!</h2>
+    <p>Cửa hàng cần biết con là ai để trừ kim cương và trao vật phẩm cho đúng.</p>
+    <a class="chNutLienKet" href="index.html">Đi tới trang Đăng Nhập</a>
+  </div>
+
+  <!-- Thanh số dư kim cương / level / EXP -->
+  <div id="chThanhSoDu">
+    <div class="chSoDuHop">
+      <div class="chSoDuO"><span>💎</span> <span id="chSoKimCuong">0</span> <span class="chSoDuNhan">kim cương</span></div>
+      <div class="chSoDuO"><span>⭐</span> <span class="chSoDuNhan">Level</span> <span id="chSoLevel">1</span></div>
+      <div class="chSoDuO"><span>📈</span> <span id="chSoExp">0</span> <span class="chSoDuNhan">EXP</span></div>
+    </div>
+  </div>
+
+  <!-- Khu vực thông báo -->
+  <div id="chThongBao"></div>
+
+  <!-- Thanh lọc theo loại -->
+  <div id="chThanhLoc"></div>
+
+  <!-- Lưới vật phẩm -->
+  <div id="chDangTai">Đang tải cửa hàng...</div>
+  <div id="chRong" style="display:none;">Cửa hàng chưa có vật phẩm nào. Con quay lại sau nhé!</div>
+  <div id="chLuoiVatPham"></div>
+
+  <!-- Quà đã đổi đang chờ trao -->
+  <div id="chKhoiChoTrao">
+    <div class="chChoTraoHop">
+      <h3>🎁 Quà Con Đã Đổi</h3>
+      <div id="chDanhSachChoTrao"></div>
+    </div>
+  </div>
+
+  <!-- ================================================= -->
+  <!-- CÁC FILE JAVASCRIPT -->
+  <!-- Thứ tự bắt buộc: config -> api -> cuahang_NC -->
+  <!-- (KHÔNG nạp app.js/board.js: trang tự đọc phiên từ sessionStorage) -->
+  <!-- ================================================= -->
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="cuahang_NC.js"></script>
+
+</body>
+</html>

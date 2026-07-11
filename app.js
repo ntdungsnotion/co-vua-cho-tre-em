@@ -1,32 +1,49 @@
 // ================================
 // FILE: app.js
-// CHỨC NĂNG: Điều khiển ẩn/hiện 4 Tab (Auth, Dashboard, Play, Rank) và theo dõi trạng thái đăng nhập
-// BƯỚC: MIG_04 (vá lỗi UX sau NC_02: giữ đăng nhập qua F5 + ẩn nút/tab Đăng Nhập khi đã đăng nhập)
+// CHỨC NĂNG: Điều khiển ẩn/hiện các Tab, theo dõi trạng thái đăng nhập, MENU
+//            THEO VAI TRÒ và "THANH THÔNG TIN TRÊN CÙNG" (avatar/kim cương/EXP/
+//            level/danh hiệu/hạng) - dùng chung cho mọi trang con (board.js,
+//            rank.js, taikhoan_NC.js).
+// BƯỚC: NC_05 (nâng cấp từ MIG_04) - NGÀY: 10/07/2026
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "app" để tránh xung đột
 //
-// BẢN VÁ: giữ đăng nhập qua F5 (làm mới trang)
-//   - Sau khi đăng nhập/đăng ký thành công và sau mỗi lần điểm/level thay đổi: lưu
-//     TOÀN BỘ duLieuTaiKhoan (kể cả maPhien) vào sessionStorage - KHÔNG lưu mật khẩu
-//     (mật khẩu chưa từng được giữ lại trong bộ nhớ, chỉ dùng 1 lần lúc gọi apiDangNhap).
-//   - Lúc tải trang: nếu sessionStorage có sẵn phiên -> khôi phục ngay, vào thẳng
-//     Dashboard, không bắt đăng nhập lại.
-//   - sessionStorage tự xóa khi đóng tab/trình duyệt (khác localStorage), vẫn an toàn.
-//   - GHI CHÚ CHO NC_05: khi có RPC lay_thong_tin_ca_nhan/lay_ho_so (xác thực bằng
-//     ten + maPhien, không cần mật khẩu), nên gọi lại máy chủ để LÀM MỚI + XÁC THỰC
-//     phiên lúc khôi phục (phát hiện phiên đã hết hạn do đăng nhập nơi khác), thay vì
-//     chỉ tin dữ liệu cũ lưu cục bộ như bản vá tạm thời này.
+// ĐIỂM MỚI NC_05 (KẾ HOẠCH mục NC_05, HƯỚNG DẪN mục 3):
+//   - appTaiKhoanDangNhap nay luu THEM vaiTro, kinhNghiem, maPhien, trangBi (da
+//     co san tu RPC dang_nhap/dang_ky tu NC_00 nhung truoc day app.js bo qua).
+//   - Tab "Bảng Điều Khiển" cũ đổi thành Tab "Tài Khoản" (section-taikhoan); toàn
+//     bộ nội dung chi tiết (avatar, trang bị, lịch sử trận, thống kê đối thủ...)
+//     do file taikhoan_NC.js đảm nhiệm - app.js chỉ điều khiển CHUYỂN TAB.
+//   - MENU THEO VAI TRÒ: mục "Quản Trị" chỉ hiện khi vaiTro === 'admin'
+//     (appCapNhatMenuTheoVaiTro). Quản Trị/Cửa Hàng/Học Tập/Khám Phá hiện dạng
+//     nút "sắp có" (class nutTabSapCo, disabled) vì trang tương ứng CHƯA làm
+//     (NC_06A/NC_06B/NC_07) - chỉ "để chỗ sẵn" như KẾ HOẠCH yêu cầu.
+//   - THANH THÔNG TIN TRÊN CÙNG (appLamMoiThanhThongTin/appVeThanhThongTin): gọi
+//     RPC lay_thong_tin_ca_nhan (api.js: apiLayThongTinCaNhan) ngay sau đăng nhập
+//     và SAU MỖI VÁN/GIAO DỊCH để luôn đúng số liệu, thay vì chỉ tin dữ liệu cũ
+//     lưu cục bộ như bản vá tạm thời trước đây.
+//   - XÁC THỰC LẠI PHIÊN LÚC KHÔI PHỤC (F5): appKhoiTao gọi appLamMoiThanhThongTin
+//     ngay sau khi khôi phục sessionStorage; nếu máy chủ báo "không tìm thấy tài
+//     khoản" thì tự đăng xuất an toàn (đúng góp ý để lại từ bản vá NC_02/NC_03).
+//   - appCapNhatTrangBiCucBo(): cho taikhoan_NC.js đồng bộ trang_bi/avatar mới
+//     vào appTaiKhoanDangNhap NGAY (không cần F5) để board.js (đọc trực tiếp
+//     appLayTaiKhoanDangNhap().trangBi) áp dụng đúng ở ván cờ tiếp theo.
 // ================================
 
 // Biến lưu trạng thái tài khoản đang đăng nhập (null nếu chưa đăng nhập)
-// Cấu trúc giống duLieuTaiKhoan trả về từ api.js: { tenDangNhap, level, diemSo, avatarDaChon }
+// Cấu trúc: { tenDangNhap, level, diemSo, avatarDaChon, vaiTro, kinhNghiem,
+//             maPhien, trangBi }
 var appTaiKhoanDangNhap = null;
 
 // Khóa dùng để lưu phiên đăng nhập vào sessionStorage (giữ đăng nhập qua F5)
 var APP_KHOA_LUU_PHIEN = "coVuaTaiKhoanDangNhap";
 
+// NC_05: dữ liệu ĐANG HIỂN THỊ trên Thanh Thông Tin Trên Cùng (cache nhẹ để các
+// hàm cập nhật cục bộ như appCapNhatTrangBiCucBo không cần gọi lại máy chủ)
+var appThongTinHienThi = null;
+
 /**
  * Hàm lưu toàn bộ thông tin tài khoản đang đăng nhập vào sessionStorage.
- * Gọi sau khi đăng nhập/đăng ký thành công và sau mỗi lần điểm/level thay đổi.
+ * Gọi sau khi đăng nhập/đăng ký thành công và sau mỗi lần điểm/level/trang bị đổi.
  */
 function appLuuPhienDangNhap() {
   if (!appTaiKhoanDangNhap) return;
@@ -64,7 +81,7 @@ function appKhoiPhucPhienDangNhap() {
  * Mặc định hiện Tab Đăng Nhập lúc chưa có ai đăng nhập
  */
 function appKhoiTao() {
-  // Gán sự kiện cho từng nút Tab trên thanh điều hướng
+  // Gán sự kiện cho từng nút Tab trên thanh điều hướng (không gồm nút "sắp có")
   var dsNutTab = document.querySelectorAll(".nutTab");
   dsNutTab.forEach(function (nut) {
     nut.addEventListener("click", function () {
@@ -84,8 +101,14 @@ function appKhoiTao() {
   if (phienDaLuu && phienDaLuu.tenDangNhap) {
     appTaiKhoanDangNhap = phienDaLuu;
     appCapNhatGiaoDienHeader();
-    appCapNhatDashboard(phienDaLuu);
-    appChuyenTab("dashboard");
+    appCapNhatMenuTheoVaiTro(phienDaLuu.vaiTro);
+    // Hiện tạm bằng dữ liệu cũ lưu cục bộ trong lúc chờ máy chủ xác nhận lại
+    appHienThanhThongTinSoBo(phienDaLuu);
+    appChuyenTab("taikhoan");
+    // NC_05: xác thực + làm mới lại với máy chủ (nguồn số liệu chuẩn), đồng thời
+    // phát hiện tài khoản không còn tồn tại thì tự đăng xuất an toàn.
+    // (Trang Tài Khoản tự tải hồ sơ chi tiết riêng - xem taikhoan_NC.js)
+    appLamMoiThanhThongTin();
   } else {
     // Trạng thái ban đầu: chưa đăng nhập -> hiện Tab Đăng Nhập
     appChuyenTab("auth");
@@ -95,12 +118,12 @@ function appKhoiTao() {
 
 /**
  * Hàm chuyển đổi Tab đang hiển thị
- * Nhận vào: tenTab (chuỗi), ví dụ: "auth", "dashboard", "play", "rank"
+ * Nhận vào: tenTab (chuỗi), ví dụ: "auth", "taikhoan", "play", "rank"
  * Ẩn hết các noiDungTab, chỉ hiện Tab được chọn
  * Đồng thời cập nhật class "dangChon" cho nút Tab tương ứng
  */
 function appChuyenTab(tenTab) {
-  // Nếu chưa đăng nhập, chặn không cho vào Dashboard/Play/Rank, bắt buộc quay về Auth
+  // Nếu chưa đăng nhập, chặn không cho vào các Tab cần đăng nhập, bắt buộc quay về Auth
   if (!appTaiKhoanDangNhap && tenTab !== "auth") {
     tenTab = "auth";
   }
@@ -131,24 +154,37 @@ function appChuyenTab(tenTab) {
 /**
  * Hàm được gọi từ auth.js sau khi đăng nhập/đăng ký thành công
  * Nhận vào: duLieuTaiKhoan (object) trả về từ api.js
- * Lưu trạng thái đăng nhập, cập nhật giao diện, chuyển sang Tab Dashboard
+ * Lưu trạng thái đăng nhập, dựng menu theo vai trò, cập nhật giao diện,
+ * chuyển sang Tab Tài Khoản
  */
 function appDangNhapThanhCong(duLieuTaiKhoan) {
   appTaiKhoanDangNhap = duLieuTaiKhoan;
   appLuuPhienDangNhap();
   appCapNhatGiaoDienHeader();
-  appCapNhatDashboard(duLieuTaiKhoan);
-  appChuyenTab("dashboard");
+  appCapNhatMenuTheoVaiTro(duLieuTaiKhoan.vaiTro);
+  appHienThanhThongTinSoBo(duLieuTaiKhoan);
+  appChuyenTab("taikhoan");
+  appLamMoiThanhThongTin();
+
+  // Trang Tài Khoản (taikhoan_NC.js) tự tải hồ sơ chi tiết ngay khi vừa đăng nhập,
+  // vì thời điểm này DOMContentLoaded của taikhoan_NC.js đã chạy xong từ trước
+  // (lúc đó chưa đăng nhập nên chưa tự tải được) - gọi lại đây cho chắc chắn.
+  if (typeof taikhoanTaiHoSo === "function") {
+    taikhoanTaiHoSo();
+  }
 }
 
 /**
  * Hàm xử lý khi người dùng bấm nút Đăng Xuất
- * Xóa trạng thái đăng nhập, quay về Tab Đăng Nhập
+ * Xóa trạng thái đăng nhập, ẩn thanh thông tin, ẩn menu Quản Trị, quay về Tab Đăng Nhập
  */
 function appXuLyDangXuat() {
   appTaiKhoanDangNhap = null;
+  appThongTinHienThi = null;
   appXoaPhienDangNhap();
   appCapNhatGiaoDienHeader();
+  appAnThanhThongTin();
+  appCapNhatMenuTheoVaiTro(null);
   appChuyenTab("auth");
 }
 
@@ -175,28 +211,19 @@ function appCapNhatGiaoDienHeader() {
 }
 
 /**
- * Hàm cập nhật toàn bộ thông tin hiển thị trên Tab Dashboard
- * Nhận vào: duLieuTaiKhoan (object) có các trường: tenDangNhap, level, diemSo, avatarDaChon
- * Tự tính danh hiệu và trạng thái mở khóa dựa theo Level (dựa trên quy tắc giống supabase_setup.sql)
+ * NC_05: Hàm hiện/ẩn mục menu "Quản Trị" theo vai trò tài khoản.
+ * "Quản Trị" hiện dạng nút "sắp có" (trang admin_NC làm ở NC_06A) nhưng CHỈ
+ * hiện ra (để chỗ sẵn) với tài khoản vai_tro = 'admin' (HƯỚNG DẪN mục 3).
  */
-function appCapNhatDashboard(duLieuTaiKhoan) {
-  var oTen = document.getElementById("dashboardTenDangNhap");
-  var oLevel = document.getElementById("dashboardLevel");
-  var oDiem = document.getElementById("dashboardDiemSo");
-  var oDanhHieu = document.getElementById("dashboardDanhHieu");
-  var oAvatar = document.getElementById("dashboardAvatar");
-
-  if (oTen) oTen.textContent = duLieuTaiKhoan.tenDangNhap;
-  if (oLevel) oLevel.textContent = duLieuTaiKhoan.level;
-  if (oDiem) oDiem.textContent = duLieuTaiKhoan.diemSo;
-  if (oDanhHieu) oDanhHieu.textContent = appTinhDanhHieu(duLieuTaiKhoan.level);
-  if (oAvatar) oAvatar.textContent = duLieuTaiKhoan.avatarDaChon || "❓";
-
-  appCapNhatTrangThaiMoKhoa(duLieuTaiKhoan.level);
+function appCapNhatMenuTheoVaiTro(vaiTro) {
+  var tabQuanTri = document.getElementById("tabQuanTri");
+  if (!tabQuanTri) return;
+  tabQuanTri.style.display = (vaiTro === "admin") ? "inline-block" : "none";
 }
 
 /**
- * Hàm tính danh hiệu hiển thị dựa theo Level (bản sao logic từ tinh_danh_hieu() trong SQL)
+ * NC_05: Hàm tính danh hiệu hiển thị dựa theo Level (bản sao logic từ
+ * tinh_danh_hieu() trong SQL) - dùng làm giá trị TẠM lúc chưa có phản hồi máy chủ.
  */
 function appTinhDanhHieu(level) {
   if (level >= 1 && level <= 4) return "Tốt Chăm Chỉ";
@@ -209,48 +236,133 @@ function appTinhDanhHieu(level) {
 }
 
 /**
- * Hàm cập nhật giao diện danh sách Phần Thưởng Đã Mở Khóa trên Dashboard
- * dựa theo các mốc Level 5/10/15/20, gán/xóa class "daMoKhoa" tương ứng
+ * NC_05: Hiện tạm Thanh Thông Tin Trên Cùng bằng dữ liệu cục bộ đang có (từ
+ * sessionStorage hoặc vừa đăng nhập), trong lúc chờ appLamMoiThanhThongTin()
+ * lấy số liệu CHUẨN (EXP/hạng) từ máy chủ. Tránh thanh thông tin trống trong
+ * vài trăm mili giây đầu, đặc biệt khi mạng chậm.
  */
-function appCapNhatTrangThaiMoKhoa(level) {
-  appGanTrangThaiMoKhoa("moKhoaMauBanCoMoi", level >= 5, "Màu bàn cờ mới (Level 5)");
-  appGanTrangThaiMoKhoa("moKhoaQuanCoDongVat", level >= 10, "Bộ quân cờ động vật (Level 10)");
-  appGanTrangThaiMoKhoa("moKhoaHieuUngSamSet", level >= 15, "Hiệu ứng sấm sét (Level 15)");
-  appGanTrangThaiMoKhoa("moKhoaRuongKhoBau", level >= 20, "Rương kho báu đặc biệt (Level 20)");
+function appHienThanhThongTinSoBo(duLieuTaiKhoan) {
+  appVeThanhThongTin({
+    avatarDaChon: duLieuTaiKhoan.avatarDaChon,
+    diemSo: duLieuTaiKhoan.diemSo,
+    kinhNghiem: duLieuTaiKhoan.kinhNghiem || 0,
+    level: duLieuTaiKhoan.level,
+    hangThu: "—",
+    danhHieu: appTinhDanhHieu(duLieuTaiKhoan.level)
+  });
 }
 
 /**
- * Hàm phụ trợ: gán class "daMoKhoa" và cập nhật chú thích cho 1 mục phần thưởng
+ * NC_05: Gọi máy chủ (RPC lay_thong_tin_ca_nhan) để lấy số liệu CHUẨN cho Thanh
+ * Thông Tin Trên Cùng, đồng thời đồng bộ lại appTaiKhoanDangNhap (level, diemSo,
+ * kinhNghiem, avatarDaChon, trangBi, vaiTro) theo máy chủ - nguồn dữ liệu chuẩn.
+ * Gọi hàm này: ngay sau đăng nhập, lúc khôi phục phiên (F5), và sau mỗi ván cờ.
  */
-function appGanTrangThaiMoKhoa(idPhanTu, daMoKhoa, nhanGoc) {
-  var phanTu = document.getElementById(idPhanTu);
-  if (!phanTu) return;
+function appLamMoiThanhThongTin() {
+  if (!appTaiKhoanDangNhap) return;
 
-  if (daMoKhoa) {
-    phanTu.classList.add("daMoKhoa");
-    phanTu.textContent = nhanGoc + ": đã mở khóa";
-  } else {
-    phanTu.classList.remove("daMoKhoa");
-    phanTu.textContent = nhanGoc + ": chưa mở";
-  }
+  apiLayThongTinCaNhan(appTaiKhoanDangNhap.tenDangNhap).then(function (ketQua) {
+    if (ketQua && ketQua.thanhCong && ketQua.thongTin) {
+      var tt = ketQua.thongTin;
+
+      appTaiKhoanDangNhap.level = tt.level;
+      appTaiKhoanDangNhap.diemSo = tt.diemSo;
+      appTaiKhoanDangNhap.kinhNghiem = tt.kinhNghiem;
+      appTaiKhoanDangNhap.avatarDaChon = tt.avatarDaChon;
+      appTaiKhoanDangNhap.trangBi = tt.trangBi;
+      appTaiKhoanDangNhap.vaiTro = tt.vaiTro;
+      appLuuPhienDangNhap();
+
+      appCapNhatMenuTheoVaiTro(tt.vaiTro);
+      appVeThanhThongTin(tt);
+    } else if (ketQua && ketQua.thongBao && ketQua.thongBao.indexOf("Khong tim thay") !== -1) {
+      // Tài khoản không còn tồn tại trên máy chủ (VD quản trị đã xóa) ->
+      // coi như phiên hết hạn, tự đăng xuất an toàn thay vì để trang bị lỗi
+      appXuLyDangXuat();
+    }
+    // Các lỗi mạng khác: giữ nguyên số liệu tạm đang hiện, không làm phiền trẻ
+  });
 }
 
 /**
- * Hàm cho phép các file khác (board.js) lấy thông tin tài khoản đang đăng nhập
+ * NC_05: Vẽ dữ liệu vào các phần tử của Thanh Thông Tin Trên Cùng và lưu cache
+ * (appThongTinHienThi) để các hàm cập nhật cục bộ khác tái sử dụng.
+ * Nhận vào tt: { avatarDaChon, diemSo, kinhNghiem, level, hangThu, danhHieu }
+ */
+function appVeThanhThongTin(tt) {
+  appThongTinHienThi = tt;
+
+  var khoi = document.getElementById("thanhThongTin");
+  if (khoi) khoi.style.display = "flex";
+
+  var oAvatar = document.getElementById("thanhThongTinAvatar");
+  var oKimCuong = document.getElementById("ttKimCuong");
+  var oExp = document.getElementById("ttExp");
+  var oLevel = document.getElementById("ttLevel");
+  var oHang = document.getElementById("ttHang");
+  var oDanhHieu = document.getElementById("thanhThongTinDanhHieu");
+
+  if (oAvatar) oAvatar.textContent = tt.avatarDaChon || "❓";
+  if (oKimCuong) oKimCuong.textContent = "💎 " + tt.diemSo;
+  if (oExp) oExp.textContent = "⭐ EXP " + tt.kinhNghiem;
+  if (oLevel) oLevel.textContent = "🎚️ Lv " + tt.level;
+  if (oHang) oHang.textContent = "🏅 Hạng " + tt.hangThu;
+  if (oDanhHieu) oDanhHieu.textContent = tt.danhHieu;
+}
+
+/** NC_05: Hàm ẩn hẳn Thanh Thông Tin Trên Cùng, gọi lúc đăng xuất */
+function appAnThanhThongTin() {
+  var khoi = document.getElementById("thanhThongTin");
+  if (khoi) khoi.style.display = "none";
+}
+
+/**
+ * Hàm cho phép các file khác (board.js, rank.js, taikhoan_NC.js) lấy thông tin
+ * tài khoản đang đăng nhập
  */
 function appLayTaiKhoanDangNhap() {
   return appTaiKhoanDangNhap;
 }
 
 /**
- * Hàm cho phép board.js cập nhật lại dữ liệu tài khoản sau khi kết thúc 1 ván cờ
- * (gọi lại appCapNhatDashboard để đồng bộ giao diện Dashboard với điểm/level mới nhất)
+ * Hàm cho phép board.js cập nhật lại dữ liệu tài khoản sau khi kết thúc 1 ván cờ.
+ * QUAN TRỌNG: board.js CHỈ gửi { levelMoi, diemMoi } (đã chốt sổ từ NC_03, KHÔNG
+ * sửa board.js) nên hàm này giữ nguyên nhận 2 trường đó, rồi gọi thêm
+ * appLamMoiThanhThongTin() để đồng bộ ĐẦY ĐỦ (EXP, hạng, danh hiệu) từ máy chủ -
+ * đúng yêu cầu "Thanh Thông Tin Tự Cập Nhật Sau Mỗi Ván" của NC_05.
  */
 function appCapNhatTaiKhoanSauVanCo(duLieuTaiKhoanMoi) {
-  appTaiKhoanDangNhap.level = duLieuTaiKhoanMoi.levelMoi;
-  appTaiKhoanDangNhap.diemSo = duLieuTaiKhoanMoi.diemMoi;
+  if (!appTaiKhoanDangNhap || !duLieuTaiKhoanMoi) return;
+
+  if (duLieuTaiKhoanMoi.levelMoi !== undefined) {
+    appTaiKhoanDangNhap.level = duLieuTaiKhoanMoi.levelMoi;
+  }
+  if (duLieuTaiKhoanMoi.diemMoi !== undefined) {
+    appTaiKhoanDangNhap.diemSo = duLieuTaiKhoanMoi.diemMoi;
+  }
   appLuuPhienDangNhap();
-  appCapNhatDashboard(appTaiKhoanDangNhap);
+  appLamMoiThanhThongTin();
+}
+
+/**
+ * NC_05: Cho taikhoan_NC.js đồng bộ NGAY trang_bi/avatar mới vào
+ * appTaiKhoanDangNhap sau khi trẻ đổi avatar hoặc trang bị vật phẩm, KHÔNG cần
+ * F5 hay gọi lại lay_thong_tin_ca_nhan. Quan trọng vì board.js đọc trực tiếp
+ * appLayTaiKhoanDangNhap().trangBi mỗi lần vẽ bàn cờ (áp dụng trang bị - NC_03).
+ */
+function appCapNhatTrangBiCucBo(trangBiMoi, avatarMoi) {
+  if (!appTaiKhoanDangNhap) return;
+
+  appTaiKhoanDangNhap.trangBi = trangBiMoi;
+  if (avatarMoi !== undefined) {
+    appTaiKhoanDangNhap.avatarDaChon = avatarMoi;
+  }
+  appLuuPhienDangNhap();
+
+  if (appThongTinHienThi) {
+    appThongTinHienThi.avatarDaChon = appTaiKhoanDangNhap.avatarDaChon;
+    appVeThanhThongTin(appThongTinHienThi);
+  }
 }
 
 // Chạy hàm khởi tạo ngay khi toàn bộ HTML đã được dựng xong
