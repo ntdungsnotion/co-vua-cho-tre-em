@@ -180,12 +180,8 @@ function rankVeBang(danhSachGoc) {
     // Cột 1: Hạng (top 3 hiện huy chương, còn lại hiện số thứ tự)
     hang.appendChild(rankTaoO(rankKyHieuHang(hangThu)));
 
-    // Cột 2: Tên đăng nhập (kèm avatar nếu có)
-    var chuTen = nguoiChoi.tenDangNhap;
-    if (nguoiChoi.avatarDaChon) {
-      chuTen = nguoiChoi.avatarDaChon + " " + chuTen;
-    }
-    hang.appendChild(rankTaoO(chuTen));
+    // Cột 2: Tên đăng nhập (kèm avatar: URL -> ảnh tròn, emoji -> chữ)
+    hang.appendChild(rankTaoODanhTinh(nguoiChoi.avatarDaChon, nguoiChoi.tenDangNhap));
 
     // Cột 3: Level
     hang.appendChild(rankTaoO(nguoiChoi.level));
@@ -222,6 +218,33 @@ function rankKyHieuHang(hangThu) {
 function rankTaoO(noiDung) {
   var o = document.createElement("td");
   o.textContent = (noiDung === undefined || noiDung === null) ? "" : noiDung;
+  return o;
+}
+
+/**
+ * Ô "Tên Đăng Nhập" kèm avatar. Avatar cao cấp lưu URL ảnh -> vẽ <img> tròn nhỏ
+ * (tạo bằng DOM, gán .src - KHÔNG nối chuỗi innerHTML để tránh chèn mã); avatar
+ * miễn phí là emoji -> đặt trước tên bằng chữ. Tên luôn dùng textContent (an toàn).
+ * Nhờ vậy URL dài không còn bị in ra thành chữ tràn bảng.
+ */
+function rankTaoODanhTinh(avatar, ten) {
+  var o = document.createElement("td");
+  var v = (avatar || "").trim();
+  var laAnh = v && (v.indexOf("http") === 0 || v.indexOf("/") >= 0);
+
+  if (laAnh) {
+    var img = document.createElement("img");
+    img.src = v;
+    img.alt = "";
+    img.style.cssText =
+      "width:26px;height:26px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px;";
+    o.appendChild(img);
+    o.appendChild(document.createTextNode(ten || ""));
+  } else if (v) {
+    o.textContent = v + " " + (ten || "");
+  } else {
+    o.textContent = ten || "";
+  }
   return o;
 }
 
