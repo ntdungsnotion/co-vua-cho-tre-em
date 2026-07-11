@@ -2,6 +2,9 @@
 // FILE: choi2nguoi_NC.js
 // CHỨC NĂNG: Chế độ chơi cờ 2 NGƯỜI ở 2 MÁY (sảnh phòng + ván cờ)
 // NGÀY: 10/07/2026 10:00 - BƯỚC: NC_04
+// SỬA: 11/07/2026 10:30 - BƯỚC: NC_06B: avatar cao cấp (URL ảnh) ở thẻ người chơi
+//   (bản thân + đối thủ) hiển thị bằng <img> thay vì in URL thành chữ - hàm
+//   c2nVeAvatarVao (HƯỚNG DẪN 4.6).
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "c2n" (choi-2-nguoi) để tránh xung đột
 //
 // PHỤ THUỘC:

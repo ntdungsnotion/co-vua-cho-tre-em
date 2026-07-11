@@ -4,6 +4,8 @@
 //            TRÌNH DUYỆT (không gọi lại máy chủ), vẽ dữ liệu thành các hàng
 //            trong bảng HTML.
 // BƯỚC: NC_05 (nâng cấp từ MIG_04) - NGÀY: 10/07/2026
+// SỬA: 11/07/2026 10:30 - BƯỚC: NC_06B: avatar cao cấp (URL ảnh) hiển thị bằng
+//   <img> tròn thay vì in URL thành chữ - thêm hàm rankTaoODanhTinh (HƯỚNG DẪN 4.6).
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "rank" để tránh xung đột
 // PHỤ THUỘC:
 //   - api.js: apiLayXepHang() -> trả về { thanhCong, thongBao, danhSachXepHang }
