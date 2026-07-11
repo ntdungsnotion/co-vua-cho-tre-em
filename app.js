@@ -302,12 +302,27 @@ function appVeThanhThongTin(tt) {
   var oHang = document.getElementById("ttHang");
   var oDanhHieu = document.getElementById("thanhThongTinDanhHieu");
 
-  if (oAvatar) oAvatar.textContent = tt.avatarDaChon || "❓";
+  if (oAvatar) appVeAvatarVao(oAvatar, tt.avatarDaChon);
   if (oKimCuong) oKimCuong.textContent = "💎 " + tt.diemSo;
   if (oExp) oExp.textContent = "⭐ EXP " + tt.kinhNghiem;
   if (oLevel) oLevel.textContent = "🎚️ Lv " + tt.level;
   if (oHang) oHang.textContent = "🏅 Hạng " + tt.hangThu;
   if (oDanhHieu) oDanhHieu.textContent = tt.danhHieu;
+}
+
+/**
+ * Vẽ avatar vào 1 ô tròn: nếu giá trị là ĐƯỜNG DẪN ẢNH (avatar cao cấp) thì vẽ
+ * <img> cho vừa khung; nếu là emoji/chữ (avatar miễn phí) thì đặt text bình
+ * thường. Tránh lỗi URL dài bị in ra thành chữ tràn màn hình.
+ */
+function appVeAvatarVao(o, giaTri) {
+  var v = (giaTri || "").trim();
+  if (v && (v.indexOf("http") === 0 || v.indexOf("/") >= 0)) {
+    o.innerHTML = '<img src="' + v.replace(/"/g, "&quot;") + '" alt="avatar" ' +
+      'style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  } else {
+    o.textContent = v || "❓";
+  }
 }
 
 /** NC_05: Hàm ẩn hẳn Thanh Thông Tin Trên Cùng, gọi lúc đăng xuất */

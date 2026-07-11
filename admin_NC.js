@@ -149,21 +149,54 @@ function adminXuLyLoi(phanHoi) {
  * Tai 1 file len bucket 'hinh-vat-pham' cua Supabase Storage.
  * thuMuc: 'vat-pham' | 'quan-co' | 'am-thanh'
  * Tra ve Promise chua URL cong khai cua file.
- * GHI CHU: bucket dat cong khai + cho phep khoa anon ghi (danh doi da chot o
- * NC_00 voi quy mo ~3 nguoi choi). Ten file gan them dau thoi gian de khong de len nhau.
+ *
+ * CHONG TRUNG (NC_06B): dat ten file theo MA BAM SHA-256 cua noi dung (content-
+ * addressed). Nho vay file co noi dung Y HET nhau se co CUNG duong dan -> khong
+ * tao ban sao trong kho. Neu file da ton tai thi bo qua buoc tai, tra lai link cu.
+ * GHI CHU: bucket cong khai + cho phep khoa anon ghi (danh doi da chot o NC_00,
+ * quy mo ~3 nguoi choi). crypto.subtle can https (GitHub Pages la https -> ok).
  */
 function adminTaiFileLen(file, thuMuc) {
-  var tenSach = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  var duongDan = thuMuc + "/" + Date.now() + "_" + tenSach;
+  return file.arrayBuffer()
+    .then(function (buf) { return crypto.subtle.digest("SHA-256", buf); })
+    .then(function (hashBuf) {
+      var hash = adminHexTuBuffer(hashBuf);
+      var duoi = adminDuoiFile(file.name);          // .webp / .png / .mp3 ...
+      var duongDan = thuMuc + "/" + hash + duoi;
+      var layLink = function () {
+        return supabaseClient.storage.from(ADMIN_BUCKET_HINH).getPublicUrl(duongDan).data.publicUrl;
+      };
 
-  return supabaseClient.storage
-    .from(ADMIN_BUCKET_HINH)
-    .upload(duongDan, file, { upsert: true, cacheControl: "3600" })
-    .then(function (ketQua) {
-      if (ketQua.error) throw new Error(ketQua.error.message);
-      var cong = supabaseClient.storage.from(ADMIN_BUCKET_HINH).getPublicUrl(duongDan);
-      return cong.data.publicUrl;
+      // Neu da co file cung ma bam -> khong tai lai (neu list bi chan quyen thi
+      // ham nay tra ve loi, ta bo qua va cu tai len; upsert cung ten van khong nhan doi).
+      return supabaseClient.storage.from(ADMIN_BUCKET_HINH)
+        .list(thuMuc, { search: hash })
+        .then(function (kq) {
+          var daCo = kq && kq.data && kq.data.some(function (f) { return f.name === hash + duoi; });
+          if (daCo) return layLink();
+          return supabaseClient.storage.from(ADMIN_BUCKET_HINH)
+            .upload(duongDan, file, { upsert: true, cacheControl: "3600" })
+            .then(function (up) {
+              if (up.error) throw new Error(up.error.message);
+              return layLink();
+            });
+        });
     });
+}
+
+/** Chuoi hex tu ArrayBuffer (dung cho ma bam SHA-256) */
+function adminHexTuBuffer(buf) {
+  var b = new Uint8Array(buf), s = "";
+  for (var i = 0; i < b.length; i++) {
+    s += b[i].toString(16).padStart(2, "0");
+  }
+  return s;
+}
+
+/** Lay duoi file (.webp/.png/.mp3...) tu ten, chu thuong; khong co thi tra "" */
+function adminDuoiFile(ten) {
+  var m = /\.[a-zA-Z0-9]+$/.exec(ten || "");
+  return m ? m[0].toLowerCase() : "";
 }
 
 /** Kiem tra 1 chuoi co phai duong dan anh khong (giong het quy tac cua board.js) */
@@ -447,7 +480,10 @@ function adminVeBangVatPham() {
         "<td>" + vp.daDoi + "</td>" +
         "<td>" + hienThi + "</td>" +
         "<td>" + vp.thuTuHienThi + "</td>" +
-        '<td><button class="adminNut" data-suavp="' + vp.id + '" type="button">✏️ Sửa</button></td>' +
+        '<td>' +
+          '<button class="adminNut" data-suavp="' + vp.id + '" type="button">✏️ Sửa</button> ' +
+          '<button class="adminNut adminNutNguyHiem" data-xoavp="' + vp.id + '" type="button">🗑️ Xóa</button>' +
+        '</td>' +
       "</tr>";
   });
   than.innerHTML = html;
@@ -458,6 +494,80 @@ function adminVeBangVatPham() {
       adminDoVatPhamVaoForm(parseInt(this.getAttribute("data-suavp"), 10));
     });
   }
+
+  var nutXoa = than.querySelectorAll("[data-xoavp]");
+  for (var k = 0; k < nutXoa.length; k++) {
+    nutXoa[k].addEventListener("click", function () {
+      adminXoaVatPham(parseInt(this.getAttribute("data-xoavp"), 10));
+    });
+  }
+}
+
+/**
+ * Xóa 1 vật phẩm: hỏi xác nhận -> gọi RPC admin_xoa_vat_pham (xóa dòng + lịch sử
+ * đổi của nó) -> xóa luôn file ảnh khỏi Storage cho sạch rác -> tải lại danh sách.
+ */
+function adminXoaVatPham(id) {
+  var vp = null;
+  for (var i = 0; i < adminDsVatPham.length; i++) {
+    if (adminDsVatPham[i].id === id) { vp = adminDsVatPham[i]; break; }
+  }
+  if (!vp) return;
+
+  var canhBao = "Xóa hẳn vật phẩm #" + id + " (\"" + (vp.ten || "") + "\")?";
+  if (vp.daDoi && vp.daDoi > 0) {
+    canhBao += "\n\n⚠️ Vật phẩm này đã được đổi " + vp.daDoi + " lần. Xóa sẽ XÓA LUÔN " +
+      "lịch sử đổi của nó (mọi trẻ). Nếu chỉ muốn ngưng bán mà giữ lịch sử, hãy " +
+      "bấm Hủy rồi dùng nút \"Sửa\" để đặt Ẩn thay vì xóa.";
+  }
+  canhBao += "\n\nHành động này KHÔNG hoàn tác được.";
+  if (!window.confirm(canhBao)) return;
+
+  adminBaoTin("⏳ Đang xóa vật phẩm...", true);
+  adminGoiRpc("admin_xoa_vat_pham", { p_id: id }).then(function (ph) {
+    if (!ph.thanhCong) { adminXuLyLoi(ph); return; }
+
+    // Xóa file ảnh khỏi Storage cho sạch (không chặn nếu lỗi quyền Storage)
+    adminXoaAnhTrongStorage(ph.danhSachUrlAnh || []).then(function (ketQua) {
+      if (ketQua.loi > 0) {
+        adminBaoTin("✅ Đã xóa vật phẩm. Nhưng " + ketQua.loi + " ảnh chưa xóa được " +
+          "khỏi Storage (có thể do quyền) - chú có thể xóa tay trong Supabase Storage.", true);
+      } else if (ketQua.xong > 0) {
+        adminBaoTin("✅ Đã xóa vật phẩm và " + ketQua.xong + " ảnh kèm theo.", true);
+      } else {
+        adminBaoTin("✅ Đã xóa vật phẩm.", true);
+      }
+      adminXoaFormVatPham();
+      adminTaiVatPham();
+    });
+  });
+}
+
+/**
+ * Xóa danh sách URL ảnh khỏi Supabase Storage (bucket hinh-vat-pham).
+ * Chuyển URL công khai -> đường dẫn trong bucket rồi gọi remove().
+ * Trả về Promise {xong, loi}. Không ném lỗi ra ngoài (best-effort).
+ */
+function adminXoaAnhTrongStorage(danhSachUrl) {
+  var moc = "/object/public/" + ADMIN_BUCKET_HINH + "/";
+  var duongDan = [];
+  (danhSachUrl || []).forEach(function (url) {
+    var viTri = (url || "").indexOf(moc);
+    if (viTri >= 0) duongDan.push(url.substring(viTri + moc.length));
+  });
+
+  if (duongDan.length === 0) {
+    return Promise.resolve({ xong: 0, loi: 0 });
+  }
+
+  return supabaseClient.storage.from(ADMIN_BUCKET_HINH).remove(duongDan)
+    .then(function (kq) {
+      if (kq && kq.error) return { xong: 0, loi: duongDan.length };
+      return { xong: duongDan.length, loi: 0 };
+    })
+    .catch(function () {
+      return { xong: 0, loi: duongDan.length };
+    });
 }
 
 /** Do 1 vat pham vao form de sua */

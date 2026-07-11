@@ -146,7 +146,7 @@ function taikhoanVeTongQuan(tt) {
   taikhoanGanChu("taikhoanHang", tt.hangThu);
 
   var oAvatar = document.getElementById("taikhoanAvatarLon");
-  if (oAvatar) oAvatar.textContent = tt.avatarDaChon || "❓";
+  if (oAvatar) taikhoanVeAvatarVao(oAvatar, tt.avatarDaChon);
   taikhoanDanhDauAvatarDangChon(tt.avatarDaChon);
 
   taikhoanGanChu("ttThangMay", tt.tranMayThang);
@@ -161,6 +161,20 @@ function taikhoanGanChu(idPhanTu, giaTri) {
   var o = document.getElementById(idPhanTu);
   if (!o) return;
   o.textContent = (giaTri === undefined || giaTri === null) ? "0" : giaTri;
+}
+
+/**
+ * Vẽ avatar vào ô tròn lớn: URL ảnh (avatar cao cấp) -> <img> vừa khung; emoji/
+ * chữ (avatar miễn phí) -> đặt text. Tránh URL dài bị in thành chữ tràn màn hình.
+ */
+function taikhoanVeAvatarVao(o, giaTri) {
+  var v = (giaTri || "").trim();
+  if (v && (v.indexOf("http") === 0 || v.indexOf("/") >= 0)) {
+    o.innerHTML = '<img src="' + v.replace(/"/g, "&quot;") + '" alt="avatar" ' +
+      'style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  } else {
+    o.textContent = v || "❓";
+  }
 }
 
 /** Tô viền nút avatar đang được chọn trong lưới avatar miễn phí */
@@ -207,7 +221,7 @@ function taikhoanVeVatPhamSoHuu(danhSach) {
   khung.innerHTML = "";
 
   if (!danhSach || danhSach.length === 0) {
-    khung.innerHTML = '<p class="taikhoanRong">Con chưa sở hữu vật phẩm nào. Cửa Hàng sắp ra mắt nhé! 🛍️</p>';
+    khung.innerHTML = '<p class="taikhoanRong">Con chưa có vật phẩm số nào. Ghé Cửa Hàng đổi bộ quân cờ, bàn cờ, hiệu ứng... để trang bị nhé! 🛍️ (Quà như bánh kẹo hiện ở mục Lịch Sử Đổi Thưởng, không nằm ở đây.)</p>';
     return;
   }
 
@@ -303,7 +317,9 @@ function taikhoanVeLichSuDoiQua(danhSach) {
     oTen.textContent = (dong.tenVatPham || "Vật phẩm") + " (" + dong.giaLucDoi + " 💎)";
 
     var oTrangThai = document.createElement("span");
-    var daTrao = dong.trangThai === "da_trao";
+    // Quản trị xác nhận trao xong thì máy chủ ghi trang_thai = 'da_nhan'
+    // (KHÔNG phải 'da_trao'). Trước đây so sai chuỗi nên luôn hiện "Chờ trao".
+    var daTrao = dong.trangThai === "da_nhan";
     oTrangThai.className = "mucLichSuDoiQuaTrangThai " + (daTrao ? "daTrao" : "choTrao");
     oTrangThai.textContent = daTrao ? "✅ Đã trao" : "⏳ Chờ trao";
 
