@@ -837,9 +837,24 @@ function c2nCapNhatTheBanThan() {
   var oLevel = document.getElementById("c2nTheBanThanLevel");
 
   var mau = (c2nVaiTro === "chu") ? "Quân Trắng" : "Quân Đen";
-  if (oAvatar) oAvatar.textContent = c2nTaiKhoan.avatarDaChon || "❓";
+  c2nVeAvatarVao(oAvatar, c2nTaiKhoan.avatarDaChon);
   if (oTen) oTen.textContent = c2nTaiKhoan.tenDangNhap + " (con)";
   if (oLevel) oLevel.textContent = "Level " + (c2nTaiKhoan.level || 1) + " · " + mau;
+}
+
+/**
+ * Vẽ avatar vào ô tròn: URL ảnh (avatar cao cấp) -> <img> vừa khung; emoji/chữ
+ * (avatar miễn phí) -> đặt text. Tránh URL dài in ra thành chữ tràn thẻ người chơi.
+ */
+function c2nVeAvatarVao(o, giaTri) {
+  if (!o) return;
+  var v = (giaTri || "").trim();
+  if (v && (v.indexOf("http") === 0 || v.indexOf("/") >= 0)) {
+    o.innerHTML = '<img src="' + v.replace(/"/g, "&quot;") + '" alt="avatar" ' +
+      'style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  } else {
+    o.textContent = v || "❓";
+  }
 }
 
 function c2nLayThongTinDoiThu() {
@@ -861,7 +876,7 @@ function c2nLayThongTinDoiThu() {
     c2nDoiThu.level = kq.thongTin.level || 1;
     c2nDoiThu.avatar = kq.thongTin.avatarDaChon || "🙂";
     if (oLevel) oLevel.textContent = "Level " + c2nDoiThu.level + " · " + mau;
-    if (oAvatar) oAvatar.textContent = c2nDoiThu.avatar;
+    c2nVeAvatarVao(oAvatar, c2nDoiThu.avatar);
   });
 }
 
