@@ -6,10 +6,10 @@
 //            tô sáng nước vừa đi, thẻ thông tin trận đấu, lời khen theo Level,
 //            NÚT GỢI Ý (Stockfish) + ÁP DỤNG TRANG BỊ (bộ quân/bàn cờ/hiệu ứng)
 // BƯỚC: NC_03 (nâng cấp từ NC_02) - FILE NÀY CHỐT SỔ TẠI NC_03 (nguyên tắc gom
-// SỬA: 11/07/2026 10:30 - BƯỚC: NC_06B (SỬA LỖI - đúng ngoại lệ mở file đóng băng):
-//   thẻ trận đấu vẽ avatar cao cấp (URL) bằng <img> thay vì in URL thành chữ (4.6).
 //        việc theo file - xem HƯỚNG DẪN mục 7). Sau bước này chỉ mở lại board.js
 //        khi SỬA LỖI, không thêm tính năng mới ở đây nữa.
+// SỬA: 11/07/2026 16:05 - BƯỚC: NC_06B (SỬA LỖI - đúng ngoại lệ mở file đóng băng):
+//   thẻ trận đấu vẽ avatar cao cấp (URL) bằng <img> thay vì in URL thành chữ (4.6).
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "board" để tránh xung đột
 // PHỤ THUỘC:
 //   - chess.js 0.12.0 (nạp trong index.html, biến toàn cục "Chess")
