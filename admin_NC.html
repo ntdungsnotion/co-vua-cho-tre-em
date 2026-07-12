@@ -11,7 +11,8 @@
                   trên web, không cần mở Supabase Table Editor.
                   7 màn hình: Vật Phẩm, Đổi Thưởng, Ý Tưởng, Cấu Hình Chung,
                   Cấp Độ Máy, Lời Động Viên, Giọng Đọc.
-       NGÀY: 10/07/2026 14:00 - BƯỚC: NC_06A
+       NGÀY: 12/07/2026 - BƯỚC: NC_09B (băng rôn chế độ form + hướng dẫn 2 bước Ghi/Lưu;
+             NC_09: bộ quân cờ nhập ảnh riêng Trắng/Đen - 12 ô)
        PHỤ THUỘC: style.css, config.js, api.js, admin_NC.js
                   (KHÔNG cần chess.js / stockfish - trang này không có bàn cờ)
        BẢO MẬT: đọc tài khoản từ sessionStorage "coVuaTaiKhoanDangNhap"
@@ -382,15 +383,20 @@
           </div>
         </div>
 
-        <!-- Trợ lý riêng cho BỘ QUÂN CỜ: 6 ô ảnh/emoji từng quân -->
+        <!-- Trợ lý riêng cho BỘ QUÂN CỜ: 12 ô = 6 quân × 2 màu (Trắng/Đen) - NC_09 -->
         <div id="vpTroLyBoQuan" style="display:none;">
-          <h4 style="margin-bottom:4px;">♟️ Ảnh hoặc emoji cho từng quân</h4>
+          <h4 style="margin-bottom:4px;">♟️ Ảnh hoặc emoji cho từng quân (mỗi quân 2 màu: Trắng & Đen)</h4>
           <p class="adminGhiChu">
-            Mỗi ô điền MỘT emoji (ví dụ 🦖) HOẶC tải một ảnh lên (board.js tự nhận diện:
-            giá trị bắt đầu bằng "http" hoặc có dấu "/" thì vẽ ảnh, ngược lại vẽ emoji).
-            Điền xong bấm <strong>Ghi vào ô Dữ liệu</strong> bên dưới.
+            Mỗi ô điền MỘT emoji (ví dụ 🦖) HOẶC tải một ảnh lên (bắt đầu bằng "http"
+            hoặc có dấu "/" thì vẽ ảnh, ngược lại vẽ emoji). Bộ quân có 12 ô: mỗi quân
+            một ảnh <strong>Trắng</strong> và một ảnh <strong>Đen</strong>.
+            <strong>Không cần điền đủ ngay</strong> — ô nào bỏ trống sẽ hiện quân cổ điển
+            mặc định, bạn có thể up ảnh dần từng quân. Điền xong bấm
+            <strong>Ghi vào ô Dữ liệu</strong> bên dưới để tạo mã "Dữ liệu (JSON)",
+            sau đó bấm <strong>💾 Lưu Vật Phẩm</strong> để lưu vào cơ sở dữ liệu —
+            chưa bấm Lưu thì mọi thứ CHƯA được lưu.
           </p>
-          <div class="adminHang" id="vpLuoiQuan"><!-- admin_NC.js điền 6 ô --></div>
+          <div class="adminHang" id="vpLuoiQuan"><!-- admin_NC.js điền 12 ô (6 quân × 2 màu) --></div>
           <button class="adminNut adminNutPhu" id="btnVpGhiJsonQuan" type="button">⬇️ Ghi vào ô Dữ liệu</button>
           <button class="adminNut adminNutPhu" id="btnVpDocJsonQuan" type="button">⬆️ Đọc ngược từ ô Dữ liệu</button>
         </div>
@@ -420,6 +426,10 @@
           </div>
         </div>
 
+        <!-- NC_09B: bang ro CHE DO FORM - admin_NC.js cap nhat noi dung/mau -->
+        <div id="vpCheDoForm" style="padding:8px 12px;border-radius:8px;margin:6px 0;font-weight:bold;background:#d1e7dd;border:1px solid #198754;">
+          🆕 CHẾ ĐỘ THÊM MỚI — bấm Lưu sẽ TẠO một vật phẩm mới.
+        </div>
         <div class="adminHang">
           <button class="adminNut" id="btnVpLamMoiForm" type="button">➕ Thêm Vật Phẩm Mới (làm trống form)</button>
           <button class="adminNut adminNutThanhCong" id="btnVpLuu" type="button">💾 Lưu Vật Phẩm</button>
