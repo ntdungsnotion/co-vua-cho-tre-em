@@ -7,9 +7,13 @@
 
   <!-- ================================================================
        FILE: hoctap_NC.html
-       CHỨC NĂNG: Trang giới thiệu "sắp có bài học/bài tập/câu đố cờ vua" +
-                  khu vực trẻ gửi ý tưởng (chuyên mục hoc_tap)
-       NGÀY: 11/07/2026 - BƯỚC: NC_07-1
+       CHỨC NĂNG: Trang giới thiệu "sắp có nội dung HỌC TẬP NÓI CHUNG" (Toán,
+                  Văn, Tiếng Anh, Piano, Bơi, Kỹ năng sống...) - KHÔNG chỉ học
+                  cờ - + khu vực trẻ gửi ý tưởng (chuyên mục hoc_tap).
+                  Đây là hạt giống của "dự án Kids Challenge" (giai đoạn sau,
+                  tách sang dự án riêng - xem KẾ HOẠCH). Trang này chỉ là khung
+                  giới thiệu + thu ý tưởng, chưa có nghiệp vụ học tập.
+       NGÀY: 12/07/2026 - BƯỚC: NC_07-1 (reframe nghĩa rộng)
        PHỤ THUỘC: style.css, config.js, api.js, ytuong_NC.js
        GHI CHÚ: các định dạng RIÊNG của trang này (kể cả khối "Gửi Ý Tưởng"
                 dùng chung với trang Khám Phá) nằm trong thẻ <style> bên dưới
@@ -221,36 +225,54 @@
   <!-- Toàn bộ nội dung chỉ hiện khi đã đăng nhập -->
   <div id="ytNoiDungCanDangNhap">
 
-    <!-- Giới thiệu "sắp có" -->
+    <!-- Giới thiệu "sắp có" - HỌC TẬP NÓI CHUNG (không chỉ học cờ) -->
     <div id="htGioiThieu">
-      <h2>Sắp có nhiều điều thú vị!</h2>
-      <p>Cô đang chuẩn bị các bài học, bài tập và câu đố cờ vua cho con đây.</p>
+      <h2>Sắp có nhiều môn học thú vị!</h2>
+      <p>Cô đang chuẩn bị thật nhiều nội dung học tập cho con — đủ mọi môn, không chỉ cờ vua đâu nhé.</p>
     </div>
     <div id="htLuoiSapCo">
       <div class="htTheSapCo">
         <span class="htNhanSapCo">Sắp có</span>
+        <span class="htIcon">🔢</span>
+        <h3>Toán</h3>
+        <p>Học đếm, tính toán và những con số vui nhộn.</p>
+      </div>
+      <div class="htTheSapCo">
+        <span class="htNhanSapCo">Sắp có</span>
         <span class="htIcon">📖</span>
-        <h3>Bài Học</h3>
-        <p>Học các nước đi, chiến thuật và mẹo hay khi chơi cờ.</p>
+        <h3>Tiếng Việt</h3>
+        <p>Đọc, viết và kể chuyện thật hay bằng tiếng Việt.</p>
       </div>
       <div class="htTheSapCo">
         <span class="htNhanSapCo">Sắp có</span>
-        <span class="htIcon">✏️</span>
-        <h3>Bài Tập</h3>
-        <p>Luyện tập từng kỹ năng nhỏ để chơi cờ giỏi hơn mỗi ngày.</p>
+        <span class="htIcon">🔤</span>
+        <h3>Tiếng Anh</h3>
+        <p>Làm quen với những từ tiếng Anh đầu tiên thật dễ thương.</p>
       </div>
       <div class="htTheSapCo">
         <span class="htNhanSapCo">Sắp có</span>
-        <span class="htIcon">🧩</span>
-        <h3>Câu Đố</h3>
-        <p>Thử thách bộ não với các thế cờ hay và bất ngờ.</p>
+        <span class="htIcon">🎹</span>
+        <h3>Âm Nhạc</h3>
+        <p>Piano và những giai điệu vui tai cho đôi tay khéo léo.</p>
+      </div>
+      <div class="htTheSapCo">
+        <span class="htNhanSapCo">Sắp có</span>
+        <span class="htIcon">🏊</span>
+        <h3>Thể Thao</h3>
+        <p>Bơi lội, vận động để cơ thể luôn khỏe mạnh.</p>
+      </div>
+      <div class="htTheSapCo">
+        <span class="htNhanSapCo">Sắp có</span>
+        <span class="htIcon">🌟</span>
+        <h3>Kỹ Năng Sống</h3>
+        <p>Những điều hay giúp con tự lập và tự tin mỗi ngày.</p>
       </div>
     </div>
 
     <!-- Khu vực gửi ý tưởng - ytuong_NC.js điền động, chuyên mục hoc_tap -->
     <div class="ytKhoiYTuong" data-chuyen-muc="hoc_tap">
       <h3 class="ytKhoiTieuDe">💭 Con muốn học gì?</h3>
-      <p class="ytKhoiMoTa">Kể cho cô nghe con muốn học bài học, bài tập hay câu đố cờ vua nào nhé!</p>
+      <p class="ytKhoiMoTa">Kể cho cô nghe con muốn học môn gì hay điều gì mới nhé — toán, tiếng Anh, đàn, bơi... gì cũng được!</p>
       <div class="ytHopNhap">
         <textarea class="ytO" placeholder="Con muốn học..."></textarea>
         <div class="ytHangDuoiO">

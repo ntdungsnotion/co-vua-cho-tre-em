@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cờ Vua Cho Trẻ Em</title>
 
-  <!-- NGÀY: 12/07/2026 - BƯỚC: NC_07-2 (kích hoạt nút "Khám Phá" -> trang
-       khampha_NC.html mới). Từ đây cả 2 nút "Học Tập" và "Khám Phá" đều là
-       liên kết thật; không còn nút "sắp có" (disabled) nào trên thanh điều hướng.
-       LỊCH SỬ: NC_07-1 (kích hoạt nút "Học Tập" -> hoctap_NC.html); NC_06B
+  <!-- NGÀY: 12/07/2026 - BƯỚC: NC_07-3 (thêm nút "🎯 Thử Thách" -> trang
+       thuthach_NC.html mới, KHUNG giới thiệu). 3 nút Học Tập/Khám Phá/Thử Thách
+       là hạt giống "dự án Kids Challenge" (tách sang dự án riêng - xem KẾ HOẠCH);
+       không còn nút "sắp có" (disabled) nào trên thanh điều hướng.
+       LỊCH SỬ: NC_07-2 (kích hoạt "Khám Phá" -> khampha_NC.html + reframe nghĩa
+       rộng); NC_07-1 (kích hoạt "Học Tập" -> hoctap_NC.html); NC_06B
        (kích hoạt 2 nút "Cửa Hàng" -> trang cuahang_NC.html: nút trên thanh
        điều hướng + link trong tab Tài Khoản); NC_06A (kích hoạt nút "Quản
        Trị" -> admin_NC.html); NC_05 (Thanh Thông Tin Trên Cùng + Trang Tài
@@ -100,8 +102,9 @@
        Cố tình KHÔNG dùng class "nutTab" để app.js không gán sự kiện chuyển tab
        (giống "2 Người" và "Quản Trị"). NC_07-1: "Học Tập" nay là thẻ <a> mở
        trang hoctap_NC.html (hết "sắp có"), cùng lý do trên. NC_07-2: "Khám Phá"
-       nay cũng là thẻ <a> mở trang khampha_NC.html (hết "sắp có") - không còn
-       nút "sắp có" nào trên thanh điều hướng. -->
+       nay cũng là thẻ <a> mở trang khampha_NC.html. NC_07-3: THÊM "🎯 Thử Thách"
+       là thẻ <a> mở trang khung thuthach_NC.html - cùng dạng thẻ <a> (không phải
+       "nutTab") nên app.js không gán sự kiện. Không còn nút "sắp có" nào. -->
   <!-- ================================================= -->
   <nav id="thanhDieuHuong">
     <button class="nutTab" id="tabAuth" data-tab="auth">Đăng Nhập</button>
@@ -112,6 +115,7 @@
     <a class="nutTabLienKet" id="tabCuaHang" href="cuahang_NC.html">🛍️ Cửa Hàng</a>
     <a class="nutTabLienKet" id="tabHocTap" href="hoctap_NC.html">📚 Học Tập</a>
     <a class="nutTabLienKet" id="tabKhamPha" href="khampha_NC.html">🧭 Khám Phá</a>
+    <a class="nutTabLienKet" id="tabThuThach" href="thuthach_NC.html">🎯 Thử Thách</a>
     <a class="nutTabLienKet" id="tabQuanTri" href="admin_NC.html" title="Trang Quản Trị (chỉ dành cho quản trị viên)" style="display:none;">🛠️ Quản Trị</a>
   </nav>
 

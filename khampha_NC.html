@@ -7,11 +7,15 @@
 
   <!-- ================================================================
        FILE: khampha_NC.html
-       CHỨC NĂNG: Trang giới thiệu "sắp có nội dung mới như cờ tướng..." +
-                  2 khu vực trẻ gửi ý tưởng: chuyên mục kham_pha (khám phá
-                  chung) và tro_choi ("Trò Chơi" - nội dung CON nằm trong
+       CHỨC NĂNG: Trang giới thiệu "sắp có nội dung KHÁM PHÁ THẾ GIỚI NÓI CHUNG"
+                  (Khoa học, Thiên văn, Động vật, Lịch sử, AI, Lập trình, Địa
+                  lý, Bảo tàng...) + 2 khu vực trẻ gửi ý tưởng: chuyên mục
+                  kham_pha (khám phá thế giới) và tro_choi (các loại CỜ KHÁC như
+                  cờ tướng/cờ caro + trò chơi nhỏ - chỉ là PHÂN HỆ NHỎ nằm trong
                   Khám Phá, không phải trang riêng).
-       NGÀY: 11/07/2026 - BƯỚC: NC_07-2
+                  Đây là hạt giống của "dự án Kids Challenge" (giai đoạn sau,
+                  tách sang dự án riêng - xem KẾ HOẠCH).
+       NGÀY: 12/07/2026 - BƯỚC: NC_07-2 (reframe nghĩa rộng)
        PHỤ THUỘC: style.css, config.js, api.js, ytuong_NC.js (TÁI SỬ DỤNG
                   NGUYÊN VẸN từ NC_07-1, KHÔNG sửa file này).
        GHI CHÚ: khối CSS ".yt..." bên dưới được CHÉP NGUYÊN từ hoctap_NC.html
@@ -231,36 +235,54 @@
   <!-- Toàn bộ nội dung chỉ hiện khi đã đăng nhập -->
   <div id="ytNoiDungCanDangNhap">
 
-    <!-- Giới thiệu "sắp có" -->
+    <!-- Giới thiệu "sắp có" - KHÁM PHÁ THẾ GIỚI NÓI CHUNG -->
     <div id="kpGioiThieu">
-      <h2>Sắp có nhiều điều mới để khám phá!</h2>
-      <p>Cô đang chuẩn bị thêm những điều thú vị xoay quanh cờ vua cho con đây.</p>
+      <h2>Sắp có cả một thế giới để khám phá!</h2>
+      <p>Cô đang chuẩn bị thật nhiều điều kỳ diệu về thế giới quanh con — từ vũ trụ xa xôi đến những con vật ngộ nghĩnh.</p>
     </div>
     <div id="kpLuoiSapCo">
       <div class="kpTheSapCo">
         <span class="kpNhanSapCo">Sắp có</span>
-        <span class="kpIcon">🀄</span>
-        <h3>Cờ Tướng</h3>
-        <p>Khám phá một loại cờ khác cũng rất thú vị và nhiều màu sắc.</p>
+        <span class="kpIcon">🔬</span>
+        <h3>Khoa Học</h3>
+        <p>Những thí nghiệm và điều kỳ diệu quanh ta.</p>
+      </div>
+      <div class="kpTheSapCo">
+        <span class="kpNhanSapCo">Sắp có</span>
+        <span class="kpIcon">🔭</span>
+        <h3>Thiên Văn</h3>
+        <p>Các vì sao, hành tinh và bí ẩn của vũ trụ bao la.</p>
+      </div>
+      <div class="kpTheSapCo">
+        <span class="kpNhanSapCo">Sắp có</span>
+        <span class="kpIcon">🦁</span>
+        <h3>Động Vật</h3>
+        <p>Thế giới muôn loài từ rừng sâu tới đại dương.</p>
+      </div>
+      <div class="kpTheSapCo">
+        <span class="kpNhanSapCo">Sắp có</span>
+        <span class="kpIcon">🏛️</span>
+        <h3>Lịch Sử</h3>
+        <p>Những câu chuyện thú vị của ngày xưa.</p>
+      </div>
+      <div class="kpTheSapCo">
+        <span class="kpNhanSapCo">Sắp có</span>
+        <span class="kpIcon">🤖</span>
+        <h3>AI &amp; Lập Trình</h3>
+        <p>Máy tính suy nghĩ thế nào và cách ra lệnh cho nó.</p>
       </div>
       <div class="kpTheSapCo">
         <span class="kpNhanSapCo">Sắp có</span>
         <span class="kpIcon">🌍</span>
-        <h3>Chuyện Cờ Vua Thế Giới</h3>
-        <p>Những câu chuyện, kỷ lục và điều thú vị về cờ vua khắp nơi.</p>
-      </div>
-      <div class="kpTheSapCo">
-        <span class="kpNhanSapCo">Sắp có</span>
-        <span class="kpIcon">🎮</span>
-        <h3>Trò Chơi</h3>
-        <p>Những trò chơi nhỏ vui nhộn liên quan đến cờ vua.</p>
+        <h3>Địa Lý</h3>
+        <p>Các vùng đất, quốc gia và kỳ quan khắp thế giới.</p>
       </div>
     </div>
 
     <!-- Khu vực gửi ý tưởng #1 - chuyên mục kham_pha -->
     <div class="ytKhoiYTuong" data-chuyen-muc="kham_pha">
       <h3 class="ytKhoiTieuDe">🔭 Con muốn khám phá điều gì?</h3>
-      <p class="ytKhoiMoTa">Kể cho cô nghe con tò mò về điều gì xoay quanh cờ vua nhé!</p>
+      <p class="ytKhoiMoTa">Con tò mò về điều gì trong thế giới này nào? Vũ trụ, động vật, khoa học, lịch sử...?</p>
       <div class="ytHopNhap">
         <textarea class="ytO" placeholder="Con muốn khám phá..."></textarea>
         <div class="ytHangDuoiO">
@@ -276,14 +298,15 @@
       </div>
     </div>
 
-    <p class="kpNganCach">🎮 Trò Chơi là một phần nhỏ nằm trong Khám Phá</p>
+    <p class="kpNganCach">🎲 Các loại cờ khác &amp; trò chơi nhỏ là một phần nằm trong Khám Phá</p>
 
-    <!-- Khu vực gửi ý tưởng #2 - chuyên mục tro_choi (nội dung con của Khám Phá) -->
+    <!-- Khu vực gửi ý tưởng #2 - chuyên mục tro_choi: CÁC LOẠI CỜ KHÁC + trò chơi
+         nhỏ (cờ tướng, cờ caro...) - phân hệ nhỏ nằm trong Khám Phá -->
     <div class="ytKhoiYTuong" data-chuyen-muc="tro_choi">
-      <h3 class="ytKhoiTieuDe">🎮 Con muốn trò chơi có thêm gì?</h3>
-      <p class="ytKhoiMoTa">Con muốn có thêm trò chơi nhỏ nào vui vui không?</p>
+      <h3 class="ytKhoiTieuDe">🎲 Con muốn có thêm cờ hay trò chơi nào?</h3>
+      <p class="ytKhoiMoTa">Cờ tướng, cờ caro, hay một trò chơi nhỏ vui vui nào con thích?</p>
       <div class="ytHopNhap">
-        <textarea class="ytO" placeholder="Con muốn trò chơi..."></textarea>
+        <textarea class="ytO" placeholder="Con muốn chơi..."></textarea>
         <div class="ytHangDuoiO">
           <span class="ytSoKyTuConLai">500</span>
           <button class="ytNutGui" type="button">📨 Gửi Ý Tưởng</button>
