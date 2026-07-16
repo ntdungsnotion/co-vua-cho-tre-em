@@ -10,6 +10,13 @@
 //        khi SỬA LỖI, không thêm tính năng mới ở đây nữa.
 // SỬA: 11/07/2026 16:05 - BƯỚC: NC_06B (SỬA LỖI - đúng ngoại lệ mở file đóng băng):
 //   thẻ trận đấu vẽ avatar cao cấp (URL) bằng <img> thay vì in URL thành chữ (4.6).
+// SỬA: 11/07/2026 - BƯỚC: NC_09 (SỬA LỖI + trải nghiệm - đúng ngoại lệ mở file đóng
+//   băng, xem HƯỚNG DẪN mục 7): (1) trang_bi.bo_quan_co lưu MÃ ĐỊNH DANH (chuỗi),
+//   trước đây board.js đọc nhầm như object nên bộ cờ trang bị KHÔNG hiện -> nay
+//   PHÂN GIẢI mã -> du_lieu thật qua bảng lay_bo_co; (2) hỗ trợ ảnh RIÊNG từng màu
+//   (du_lieu {trang:{...},den:{...}}); (3) DỰ PHÒNG TỪNG Ô: quân/màu chưa có ảnh
+//   hoặc ảnh lỗi -> vẽ ký tự cổ điển; (4) BỎ bộ động vật đóng cứng ở Lv10 (nay là
+//   vật phẩm bo_co_dong_vat, trẻ tự chọn). HƯỚNG DẪN 4.6/4.7.
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "board" để tránh xung đột
 // PHỤ THUỘC:
 //   - chess.js 0.12.0 (nạp trong index.html, biến toàn cục "Chess")
@@ -65,14 +72,24 @@
 //      đi, trợ lý CHỈ hỏi bằng GIỌNG NÓI và nút "💡 Gợi Ý" NHẤP NHÁY để mời bấm.
 //      Không còn bong bóng che màn hình.
 //  11) ÁP DỤNG TRANG BỊ khi vẽ bàn cờ: đọc trangBi (jsonb) của tài khoản đang
-//      đăng nhập, ưu tiên HƠN quà tặng theo Level (Lv5 màu bàn cờ, Lv10 quân động
-//      vật) vì đây là vật phẩm CHỦ ĐỘNG mua/đổi:
-//        trangBi.bo_quan_co = { k,q,r,b,n,p: "emoji hoặc URL ảnh" } (HƯỚNG DẪN 4.6:
-//          giá trị bắt đầu bằng "http" hoặc chứa "/" -> vẽ <img>, ngược lại vẽ emoji).
-//        trangBi.ban_co = { mauSang, mauToi } (mã màu CSS).
-//        trangBi.hieu_ung = { bieuTuong: [emoji,...] } (đổi bộ hạt pháo hoa mừng thắng).
-//      Chưa có Cửa Hàng (NC_06B) nên kiểm thử bằng cách gán cột trang_bi tay trong
-//      Supabase SQL Editor (xem ví dụ trong phần code bên dưới).
+//      đăng nhập. QUY ƯỚC (chốt ở NC_09): trangBi lưu MÃ ĐỊNH DANH (chuỗi) cho
+//      từng loại, KHÔNG lưu trực tiếp du_lieu (thống nhất với cap_nhat_trang_bi).
+//        trangBi.bo_quan_co = "bo_co_dong_vat" (mã 1 dòng vat_pham). board.js gọi
+//          lay_bo_co() lúc khởi động, dựng map mã -> du_lieu (boardMapBoCo), rồi
+//          PHÂN GIẢI mã đang trang bị ra du_lieu để vẽ (boardPhanGiaiBoQuan).
+//          du_lieu bộ quân có 2 dạng (HƯỚNG DẪN 4.6):
+//            - Tách màu: { trang:{k,q,r,b,n,p}, den:{k,q,r,b,n,p} } (NC_09, ảnh
+//              riêng Trắng/Đen).
+//            - Phẳng:    { k,q,r,b,n,p }  (dùng chung 2 màu - emoji/bản cũ).
+//          Mỗi giá trị là EMOJI hoặc URL ảnh (bắt đầu "http" / chứa "/" -> <img>).
+//          DỰ PHÒNG TỪNG Ô: quân/màu nào trống hoặc ảnh lỗi -> vẽ ký tự cổ điển
+//          (BOARD_QUAN_MAC_DINH), nên bộ chưa thiết lập/thiết lập dở vẫn không vỡ.
+//        trangBi.ban_co / trangBi.hieu_ung: cũng lưu mã định danh (bản cũ có nơi
+//          còn gán tay object để test - board.js vẫn chấp nhận object trực tiếp).
+//      Bộ động vật KHÔNG còn đóng cứng ở Lv10: nay là vật phẩm bo_co_dong_vat
+//      (mở khóa khi đạt Level 10), trẻ tự chọn trong Trang Tài Khoản.
+//      Kiểm thử: gán trang_bi.bo_quan_co = 'bo_co_dong_vat' rồi thiết lập du_lieu
+//      bộ đó qua trang Quản Trị (hoặc gán tay object du_lieu vào trang_bi để test nhanh).
 //
 // ĐIỂM MỚI CỦA NC_03B (bản sửa lỗi trải nghiệm - 4 việc):
 //  A) NÓI XONG MỚI CHO MÁY ĐI. Trước đây lời khen và nước đi của máy chạy song
@@ -202,12 +219,16 @@ var boardMaPhienTep = 0;         // Số phiên phát: câu mới sẽ hủy fil
 var BOARD_MAU_NGUOI = "w";
 var BOARD_MAU_MAY = "b";
 
-// ----- Bộ ký tự quân cờ mặc định (ký tự cờ vua Unicode) -----
+// ----- Bộ ký tự quân cờ mặc định (ký tự cờ vua Unicode) - cũng là DỰ PHÒNG cho
+//       từng ô khi bộ quân đang trang bị chưa có ảnh/emoji cho quân đó (NC_09) -----
 var BOARD_QUAN_MAC_DINH = { k: "\u265A", q: "\u265B", r: "\u265C", b: "\u265D", n: "\u265E", p: "\u265F" };
-// ----- Bộ quân cờ hình động vật (mở khóa ở Level 10) -----
-var BOARD_QUAN_DONG_VAT = { k: "\uD83E\uDD81", q: "\uD83E\uDD84", r: "\uD83D\uDC18", b: "\uD83E\uDD8A", n: "\uD83D\uDC0E", p: "\uD83D\uDC24" };
+// NC_09: bộ quân động vật KHÔNG còn đóng cứng ở đây. Nay là vật phẩm bo_co_dong_vat
+//        (bảng vat_pham, moc_level 10), du_lieu do quản trị thiết lập từng quân.
 // ----- Tên quân cờ tiếng Việt (dùng để đọc thành lời) -----
 var BOARD_TEN_QUAN_TIENG_VIET = { k: "Vua", q: "Hậu", r: "Xe", b: "Tượng", n: "Mã", p: "Tốt" };
+// NC_09: map MÃ ĐỊNH DANH bộ quân -> du_lieu (nạp 1 lần từ lay_bo_co lúc khởi động).
+//        Dùng để phân giải trang_bi.bo_quan_co (chuỗi mã) ra du_lieu thật khi vẽ.
+var boardMapBoCo = {};
 
 /**
  * Hàm khởi tạo module bàn cờ, chạy khi trang tải xong
@@ -239,6 +260,10 @@ function boardKhoiTao() {
   // Lấy cấu hình 20 cấp máy + lời khen từ Supabase (NC_01)
   boardTaiCauHinh();
 
+  // NC_09: nạp danh sách bộ quân cờ (mã định danh -> du_lieu) để phân giải bộ
+  // đang trang bị khi vẽ bàn cờ
+  boardTaiBoCo();
+
   // Vẽ sẵn 1 bàn cờ trạng thái ban đầu cho dễ nhìn (chưa tính điểm)
   boardGame = new Chess();
   boardKetThuc = true;
@@ -266,6 +291,25 @@ function boardTaiCauHinh() {
       boardCauHinhChung = phanHoi.cauHinhChung || {};
       boardCauHinhCapDo = phanHoi.cauHinhCapDo || [];
       boardLoiDongVien = phanHoi.loiDongVien || [];
+    }
+  });
+}
+
+/**
+ * NC_09: nạp danh sách bộ quân cờ (lay_bo_co) 1 lần lúc mở trang, dựng map
+ * MÃ ĐỊNH DANH -> du_lieu. Lỗi mạng thì map rỗng -> bàn cờ vẽ bằng ký tự cổ điển
+ * (không bao giờ vỡ). Nạp xong VẼ LẠI bàn cờ để bộ đang trang bị hiện ngay.
+ */
+function boardTaiBoCo() {
+  if (typeof apiLayBoCo !== "function") return;
+
+  apiLayBoCo().then(function (phanHoi) {
+    if (phanHoi && phanHoi.thanhCong && phanHoi.danhSachBoCo) {
+      boardMapBoCo = {};
+      phanHoi.danhSachBoCo.forEach(function (bo) {
+        if (bo && bo.maDinhDanh) boardMapBoCo[bo.maDinhDanh] = bo.duLieu || {};
+      });
+      if (typeof boardVeBanCo === "function") boardVeBanCo();
     }
   });
 }
@@ -530,14 +574,13 @@ function boardVeBanCo() {
 
   var level = boardLayLevelNguoiChoi();
   var dungMauMoi = level >= 5;       // Mốc Level 5: màu bàn cờ mới
-  var dungQuanDongVat = level >= 10; // Mốc Level 10: bộ quân cờ hình động vật
 
-  // NC_03: ÁP DỤNG TRANG BỊ - vật phẩm tài khoản đã mua/đổi ƯU TIÊN HƠN quà Level,
-  // vì đây là lựa chọn CHỦ ĐỘNG của trẻ. Cấu trúc trangBi xem chú thích đầu file.
+  // NC_03/NC_09: ÁP DỤNG TRANG BỊ - vật phẩm tài khoản đã chọn. Cấu trúc trangBi
+  // xem chú thích đầu file. NC_09: bo_quan_co lưu MÃ ĐỊNH DANH -> phân giải ra du_lieu.
   var taiKhoan = (typeof appLayTaiKhoanDangNhap === "function") ? appLayTaiKhoanDangNhap() : null;
   var trangBi = (taiKhoan && taiKhoan.trangBi) || {};
   var banCoTrangBi = trangBi.ban_co || null;
-  var boQuanTrangBi = trangBi.bo_quan_co || null;
+  var boQuanTrangBi = boardPhanGiaiBoQuan(trangBi.bo_quan_co);
 
   var mauSang = (banCoTrangBi && banCoTrangBi.mauSang) ? banCoTrangBi.mauSang : (dungMauMoi ? "#e8f4ff" : "#f0d9b5");
   var mauToi = (banCoTrangBi && banCoTrangBi.mauToi) ? banCoTrangBi.mauToi : (dungMauMoi ? "#5b8def" : "#b58863");
@@ -598,7 +641,7 @@ function boardVeBanCo() {
       // Vẽ quân cờ nếu ô này có quân
       var quan = luoiQuan[hang][cot];
       if (quan) {
-        var oQuan = boardTaoPhanTuQuan(quan, dungQuanDongVat, boQuanTrangBi);
+        var oQuan = boardTaoPhanTuQuan(quan, boQuanTrangBi);
         oVuong.appendChild(oQuan);
 
         // Tô đỏ ô có Vua đang bị chiếu để trẻ em dễ nhận biết
@@ -641,14 +684,71 @@ function boardVeBanCo() {
 }
 
 /**
- * Hàm tạo 1 phần tử hiển thị quân cờ.
- * Thứ tự ƯU TIÊN (NC_03): vật phẩm TRANG BỊ (mua/đổi) > bộ quân động vật (quà
- * Level 10) > ký tự Unicode mặc định.
- * boQuanTrangBi: object { k,q,r,b,n,p } lấy từ trangBi.bo_quan_co (NC_03) - mỗi
- * giá trị là EMOJI hoặc URL ẢNH (HƯỚNG DẪN 4.6): giá trị bắt đầu bằng "http" hoặc
- * chứa "/" thì vẽ thẻ <img>, ngược lại vẽ thẳng làm chữ (emoji).
+ * NC_09: Phân giải giá trị trang_bi.bo_quan_co ra du_lieu bộ quân THẬT.
+ * - Chuỗi (mã định danh, ví dụ "bo_co_dong_vat"): tra du_lieu trong boardMapBoCo
+ *   (nạp từ lay_bo_co). Chưa có trong map (chưa tải xong / không tồn tại) -> null.
+ * - Object (gán tay trong SQL để test, hoặc dữ liệu bản cũ): dùng trực tiếp.
+ * - Rỗng / null: null.
+ * Trả null nghĩa là "không có bộ trang bị" -> mỗi quân sẽ vẽ ký tự cổ điển.
  */
-function boardTaoPhanTuQuan(quan, coDungDongVat, boQuanTrangBi) {
+function boardPhanGiaiBoQuan(giaTri) {
+  if (!giaTri) return null;
+  if (typeof giaTri === "string") {
+    return boardMapBoCo[giaTri] || null;
+  }
+  if (typeof giaTri === "object") return giaTri;
+  return null;
+}
+
+/**
+ * NC_09: Lấy giá trị (emoji hoặc URL ảnh) cho 1 quân từ du_lieu bộ đang trang bị.
+ * Hỗ trợ 2 định dạng du_lieu:
+ *   - Tách màu: { trang:{k,q,...}, den:{k,q,...} } -> lấy theo MÀU quân.
+ *   - Phẳng:    { k,q,r,b,n,p }                    -> dùng chung 2 màu (emoji/bản cũ).
+ * Ô trống / thiếu -> trả "" để bên gọi vẽ ký tự cổ điển (DỰ PHÒNG TỪNG Ô).
+ */
+function boardLayGiaTriQuan(boQuan, quan) {
+  if (!boQuan || typeof boQuan !== "object") return "";
+  var nhom = boQuan;
+  if (boQuan.trang || boQuan.den) {
+    nhom = (quan.color === "w") ? boQuan.trang : boQuan.den;
+  }
+  if (!nhom || typeof nhom !== "object") return "";
+  var v = nhom[quan.type];
+  return (v === null || v === undefined) ? "" : String(v).trim();
+}
+
+/**
+ * NC_09: Vẽ ký tự quân cờ CỔ ĐIỂN (Unicode) vào 1 phần tử - dùng làm DỰ PHÒNG cho
+ * từng ô khi bộ quân chưa có giá trị cho quân đó, hoặc ảnh tải lỗi (chưa up/404).
+ * Xóa các style khung tròn (nếu đang là <img> lỗi thì bên gọi đã dọn innerHTML).
+ */
+function boardVeQuanMacDinh(oQuan, quan) {
+  oQuan.textContent = BOARD_QUAN_MAC_DINH[quan.type];
+  oQuan.style.borderRadius = "";
+  oQuan.style.background = "";
+  oQuan.style.border = "";
+  oQuan.style.width = "";
+  oQuan.style.height = "";
+  oQuan.style.fontSize = "";
+  if (quan.color === "w") {
+    oQuan.style.color = "#ffffff";
+    oQuan.style.textShadow = "0 0 2px #000, 1px 1px 2px #000";
+  } else {
+    oQuan.style.color = "#1a1a1a";
+    oQuan.style.textShadow = "0 0 2px rgba(255,255,255,0.5)";
+  }
+}
+
+/**
+ * Hàm tạo 1 phần tử hiển thị quân cờ (NC_09).
+ * boQuanTrangBi: du_lieu bộ quân đang trang bị đã PHÂN GIẢI (object hoặc null).
+ * Với từng quân, lấy giá trị theo MÀU + LOẠI (boardLayGiaTriQuan):
+ *   - URL ảnh -> vẽ <img>, và nếu ảnh LỖI thì tự rơi về ký tự cổ điển (dự phòng ô).
+ *   - Emoji   -> vẽ trong khung tròn phân biệt Trắng/Đen.
+ *   - Trống   -> vẽ ký tự cổ điển (bộ chưa thiết lập quân này) - KHÔNG để ô trống.
+ */
+function boardTaoPhanTuQuan(quan, boQuanTrangBi) {
   var oQuan = document.createElement("span");
   oQuan.style.pointerEvents = "none";
   oQuan.style.display = "flex";
@@ -656,12 +756,12 @@ function boardTaoPhanTuQuan(quan, coDungDongVat, boQuanTrangBi) {
   oQuan.style.justifyContent = "center";
   oQuan.style.position = "relative"; // nằm trên lớp phủ nước cuối
 
-  var giaTriTrangBi = boQuanTrangBi ? boQuanTrangBi[quan.type] : null;
+  var giaTriTrangBi = boardLayGiaTriQuan(boQuanTrangBi, quan);
   var laAnhTrangBi = !!giaTriTrangBi &&
     (String(giaTriTrangBi).indexOf("http") === 0 || String(giaTriTrangBi).indexOf("/") !== -1);
 
   if (laAnhTrangBi) {
-    // NC_03: bộ quân cờ bằng ẢNH do quản trị tải lên Storage (HƯỚNG DẪN 4.6)
+    // Bộ quân cờ bằng ẢNH do quản trị tải lên Storage (HƯỚNG DẪN 4.6)
     var oAnh = document.createElement("img");
     oAnh.src = giaTriTrangBi;
     oAnh.alt = BOARD_TEN_QUAN_TIENG_VIET[quan.type] || "";
@@ -669,11 +769,15 @@ function boardTaoPhanTuQuan(quan, coDungDongVat, boQuanTrangBi) {
     oAnh.style.height = "88%";
     oAnh.style.objectFit = "contain";
     oAnh.style.pointerEvents = "none";
+    // NC_09: DỰ PHÒNG TỪNG Ô - ảnh lỗi (chưa up / sai link / 404) -> vẽ ký tự cổ điển
+    oAnh.addEventListener("error", function () {
+      oQuan.innerHTML = "";
+      boardVeQuanMacDinh(oQuan, quan);
+    });
     oQuan.appendChild(oAnh);
-  } else if (giaTriTrangBi || coDungDongVat) {
-    // Emoji TRANG BỊ tùy chỉnh HOẶC bộ quân động vật (quà Level 10): vẽ trong
-    // khung tròn để vẫn phân biệt được bên Trắng/Đen dù emoji trung tính màu sắc
-    oQuan.textContent = giaTriTrangBi || BOARD_QUAN_DONG_VAT[quan.type];
+  } else if (giaTriTrangBi) {
+    // Emoji tùy chỉnh: vẽ trong khung tròn để phân biệt Trắng/Đen (emoji trung tính màu)
+    oQuan.textContent = giaTriTrangBi;
     oQuan.style.width = "84%";
     oQuan.style.height = "84%";
     oQuan.style.borderRadius = "50%";
@@ -686,14 +790,8 @@ function boardTaoPhanTuQuan(quan, coDungDongVat, boQuanTrangBi) {
       oQuan.style.border = "2px solid #111";
     }
   } else {
-    oQuan.textContent = BOARD_QUAN_MAC_DINH[quan.type];
-    if (quan.color === "w") {
-      oQuan.style.color = "#ffffff";
-      oQuan.style.textShadow = "0 0 2px #000, 1px 1px 2px #000";
-    } else {
-      oQuan.style.color = "#1a1a1a";
-      oQuan.style.textShadow = "0 0 2px rgba(255,255,255,0.5)";
-    }
+    // NC_09: ô quân trống (bộ chưa thiết lập quân/màu này) -> ký tự cổ điển
+    boardVeQuanMacDinh(oQuan, quan);
   }
   return oQuan;
 }

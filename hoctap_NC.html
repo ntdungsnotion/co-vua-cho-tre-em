@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Học Tập - Cờ Vua Cho Trẻ Em</title>
+
+  <!-- ================================================================
+       FILE: hoctap_NC.html
+       CHỨC NĂNG: Trang giới thiệu "sắp có bài học/bài tập/câu đố cờ vua" +
+                  khu vực trẻ gửi ý tưởng (chuyên mục hoc_tap)
+       NGÀY: 11/07/2026 - BƯỚC: NC_07-1
+       PHỤ THUỘC: style.css, config.js, api.js, ytuong_NC.js
+       GHI CHÚ: các định dạng RIÊNG của trang này (kể cả khối "Gửi Ý Tưởng"
+                dùng chung với trang Khám Phá) nằm trong thẻ <style> bên dưới
+                để KHÔNG phải sửa style.css (file dùng chung). Khối CSS đánh
+                dấu "DÙNG CHUNG VỚI KHÁM PHÁ" PHẢI được chép nguyên sang
+                khampha_NC.html ở bước NC_07-2 (ytuong_NC.js render ra đúng
+                các class này, không đổi được).
+                Trang tự đọc phiên đăng nhập từ sessionStorage (khóa
+                "coVuaTaiKhoanDangNhap" do app.js ghi) - KHÔNG nạp app.js.
+       ================================================================ -->
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- THƯ VIỆN NGOÀI - chỉ cần supabase-js (trang này không dùng chess.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ----- Nút liên kết quay về trang chính (giống cuahang, prefix ht) ----- */
+    .htNutLienKet {
+      display: inline-block;
+      text-decoration: none;
+      background-color: transparent;
+      border: 2px solid var(--mau-chinh);
+      color: var(--mau-chinh-dam);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      transition: all 0.2s ease-in-out;
+    }
+    .htNutLienKet:hover {
+      background-color: var(--mau-chinh);
+      color: #ffffff;
+    }
+    #headerChinh .htNutLienKet {
+      color: #ffffff;
+      border-color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+    #headerChinh .htNutLienKet:hover {
+      background-color: #ffffff;
+      color: var(--mau-chinh-dam);
+    }
+
+    #htChuaDangNhap { text-align: center; padding: 40px 16px; }
+
+    /* ----- Khối giới thiệu "sắp có" (minh họa bằng emoji/CSS, không thư viện) ----- */
+    #htGioiThieu {
+      max-width: 860px;
+      margin: 20px auto 8px;
+      padding: 0 16px;
+      text-align: center;
+    }
+    #htGioiThieu h2 { color: var(--mau-chinh-dam); margin-bottom: 6px; }
+    #htGioiThieu p { color: #566573; }
+
+    #htLuoiSapCo {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      max-width: 860px;
+      margin: 18px auto 28px;
+      padding: 0 16px;
+    }
+    .htTheSapCo {
+      position: relative;
+      background-color: var(--mau-nen-khoi);
+      border: 2px dashed var(--mau-vien);
+      border-radius: var(--bo-tron);
+      box-shadow: var(--do-bong);
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .htTheSapCo .htIcon { font-size: 2.6rem; display: block; margin-bottom: 8px; }
+    .htTheSapCo h3 { margin: 0 0 6px; color: var(--mau-chu); font-size: 1.05rem; }
+    .htTheSapCo p { margin: 0; font-size: 0.85rem; color: #6b7684; }
+    .htNhanSapCo {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--mau-phu);
+      color: #6b4400;
+      font-size: 0.7rem;
+      font-weight: bold;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    /* ================================================================
+       KHỐI "GỬI Ý TƯỞNG" - DÙNG CHUNG VỚI KHÁM PHÁ (bước NC_07-2)
+       Toàn bộ class bên dưới do ytuong_NC.js đọc/ghi trực tiếp - PHẢI chép
+       nguyên khối CSS này sang khampha_NC.html, không đổi tên class.
+       ================================================================ */
+    .ytKhoiYTuong {
+      max-width: 640px;
+      margin: 0 auto 32px;
+      padding: 0 16px;
+    }
+    .ytKhoiTieuDe { color: var(--mau-chinh-dam); margin-bottom: 4px; }
+    .ytKhoiMoTa { color: #566573; font-size: 0.9rem; margin: 0 0 12px; }
+
+    .ytHopNhap {
+      background-color: var(--mau-nen-khoi);
+      border: 2px solid var(--mau-vien);
+      border-radius: var(--bo-tron);
+      box-shadow: var(--do-bong);
+      padding: 16px;
+    }
+    .ytO {
+      width: 100%;
+      min-height: 90px;
+      resize: vertical;
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 10px 12px;
+      border: 2px solid var(--mau-vien);
+      border-radius: 10px;
+      box-sizing: border-box;
+    }
+    .ytO:focus { outline: none; border-color: var(--mau-chinh); }
+
+    .ytHangDuoiO {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .ytSoKyTuConLai { font-size: 0.8rem; color: #8a97a5; }
+    .ytSoKyTuConLai.ytHetKyTu { color: var(--mau-that-bai); font-weight: bold; }
+
+    .ytNutGui {
+      background-color: var(--mau-chinh);
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease-in-out;
+    }
+    .ytNutGui:hover:not(:disabled) { background-color: var(--mau-chinh-dam); }
+    .ytNutGui:disabled { background-color: #b7c3cf; cursor: not-allowed; }
+
+    .ytThongBaoKhoi {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .ytThongBaoKhoi.hien { display: block; }
+    .ytThongBaoKhoi.tot { background: #d6f5e3; color: #1e8449; }
+    .ytThongBaoKhoi.xau { background: #fadbd8; color: #a93226; }
+
+    .ytKhoiDanhSach { margin-top: 18px; }
+    .ytKhoiDanhSach h4 { color: var(--mau-chinh-dam); font-size: 0.95rem; margin-bottom: 8px; }
+    .ytDanhSachRong { color: #8a97a5; font-size: 0.88rem; text-align: center; padding: 10px 0; }
+
+    .ytDanhSach { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    .ytDong {
+      background-color: var(--mau-nen-khoi);
+      border: 2px solid var(--mau-vien);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .ytDongNoiDung { margin: 0 0 8px; color: var(--mau-chu); white-space: pre-wrap; }
+    .ytDongMeta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .ytDongThoiGian { font-size: 0.78rem; color: #8a97a5; }
+    .ytNhanTrangThai {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    .ytNhanMoi { background: #ffe9b8; color: #8a6100; }
+    .ytNhanDaXem { background: #d6f5e3; color: #1e8449; }
+  </style>
+</head>
+<body>
+
+  <header id="headerChinh">
+    <h1>📚 Học Tập</h1>
+    <div id="trangThaiDangNhap">
+      <span id="ytTenNguoiChoi"></span>
+      <a class="htNutLienKet" href="index.html">⬅ Về Trang Chính</a>
+    </div>
+  </header>
+
+  <!-- Khi chưa đăng nhập (mở thẳng trang này) -->
+  <div id="ytChuaDangNhap" style="display:none;">
+    <h2>Con hãy đăng nhập trước nhé!</h2>
+    <p>Trang Học Tập cần biết con là ai để lưu lại ý tưởng con gửi.</p>
+    <a class="htNutLienKet" href="index.html">Đi tới trang Đăng Nhập</a>
+  </div>
+
+  <!-- Toàn bộ nội dung chỉ hiện khi đã đăng nhập -->
+  <div id="ytNoiDungCanDangNhap">
+
+    <!-- Giới thiệu "sắp có" -->
+    <div id="htGioiThieu">
+      <h2>Sắp có nhiều điều thú vị!</h2>
+      <p>Cô đang chuẩn bị các bài học, bài tập và câu đố cờ vua cho con đây.</p>
+    </div>
+    <div id="htLuoiSapCo">
+      <div class="htTheSapCo">
+        <span class="htNhanSapCo">Sắp có</span>
+        <span class="htIcon">📖</span>
+        <h3>Bài Học</h3>
+        <p>Học các nước đi, chiến thuật và mẹo hay khi chơi cờ.</p>
+      </div>
+      <div class="htTheSapCo">
+        <span class="htNhanSapCo">Sắp có</span>
+        <span class="htIcon">✏️</span>
+        <h3>Bài Tập</h3>
+        <p>Luyện tập từng kỹ năng nhỏ để chơi cờ giỏi hơn mỗi ngày.</p>
+      </div>
+      <div class="htTheSapCo">
+        <span class="htNhanSapCo">Sắp có</span>
+        <span class="htIcon">🧩</span>
+        <h3>Câu Đố</h3>
+        <p>Thử thách bộ não với các thế cờ hay và bất ngờ.</p>
+      </div>
+    </div>
+
+    <!-- Khu vực gửi ý tưởng - ytuong_NC.js điền động, chuyên mục hoc_tap -->
+    <div class="ytKhoiYTuong" data-chuyen-muc="hoc_tap">
+      <h3 class="ytKhoiTieuDe">💭 Con muốn học gì?</h3>
+      <p class="ytKhoiMoTa">Kể cho cô nghe con muốn học bài học, bài tập hay câu đố cờ vua nào nhé!</p>
+      <div class="ytHopNhap">
+        <textarea class="ytO" placeholder="Con muốn học..."></textarea>
+        <div class="ytHangDuoiO">
+          <span class="ytSoKyTuConLai">500</span>
+          <button class="ytNutGui" type="button">📨 Gửi Ý Tưởng</button>
+        </div>
+        <div class="ytThongBaoKhoi"></div>
+      </div>
+      <div class="ytKhoiDanhSach">
+        <h4>📋 Ý tưởng con đã gửi</h4>
+        <div class="ytDanhSachRong">Con chưa gửi ý tưởng nào ở mục này.</div>
+        <ul class="ytDanhSach"></ul>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================================================= -->
+  <!-- CÁC FILE JAVASCRIPT -->
+  <!-- Thứ tự bắt buộc: config -> api -> ytuong_NC -->
+  <!-- (KHÔNG nạp app.js/board.js: trang tự đọc phiên từ sessionStorage) -->
+  <!-- ================================================= -->
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="ytuong_NC.js"></script>
+
+</body>
+</html>

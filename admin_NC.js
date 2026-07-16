@@ -1,9 +1,31 @@
 // ================================
 // FILE: admin_NC.js
 // CHUC NANG: Toan bo logic cua Trang Quan Tri (admin_NC.html)
-//   7 man hinh: Vat Pham | Doi Thuong | Y Tuong | Cau Hinh Chung |
-//               Cap Do May | Loi Dong Vien | Giong Doc
-// BUOC: NC_06A - NGAY: 10/07/2026 14:00
+//   9 man hinh: Vat Pham | Doi Thuong | Y Tuong | Cau Hinh Chung |
+//               Cap Do May | Loi Dong Vien | Giong Doc | Ho So Tre | Don Kho Anh
+// BUOC: NC_06A-2 (nang cap tu NC_09B) - NGAY: 12/07/2026 21:00
+//   NC_06A-2 (3 tinh nang quan tri con thieu - KE HOACH muc NC_06A-2):
+//     (a) XEM NGUOI SO HUU: nut 👥 o cot "Da doi" cua bang vat pham -> khoi
+//         danh sach tre da doi/mua vat pham do (RPC admin_lay_nguoi_so_huu_vat_pham).
+//     (b) MAN HINH "HO SO TRE": danh sach moi tre (RPC cong khai lay_xep_hang)
+//         + chi tiet 1 tre (RPC cong khai lay_ho_so) - theo LUAT DOC/GHI chot o
+//         NC_06A: RPC cong khai da tra DU truong thi dung lai, khong viet RPC trung.
+//     (c) MAN HINH "DON KHO ANH": quet file mo coi trong bucket hinh-vat-pham.
+//         Tham chieu lay tu RPC admin_lay_tham_chieu_storage (gop DU 4 nguon
+//         HUONG DAN 4.6 + 1 nguon du phong trang_bi); danh sach file lay bang
+//         storage.list() de quy theo thu muc. CHI liet ke - xoa phai xac nhan
+//         TUNG FILE, khong bao gio tu xoa hang loat.
+//   NC_09B (sua loi chay thu NC_09):
+//     (1) SUA LOI: adminXoaFormVatPham con xoa luoi quan theo id 6 o cu -> gay;
+//         nay theo 12 o (6 quan x 2 mau).
+//     (2) BANG RO CHE DO FORM (#vpCheDoForm): "CHE DO SUA #id" / "CHE DO THEM MOI"
+//         hien ro ngay canh nut Luu de khong bam nham tao vat pham trung.
+//     (3) CHAN CUNG luu trung MA DINH DANH (moi ma chi thuoc 1 vat pham); tang
+//         CSDL them UNIQUE index (supabase_nc09b_thong_nhat_avatar.sql).
+//   NC_09: man hinh Vat Pham cho bo_quan_co nay nhap ANH RIENG TUNG MAU:
+//     12 o = 6 quan x 2 mau (Trang/Den). Ghi/doc du_lieu dang
+//     { trang:{k,q,...}, den:{k,q,...} }. Van doc nguoc duoc du_lieu dang PHANG
+//     cu ({k,q,...}) -> do vao ca 2 mau. HUONG DAN 4.6.
 //
 // PHU THUOC (nap theo thu tu nay trong admin_NC.html):
 //   config.js  -> bien toan cuc supabaseClient
@@ -39,6 +61,7 @@ var adminDsLoiDongVien = [];   // Cache danh sach cau noi
 var adminDsCapDo = [];         // Cache 20 dong cap do
 var adminCapDoDaSua = {};      // { capDo: true } - danh dau dong da sua de "Luu tat ca"
 var adminDanhSachGiong = [];   // speechSynthesis.getVoices()
+var adminDsFileMoCoi = [];     // NC_06A-2: cache file mo coi sau khi quet kho
 
 // 6 quan co (dung cho tro ly nhap bo quan co bang anh)
 var ADMIN_QUAN_CO = [
@@ -48,6 +71,13 @@ var ADMIN_QUAN_CO = [
   { ma: "b", ten: "Tượng", emojiMau: "♝" },
   { ma: "n", ten: "Mã",    emojiMau: "♞" },
   { ma: "p", ten: "Tốt",   emojiMau: "♟" }
+];
+
+// NC_09: 2 mau quan - moi quan nhap ANH RIENG cho Trang va Den. Khoa du_lieu
+// tuong ung: du_lieu = { trang:{k,q,...}, den:{k,q,...} }.
+var ADMIN_MAU_QUAN = [
+  { ma: "trang", ten: "Trắng" },
+  { ma: "den",   ten: "Đen" }
 ];
 
 // 12 ma tinh huong (HUONG DAN 4.8) + 2 ma cu con dung trong chuoi du phong.
@@ -258,6 +288,8 @@ function adminKhoiTao() {
   adminDungManHinhCapDo();
   adminDungManHinhLoiDongVien();
   adminDungManHinhGiongDoc();
+  adminDungManHinhHoSoTre();   // NC_06A-2
+  adminDungManHinhDonKho();    // NC_06A-2
 
   // --- Tai du lieu cho man hinh dau tien; cac man hinh khac tai khi bam vao ---
   adminTaiVatPham();
@@ -290,6 +322,9 @@ function adminChuyenManHinh(ten, nutBam) {
   if (ten === "capdo")        adminTaiCapDo();
   if (ten === "loidongvien")  adminTaiLoiDongVien();
   if (ten === "giongdoc")     adminTaiGiongDoc();
+  if (ten === "hosotre")      adminTaiDanhSachTre();   // NC_06A-2
+  // "donkho" KHONG tu quet: viec quet doc toan bo kho + CSDL, va la man hinh
+  // co rui ro xoa nham -> chi chay khi quan tri chu dong bam nut "Quet Kho".
 }
 
 
@@ -298,39 +333,47 @@ function adminChuyenManHinh(ten, nutBam) {
 // ================================================================
 
 function adminDungManHinhVatPham() {
-  // Ve 6 o nhap quan co
+  // NC_09: ve 12 o nhap quan co = 6 quan x 2 mau (Trang/Den). Id o:
+  //   vpQuan_<mau>_<quan>, vpFileQuan_<mau>_<quan>, vpXemTruocQuan_<mau>_<quan>.
   var luoi = adminEl("vpLuoiQuan");
   var html = "";
-  for (var i = 0; i < ADMIN_QUAN_CO.length; i++) {
-    var q = ADMIN_QUAN_CO[i];
-    html +=
-      '<div class="adminOAnhQuan">' +
-        '<span class="adminNhanQuan">' + q.emojiMau + " " + adminThoat(q.ten) + "</span>" +
-        '<div class="adminXemTruocQuan" id="vpXemTruocQuan_' + q.ma + '">—</div>' +
-        '<input type="text" id="vpQuan_' + q.ma + '" placeholder="emoji hoặc link">' +
-        '<input type="file" id="vpFileQuan_' + q.ma + '" accept="image/*" style="font-size:0.75rem;">' +
-      "</div>";
-  }
+  ADMIN_QUAN_CO.forEach(function (q) {
+    ADMIN_MAU_QUAN.forEach(function (mau) {
+      var id = mau.ma + "_" + q.ma;
+      html +=
+        '<div class="adminOAnhQuan">' +
+          '<span class="adminNhanQuan">' + q.emojiMau + " " + adminThoat(q.ten) +
+            " • " + adminThoat(mau.ten) + "</span>" +
+          '<div class="adminXemTruocQuan" id="vpXemTruocQuan_' + id + '">—</div>' +
+          '<input type="text" id="vpQuan_' + id + '" placeholder="emoji hoặc link">' +
+          '<input type="file" id="vpFileQuan_' + id + '" accept="image/*" style="font-size:0.75rem;">' +
+        "</div>";
+    });
+  });
   luoi.innerHTML = html;
 
-  // Gan su kien cho 6 o
+  // Gan su kien cho 12 o
   ADMIN_QUAN_CO.forEach(function (q) {
-    adminEl("vpQuan_" + q.ma).addEventListener("input", function () {
-      adminVeXemTruocQuan(q.ma);
-    });
-    adminEl("vpFileQuan_" + q.ma).addEventListener("change", function () {
-      var file = this.files[0];
-      if (!file) return;
-      adminBaoTin("⏳ Đang tải ảnh quân " + q.ten + " lên...", true);
-      adminTaiFileLen(file, "quan-co")
-        .then(function (url) {
-          adminEl("vpQuan_" + q.ma).value = url;
-          adminVeXemTruocQuan(q.ma);
-          adminBaoTin("✅ Đã tải ảnh quân " + q.ten + " lên. Nhớ bấm \"Ghi vào ô Dữ liệu\".", true);
-        })
-        .catch(function (loi) {
-          adminBaoTin("❌ Không tải được ảnh: " + loi.message, false);
-        });
+    ADMIN_MAU_QUAN.forEach(function (mau) {
+      var id = mau.ma + "_" + q.ma;
+      var nhan = q.ten + " (" + mau.ten + ")";
+      adminEl("vpQuan_" + id).addEventListener("input", function () {
+        adminVeXemTruocQuan(id);
+      });
+      adminEl("vpFileQuan_" + id).addEventListener("change", function () {
+        var file = this.files[0];
+        if (!file) return;
+        adminBaoTin("⏳ Đang tải ảnh quân " + nhan + " lên...", true);
+        adminTaiFileLen(file, "quan-co")
+          .then(function (url) {
+            adminEl("vpQuan_" + id).value = url;
+            adminVeXemTruocQuan(id);
+            adminBaoTin("✅ Đã tải ảnh quân " + nhan + " lên. Nhớ bấm \"Ghi vào ô Dữ liệu\".", true);
+          })
+          .catch(function (loi) {
+            adminBaoTin("❌ Không tải được ảnh: " + loi.message, false);
+          });
+      });
     });
   });
 
@@ -391,26 +434,37 @@ function adminVeXemTruocQuan(maQuan) {
   }
 }
 
-/** Gom 6 o quan thanh JSON, ghi vao o Du lieu */
+/**
+ * NC_09: Gom 12 o quan thanh JSON dang { trang:{k,q,...}, den:{k,q,...} },
+ * ghi vao o Du lieu. O trong thi BO QUA khoa do (board.js tu ve ky tu co dien).
+ */
 function adminGhiJsonBoQuan() {
-  var obj = {};
+  var obj = { trang: {}, den: {} };
   var thieu = [];
   ADMIN_QUAN_CO.forEach(function (q) {
-    var v = adminEl("vpQuan_" + q.ma).value.trim();
-    if (v) obj[q.ma] = v; else thieu.push(q.ten);
+    ADMIN_MAU_QUAN.forEach(function (mau) {
+      var v = adminEl("vpQuan_" + mau.ma + "_" + q.ma).value.trim();
+      if (v) obj[mau.ma][q.ma] = v;
+      else thieu.push(q.ten + " (" + mau.ten + ")");
+    });
   });
 
   adminEl("vpDuLieu").value = JSON.stringify(obj);
 
   if (thieu.length > 0) {
-    adminBaoTin("⚠️ Đã ghi, nhưng còn thiếu quân: " + thieu.join(", ") +
-                ". Quân thiếu sẽ dùng hình mặc định.", false);
+    adminBaoTin("⚠️ Đã ghi. Còn trống: " + thieu.join(", ") +
+                ". Ô trống sẽ dùng quân cổ điển mặc định (không sao, up sau cũng được).", false);
   } else {
-    adminBaoTin("✅ Đã ghi đủ 6 quân vào ô Dữ liệu.", true);
+    adminBaoTin("✅ Đã ghi đủ 12 ô (6 quân × 2 màu) vào ô Dữ liệu.", true);
   }
 }
 
-/** Doc nguoc JSON trong o Du lieu ra 6 o quan (dung khi sua vat pham cu) */
+/**
+ * NC_09: Doc nguoc JSON trong o Du lieu ra 12 o quan (dung khi sua vat pham cu).
+ * Chap nhan CA 2 dinh dang:
+ *   - Tach mau: { trang:{...}, den:{...} } -> do dung tung mau.
+ *   - Phang cu: { k,q,r,b,n,p }            -> do CHUNG gia tri cho ca Trang lan Den.
+ */
 function adminDocJsonBoQuan() {
   var obj;
   try {
@@ -419,11 +473,21 @@ function adminDocJsonBoQuan() {
     adminBaoTin("❌ Ô Dữ liệu không phải JSON hợp lệ.", false);
     return;
   }
+
+  var coTachMau = obj && (obj.trang || obj.den);
   ADMIN_QUAN_CO.forEach(function (q) {
-    adminEl("vpQuan_" + q.ma).value = obj[q.ma] || "";
-    adminVeXemTruocQuan(q.ma);
+    ADMIN_MAU_QUAN.forEach(function (mau) {
+      var giaTri;
+      if (coTachMau) {
+        giaTri = (obj[mau.ma] && obj[mau.ma][q.ma]) || "";
+      } else {
+        giaTri = obj[q.ma] || ""; // dinh dang phang: dung chung cho ca 2 mau
+      }
+      adminEl("vpQuan_" + mau.ma + "_" + q.ma).value = giaTri;
+      adminVeXemTruocQuan(mau.ma + "_" + q.ma);
+    });
   });
-  adminBaoTin("✅ Đã đọc dữ liệu ra 6 ô quân.", true);
+  adminBaoTin("✅ Đã đọc dữ liệu ra 12 ô quân (Trắng/Đen).", true);
 }
 
 /** Ghi 2 mau ban co thanh JSON */
@@ -477,7 +541,9 @@ function adminVeBangVatPham() {
         "<td>" + vp.giaKimCuong + "</td>" +
         "<td>" + mocLevel + "</td>" +
         "<td>" + soLuong + "</td>" +
-        "<td>" + vp.daDoi + "</td>" +
+        // NC_06A-2: cot "Da doi" thanh nut 👥 -> xem TRE NAO da doi/mua
+        '<td><button class="adminNut adminNutPhu" data-sohuu="' + vp.id + '" type="button" ' +
+          'title="Xem trẻ nào đã đổi/mua vật phẩm này">👥 ' + vp.daDoi + "</button></td>" +
         "<td>" + hienThi + "</td>" +
         "<td>" + vp.thuTuHienThi + "</td>" +
         '<td>' +
@@ -501,6 +567,76 @@ function adminVeBangVatPham() {
       adminXoaVatPham(parseInt(this.getAttribute("data-xoavp"), 10));
     });
   }
+
+  // NC_06A-2: nut 👥 xem nguoi so huu
+  var nutSoHuu = than.querySelectorAll("[data-sohuu]");
+  for (var m = 0; m < nutSoHuu.length; m++) {
+    nutSoHuu[m].addEventListener("click", function () {
+      adminXemNguoiSoHuu(parseInt(this.getAttribute("data-sohuu"), 10));
+    });
+  }
+}
+
+/**
+ * NC_06A-2 (a): Hien khoi "Nguoi So Huu" cua 1 vat pham.
+ * Danh sach lay tu lich_su_doi_qua (RPC admin_lay_nguoi_so_huu_vat_pham) -
+ * moi luot doi 1 dong. LUU Y: vat pham mo khoa theo moc_level la "co san" cho
+ * moi tre du level, KHONG nam trong danh sach nay (HUONG DAN 4.6).
+ */
+function adminXemNguoiSoHuu(id) {
+  var khoi = adminEl("khoiNguoiSoHuu");
+  khoi.style.display = "block";
+  adminEl("tieuDeNguoiSoHuu").textContent = "👥 Người Sở Hữu — đang tải...";
+  adminEl("bangNguoiSoHuu").innerHTML = '<tr><td colspan="6" class="adminDangTai">Đang tải...</td></tr>';
+  khoi.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  adminGoiRpc("admin_lay_nguoi_so_huu_vat_pham", { p_vat_pham_id: id }).then(function (ph) {
+    if (!ph.thanhCong) {
+      adminXuLyLoi(ph);
+      adminEl("bangNguoiSoHuu").innerHTML = '<tr><td colspan="6" class="adminRong">Không tải được danh sách.</td></tr>';
+      return;
+    }
+
+    adminEl("tieuDeNguoiSoHuu").textContent = "👥 Người Sở Hữu: \"" + (ph.ten || "") + "\" (#" + id + ")";
+
+    var ghiChu = "Danh sách dưới đây là các lượt đổi/mua thật sự (ghi trong lịch sử đổi quà).";
+    if (ph.mocLevel !== null && ph.mocLevel !== undefined) {
+      ghiChu += " ⚠️ Vật phẩm này có mốc level " + ph.mocLevel +
+        ": mọi trẻ đạt level đó đều được dùng MIỄN PHÍ mà KHÔNG hiện ở đây.";
+    }
+    adminEl("ghiChuNguoiSoHuu").textContent = ghiChu;
+
+    var ds = ph.danhSachSoHuu || [];
+    if (ds.length === 0) {
+      adminEl("bangNguoiSoHuu").innerHTML = '<tr><td colspan="6" class="adminRong">Chưa có trẻ nào đổi/mua vật phẩm này.</td></tr>';
+      return;
+    }
+
+    var html = "";
+    ds.forEach(function (sh) {
+      var choTrao = (sh.trangThai === "cho_trao");
+      var huyHieu = choTrao
+        ? '<span class="adminHuyHieu adminHuyHieuCho">Chờ trao</span>'
+        : '<span class="adminHuyHieu adminHuyHieuXong">Đã nhận</span>';
+      html +=
+        "<tr>" +
+          "<td><strong>" + adminThoat(sh.tenDangNhap) + "</strong></td>" +
+          "<td>Lv " + sh.level + "</td>" +
+          "<td>" + sh.giaLucDoi + " 💎</td>" +
+          "<td>" + huyHieu + "</td>" +
+          "<td>" + adminDinhDangGio(sh.thoiGianDoi) + "</td>" +
+          '<td><button class="adminNut adminNutPhu" data-mohoso="' + adminThoat(sh.tenDangNhap) + '" type="button">👦 Xem hồ sơ</button></td>' +
+        "</tr>";
+    });
+    adminEl("bangNguoiSoHuu").innerHTML = html;
+
+    var nut = adminEl("bangNguoiSoHuu").querySelectorAll("[data-mohoso]");
+    for (var i = 0; i < nut.length; i++) {
+      nut[i].addEventListener("click", function () {
+        adminMoHoSoTre(this.getAttribute("data-mohoso"));
+      });
+    }
+  });
 }
 
 /**
@@ -592,6 +728,7 @@ function adminDoVatPhamVaoForm(id) {
   adminEl("vpDuLieu").value = JSON.stringify(vp.duLieu || {});
 
   adminEl("tieuDeFormVatPham").textContent = "✏️ Sửa Vật Phẩm #" + vp.id;
+  adminCapNhatBangCheDo(vp.id, vp.ten || "");
   adminCapNhatTroLyTheoLoai();
   adminVeXemTruocHinhChinh();
 
@@ -619,13 +756,39 @@ function adminXoaFormVatPham() {
   adminEl("vpHienThi").checked = true;
   adminEl("vpDuLieu").value = "{}";
   adminEl("vpFileHinh").value = "";
+  // NC_09B SUA LOI: luoi quan nay la 12 o (6 quan x 2 mau - NC_09), id moi
+  // vpQuan_<mau>_<quan>; vong lap cu theo id 6 o (vpQuan_<quan>) lam ham gay giua chung
   ADMIN_QUAN_CO.forEach(function (q) {
-    adminEl("vpQuan_" + q.ma).value = "";
-    adminEl("vpFileQuan_" + q.ma).value = "";
-    adminVeXemTruocQuan(q.ma);
+    ADMIN_MAU_QUAN.forEach(function (mau) {
+      var id = mau.ma + "_" + q.ma;
+      adminEl("vpQuan_" + id).value = "";
+      adminEl("vpFileQuan_" + id).value = "";
+      adminVeXemTruocQuan(id);
+    });
   });
   adminEl("tieuDeFormVatPham").textContent = "➕ Thêm Vật Phẩm Mới";
+  adminCapNhatBangCheDo(null, "");
   adminVeXemTruocHinhChinh();
+}
+
+/**
+ * NC_09B: Bang ro CHE DO FORM ngay canh nut Luu - de khong con bam nham:
+ *   - Dang SUA (co id):  Luu = CAP NHAT dung vat pham do, KHONG tao moi.
+ *   - Dang THEM (id rong): Luu = TAO vat pham moi.
+ */
+function adminCapNhatBangCheDo(id, ten) {
+  var bang = adminEl("vpCheDoForm");
+  if (!bang) return;
+  if (id) {
+    bang.textContent = "🔒 CHẾ ĐỘ SỬA — bấm Lưu sẽ CẬP NHẬT vật phẩm #" + id +
+      (ten ? " (\"" + ten + "\")" : "") + ", KHÔNG tạo vật phẩm mới.";
+    bang.style.background = "#fff3cd";
+    bang.style.border = "1px solid #e0a800";
+  } else {
+    bang.textContent = "🆕 CHẾ ĐỘ THÊM MỚI — bấm Lưu sẽ TẠO một vật phẩm mới.";
+    bang.style.background = "#d1e7dd";
+    bang.style.border = "1px solid #198754";
+  }
 }
 
 function adminLuuVatPham() {
@@ -644,6 +807,23 @@ function adminLuuVatPham() {
   }
 
   var idCu = adminEl("vpId").value;
+
+  // NC_09B: CHAN CUNG trung MA DINH DANH (goc cua vu 2 bo Dong Vat cung "Dang
+  // Dung"). Ma khac rong ma da thuoc MOT VAT PHAM KHAC -> khong cho luu, chi ra
+  // dung vat pham do de quan tri bam Sua tren dong ay. Tang CSDL cung co UNIQUE
+  // index chan lop 2 (NC_09B SQL).
+  var maMoi = adminEl("vpMaDinhDanh").value.trim();
+  if (maMoi) {
+    for (var it = 0; it < adminDsVatPham.length; it++) {
+      var vpTrung = adminDsVatPham[it];
+      if ((vpTrung.maDinhDanh || "") === maMoi && String(vpTrung.id) !== String(idCu)) {
+        adminBaoTin("❌ KHÔNG LƯU: mã định danh \"" + maMoi + "\" đã thuộc vật phẩm #" +
+          vpTrung.id + " (\"" + (vpTrung.ten || "") + "\"). Mỗi mã chỉ dùng cho MỘT vật phẩm. " +
+          "Muốn sửa vật phẩm đó, bấm nút Sửa trên đúng dòng của nó; muốn tạo vật phẩm mới, đặt mã khác.", false);
+        return;
+      }
+    }
+  }
 
   // AN TOÀN: nếu form đang mang id (tức đang SỬA một vật phẩm cũ), hỏi lại cho
   // chắc để tránh vô tình ghi đè lên vật phẩm khác. Muốn tạo cái mới hoàn toàn,
@@ -1334,5 +1514,370 @@ function adminLuuGiongDoc(tenGiong) {
       adminBaoTin(tenGiong
         ? "✅ Đã lưu giọng \"" + tenGiong + "\"."
         : "✅ Đã xóa lựa chọn — mỗi máy sẽ tự dò giọng tiếng Việt của nó.", true);
+    });
+}
+
+
+// ================================================================
+// PHAN 10: MAN HINH "HO SO TRE" (NC_06A-2)
+// KHONG can RPC quan tri moi: lay_xep_hang() va lay_ho_so() cong khai da tra
+// DU truong can xem (LUAT DOC/GHI chot o NC_06A - HUONG DAN muc 5).
+// ================================================================
+
+function adminDungManHinhHoSoTre() {
+  adminEl("btnLamMoiHoSoTre").addEventListener("click", adminTaiDanhSachTre);
+}
+
+function adminTaiDanhSachTre() {
+  adminEl("bangDanhSachTre").innerHTML = '<tr><td colspan="10" class="adminDangTai">Đang tải...</td></tr>';
+  apiGoiRpc("lay_xep_hang", {}).then(function (ph) {
+    if (!ph.thanhCong) {
+      adminXuLyLoi(ph);
+      adminEl("bangDanhSachTre").innerHTML = '<tr><td colspan="10" class="adminRong">Không tải được danh sách.</td></tr>';
+      return;
+    }
+
+    var ds = ph.danhSachXepHang || [];
+    if (ds.length === 0) {
+      adminEl("bangDanhSachTre").innerHTML = '<tr><td colspan="10" class="adminRong">Chưa có tài khoản nào.</td></tr>';
+      return;
+    }
+
+    var html = "";
+    ds.forEach(function (t) {
+      html +=
+        "<tr>" +
+          "<td>" + t.hangThu + "</td>" +
+          "<td><strong>" + adminThoat(t.tenDangNhap) + "</strong></td>" +
+          "<td>Lv " + t.level + "</td>" +
+          "<td>" + adminThoat(t.danhHieu) + "</td>" +
+          "<td>" + t.diemSo + " 💎</td>" +
+          "<td>" + t.kinhNghiem + "</td>" +
+          "<td>" + t.tongTran + "</td>" +
+          "<td>" + t.tongThang + "</td>" +
+          "<td>" + t.tyLeThang + "%</td>" +
+          '<td><button class="adminNut adminNutPhu" data-hoso="' + adminThoat(t.tenDangNhap) + '" type="button">👦 Xem hồ sơ</button></td>' +
+        "</tr>";
+    });
+    adminEl("bangDanhSachTre").innerHTML = html;
+
+    var nut = adminEl("bangDanhSachTre").querySelectorAll("[data-hoso]");
+    for (var i = 0; i < nut.length; i++) {
+      nut[i].addEventListener("click", function () {
+        adminMoHoSoTre(this.getAttribute("data-hoso"));
+      });
+    }
+  });
+}
+
+/**
+ * Mo ho so chi tiet cua 1 tre. Goi duoc tu 2 noi:
+ *   - Nut "Xem ho so" trong man hinh Ho So Tre.
+ *   - Nut "Xem ho so" trong khoi Nguoi So Huu (man hinh Vat Pham) -> ham nay
+ *     tu CHUYEN sang man hinh Ho So Tre truoc khi tai.
+ */
+function adminMoHoSoTre(ten) {
+  // Chuyen sang man hinh Ho So Tre (dung dung duong di cua adminChuyenManHinh
+  // de nut dieu huong sang mau "dang chon" va lazy-load danh sach lan dau)
+  var nutManHinh = document.querySelector('.adminNutManHinh[data-manhinh="hosotre"]');
+  if (nutManHinh) adminChuyenManHinh("hosotre", nutManHinh);
+
+  var khoi = adminEl("khoiChiTietTre");
+  khoi.style.display = "block";
+  adminEl("tieuDeChiTietTre").textContent = "📄 Hồ Sơ Chi Tiết: " + ten + " — đang tải...";
+  adminEl("htAvatarVaTen").innerHTML = "";
+  adminEl("htLuoiThe").innerHTML = "";
+  adminEl("htBangVatPham").innerHTML = '<tr><td colspan="3" class="adminDangTai">Đang tải...</td></tr>';
+  adminEl("htBangDoiQua").innerHTML = '<tr><td colspan="5" class="adminDangTai">Đang tải...</td></tr>';
+  adminEl("htBangTran").innerHTML = '<tr><td colspan="4" class="adminDangTai">Đang tải...</td></tr>';
+
+  apiGoiRpc("lay_ho_so", { p_ten: ten }).then(function (ph) {
+    if (!ph.thanhCong) {
+      adminXuLyLoi(ph);
+      adminEl("tieuDeChiTietTre").textContent = "📄 Hồ Sơ Chi Tiết: " + ten + " — không tải được.";
+      return;
+    }
+    adminVeChiTietTre(ph.hoSo || {});
+    khoi.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+function adminVeChiTietTre(hoSo) {
+  var tt = hoSo.thongTin || {};
+
+  adminEl("tieuDeChiTietTre").textContent = "📄 Hồ Sơ Chi Tiết: " + (tt.tenDangNhap || "");
+
+  // Avatar: ap dung QUY TAC NHAN DIEN URL (HUONG DAN 4.6 - moi cho ve avatar
+  // deu phai co): bat dau "http" hoac chua "/" -> ve <img> tron; nguoc lai ve chu/emoji
+  var av = tt.avatarDaChon || "";
+  var htmlAvatar = adminLaDuongDanAnh(av)
+    ? '<img class="adminAvatarHoSo" src="' + adminThoat(av) + '" alt="">'
+    : '<span class="adminAvatarHoSoChu">' + (av ? adminThoat(av) : "🙂") + "</span>";
+  adminEl("htAvatarVaTen").innerHTML =
+    htmlAvatar + ' <strong style="font-size:1.1rem; margin-left:8px;">' + adminThoat(tt.tenDangNhap) + "</strong>" +
+    ' <span class="adminGhiChu">(' + adminThoat(tt.danhHieu) + ")</span>";
+
+  // Luoi the so lieu
+  function the(nhan, soLieu) {
+    return '<div class="adminTheThongTin"><div class="nhan">' + nhan +
+           '</div><div class="soLieu">' + soLieu + "</div></div>";
+  }
+  adminEl("htLuoiThe").innerHTML =
+    the("Hạng", "#" + tt.hangThu) +
+    the("Level", tt.level) +
+    the("Kim cương", tt.diemSo + " 💎") +
+    the("EXP", tt.kinhNghiem) +
+    the("Đấu máy (thắng / khác)", tt.tranMayThang + " / " + tt.tranMayKhac) +
+    the("2 người (T / B / H)", tt.tran2nThang + " / " + tt.tran2nThua + " / " + tt.tran2nHoa) +
+    the("Tổng thắng / tổng trận", tt.tongThang + " / " + tt.tongTran) +
+    the("Tỷ lệ thắng", tt.tyLeThang + "%");
+
+  // Vat pham so huu (da doi/mua that su - vat pham theo moc level KHONG o day)
+  var vps = hoSo.vatPhamSoHuu || [];
+  if (vps.length === 0) {
+    adminEl("htBangVatPham").innerHTML = '<tr><td colspan="3" class="adminRong">Chưa đổi/mua vật phẩm nào.</td></tr>';
+  } else {
+    var htmlVp = "";
+    vps.forEach(function (vp) {
+      htmlVp +=
+        "<tr>" +
+          "<td>" + adminThoat(vp.loai) + "</td>" +
+          "<td>" + adminThoat(vp.ten) + "</td>" +
+          "<td><code>" + adminThoat(vp.maDinhDanh) + "</code></td>" +
+        "</tr>";
+    });
+    adminEl("htBangVatPham").innerHTML = htmlVp;
+  }
+
+  // Lich su doi qua
+  var lsq = hoSo.lichSuDoiQua || [];
+  if (lsq.length === 0) {
+    adminEl("htBangDoiQua").innerHTML = '<tr><td colspan="5" class="adminRong">Chưa có lượt đổi quà nào.</td></tr>';
+  } else {
+    var htmlQ = "";
+    lsq.forEach(function (ls) {
+      var choTrao = (ls.trangThai === "cho_trao");
+      var huyHieu = choTrao
+        ? '<span class="adminHuyHieu adminHuyHieuCho">Chờ trao</span>'
+        : '<span class="adminHuyHieu adminHuyHieuXong">Đã nhận</span>';
+      htmlQ +=
+        "<tr>" +
+          "<td>" + adminThoat(ls.tenVatPham) + "</td>" +
+          "<td>" + adminThoat(ls.loai) + "</td>" +
+          "<td>" + ls.giaLucDoi + " 💎</td>" +
+          "<td>" + huyHieu + "</td>" +
+          "<td>" + adminDinhDangGio(ls.thoiGianDoi) + "</td>" +
+        "</tr>";
+    });
+    adminEl("htBangDoiQua").innerHTML = htmlQ;
+  }
+
+  // 50 tran gan nhat
+  var lst = hoSo.lichSuTran || [];
+  if (lst.length === 0) {
+    adminEl("htBangTran").innerHTML = '<tr><td colspan="4" class="adminRong">Chưa có trận nào.</td></tr>';
+  } else {
+    var htmlT = "";
+    lst.forEach(function (tr) {
+      var kq = tr.ketQua === "thang" ? "🏆 Thắng" : (tr.ketQua === "hoa" ? "🤝 Hòa" : "❌ Thua");
+      htmlT +=
+        "<tr>" +
+          "<td>" + adminDinhDangGio(tr.thoiGian) + "</td>" +
+          "<td>" + (tr.cheDo === "may" ? "Đấu máy" : "2 người") + "</td>" +
+          "<td>" + adminThoat(tr.doiThu) + "</td>" +
+          "<td>" + kq + "</td>" +
+        "</tr>";
+    });
+    adminEl("htBangTran").innerHTML = htmlT;
+  }
+}
+
+
+// ================================================================
+// PHAN 11: MAN HINH "DON KHO ANH" - FILE MO COI (NC_06A-2)
+// Quy trinh AN TOAN (KE HOACH NC_06A-2 muc c):
+//   1) Liet ke MOI file trong bucket hinh-vat-pham (storage.list, de quy thu muc).
+//   2) Lay MOI URL dang duoc tham chieu trong CSDL qua RPC
+//      admin_lay_tham_chieu_storage (4 nguon bat buoc + 1 nguon du phong).
+//   3) File co mat trong kho nhung KHONG co trong tham chieu = MO COI.
+//   4) CHI liet ke; xoa phai bam 🗑️ va xac nhan TUNG file. Khong xoa hang loat.
+// Bucket da co policy select(public) + delete(anon) tu NC_00 (PHAN O cua
+// supabase_nang_cap.sql); neu bucket tao tay thieu quyen thi bao loi ro rang.
+// ================================================================
+
+function adminDungManHinhDonKho() {
+  adminEl("btnQuetKho").addEventListener("click", adminQuetKho);
+}
+
+/** Doi so byte thanh chuoi de doc (B / KB / MB) */
+function adminDinhDangKichThuoc(soByte) {
+  if (soByte === null || soByte === undefined || isNaN(soByte)) return "—";
+  if (soByte < 1024) return soByte + " B";
+  if (soByte < 1024 * 1024) return (soByte / 1024).toFixed(1) + " KB";
+  return (soByte / (1024 * 1024)).toFixed(2) + " MB";
+}
+
+/**
+ * Liet ke DE QUY moi file trong bucket, bat dau tu tien to (thu muc) cho truoc.
+ * Supabase tra thu muc la muc KHONG co id -> goi lai chinh ham nay cho thu muc do.
+ * Bo qua file ky thuat ".emptyFolderPlaceholder" (Supabase tu tao cho thu muc rong).
+ * Tra ve Promise<mang {duongDan, kichThuoc, suaLanCuoi}>.
+ */
+function adminLietKeKho(tienTo) {
+  return supabaseClient.storage.from(ADMIN_BUCKET_HINH)
+    .list(tienTo, { limit: 1000 })
+    .then(function (kq) {
+      if (kq.error) throw new Error(kq.error.message);
+
+      var viecCon = [];
+      var dsFile = [];
+      (kq.data || []).forEach(function (muc) {
+        if (!muc || !muc.name || muc.name.charAt(0) === ".") return;
+        var duongDan = tienTo ? tienTo + "/" + muc.name : muc.name;
+        if (muc.id === null || muc.id === undefined) {
+          viecCon.push(adminLietKeKho(duongDan));   // la thu muc -> quet tiep
+        } else {
+          dsFile.push({
+            duongDan:   duongDan,
+            kichThuoc:  (muc.metadata && muc.metadata.size) || null,
+            suaLanCuoi: muc.updated_at || muc.created_at || null
+          });
+        }
+      });
+
+      return Promise.all(viecCon).then(function (cacMang) {
+        cacMang.forEach(function (mg) { dsFile = dsFile.concat(mg); });
+        return dsFile;
+      });
+    });
+}
+
+/** Doi URL cong khai -> duong dan trong bucket; khong thuoc bucket nay tra null */
+function adminUrlSangDuongDan(url) {
+  var moc = "/object/public/" + ADMIN_BUCKET_HINH + "/";
+  var viTri = (url || "").indexOf(moc);
+  if (viTri < 0) return null;
+  var duongDan = url.substring(viTri + moc.length);
+  var dauHoi = duongDan.indexOf("?");
+  if (dauHoi >= 0) duongDan = duongDan.substring(0, dauHoi);
+  try { return decodeURIComponent(duongDan); } catch (loi) { return duongDan; }
+}
+
+function adminQuetKho() {
+  var nut = adminEl("btnQuetKho");
+  nut.disabled = true;
+  adminEl("dkTrangThai").textContent = "⏳ Đang quét kho và cơ sở dữ liệu...";
+  adminEl("bangFileMoCoi").innerHTML = '<tr><td colspan="5" class="adminDangTai">Đang quét...</td></tr>';
+
+  Promise.all([
+    adminGoiRpc("admin_lay_tham_chieu_storage", {}),
+    adminLietKeKho("")
+  ]).then(function (kq) {
+    nut.disabled = false;
+    var phTC = kq[0];        // tham chieu tu CSDL
+    var dsKho = kq[1];       // file thuc te trong bucket
+
+    if (!phTC.thanhCong) {
+      adminXuLyLoi(phTC);
+      adminEl("dkTrangThai").textContent = "❌ Không lấy được danh sách tham chiếu từ máy chủ (đã chạy file SQL NC_06A-2 chưa?).";
+      adminEl("bangFileMoCoi").innerHTML = '<tr><td colspan="5" class="adminRong">Quét thất bại.</td></tr>';
+      return;
+    }
+
+    // Tap hop duong dan dang duoc dung
+    var dangDung = {};
+    (phTC.danhSachUrl || []).forEach(function (url) {
+      var dd = adminUrlSangDuongDan(url);
+      if (dd) dangDung[dd] = true;
+    });
+
+    adminDsFileMoCoi = dsKho.filter(function (f) { return !dangDung[f.duongDan]; });
+
+    adminEl("dkTrangThai").textContent =
+      "📊 Kho có " + dsKho.length + " file — đang dùng " +
+      (dsKho.length - adminDsFileMoCoi.length) + " — mồ côi " + adminDsFileMoCoi.length + ".";
+    adminVeBangFileMoCoi();
+  }).catch(function (loi) {
+    nut.disabled = false;
+    adminEl("dkTrangThai").textContent = "❌ Không quét được kho: " + loi.message +
+      " (kiểm tra bucket hinh-vat-pham đã cho phép ĐỌC (select) chưa - xem PHẦN O của supabase_nang_cap.sql).";
+    adminEl("bangFileMoCoi").innerHTML = '<tr><td colspan="5" class="adminRong">Quét thất bại.</td></tr>';
+  });
+}
+
+function adminVeBangFileMoCoi() {
+  var than = adminEl("bangFileMoCoi");
+  if (adminDsFileMoCoi.length === 0) {
+    than.innerHTML = '<tr><td colspan="5" class="adminRong">🎉 Không có file mồ côi nào — kho đang sạch.</td></tr>';
+    return;
+  }
+
+  var html = "";
+  adminDsFileMoCoi.forEach(function (f, chiSo) {
+    var url = supabaseClient.storage.from(ADMIN_BUCKET_HINH).getPublicUrl(f.duongDan).data.publicUrl;
+    var duoi = adminDuoiFile(f.duongDan);
+    var xemTruoc;
+    if ([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"].indexOf(duoi) >= 0) {
+      xemTruoc = '<img class="adminAnhXemTruoc" style="max-width:48px;max-height:48px;" src="' + adminThoat(url) + '" alt="">';
+    } else if ([".mp3", ".wav", ".ogg", ".m4a"].indexOf(duoi) >= 0) {
+      xemTruoc = '<button class="adminNut adminNutPhu" data-nghefile="' + chiSo + '" type="button">▶️</button>';
+    } else {
+      xemTruoc = "—";
+    }
+
+    html +=
+      "<tr>" +
+        "<td><code>" + adminThoat(f.duongDan) + "</code></td>" +
+        "<td>" + adminDinhDangKichThuoc(f.kichThuoc) + "</td>" +
+        "<td>" + adminDinhDangGio(f.suaLanCuoi) + "</td>" +
+        "<td>" + xemTruoc + "</td>" +
+        '<td><button class="adminNut adminNutNguyHiem" data-xoafile="' + chiSo + '" type="button">🗑️ Xóa</button></td>' +
+      "</tr>";
+  });
+  than.innerHTML = html;
+
+  var nutNghe = than.querySelectorAll("[data-nghefile]");
+  for (var i = 0; i < nutNghe.length; i++) {
+    nutNghe[i].addEventListener("click", function () {
+      var f = adminDsFileMoCoi[parseInt(this.getAttribute("data-nghefile"), 10)];
+      if (!f) return;
+      var url = supabaseClient.storage.from(ADMIN_BUCKET_HINH).getPublicUrl(f.duongDan).data.publicUrl;
+      new Audio(url).play().catch(function () {
+        adminBaoTin("❌ Không phát được file âm thanh này.", false);
+      });
+    });
+  }
+
+  var nutXoa = than.querySelectorAll("[data-xoafile]");
+  for (var j = 0; j < nutXoa.length; j++) {
+    nutXoa[j].addEventListener("click", function () {
+      adminXoaFileMoCoi(parseInt(this.getAttribute("data-xoafile"), 10), this);
+    });
+  }
+}
+
+/** Xoa 1 file mo coi - LUON hoi xac nhan rieng tung file (khong xoa hang loat) */
+function adminXoaFileMoCoi(chiSo, nut) {
+  var f = adminDsFileMoCoi[chiSo];
+  if (!f) return;
+
+  if (!window.confirm(
+    "Xóa hẳn file này khỏi kho?\n\n" + f.duongDan +
+    "\n\nFile này hiện KHÔNG được dùng ở đâu trong cơ sở dữ liệu (theo lần quét gần nhất)." +
+    "\nHành động này KHÔNG hoàn tác được.")) return;
+
+  nut.disabled = true;
+  supabaseClient.storage.from(ADMIN_BUCKET_HINH).remove([f.duongDan])
+    .then(function (kq) {
+      if (kq.error) throw new Error(kq.error.message);
+      adminDsFileMoCoi.splice(chiSo, 1);
+      adminBaoTin("✅ Đã xóa file " + f.duongDan + ".", true);
+      adminEl("dkTrangThai").textContent = "📊 Còn " + adminDsFileMoCoi.length + " file mồ côi (theo lần quét gần nhất).";
+      adminVeBangFileMoCoi();  // ve lai de chi so cac nut khop mang moi
+    })
+    .catch(function (loi) {
+      nut.disabled = false;
+      adminBaoTin("❌ Không xóa được file: " + loi.message +
+        " (kiểm tra bucket đã cho phép XÓA (delete) cho anon chưa - xem hướng dẫn kèm bước này).", false);
     });
 }

@@ -3,9 +3,12 @@
 // CHUC NANG: Goi cac ham RPC tren Supabase
 //            (dang_ky, dang_nhap, cap_nhat_diem, lay_xep_hang, lay_cau_hinh,
 //             tru_diem_goi_y, lay_thong_tin_ca_nhan, lay_ho_so, cap_nhat_avatar,
-//             cap_nhat_trang_bi, lay_lich_su_tran, lay_thong_ke_doi_thu)
-// BUOC: NC_05 (nang cap tu NC_03) - NGAY: 10/07/2026 - them 6 ham cho
-//       "Thanh Thong Tin Tren Cung" + "Trang Tai Khoan" (HUONG DAN 3, KE HOACH NC_05)
+//             cap_nhat_trang_bi, lay_lich_su_tran, lay_thong_ke_doi_thu, lay_bo_co)
+// BUOC: NC_09 (nang cap tu NC_05) - NGAY: 11/07/2026
+//       NC_05: them 6 ham cho "Thanh Thong Tin Tren Cung" + "Trang Tai Khoan".
+//       NC_09: them apiLayBoCo() - lay danh sach bo quan co (du lieu tung quan) de
+//              taikhoan_NC.js cho tre CHON bo, va board.js PHAN GIAI ma dinh danh
+//              dang trang bi ra du_lieu that (HUONG DAN 4.6, KE HOACH NC_09)
 // QUY UOC: GIU NGUYEN ten ham va kieu tra ve Promise/.then() giong ban cu,
 //          de app.js / auth.js / board.js / rank.js / taikhoan_NC.js KHONG phai
 //          sua logic goi API da co
@@ -182,4 +185,19 @@ function apiLayLichSuTran(tenDangNhap) {
  */
 function apiLayThongKeDoiThu(tenDangNhap) {
   return apiGoiRpc("lay_thong_ke_doi_thu", { p_ten: tenDangNhap });
+}
+
+/**
+ * NC_09: Ham lay danh sach BO QUAN CO (loai='bo_quan_co', dang hien thi).
+ * RPC lay_bo_co() - CONG KHAI (khong can ten), tra ve du_lieu tung quan.
+ * Tra ve Promise: { thanhCong, thongBao, danhSachBoCo }
+ * Moi bo: { id, maDinhDanh, ten, moTa, urlHinh, duLieu, mocLevel }
+ *   duLieu co the la { k,q,r,b,n,p } (dung chung 2 mau) HOAC
+ *   { trang:{k,q,...}, den:{k,q,...} } (anh rieng tung mau - NC_09).
+ * Dung cho 2 noi:
+ *   - taikhoan_NC.js: liet ke bo co da mo khoa (mocLevel <= level) de tre CHON.
+ *   - board.js: dung ma dinh danh dang trang bi tra cuu ra duLieu that de ve quan.
+ */
+function apiLayBoCo() {
+  return apiGoiRpc("lay_bo_co", {});
 }

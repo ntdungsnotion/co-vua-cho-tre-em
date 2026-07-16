@@ -5,11 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cờ Vua Cho Trẻ Em</title>
 
-  <!-- NGÀY: 11/07/2026 - BƯỚC: NC_06B (kích hoạt 2 nút "Cửa Hàng" -> trang
-       cuahang_NC.html: nút trên thanh điều hướng + link trong tab Tài Khoản).
-       LỊCH SỬ: NC_06A (kích hoạt nút "Quản Trị" -> admin_NC.html);
-       NC_05 (Thanh Thông Tin Trên Cùng + Trang Tài Khoản + Menu Theo Vai Trò -
-       thay Tab "Bảng Điều Khiển" cũ) -->
+  <!-- NGÀY: 12/07/2026 - BƯỚC: NC_07-2 (kích hoạt nút "Khám Phá" -> trang
+       khampha_NC.html mới). Từ đây cả 2 nút "Học Tập" và "Khám Phá" đều là
+       liên kết thật; không còn nút "sắp có" (disabled) nào trên thanh điều hướng.
+       LỊCH SỬ: NC_07-1 (kích hoạt nút "Học Tập" -> hoctap_NC.html); NC_06B
+       (kích hoạt 2 nút "Cửa Hàng" -> trang cuahang_NC.html: nút trên thanh
+       điều hướng + link trong tab Tài Khoản); NC_06A (kích hoạt nút "Quản
+       Trị" -> admin_NC.html); NC_05 (Thanh Thông Tin Trên Cùng + Trang Tài
+       Khoản + Menu Theo Vai Trò - thay Tab "Bảng Điều Khiển" cũ) -->
 
   <!-- File định dạng giao diện (đã tách khỏi thẻ <style>, dùng làm file .css thường) -->
   <link rel="stylesheet" href="style.css">
@@ -95,8 +98,10 @@
        KHÔNG dùng class "nutTab" để app.js không gán sự kiện chuyển tab. -->
   <!-- NC_06B: "Cửa Hàng" nay là thẻ <a> mở trang cuahang_NC.html (hết "sắp có").
        Cố tình KHÔNG dùng class "nutTab" để app.js không gán sự kiện chuyển tab
-       (giống "2 Người" và "Quản Trị"). Học Tập/Khám Phá: vẫn "để chỗ sẵn"
-       (disabled), kích hoạt ở NC_07. -->
+       (giống "2 Người" và "Quản Trị"). NC_07-1: "Học Tập" nay là thẻ <a> mở
+       trang hoctap_NC.html (hết "sắp có"), cùng lý do trên. NC_07-2: "Khám Phá"
+       nay cũng là thẻ <a> mở trang khampha_NC.html (hết "sắp có") - không còn
+       nút "sắp có" nào trên thanh điều hướng. -->
   <!-- ================================================= -->
   <nav id="thanhDieuHuong">
     <button class="nutTab" id="tabAuth" data-tab="auth">Đăng Nhập</button>
@@ -105,8 +110,8 @@
     <a class="nutTabLienKet" id="tabHaiNguoi" href="choi2nguoi_NC.html">👫 2 Người</a>
     <button class="nutTab" id="tabRank" data-tab="rank">🏆 Xếp Hạng</button>
     <a class="nutTabLienKet" id="tabCuaHang" href="cuahang_NC.html">🛍️ Cửa Hàng</a>
-    <button class="nutTabSapCo" id="tabHocTap" type="button" disabled title="Sắp ra mắt (NC_07)">📚 Học Tập</button>
-    <button class="nutTabSapCo" id="tabKhamPha" type="button" disabled title="Sắp ra mắt (NC_07)">🧭 Khám Phá</button>
+    <a class="nutTabLienKet" id="tabHocTap" href="hoctap_NC.html">📚 Học Tập</a>
+    <a class="nutTabLienKet" id="tabKhamPha" href="khampha_NC.html">🧭 Khám Phá</a>
     <a class="nutTabLienKet" id="tabQuanTri" href="admin_NC.html" title="Trang Quản Trị (chỉ dành cho quản trị viên)" style="display:none;">🛠️ Quản Trị</a>
   </nav>
 

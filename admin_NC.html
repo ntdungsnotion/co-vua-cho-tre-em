@@ -9,10 +9,11 @@
        FILE: admin_NC.html
        CHỨC NĂNG: Trang Quản Trị - quản lý TẤT CẢ nội dung vận hành ngay
                   trên web, không cần mở Supabase Table Editor.
-                  7 màn hình: Vật Phẩm, Đổi Thưởng, Ý Tưởng, Cấu Hình Chung,
-                  Cấp Độ Máy, Lời Động Viên, Giọng Đọc.
-       NGÀY: 12/07/2026 - BƯỚC: NC_09B (băng rôn chế độ form + hướng dẫn 2 bước Ghi/Lưu;
-             NC_09: bộ quân cờ nhập ảnh riêng Trắng/Đen - 12 ô)
+                  9 màn hình: Vật Phẩm, Đổi Thưởng, Ý Tưởng, Cấu Hình Chung,
+                  Cấp Độ Máy, Lời Động Viên, Giọng Đọc, Hồ Sơ Trẻ, Dọn Kho Ảnh.
+       NGÀY: 12/07/2026 21:00 - BƯỚC: NC_06A-2 (thêm: xem người sở hữu vật phẩm,
+             màn hình Hồ Sơ Trẻ, màn hình Dọn Kho Ảnh - quét/xóa file mồ côi;
+             NC_09B: băng rôn chế độ form; NC_09: bộ quân 12 ô Trắng/Đen)
        PHỤ THUỘC: style.css, config.js, api.js, admin_NC.js
                   (KHÔNG cần chess.js / stockfish - trang này không có bàn cờ)
        BẢO MẬT: đọc tài khoản từ sessionStorage "coVuaTaiKhoanDangNhap"
@@ -259,6 +260,52 @@
 
     .adminDangTai { padding: 16px; text-align: center; color: #6b7a8c; }
     .adminRong { padding: 16px; text-align: center; color: #6b7a8c; font-style: italic; }
+
+    /* ----- NC_06A-2: thẻ số liệu trong Hồ Sơ Trẻ ----- */
+    .adminLuoiThe {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .adminTheThongTin {
+      flex: 1 1 130px;
+      min-width: 120px;
+      background-color: #f4f8fd;
+      border: 1px solid var(--mau-vien);
+      border-radius: 10px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+    .adminTheThongTin .nhan { font-size: 0.8rem; color: #6b7a8c; }
+    .adminTheThongTin .soLieu {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: var(--mau-chinh-dam);
+      margin-top: 2px;
+      word-break: break-word;
+    }
+    .adminAvatarHoSo {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 2px solid var(--mau-vien);
+      object-fit: cover;
+      background-color: #ffffff;
+      vertical-align: middle;
+    }
+    .adminAvatarHoSoChu {
+      display: inline-block;
+      width: 56px;
+      height: 56px;
+      line-height: 56px;
+      border-radius: 50%;
+      border: 2px solid var(--mau-vien);
+      background-color: #ffffff;
+      font-size: 2rem;
+      text-align: center;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -296,6 +343,8 @@
       <button class="adminNutManHinh" data-manhinh="capdo">🎚️ Cấp Độ Máy</button>
       <button class="adminNutManHinh" data-manhinh="loidongvien">💬 Lời Động Viên</button>
       <button class="adminNutManHinh" data-manhinh="giongdoc">🔊 Giọng Đọc</button>
+      <button class="adminNutManHinh" data-manhinh="hosotre">👦 Hồ Sơ Trẻ</button>
+      <button class="adminNutManHinh" data-manhinh="donkho">🧹 Dọn Kho Ảnh</button>
     </nav>
 
     <div class="adminThongBao" id="adminThongBao"></div>
@@ -448,6 +497,30 @@
             </thead>
             <tbody id="bangVatPham">
               <tr><td colspan="12" class="adminDangTai">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="adminGhiChu" style="margin-top:8px;">
+          💡 Bấm nút <strong>👥</strong> ở cột "Đã đổi" để xem <strong>trẻ nào</strong> đã đổi/mua vật phẩm đó.
+        </p>
+      </div>
+
+      <!-- NC_06A-2: khối NGƯỜI SỞ HỮU - hiện khi bấm 👥 trên một dòng vật phẩm -->
+      <div class="adminKhoi" id="khoiNguoiSoHuu" style="display:none;">
+        <h3 id="tieuDeNguoiSoHuu">👥 Người Sở Hữu</h3>
+        <p class="adminGhiChu" id="ghiChuNguoiSoHuu">
+          Danh sách dưới đây là các lượt <strong>đổi/mua thật sự</strong> (ghi trong lịch sử đổi quà).
+        </p>
+        <div class="adminCuonNgang">
+          <table class="adminBang">
+            <thead>
+              <tr>
+                <th>Trẻ</th><th>Level hiện tại</th><th>Giá lúc đổi</th>
+                <th>Trạng thái</th><th>Thời gian đổi</th><th style="width:130px;"></th>
+              </tr>
+            </thead>
+            <tbody id="bangNguoiSoHuu">
+              <tr><td colspan="6" class="adminDangTai">Đang tải...</td></tr>
             </tbody>
           </table>
         </div>
@@ -692,6 +765,112 @@
           ⚠️ Máy này KHÔNG có giọng tiếng Việt nào. Vẫn lưu được tên giọng, nhưng không nghe thử được.
           Trên Windows: Cài đặt → Thời gian &amp; ngôn ngữ → Giọng nói → Thêm giọng nói → Tiếng Việt.
         </p>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- MÀN HÌNH 8: HỒ SƠ TRẺ (NC_06A-2) -->
+    <!-- Dùng lại 2 RPC công khai lay_xep_hang + lay_ho_so (đã trả đủ trường) -->
+    <!-- ============================================================ -->
+    <section class="adminManHinh" id="manhinh-hosotre">
+      <div class="adminKhoi">
+        <h3>👦 Danh Sách Trẻ</h3>
+        <p class="adminGhiChu">
+          Bấm <strong>Xem hồ sơ</strong> để mở chi tiết: số liệu, vật phẩm sở hữu, lịch sử đổi quà
+          và 50 trận gần nhất của trẻ đó.
+        </p>
+        <button class="adminNut adminNutPhu" id="btnLamMoiHoSoTre" type="button">🔄 Làm Mới</button>
+        <div class="adminCuonNgang" style="margin-top:10px;">
+          <table class="adminBang">
+            <thead>
+              <tr>
+                <th>Hạng</th><th>Tên</th><th>Level</th><th>Danh hiệu</th>
+                <th>💎</th><th>EXP</th><th>Tổng trận</th><th>Tổng thắng</th>
+                <th>Tỷ lệ thắng</th><th style="width:130px;"></th>
+              </tr>
+            </thead>
+            <tbody id="bangDanhSachTre">
+              <tr><td colspan="10" class="adminDangTai">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Chi tiết 1 trẻ: hiện sau khi bấm "Xem hồ sơ" -->
+      <div class="adminKhoi" id="khoiChiTietTre" style="display:none;">
+        <h3 id="tieuDeChiTietTre">📄 Hồ Sơ Chi Tiết</h3>
+
+        <div id="htAvatarVaTen" style="margin-bottom:6px;"></div>
+        <div class="adminLuoiThe" id="htLuoiThe"><!-- admin_NC.js điền thẻ số liệu --></div>
+
+        <h4 style="margin-bottom:4px;">🎁 Vật Phẩm Sở Hữu (đã đổi/mua)</h4>
+        <p class="adminGhiChu">
+          Vật phẩm mở khóa theo <strong>mốc level</strong> là "có sẵn" khi trẻ đủ level,
+          KHÔNG nằm trong danh sách này (danh sách chỉ gồm các món đã đổi/mua thật sự).
+        </p>
+        <div class="adminCuonNgang">
+          <table class="adminBang">
+            <thead>
+              <tr><th>Loại</th><th>Tên</th><th>Mã định danh</th></tr>
+            </thead>
+            <tbody id="htBangVatPham"></tbody>
+          </table>
+        </div>
+
+        <h4 style="margin:14px 0 4px;">📦 Lịch Sử Đổi Quà</h4>
+        <div class="adminCuonNgang">
+          <table class="adminBang">
+            <thead>
+              <tr><th>Vật phẩm</th><th>Loại</th><th>Giá lúc đổi</th><th>Trạng thái</th><th>Thời gian đổi</th></tr>
+            </thead>
+            <tbody id="htBangDoiQua"></tbody>
+          </table>
+        </div>
+
+        <h4 style="margin:14px 0 4px;">♟️ 50 Trận Gần Nhất</h4>
+        <div class="adminCuonNgang" style="max-height:320px; overflow-y:auto;">
+          <table class="adminBang">
+            <thead>
+              <tr><th>Thời gian</th><th>Chế độ</th><th>Đối thủ</th><th>Kết quả</th></tr>
+            </thead>
+            <tbody id="htBangTran"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- MÀN HÌNH 9: DỌN KHO ẢNH - FILE MỒ CÔI (NC_06A-2) -->
+    <!-- ============================================================ -->
+    <section class="adminManHinh" id="manhinh-donkho">
+      <div class="adminKhoi">
+        <h3>🧹 Dọn Kho Ảnh (file mồ côi trong Storage)</h3>
+        <p class="adminGhiChu">
+          Nút Quét sẽ liệt kê mọi file trong kho <strong>hinh-vat-pham</strong> rồi so với
+          <strong>mọi nơi đang dùng file</strong> trong cơ sở dữ liệu (ảnh vật phẩm, ảnh từng quân cờ,
+          avatar cao cấp các trẻ đang chọn, file MP3 lời động viên). File <strong>không ai dùng</strong>
+          gọi là "mồ côi" — thường là ảnh cũ đã thay bằng ảnh mới.<br>
+          🔒 <strong>An toàn</strong>: trang này KHÔNG bao giờ tự xóa. Mỗi file phải bấm 🗑️ và
+          xác nhận riêng. Nếu không chắc, cứ để nguyên — file mồ côi không gây lỗi gì, chỉ tốn chỗ.
+        </p>
+        <div class="adminHang">
+          <button class="adminNut" id="btnQuetKho" type="button">🔍 Quét Kho</button>
+        </div>
+        <p class="adminGhiChu" id="dkTrangThai" style="font-weight:bold;">Chưa quét. Bấm "🔍 Quét Kho" để bắt đầu.</p>
+        <div class="adminCuonNgang">
+          <table class="adminBang">
+            <thead>
+              <tr>
+                <th>File (đường dẫn trong kho)</th><th style="width:90px;">Kích thước</th>
+                <th style="width:130px;">Sửa lần cuối</th><th style="width:90px;">Xem trước</th>
+                <th style="width:90px;"></th>
+              </tr>
+            </thead>
+            <tbody id="bangFileMoCoi">
+              <tr><td colspan="5" class="adminRong">Chưa có dữ liệu.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 

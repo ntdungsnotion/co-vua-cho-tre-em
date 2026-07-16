@@ -4,11 +4,17 @@
 //            Avatar" cũ) - chọn avatar miễn phí, trang bị vật phẩm số đã sở
 //            hữu, xem kim cương/EXP/level/hạng/danh hiệu/thành tích, bảng 50
 //            trận gần nhất, thống kê theo đối thủ, lịch sử đổi thưởng (chỉ xem).
-// BƯỚC: NC_05 - NGÀY: 10/07/2026
+// BƯỚC: NC_09 (nâng cấp từ NC_05) - NGÀY: 11/07/2026
+//   NC_09: THÊM mục "Bộ Quân Cờ" (#danhSachBoQuanCo) - liệt kê các bộ quân đã MỞ
+//   KHÓA theo Level (mocLevel <= level; Bộ Cổ Điển mocLevel 1 nên ai cũng có từ
+//   đầu) để trẻ CHỌN bộ dùng trên bàn cờ. Chọn = trang bị loai='bo_quan_co' bằng
+//   MÃ ĐỊNH DANH của bộ (cap_nhat_trang_bi); board.js phân giải mã -> du_lieu.
+//   Dữ liệu lấy từ apiLayBoCo() (KHÔNG cần lich_su_doi_qua - bộ mở khóa theo
+//   level là "có sẵn", không phải mua). HƯỚNG DẪN 4.6.
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "taikhoan" để tránh xung đột
 // PHỤ THUỘC:
 //   - api.js: apiLayHoSo, apiLayThongKeDoiThu, apiLayLichSuTran,
-//             apiCapNhatAvatar, apiCapNhatTrangBi
+//             apiCapNhatAvatar, apiCapNhatTrangBi, apiLayBoCo (NC_09)
 //   - app.js: appLayTaiKhoanDangNhap(), appCapNhatTrangBiCucBo()
 //
 // GHI CHÚ (HƯỚNG DẪN 4.6 - QUAN TRỌNG cho các bước sau):
@@ -85,6 +91,9 @@ function taikhoanTaiHoSo() {
   var taiKhoan = (typeof appLayTaiKhoanDangNhap === "function") ? appLayTaiKhoanDangNhap() : null;
   if (!taiKhoan || taikhoanDangTai) return;
   taikhoanDangTai = true;
+
+  // NC_09: tải danh sách bộ quân cờ (độc lập, không chặn Promise.all bên dưới)
+  taikhoanTaiBoQuanCo();
 
   Promise.all([
     apiLayHoSo(taiKhoan.tenDangNhap),
@@ -286,11 +295,111 @@ function taikhoanTrangBiVatPham(loai, maDinhDanh) {
     if (!ketQua || !ketQua.thanhCong) return;
 
     if (typeof appCapNhatTrangBiCucBo === "function") {
-      var avatarMoi = (loai === "avatar") ? maDinhDanh : undefined;
+      // NC_09B: avatar_da_chon do MAY CHU quyet dinh (gia tri HIEN THI - url/emoji),
+      // khong dung ma dinh danh nua (truoc day gay loi avatar hien chu "TauVuTru1")
+      var avatarMoi = (loai === "avatar") ? (ketQua.avatarDaChon || maDinhDanh) : undefined;
       appCapNhatTrangBiCucBo(ketQua.trangBi, avatarMoi);
     }
     // Vẽ lại toàn bộ hồ sơ để cập nhật nút "Đang Dùng" trên đúng thẻ vật phẩm
     taikhoanTaiHoSo();
+  });
+}
+
+/**
+ * NC_09: Tải danh sách bộ quân cờ (apiLayBoCo) rồi vẽ mục "Bộ Quân Cờ".
+ * Gọi độc lập với lay_ho_so vì bộ mở khóa theo Level là "có sẵn", không nằm
+ * trong vật phẩm đã sở hữu (lich_su_doi_qua).
+ */
+function taikhoanTaiBoQuanCo() {
+  if (typeof apiLayBoCo !== "function") return;
+  apiLayBoCo().then(function (phanHoi) {
+    if (phanHoi && phanHoi.thanhCong) {
+      taikhoanVeBoQuanCo(phanHoi.danhSachBoCo || []);
+    }
+  });
+}
+
+/**
+ * NC_09: Vẽ các bộ quân cờ ĐÃ MỞ KHÓA (mocLevel <= level) thành thẻ có nút chọn.
+ * Bộ đang dùng hiện "✅ Đang Dùng"; chưa chọn gì thì coi Bộ Cổ Điển là mặc định.
+ */
+function taikhoanVeBoQuanCo(danhSach) {
+  var khung = document.getElementById("danhSachBoQuanCo");
+  if (!khung) return;
+  khung.innerHTML = "";
+
+  var taiKhoan = (typeof appLayTaiKhoanDangNhap === "function") ? appLayTaiKhoanDangNhap() : null;
+  var level = (taiKhoan && parseInt(taiKhoan.level, 10)) || 1;
+  var trangBi = (taiKhoan && taiKhoan.trangBi) || {};
+  var maDangDung = trangBi.bo_quan_co || "";
+
+  // Chi hien bo MO KHOA THEO LEVEL: moc_level la so duong va level >= moc_level.
+  // Bo cao cap (moc_level rong, mua bang kim cuong) KHONG hien o day - sau khi mua
+  // se hien trong muc "Vat Pham Da So Huu" ben duoi va trang bi o do.
+  var daMoKhoa = (danhSach || []).filter(function (bo) {
+    var moc = parseInt(bo.mocLevel, 10);
+    return !isNaN(moc) && moc >= 1 && level >= moc;
+  });
+
+  if (daMoKhoa.length === 0) {
+    khung.innerHTML = '<p class="taikhoanRong">Chưa có bộ quân cờ nào.</p>';
+    return;
+  }
+
+  daMoKhoa.forEach(function (bo) {
+    var the = document.createElement("div");
+    the.className = "theVatPhamSoHuu";
+
+    var oHinh = document.createElement("div");
+    oHinh.className = "theVatPhamHinh";
+    if (bo.urlHinh) {
+      var anh = document.createElement("img");
+      anh.src = bo.urlHinh;
+      anh.alt = bo.ten || "";
+      oHinh.appendChild(anh);
+    } else {
+      oHinh.textContent = "♟️";
+    }
+
+    var oTen = document.createElement("p");
+    oTen.className = "theVatPhamTen";
+    oTen.textContent = bo.ten || "Bộ quân cờ";
+
+    // Đang dùng: khớp mã; hoặc chưa chọn gì (rỗng) thì Bộ Cổ Điển là mặc định
+    var dangDung = (maDangDung === bo.maDinhDanh) ||
+                   (!maDangDung && bo.maDinhDanh === "bo_co_co_dien");
+
+    var nut = document.createElement("button");
+    nut.type = "button";
+    nut.className = dangDung ? "nutDaTrangBi" : "nutTrangBi";
+    nut.textContent = dangDung ? "✅ Đang Dùng" : "Chọn";
+    nut.disabled = dangDung;
+    nut.addEventListener("click", function () {
+      taikhoanChonBoQuanCo(bo.maDinhDanh);
+    });
+
+    the.appendChild(oHinh);
+    the.appendChild(oTen);
+    the.appendChild(nut);
+    khung.appendChild(the);
+  });
+}
+
+/**
+ * NC_09: Chọn 1 bộ quân cờ - trang bị loai='bo_quan_co' = MÃ ĐỊNH DANH của bộ.
+ * Máy chủ (cap_nhat_trang_bi) ghi vào trang_bi; board.js đọc mã này rồi phân
+ * giải ra du_lieu để vẽ ở lần vẽ bàn cờ kế tiếp (ván mới).
+ */
+function taikhoanChonBoQuanCo(maDinhDanh) {
+  var taiKhoan = (typeof appLayTaiKhoanDangNhap === "function") ? appLayTaiKhoanDangNhap() : null;
+  if (!taiKhoan) return;
+
+  apiCapNhatTrangBi(taiKhoan.tenDangNhap, "bo_quan_co", maDinhDanh).then(function (ketQua) {
+    if (!ketQua || !ketQua.thanhCong) return;
+    if (typeof appCapNhatTrangBiCucBo === "function") {
+      appCapNhatTrangBiCucBo(ketQua.trangBi);
+    }
+    taikhoanTaiBoQuanCo(); // vẽ lại để cập nhật nút "Đang Dùng"
   });
 }
 
