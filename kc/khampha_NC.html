@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khám Phá - Kids Challenge</title>
+
+  <!-- ================================================================
+       FILE: khampha_NC.html
+       CHỨC NĂNG: Trang ĐIỂM VÀO ĐỘC LẬP của phân hệ Khám Phá (Kids
+                  Challenge) - giới thiệu "sắp có nội dung khám phá thế giới
+                  nói chung" + 2 khu vực gửi ý tưởng: chuyên mục kham_pha
+                  (khám phá thế giới) và tro_choi (các loại cờ khác + trò
+                  chơi nhỏ - phân hệ con nằm trong Khám Phá). Bản dựng lại từ
+                  bước KC_00: dùng bộ CSS/JS RIÊNG của Kids Challenge, KHÔNG
+                  còn mượn style.css/config.js/api.js/ytuong_NC.js của Cờ
+                  Vua và KHÔNG còn đi qua index.html/menu Cờ Vua (HƯỚNG DẪN
+                  mục 2). Nghiệp vụ Khám Phá thật (kc_noi_dung, trò chơi) sẽ
+                  xây ở KC_01/KP_xx - trang này VẪN CHỈ LÀ khung giới thiệu +
+                  thu ý tưởng.
+       BƯỚC: KC_00
+       NGÀY: 17/07/2026
+       PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
+                  kc_ytuong.js (đặt CÙNG THƯ MỤC /kc/, TÁI SỬ DỤNG NGUYÊN VẸN
+                  từ hoctap_NC.html, KHÔNG sửa).
+       ================================================================ -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kc_style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header id="headerChinh">
+    <h1>🧭 Khám Phá</h1>
+    <div id="trangThaiDangNhap">
+      <span id="kcTenNguoiChoi"></span>
+      <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
+      <a class="kcNutLienKet" href="../index.html">⬅ Về Cờ Vua</a>
+    </div>
+  </header>
+
+  <div id="kcChuaDangNhap" style="display:none;">
+    <h2>Con đăng nhập nhé!</h2>
+    <p>Dùng đúng tên đăng nhập và mật khẩu bên webapp Cờ Vua.</p>
+    <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+    <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+    <button id="kcNutDangNhap" type="button">Đăng nhập</button>
+    <div id="kcThongBaoDangNhap"></div>
+  </div>
+
+  <div id="kcNoiDungCanDangNhap" style="display:none;">
+
+    <div class="kcGioiThieu">
+      <h2>Sắp có cả một thế giới để khám phá!</h2>
+      <p>Cô đang chuẩn bị thật nhiều điều kỳ diệu về thế giới quanh con — từ vũ trụ xa xôi đến những con vật ngộ nghĩnh.</p>
+    </div>
+    <div class="kcLuoiThe">
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">🔬</span>
+        <h3>Khoa Học</h3>
+        <p>Những thí nghiệm và điều kỳ diệu quanh ta.</p>
+      </div>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">🔭</span>
+        <h3>Thiên Văn</h3>
+        <p>Các vì sao, hành tinh và bí ẩn của vũ trụ bao la.</p>
+      </div>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">🦁</span>
+        <h3>Động Vật</h3>
+        <p>Thế giới muôn loài từ rừng sâu tới đại dương.</p>
+      </div>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">🏛️</span>
+        <h3>Lịch Sử</h3>
+        <p>Những câu chuyện thú vị của ngày xưa.</p>
+      </div>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">🤖</span>
+        <h3>AI &amp; Lập Trình</h3>
+        <p>Máy tính suy nghĩ thế nào và cách ra lệnh cho nó.</p>
+      </div>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">🌍</span>
+        <h3>Địa Lý</h3>
+        <p>Các vùng đất, quốc gia và kỳ quan khắp thế giới.</p>
+      </div>
+    </div>
+
+    <!-- Khu vực gửi ý tưởng #1 - chuyên mục kham_pha -->
+    <div class="kcytKhoiYTuong" data-chuyen-muc="kham_pha">
+      <h3 class="kcytKhoiTieuDe">🔭 Con muốn khám phá điều gì?</h3>
+      <p class="kcytKhoiMoTa">Con tò mò về điều gì trong thế giới này nào? Vũ trụ, động vật, khoa học, lịch sử...?</p>
+      <div class="kcytHopNhap">
+        <textarea class="kcytO" placeholder="Con muốn khám phá..."></textarea>
+        <div class="kcytHangDuoiO">
+          <span class="kcytSoKyTuConLai">500</span>
+          <button class="kcytNutGui" type="button">📨 Gửi Ý Tưởng</button>
+        </div>
+        <div class="kcytThongBaoKhoi"></div>
+      </div>
+      <div class="kcytKhoiDanhSach">
+        <h4>📋 Ý tưởng con đã gửi</h4>
+        <div class="kcytDanhSachRong">Con chưa gửi ý tưởng nào ở mục này.</div>
+        <ul class="kcytDanhSach"></ul>
+      </div>
+    </div>
+
+    <p class="kcNganCach">🎲 Các loại cờ khác &amp; trò chơi nhỏ là một phần nằm trong Khám Phá</p>
+
+    <!-- Khu vực gửi ý tưởng #2 - chuyên mục tro_choi -->
+    <div class="kcytKhoiYTuong" data-chuyen-muc="tro_choi">
+      <h3 class="kcytKhoiTieuDe">🎲 Con muốn có thêm cờ hay trò chơi nào?</h3>
+      <p class="kcytKhoiMoTa">Cờ tướng, cờ caro, hay một trò chơi nhỏ vui vui nào con thích?</p>
+      <div class="kcytHopNhap">
+        <textarea class="kcytO" placeholder="Con muốn chơi..."></textarea>
+        <div class="kcytHangDuoiO">
+          <span class="kcytSoKyTuConLai">500</span>
+          <button class="kcytNutGui" type="button">📨 Gửi Ý Tưởng</button>
+        </div>
+        <div class="kcytThongBaoKhoi"></div>
+      </div>
+      <div class="kcytKhoiDanhSach">
+        <h4>📋 Ý tưởng con đã gửi</h4>
+        <div class="kcytDanhSachRong">Con chưa gửi ý tưởng nào ở mục này.</div>
+        <ul class="kcytDanhSach"></ul>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="kc_config.js"></script>
+  <script src="kc_api.js"></script>
+  <script src="kc_auth.js"></script>
+  <script src="kc_ytuong.js"></script>
+
+</body>
+</html>

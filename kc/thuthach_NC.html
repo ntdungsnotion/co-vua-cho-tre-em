@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thử Thách - Kids Challenge</title>
+
+  <!-- ================================================================
+       FILE: thuthach_NC.html
+       CHỨC NĂNG: Trang ĐIỂM VÀO ĐỘC LẬP của phân hệ Thử Thách (Kids
+                  Challenge) - bước KC_00 CHUYỂN từ khung tĩnh (không đăng
+                  nhập, không RPC) sang có khối đăng nhập + khu vực gửi ý
+                  tưởng (chuyên mục MỚI 'thu_thach', mở bằng điểm chạm
+                  WHITELIST số 1 - xem supabase_kc00_chuyen_muc_y_tuong.sql).
+                  CƠ CHẾ THẬT của Thử Thách (tài khoản phụ huynh, tạo/xác
+                  nhận thử thách, thưởng...) CHƯA làm ở bước này - vẫn nằm ở
+                  TT_01/TT_02/TT_03 (xem KẾ HOẠCH).
+       BƯỚC: KC_00
+       NGÀY: 17/07/2026
+       PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
+                  kc_ytuong.js (đặt CÙNG THƯ MỤC /kc/).
+       GHI CHÚ: định dạng RIÊNG của trang này (khối quy trình 5 bước, ghi
+                chú phụ huynh, thẻ mở rộng tương lai) nằm trong thẻ <style>
+                bên dưới vì KHÔNG dùng chung với 2 trang kia.
+       ================================================================ -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kc_style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ----- Khối quy trình (5 bước) - RIÊNG trang này ----- */
+    #ttQuyTrinh {
+      max-width: 720px;
+      margin: 8px auto 28px;
+      padding: 20px 16px;
+      background-color: var(--mau-nen-khoi);
+      border: 2px solid var(--mau-vien);
+      border-radius: var(--bo-tron);
+      box-shadow: var(--do-bong);
+    }
+    #ttQuyTrinh h3 { text-align: center; margin: 0 0 16px; }
+    .ttChuoiBuoc { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center; gap: 8px; }
+    .ttBuoc {
+      flex: 1 1 120px;
+      min-width: 110px;
+      text-align: center;
+      background: var(--mau-chinh-nhat);
+      border: 2px solid var(--mau-vien);
+      border-radius: 12px;
+      padding: 12px 8px;
+    }
+    .ttBuocIcon { font-size: 1.8rem; display: block; margin-bottom: 4px; }
+    .ttBuocChu { font-size: 0.82rem; color: var(--mau-chu); font-weight: bold; }
+    .ttMuiTen { align-self: center; font-size: 1.4rem; color: var(--mau-chinh); font-weight: bold; }
+
+    #ttGhiChuPhuHuynh {
+      max-width: 720px;
+      margin: 0 auto 32px;
+      padding: 16px 18px;
+      background: #fff6e0;
+      border: 2px solid #f0d38a;
+      border-radius: var(--bo-tron);
+      color: #6b5200;
+      text-align: center;
+      font-size: 0.92rem;
+    }
+    #ttGhiChuPhuHuynh strong { color: var(--mau-phu-dam); }
+
+    #ttTuongLai {
+      max-width: 720px;
+      margin: 0 auto 40px;
+      padding: 0 16px;
+      text-align: center;
+      color: var(--mau-chu-nhat);
+      font-size: 0.88rem;
+    }
+    #ttTuongLai span {
+      display: inline-block;
+      background: var(--mau-nen-khoi);
+      border: 1px solid var(--mau-vien);
+      border-radius: 999px;
+      padding: 4px 12px;
+      margin: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <header id="headerChinh">
+    <h1>🎯 Thử Thách</h1>
+    <div id="trangThaiDangNhap">
+      <span id="kcTenNguoiChoi"></span>
+      <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
+      <a class="kcNutLienKet" href="../index.html">⬅ Về Cờ Vua</a>
+    </div>
+  </header>
+
+  <div id="kcChuaDangNhap" style="display:none;">
+    <h2>Con đăng nhập nhé!</h2>
+    <p>Dùng đúng tên đăng nhập và mật khẩu bên webapp Cờ Vua.</p>
+    <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+    <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+    <button id="kcNutDangNhap" type="button">Đăng nhập</button>
+    <div id="kcThongBaoDangNhap"></div>
+  </div>
+
+  <div id="kcNoiDungCanDangNhap" style="display:none;">
+
+    <div class="kcGioiThieu">
+      <h2>Sắp có: Thử Thách cùng bố mẹ! 🎉</h2>
+      <p>Bố mẹ sẽ giao cho con những thử thách nhỏ mỗi ngày. Con hoàn thành, bố mẹ
+         xác nhận, và con sẽ nhận được kim cương 💎 làm phần thưởng!</p>
+    </div>
+
+    <div class="kcLuoiThe">
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">📚</span>
+        <h3>Làm Bài Tập</h3>
+        <p>Hoàn thành bài tập bố mẹ giao.</p>
+      </div>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">📖</span>
+        <h3>Đọc Sách</h3>
+        <p>Đọc một câu chuyện thật hay.</p>
+      </div>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">♟️</span>
+        <h3>Chơi Cờ</h3>
+        <p>Chơi một ván cờ để luyện trí.</p>
+      </div>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">🏃</span>
+        <h3>Tập Thể Dục</h3>
+        <p>Vận động cho cơ thể khỏe mạnh.</p>
+      </div>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">🧹</span>
+        <h3>Giúp Bố Mẹ</h3>
+        <p>Làm việc nhà nhỏ giúp gia đình.</p>
+      </div>
+    </div>
+
+    <div id="ttQuyTrinh">
+      <h3>Thử thách hoạt động thế nào?</h3>
+      <div class="ttChuoiBuoc">
+        <div class="ttBuoc"><span class="ttBuocIcon">👨‍👩‍👧</span><span class="ttBuocChu">Bố mẹ tạo thử thách</span></div>
+        <span class="ttMuiTen">→</span>
+        <div class="ttBuoc"><span class="ttBuocIcon">🧒</span><span class="ttBuocChu">Con hoàn thành</span></div>
+        <span class="ttMuiTen">→</span>
+        <div class="ttBuoc"><span class="ttBuocIcon">✅</span><span class="ttBuocChu">Bố mẹ xác nhận</span></div>
+        <span class="ttMuiTen">→</span>
+        <div class="ttBuoc"><span class="ttBuocIcon">💎</span><span class="ttBuocChu">Thưởng kim cương</span></div>
+        <span class="ttMuiTen">→</span>
+        <div class="ttBuoc"><span class="ttBuocIcon">🏆</span><span class="ttBuocChu">Lưu lịch sử &amp; thành tích</span></div>
+      </div>
+    </div>
+
+    <div id="ttGhiChuPhuHuynh">
+      🔒 Tính năng này cần <strong>tài khoản phụ huynh</strong> và đang được cô xây dựng.
+      Hãy đợi thêm một chút nhé — sắp ra mắt rồi!
+    </div>
+
+    <!-- Khu vực gửi ý tưởng - chuyên mục MỚI thu_thach (điểm chạm WHITELIST số 1) -->
+    <div class="kcytKhoiYTuong" data-chuyen-muc="thu_thach">
+      <h3 class="kcytKhoiTieuDe">🎯 Con muốn thử thách nào?</h3>
+      <p class="kcytKhoiMoTa">Con muốn bố mẹ giao cho thử thách gì? Kể cho cô nghe nhé!</p>
+      <div class="kcytHopNhap">
+        <textarea class="kcytO" placeholder="Con muốn thử thách..."></textarea>
+        <div class="kcytHangDuoiO">
+          <span class="kcytSoKyTuConLai">500</span>
+          <button class="kcytNutGui" type="button">📨 Gửi Ý Tưởng</button>
+        </div>
+        <div class="kcytThongBaoKhoi"></div>
+      </div>
+      <div class="kcytKhoiDanhSach">
+        <h4>📋 Ý tưởng con đã gửi</h4>
+        <div class="kcytDanhSachRong">Con chưa gửi ý tưởng nào ở mục này.</div>
+        <ul class="kcytDanhSach"></ul>
+      </div>
+    </div>
+
+    <div id="ttTuongLai">
+      Sau này còn có thể có:
+      <span>📅 Thử thách hằng ngày</span>
+      <span>🗓️ Thử thách theo tuần</span>
+      <span>🔥 Chuỗi ngày liên tiếp</span>
+      <span>🎖️ Huy hiệu</span>
+      <span>🌟 Thành tựu</span>
+    </div>
+
+  </div>
+
+  <script src="kc_config.js"></script>
+  <script src="kc_api.js"></script>
+  <script src="kc_auth.js"></script>
+  <script src="kc_ytuong.js"></script>
+
+</body>
+</html>

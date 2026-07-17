@@ -1,0 +1,320 @@
+/* ================================================================
+   FILE: kc_style.css
+   CHỨC NĂNG: Giao diện DÙNG CHUNG cho toàn bộ Kids Challenge (/kc/) - thay
+              thế hoàn toàn việc mượn style.css của webapp Cờ Vua. Tông màu
+              CỐ TÌNH khác Cờ Vua (tím phiêu lưu + vàng kim cương thay vì
+              xanh cờ vua) để trẻ phân biệt ngay đây là "khu vui chơi" khác.
+   BƯỚC: KC_00
+   NGÀY: 17/07/2026
+   QUY ƯỚC:
+     - Biến màu giữ NGUYÊN TÊN như bên Cờ Vua (--mau-chinh, --mau-vien...) để
+       tái dùng trực tiếp cấu trúc HTML/CSS đã có sẵn trong 3 trang skeleton
+       cũ, chỉ đổi GIÁ TRỊ màu.
+     - .kcThe / .kcLuoiThe dùng chung cho MỌI lưới "thẻ" xuất hiện ở cả 3
+       trang (môn học sắp có, chủ đề khám phá sắp có, ví dụ thử thách) - gộp
+       lại từ 3 bản gần như giống hệt nhau (htTheSapCo/kpTheSapCo/ttThe) để
+       đỡ trùng lặp code.
+     - Khối "Gửi Ý Tưởng" đổi tiền tố "yt" (bản gốc Cờ Vua) thành "kcyt" để
+       không lẫn với ytuong_NC.js cũ nếu sau này ai đọc chéo 2 bộ code.
+     - Font: Baloo 2 (tiêu đề, phóng khoáng) + Be Vietnam Pro (nội dung, tối
+       ưu tiếng Việt) nạp từ Google Fonts trong từng trang HTML. Nếu muốn bỏ
+       phụ thuộc ngoài, chỉ cần xoá link Google Fonts trong HTML - trang tự
+       rơi về font hệ thống (đã có sẵn trong khai báo font-family bên dưới).
+   ================================================================ */
+
+:root {
+  /* ----- Bảng màu: tím phiêu lưu + vàng kim cương ----- */
+  --mau-chinh: #6C4CE0;
+  --mau-chinh-dam: #4B2FB0;
+  --mau-chinh-nhat: #EFE9FD;
+  --mau-phu: #FFB800;
+  --mau-phu-dam: #8A6100;
+  --mau-nen-trang: #FAF8FF;
+  --mau-nen-khoi: #FFFFFF;
+  --mau-vien: #E4DBFB;
+  --mau-chu: #2B2640;
+  --mau-chu-nhat: #766F91;
+  --mau-thanh-cong: #2BB673;
+  --mau-that-bai: #E5484D;
+  --bo-tron: 18px;
+  --bo-tron-nho: 10px;
+  --do-bong: 0 8px 24px rgba(75, 47, 176, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--mau-nen-trang);
+  color: var(--mau-chu);
+  font-family: "Be Vietnam Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4 {
+  font-family: "Baloo 2", "Segoe UI", system-ui, sans-serif;
+  color: var(--mau-chinh-dam);
+  margin: 0 0 8px;
+}
+
+a { color: var(--mau-chinh-dam); }
+button, input, textarea { font-family: inherit; }
+
+:focus-visible {
+  outline: 3px solid var(--mau-phu);
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   HEADER DÙNG CHUNG
+   ================================================================ */
+#headerChinh {
+  background: linear-gradient(120deg, var(--mau-chinh), var(--mau-chinh-dam));
+  color: #ffffff;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+#headerChinh h1 { color: #ffffff; margin: 0; font-size: 1.5rem; }
+
+#trangThaiDangNhap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+#kcTenNguoiChoi { font-weight: bold; }
+
+.kcNutLienKet, .kcNutDangXuat {
+  display: inline-block;
+  text-decoration: none;
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.12);
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+.kcNutLienKet:hover, .kcNutDangXuat:hover {
+  background-color: #ffffff;
+  color: var(--mau-chinh-dam);
+}
+
+/* ================================================================
+   KHỐI ĐĂNG NHẬP - mỗi trang tự có (không qua index.html Cờ Vua)
+   ================================================================ */
+#kcChuaDangNhap {
+  max-width: 380px;
+  margin: 48px auto;
+  padding: 28px 24px;
+  background-color: var(--mau-nen-khoi);
+  border: 2px solid var(--mau-vien);
+  border-radius: var(--bo-tron);
+  box-shadow: var(--do-bong);
+  text-align: center;
+}
+#kcChuaDangNhap h2 { margin-bottom: 4px; }
+#kcChuaDangNhap p { color: var(--mau-chu-nhat); font-size: 0.9rem; margin-top: 0; }
+
+.kcODangNhap {
+  width: 100%;
+  padding: 11px 14px;
+  margin-top: 10px;
+  border: 2px solid var(--mau-vien);
+  border-radius: var(--bo-tron-nho);
+  font-size: 1rem;
+}
+.kcODangNhap:focus { outline: none; border-color: var(--mau-chinh); }
+
+#kcNutDangNhap {
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px 14px;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--mau-chinh);
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+#kcNutDangNhap:hover:not(:disabled) { background-color: var(--mau-chinh-dam); }
+#kcNutDangNhap:disabled { background-color: #c9c0ec; cursor: not-allowed; }
+
+#kcThongBaoDangNhap {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: var(--bo-tron-nho);
+  font-size: 0.88rem;
+  font-weight: bold;
+  display: none;
+}
+#kcThongBaoDangNhap.hien { display: block; }
+#kcThongBaoDangNhap.tot { background: #d6f5e3; color: #1e8449; }
+#kcThongBaoDangNhap.xau { background: #fadbd8; color: #a93226; }
+
+/* ================================================================
+   GIỚI THIỆU + LƯỚI THẺ DÙNG CHUNG (cả 3 trang)
+   ================================================================ */
+.kcGioiThieu {
+  max-width: 860px;
+  margin: 24px auto 8px;
+  padding: 0 16px;
+  text-align: center;
+}
+.kcGioiThieu p { color: var(--mau-chu-nhat); }
+
+.kcLuoiThe {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  max-width: 860px;
+  margin: 18px auto 28px;
+  padding: 0 16px;
+}
+.kcThe {
+  position: relative;
+  background-color: var(--mau-nen-khoi);
+  border: 2px dashed var(--mau-vien);
+  border-radius: var(--bo-tron);
+  box-shadow: var(--do-bong);
+  padding: 20px 16px;
+  text-align: center;
+}
+.kcThe .kcIcon { font-size: 2.6rem; display: block; margin-bottom: 8px; }
+.kcThe h3 { margin: 0 0 6px; color: var(--mau-chu); font-size: 1.05rem; }
+.kcThe p { margin: 0; font-size: 0.85rem; color: var(--mau-chu-nhat); }
+.kcNhan {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--mau-phu);
+  color: var(--mau-phu-dam);
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.kcNganCach {
+  max-width: 640px;
+  margin: 8px auto 4px;
+  padding: 0 16px;
+  text-align: center;
+  color: var(--mau-chu-nhat);
+  font-size: 0.85rem;
+}
+
+/* ================================================================
+   KHỐI "GỬI Ý TƯỞNG" (kc_ytuong.js) - dùng chung cho cả 3 trang, mỗi trang
+   có thể đặt nhiều khối cùng lúc với data-chuyen-muc khác nhau.
+   ================================================================ */
+.kcytKhoiYTuong {
+  max-width: 640px;
+  margin: 0 auto 32px;
+  padding: 0 16px;
+}
+.kcytKhoiTieuDe { color: var(--mau-chinh-dam); margin-bottom: 4px; }
+.kcytKhoiMoTa { color: var(--mau-chu-nhat); font-size: 0.9rem; margin: 0 0 12px; }
+
+.kcytHopNhap {
+  background-color: var(--mau-nen-khoi);
+  border: 2px solid var(--mau-vien);
+  border-radius: var(--bo-tron);
+  box-shadow: var(--do-bong);
+  padding: 16px;
+}
+.kcytO {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 10px 12px;
+  border: 2px solid var(--mau-vien);
+  border-radius: var(--bo-tron-nho);
+  box-sizing: border-box;
+}
+.kcytO:focus { outline: none; border-color: var(--mau-chinh); }
+
+.kcytHangDuoiO {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.kcytSoKyTuConLai { font-size: 0.8rem; color: var(--mau-chu-nhat); }
+.kcytSoKyTuConLai.kcytHetKyTu { color: var(--mau-that-bai); font-weight: bold; }
+
+.kcytNutGui {
+  background-color: var(--mau-chinh);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease-in-out;
+}
+.kcytNutGui:hover:not(:disabled) { background-color: var(--mau-chinh-dam); }
+.kcytNutGui:disabled { background-color: #c9c0ec; cursor: not-allowed; }
+
+.kcytThongBaoKhoi {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: var(--bo-tron-nho);
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  display: none;
+}
+.kcytThongBaoKhoi.hien { display: block; }
+.kcytThongBaoKhoi.tot { background: #d6f5e3; color: #1e8449; }
+.kcytThongBaoKhoi.xau { background: #fadbd8; color: #a93226; }
+
+.kcytKhoiDanhSach { margin-top: 18px; }
+.kcytKhoiDanhSach h4 { color: var(--mau-chinh-dam); font-size: 0.95rem; margin-bottom: 8px; }
+.kcytDanhSachRong { color: var(--mau-chu-nhat); font-size: 0.88rem; text-align: center; padding: 10px 0; }
+
+.kcytDanhSach { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.kcytDong {
+  background-color: var(--mau-nen-khoi);
+  border: 2px solid var(--mau-vien);
+  border-radius: var(--bo-tron-nho);
+  padding: 10px 14px;
+}
+.kcytDongNoiDung { margin: 0 0 8px; color: var(--mau-chu); white-space: pre-wrap; }
+.kcytDongMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.kcytDongThoiGian { font-size: 0.78rem; color: var(--mau-chu-nhat); }
+.kcytNhanTrangThai {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+.kcytNhanMoi { background: #ffe9b8; color: var(--mau-phu-dam); }
+.kcytNhanDaXem { background: #d6f5e3; color: #1e8449; }
+
+@media (max-width: 480px) {
+  #headerChinh { padding: 14px; }
+  #headerChinh h1 { font-size: 1.25rem; }
+}
