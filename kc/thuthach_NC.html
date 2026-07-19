@@ -8,20 +8,23 @@
   <!-- ================================================================
        FILE: thuthach_NC.html
        CHỨC NĂNG: Trang ĐIỂM VÀO ĐỘC LẬP của phân hệ Thử Thách (Kids
-                  Challenge) - bước KC_00 CHUYỂN từ khung tĩnh (không đăng
-                  nhập, không RPC) sang có khối đăng nhập + khu vực gửi ý
-                  tưởng (chuyên mục MỚI 'thu_thach', mở bằng điểm chạm
-                  WHITELIST số 1 - xem supabase_kc00_chuyen_muc_y_tuong.sql).
-                  CƠ CHẾ THẬT của Thử Thách (tài khoản phụ huynh, tạo/xác
-                  nhận thử thách, thưởng...) CHƯA làm ở bước này - vẫn nằm ở
-                  TT_01/TT_02/TT_03 (xem KẾ HOẠCH).
-       BƯỚC: KC_00
+                  Challenge).
+                  - Bước KC_00: khối đăng nhập + khu vực gửi ý tưởng
+                    (chuyên mục 'thu_thach').
+                  - Bước TT_01 (MỚI): khối ĐĂNG KÝ PHỤ HUYNH + màn hình
+                    "Các con của tôi" (liên kết/gỡ liên kết phụ huynh-trẻ).
+                    Xử lý bởi file MỚI tt_phuhuynh.js - KHÔNG sửa kc_auth.js
+                    dùng chung (nguyên tắc "gom việc theo file").
+                  CƠ CHẾ TẠO/XÁC NHẬN/THƯỞNG thử thách CHƯA làm ở bước này -
+                  nằm ở TT_02/TT_03 (xem KẾ HOẠCH).
+       BƯỚC: TT_01
        NGÀY: 17/07/2026
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
-                  kc_ytuong.js (đặt CÙNG THƯ MỤC /kc/).
-       GHI CHÚ: định dạng RIÊNG của trang này (khối quy trình 5 bước, ghi
-                chú phụ huynh, thẻ mở rộng tương lai) nằm trong thẻ <style>
-                bên dưới vì KHÔNG dùng chung với 2 trang kia.
+                  kc_ytuong.js, tt_phuhuynh.js (đặt CÙNG THƯ MỤC /kc/).
+       GHI CHÚ: định dạng RIÊNG của trang này (khối quy trình 5 bước, khối
+                đăng ký phụ huynh, khối "Các con của tôi", ghi chú phụ
+                huynh, thẻ mở rộng tương lai) nằm trong thẻ <style> bên
+                dưới vì KHÔNG dùng chung với 2 trang kia.
        ================================================================ -->
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -86,6 +89,122 @@
       padding: 4px 12px;
       margin: 4px;
     }
+
+    /* ----- TT_01: khối đăng ký phụ huynh (toggle với khối đăng nhập) ----- */
+    #ttChuyenDangKy { margin-top: 14px; text-align: center; }
+    .ttLienKetPhu { font-size: 0.85rem; color: var(--mau-chinh-dam); text-decoration: underline; cursor: pointer; }
+
+    #ttDangKyPhuHuynh {
+      max-width: 380px;
+      margin: 48px auto;
+      padding: 28px 24px;
+      background-color: var(--mau-nen-khoi);
+      border: 2px solid var(--mau-vien);
+      border-radius: var(--bo-tron);
+      box-shadow: var(--do-bong);
+      text-align: center;
+      display: none;
+    }
+    #ttDangKyPhuHuynh h2 { margin-bottom: 4px; }
+    #ttDangKyPhuHuynh p { color: var(--mau-chu-nhat); font-size: 0.9rem; margin-top: 0; }
+    #ttNutDangKy {
+      width: 100%;
+      margin-top: 14px;
+      padding: 11px 14px;
+      border: none;
+      border-radius: 999px;
+      background-color: var(--mau-chinh);
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #ttNutDangKy:hover:not(:disabled) { background-color: var(--mau-chinh-dam); }
+    #ttNutDangKy:disabled { background-color: #c9c0ec; cursor: not-allowed; }
+    #ttThongBaoDangKy {
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: var(--bo-tron-nho);
+      font-size: 0.88rem;
+      font-weight: bold;
+      display: none;
+    }
+    #ttThongBaoDangKy.hien { display: block; }
+    #ttThongBaoDangKy.tot { background: #d6f5e3; color: #1e8449; }
+    #ttThongBaoDangKy.xau { background: #fadbd8; color: #a93226; }
+
+    /* ----- TT_01: khối "Các con của tôi" ----- */
+    #ttKhuPhuHuynh {
+      max-width: 640px;
+      margin: 0 auto 28px;
+      padding: 18px 16px;
+      background-color: var(--mau-nen-khoi);
+      border: 2px solid var(--mau-vien);
+      border-radius: var(--bo-tron);
+      box-shadow: var(--do-bong);
+      display: none;
+    }
+    #ttKhuPhuHuynh h2 { text-align: center; margin-bottom: 12px; }
+    #ttHopLienKet { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    #ttOTenTre { flex: 1 1 200px; margin-top: 0; }
+    #ttNutLienKet {
+      flex: 0 0 auto;
+      padding: 11px 18px;
+      border: none;
+      border-radius: 999px;
+      background-color: var(--mau-chinh);
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #ttNutLienKet:hover:not(:disabled) { background-color: var(--mau-chinh-dam); }
+    #ttNutLienKet:disabled { background-color: #c9c0ec; cursor: not-allowed; }
+    #ttThongBaoLienKet {
+      flex-basis: 100%;
+      padding: 8px 12px;
+      border-radius: var(--bo-tron-nho);
+      font-size: 0.85rem;
+      font-weight: bold;
+      display: none;
+    }
+    #ttThongBaoLienKet.hien { display: block; }
+    #ttThongBaoLienKet.tot { background: #d6f5e3; color: #1e8449; }
+    #ttThongBaoLienKet.xau { background: #fadbd8; color: #a93226; }
+    #ttDanhSachTreRong { color: var(--mau-chu-nhat); font-size: 0.88rem; text-align: center; padding: 8px 0; }
+    #ttDanhSachTre { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    .ttDongTre {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 2px solid var(--mau-vien);
+      border-radius: var(--bo-tron-nho);
+    }
+    .ttDongTreAvatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; background: var(--mau-chinh-nhat);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .ttDongTreAvatar img { width: 100%; height: 100%; object-fit: cover; }
+    .ttDongTreThongTin { flex: 1 1 auto; }
+    .ttDongTreTen { font-weight: bold; color: var(--mau-chu); }
+    .ttDongTreKimCuong { font-size: 0.82rem; color: var(--mau-phu-dam); }
+    .ttNutGoLienKet {
+      flex-shrink: 0;
+      background: none;
+      border: 2px solid var(--mau-that-bai);
+      color: var(--mau-that-bai);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .ttNutGoLienKet:hover:not(:disabled) { background: var(--mau-that-bai); color: #fff; }
   </style>
 </head>
 <body>
@@ -99,6 +218,7 @@
     </div>
   </header>
 
+  <!-- Khối đăng nhập (kc_auth.js) -->
   <div id="kcChuaDangNhap" style="display:none;">
     <h2>Con đăng nhập nhé!</h2>
     <p>Dùng đúng tên đăng nhập và mật khẩu bên webapp Cờ Vua.</p>
@@ -106,14 +226,44 @@
     <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
     <button id="kcNutDangNhap" type="button">Đăng nhập</button>
     <div id="kcThongBaoDangNhap"></div>
+    <div id="ttChuyenDangKy">
+      <a href="#" id="ttNutMoDangKy" class="ttLienKetPhu">Chưa có tài khoản phụ huynh? Đăng ký ngay</a>
+    </div>
   </div>
 
+  <!-- Khối đăng ký phụ huynh (tt_phuhuynh.js) - TT_01 -->
+  <div id="ttDangKyPhuHuynh">
+    <h2>Đăng ký tài khoản phụ huynh</h2>
+    <p>Tạo tài khoản phụ huynh để liên kết với con và sắp tới là tạo/xác nhận thử thách.</p>
+    <input class="kcODangNhap" id="ttDkTen" type="text" placeholder="Tên đăng nhập (ít nhất 3 ký tự)" autocomplete="username">
+    <input class="kcODangNhap" id="ttDkMatKhau" type="password" placeholder="Mật khẩu (ít nhất 4 ký tự)" autocomplete="new-password">
+    <input class="kcODangNhap" id="ttDkMatKhauLai" type="password" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
+    <button id="ttNutDangKy" type="button">Đăng ký</button>
+    <div id="ttThongBaoDangKy"></div>
+    <div style="margin-top:14px;">
+      <a href="#" id="ttNutQuayLaiDangNhap" class="ttLienKetPhu">← Quay lại đăng nhập</a>
+    </div>
+  </div>
+
+  <!-- Toàn bộ nội dung chỉ hiện khi đã đăng nhập -->
   <div id="kcNoiDungCanDangNhap" style="display:none;">
 
     <div class="kcGioiThieu">
-      <h2>Sắp có: Thử Thách cùng bố mẹ! 🎉</h2>
+      <h2>Thử Thách cùng bố mẹ! 🎉</h2>
       <p>Bố mẹ sẽ giao cho con những thử thách nhỏ mỗi ngày. Con hoàn thành, bố mẹ
          xác nhận, và con sẽ nhận được kim cương 💎 làm phần thưởng!</p>
+    </div>
+
+    <!-- Khối "Các con của tôi" - CHỈ hiện khi đăng nhập bằng tài khoản phụ huynh -->
+    <div id="ttKhuPhuHuynh">
+      <h2>👨‍👩‍👧 Các con của tôi</h2>
+      <div id="ttHopLienKet">
+        <input class="kcODangNhap" id="ttOTenTre" type="text" placeholder="Tên đăng nhập của con">
+        <button id="ttNutLienKet" type="button">➕ Liên kết con</button>
+        <div id="ttThongBaoLienKet"></div>
+      </div>
+      <div id="ttDanhSachTreRong">Chưa liên kết con nào. Nhập đúng tên đăng nhập của con ở trên nhé.</div>
+      <ul id="ttDanhSachTre"></ul>
     </div>
 
     <div class="kcLuoiThe">
@@ -165,11 +315,12 @@
     </div>
 
     <div id="ttGhiChuPhuHuynh">
-      🔒 Tính năng này cần <strong>tài khoản phụ huynh</strong> và đang được cô xây dựng.
-      Hãy đợi thêm một chút nhé — sắp ra mắt rồi!
+      🔒 Đăng ký tài khoản phụ huynh và liên kết với con đã dùng được (bên trên)!
+      Phần <strong>tạo và xác nhận thử thách</strong> đang được cô xây dựng tiếp,
+      đợi thêm chút nhé!
     </div>
 
-    <!-- Khu vực gửi ý tưởng - chuyên mục MỚI thu_thach (điểm chạm WHITELIST số 1) -->
+    <!-- Khu vực gửi ý tưởng - chuyên mục thu_thach -->
     <div class="kcytKhoiYTuong" data-chuyen-muc="thu_thach">
       <h3 class="kcytKhoiTieuDe">🎯 Con muốn thử thách nào?</h3>
       <p class="kcytKhoiMoTa">Con muốn bố mẹ giao cho thử thách gì? Kể cho cô nghe nhé!</p>
@@ -203,6 +354,7 @@
   <script src="kc_api.js"></script>
   <script src="kc_auth.js"></script>
   <script src="kc_ytuong.js"></script>
+  <script src="tt_phuhuynh.js"></script>
 
 </body>
 </html>
