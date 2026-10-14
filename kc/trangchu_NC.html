@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trang chủ - Kids Challenge</title>
+
+  <!-- ================================================================
+       FILE: trangchu_NC.html
+       CHỨC NĂNG: TRANG CHỦ (bản TẠM) - lời chào + avatar + các khu to dẫn vào
+                  Học Tập / Khám Phá / Trò Chơi / Thử Thách.
+                  CHƯA có số liệu thật (kim cương, hạng, quà, huy hiệu số):
+                  làm ở KC_00C-2 (kế hoạch mục KC_00C).
+       BƯỚC: KC_00C-1
+       NGÀY: 15/10/2026
+       PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js
+       ================================================================ -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kc_style.css">
+  <style>
+    .tcChaoAvatar { width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center;
+      justify-content: center; font-size: 3rem; background: var(--mau-chinh-nhat); border: 3px solid var(--mau-chinh); overflow: hidden; }
+    .tcChaoAvatar img { width: 100%; height: 100%; object-fit: cover; }
+    .tcKhu { display: block; text-decoration: none; color: inherit; background: var(--mau-nen-khoi); border: 3px solid var(--mau-vien);
+      border-radius: var(--bo-tron); padding: 20px 14px; text-align: center; box-shadow: var(--do-bong); }
+    .tcKhu:active { transform: translateY(3px); }
+    .tcKhu .tcHinh { font-size: 3.4rem; display: block; line-height: 1.1; }
+    .tcKhu h3 { margin: 8px 0 4px; color: var(--mau-chinh-dam); font-size: 1.2rem; }
+    .tcKhu p { margin: 0; font-size: 0.88rem; color: var(--mau-chu-nhat); }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header id="headerChinh">
+    <h1>🏠 Trang chủ</h1>
+    <div id="trangThaiDangNhap">
+      <span id="kcTenNguoiChoi"></span>
+      <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
+    </div>
+  </header>
+
+  <nav class="kcThanhTab" aria-label="Chuyển mảng">
+    <a class="kcTab" href="trangchu_NC.html" aria-current="page"><span class="kcTabIcon">🏠</span> Trang chủ</a>
+    <a class="kcTab" href="hoctap_NC.html"><span class="kcTabIcon">📚</span> Học Tập</a>
+    <a class="kcTab" href="khampha_NC.html"><span class="kcTabIcon">🧭</span> Khám Phá</a>
+    <a class="kcTab" href="trochoi_NC.html"><span class="kcTabIcon">🎮</span> Trò Chơi</a>
+    <a class="kcTab" href="thuthach_NC.html"><span class="kcTabIcon">🎯</span> Thử Thách</a>
+  </nav>
+
+  <div id="kcChuaDangNhap" style="display:none;">
+    <h2>Con đăng nhập nhé!</h2>
+    <p>Một tài khoản dùng chung cho cả Cờ Vua và Thử Thách - Học Tập - Khám Phá - Trò Chơi.</p>
+    <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+    <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+    <button id="kcNutDangNhap" type="button">Đăng nhập</button>
+    <div id="kcThongBaoDangNhap"></div>
+  </div>
+
+  <div id="kcNoiDungCanDangNhap" style="display:none;">
+
+    <div class="kcGioiThieu">
+      <div class="tcChaoAvatar" id="tcChaoAvatar">🙂</div>
+      <h2 id="tcLoiChao">Chào con!</h2>
+      <p>Hôm nay con muốn đi đâu nào?</p>
+    </div>
+
+    <div class="kcLuoiThe">
+      <a class="tcKhu" href="hoctap_NC.html"><span class="tcHinh">📚</span><h3>Học Tập</h3><p>Học mà vui, càng học càng giỏi.</p></a>
+      <a class="tcKhu" href="khampha_NC.html"><span class="tcHinh">🧭</span><h3>Khám Phá</h3><p>Điều kỳ diệu quanh con.</p></a>
+      <a class="tcKhu" href="trochoi_NC.html"><span class="tcHinh">🎮</span><h3>Trò Chơi</h3><p>Cờ Vua và nhiều trò hay.</p></a>
+      <a class="tcKhu" href="thuthach_NC.html"><span class="tcHinh">🎯</span><h3>Thử Thách</h3><p>Nhận thử thách, nhận thưởng.</p></a>
+    </div>
+
+  </div>
+
+  <script src="kc_config.js"></script>
+  <script src="kc_api.js"></script>
+  <script src="kc_auth.js"></script>
+  <script>
+    // Lời chào + avatar lấy từ phiên đăng nhập chung (avatar là URL -> <img>, Sổ Tay D7)
+    document.addEventListener("kcSanSang", function (su) {
+      if (!su.detail || !su.detail.daDangNhap) return;
+      var tk = su.detail.taiKhoan;
+      document.getElementById("tcLoiChao").textContent = "Chào " + tk.tenDangNhap + "!";
+      var o = document.getElementById("tcChaoAvatar");
+      var av = tk.avatarDaChon;
+      if (av && av.indexOf("http") === 0) {
+        var img = document.createElement("img");
+        img.src = av; img.alt = "";
+        o.textContent = ""; o.appendChild(img);
+      } else if (av) { o.textContent = av; }
+    });
+  </script>
+
+</body>
+</html>
+<!-- 15/10/2026 - BƯỚC: KC_00C-1 -->
