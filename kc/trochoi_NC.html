@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trò Chơi - Kids Challenge</title>
+
+  <!-- ================================================================
+       FILE: trochoi_NC.html
+       CHỨC NĂNG: Trang ĐIỂM VÀO của mảng TRÒ CHƠI (Kids Challenge) - nơi gom
+                  mọi game: mở trang ra là thấy các game để chơi ngay.
+                  Mảng riêng, ngang hàng Học Tập / Khám Phá / Thử Thách
+                  (người dùng quyết 14/10/2026). Game mới sau này chỉ cần thêm
+                  một thẻ vào lưới bên dưới.
+       BƯỚC: TC_00 (bản thử)
+       NGÀY: 14/10/2026
+       PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js
+       ================================================================ -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kc_style.css">
+  <style>
+    /* Thẻ game chơi được: to, có hình, bấm là vào chơi */
+    .tcThe { display: block; text-decoration: none; color: inherit; background: var(--mau-nen-khoi); border: 3px solid var(--mau-vien);
+      border-radius: var(--bo-tron); padding: 16px; text-align: center; box-shadow: var(--do-bong); }
+    .tcThe:active { transform: translateY(3px); }
+    .tcThe .tcHinh { font-size: 3.4rem; display: block; line-height: 1.1; }
+    .tcThe h3 { margin: 8px 0 4px; color: var(--mau-chinh-dam); font-size: 1.2rem; }
+    .tcThe p { margin: 0 0 10px; font-size: 0.88rem; color: var(--mau-chu-nhat); }
+    .tcChoi { display: inline-block; background: var(--mau-phu); color: #5a3d00; font-family: "Baloo 2", sans-serif; font-weight: 700;
+      font-size: 1.05rem; padding: 6px 22px; border-radius: 999px; box-shadow: 0 4px 0 #c48f00; }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header id="headerChinh">
+    <h1>🎮 Trò Chơi</h1>
+    <div id="trangThaiDangNhap">
+      <span id="kcTenNguoiChoi"></span>
+      <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
+    </div>
+  </header>
+
+  <nav class="kcThanhTab" aria-label="Chuyển mảng">
+    <a class="kcTab" href="../index.html" data-an-voi-phu-huynh><span class="kcTabIcon">♟️</span> Cờ Vua</a>
+    <a class="kcTab" href="hoctap_NC.html"><span class="kcTabIcon">📚</span> Học Tập</a>
+    <a class="kcTab" href="khampha_NC.html"><span class="kcTabIcon">🧭</span> Khám Phá</a>
+    <a class="kcTab" href="trochoi_NC.html" aria-current="page"><span class="kcTabIcon">🎮</span> Trò Chơi</a>
+    <a class="kcTab" href="thuthach_NC.html"><span class="kcTabIcon">🎯</span> Thử Thách</a>
+  </nav>
+
+  <div id="kcChuaDangNhap" style="display:none;">
+    <h2>Con đăng nhập nhé!</h2>
+    <p>Một tài khoản dùng chung cho cả Cờ Vua và Thử Thách - Học Tập - Khám Phá - Trò Chơi. Đã đăng nhập bên Cờ Vua thì không cần đăng nhập lại.</p>
+    <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+    <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+    <button id="kcNutDangNhap" type="button">Đăng nhập</button>
+    <div id="kcThongBaoDangNhap"></div>
+  </div>
+
+  <div id="kcNoiDungCanDangNhap" style="display:none;">
+
+    <div class="kcGioiThieu">
+      <h2>Vào chơi thôi nào! 🎉</h2>
+      <p>Chọn một trò chơi, nghe thật kỹ và bấm thật nhanh nhé!</p>
+    </div>
+
+    <div class="kcLuoiThe">
+      <a class="tcThe" href="game_tu_vung_thu.html#nam">
+        <span class="tcHinh">🍄</span>
+        <h3>Săn Từ: Nấm Quái Vật</h3>
+        <p>Bé chạy qua các cây nấm quái vật. Nghe từ tiếng Anh rồi chọn đúng chữ!</p>
+        <span class="tcChoi">▶ Chơi</span>
+      </a>
+      <a class="tcThe" href="game_tu_vung_thu.html#doidau">
+        <span class="tcHinh">⚔️</span>
+        <h3>Săn Từ: Đối Đầu</h3>
+        <p>Mèo bắt chuột, nước dập lửa, kéo cắt giấy... Chọn đúng bạn giúp để thắng quái vật!</p>
+        <span class="tcChoi">▶ Chơi</span>
+      </a>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">⭕</span>
+        <h3>Cờ Caro</h3>
+        <p>Xếp năm quân liền nhau để thắng máy.</p>
+      </div>
+      <div class="kcThe">
+        <span class="kcNhan">Sắp có</span>
+        <span class="kcIcon">🐘</span>
+        <h3>Cờ Tướng</h3>
+        <p>Trò chơi cờ nổi tiếng, đấu với máy.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="kc_config.js"></script>
+  <script src="kc_api.js"></script>
+  <script src="kc_auth.js"></script>
+
+</body>
+</html>
+<!-- 14/10/2026 - BƯỚC: TC_00 -->

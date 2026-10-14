@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <!--
-  FILE: thu_nghiem_san_tu.html
-  CHỨC NĂNG: BẢN THỬ NGHIỆM trò chơi "Săn từ tiếng Anh" - bé chạy qua các cây nấm quái vật có gắn chữ.
-             Trên: sân chơi. Dưới: khung chữ (cấp 1: 2 chữ, cấp 2: 3 chữ, cấp 3: 4 chữ).
+  FILE: game_tu_vung_thu.html
+  CHỨC NĂNG: BẢN THỬ NGHIỆM game từ vựng tiếng Anh, thuộc mảng TRÒ CHƠI (trochoi_NC.html), không phải Học Tập.
+             Hai thế giới: (1) Nấm - bé chạy qua nấm quái vật gắn chữ; (2) Đối đầu - quái vật vẽ riêng cho
+             từng từ, chọn chữ "bạn giúp" đúng để thắng. Dưới sân chơi là khung chữ (cấp 1: 2 chữ, 2: 3, 3: 4).
              Bé bấm chữ -> nghe giọng đọc. Trang độc lập: chưa nối tài khoản, chưa tặng kim cương.
+             Mở thẳng một thế giới bằng #nam hoặc #doidau.
   GIỌNG ĐỌC: nếu có file am_thanh/<từ>.mp3 (giọng người thật) thì phát file; không có thì dùng giọng đọc
              tự nhiên nhất mà trình duyệt/điện thoại có.
-  BƯỚC: HT_00
+  BƯỚC: TC_00
   CẬP NHẬT: 14/10/2026 - đổi sang bé chạy + nấm gắn chữ + khung chữ bên dưới.
 -->
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Săn từ tiếng Anh (bản thử)</title>
+<title>Game Săn Từ (bản thử)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -111,6 +113,18 @@
   .theGioi .nut.chon { background: var(--vang); color: #5a3d00; box-shadow: 0 6px 0 #c48f00; }
   .quaiBox { position: absolute; bottom: 12%; left: 64%; display: flex; flex-direction: column; align-items: center; z-index: 3;
     transform: translateX(-50%); animation: hienNam .5s backwards; }
+  .quaiBox .qe svg { width: 132px; height: 132px; display: block; overflow: visible; }
+  #bong .hinh svg { width: 52px; height: 52px; display: block; overflow: visible; }
+  .chop { transform-box: fill-box; transform-origin: center; animation: chop 3.6s infinite; }
+  @keyframes chop { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+  .lua { transform-box: fill-box; transform-origin: 50% 100%; animation: bapbenh .45s infinite alternate ease-in-out; }
+  @keyframes bapbenh { from { transform: scale(.95, 1.02) skewX(-2deg); } to { transform: scale(1.05, .97) skewX(2deg); } }
+  .run { animation: run .12s infinite alternate; }
+  @keyframes run { from { transform: translateX(-1.5px); } to { transform: translateX(1.5px); } }
+  .phap { transform-box: fill-box; transform-origin: center; animation: phap 1.1s infinite alternate ease-in-out; }
+  @keyframes phap { from { transform: scale(.96); } to { transform: scale(1.05); } }
+  #veTroChoi { position: absolute; left: 12px; top: 12px; z-index: 3; text-decoration: none; color: var(--chinh-dam); font-weight: 700;
+    background: rgba(255,255,255,.85); border-radius: 999px; padding: 6px 14px; font-size: 15px; }
   .quaiBox .qe { font-size: 108px; line-height: 1; transform-origin: 50% 100%; animation: lacNam 1.2s ease-in-out infinite alternate;
     filter: drop-shadow(0 6px 4px rgba(0,0,0,.2)); }
   .quaiBox.thua .qe { animation: thua .9s forwards; }
@@ -155,6 +169,7 @@
 
   <!-- MÀN ĐẦU: chọn cấp -->
   <section id="manDau" class="man hien">
+    <a id="veTroChoi" href="trochoi_NC.html">← Trò Chơi</a>
     <div class="giua">
       <div class="be" id="beDau"></div>
       <h1>Săn Từ Tiếng Anh</h1>
@@ -230,11 +245,23 @@ const BAI = [
   { quai: { en: "germ", e: "🦠", vi: "vi khuẩn" }, hoi: "Cái gì làm sạch răng?",
     dung: [{ en: "toothbrush", e: "🪥", loi: "Bàn chải đánh bay vi khuẩn! ✨" }],
     sai: [{ en: "candy", e: "🍬", loi: "Kẹo làm vi khuẩn vui quá! 🍬" }, { en: "cake", e: "🍰", loi: "Bánh ngọt làm vi khuẩn vui quá! 🍰" },
-          { en: "juice", e: "🧃", loi: "Nước ngọt làm vi khuẩn vui quá! 🧃" }] }
+          { en: "juice", e: "🧃", loi: "Nước ngọt làm vi khuẩn vui quá! 🧃" }] },
+  { quai: { en: "ice", e: "🧊", vi: "cục đá" }, hoi: "Cái gì làm đá tan chảy?",
+    dung: [{ en: "sun", e: "☀️", loi: "Mặt trời làm đá tan chảy! 💧" }],
+    sai: [{ en: "snow", e: "❄️", loi: "Tuyết làm đá lạnh thêm! ❄️" }, { en: "cloud", e: "☁️", loi: "Mây không làm tan được đá! ☁️" },
+          { en: "moon", e: "🌙", loi: "Mặt trăng không đủ nóng để làm tan đá! 🌙" }] },
+  { quai: { en: "dark", e: "🌑", vi: "bóng tối" }, hoi: "Cái gì xua tan bóng tối?",
+    dung: [{ en: "lamp", e: "💡", loi: "Đèn sáng lên, bóng tối chạy mất! ✨" }],
+    sai: [{ en: "book", e: "📕", loi: "Sách không làm sáng được! 📕" }, { en: "sock", e: "🧦", loi: "Tất không làm sáng được! 🧦" },
+          { en: "spoon", e: "🥄", loi: "Thìa không làm sáng được! 🥄" }] },
+  { quai: { en: "cold", e: "🥶", vi: "cái lạnh" }, hoi: "Cái gì giúp con ấm lên?",
+    dung: [{ en: "coat", e: "🧥", loi: "Áo khoác ấm quá! Hết lạnh rồi! 🧥" }],
+    sai: [{ en: "ice", e: "🧊", loi: "Đá làm con lạnh thêm! Brrr 🥶" }, { en: "snow", e: "❄️", loi: "Tuyết làm con lạnh thêm! Brrr 🥶" },
+          { en: "fan", e: "🪭", loi: "Quạt làm con lạnh thêm! Brrr 🥶" }] }
 ];
 // Cấp: số chữ trong khung + có hiện hình gợi ý hay chỉ nghe giọng
 const CAP = [ { n: 2, hinh: true }, { n: 3, hinh: true }, { n: 4, hinh: false } ];
-const SO_VONG = 5, THOI_GIAN_MS = 14000;
+const SO_VONG = 5, SO_VONG_DD = 5, THOI_GIAN_MS = 14000;
 const LOI_BINH = ["Chính xác! {en} là {vi}! 🎉", "Giỏi quá! Con nhớ {en} rồi!", "Wow, nhanh ghê! {en} = {vi}!", "Tuyệt vời! {en} là {vi} ⭐"];
 const LOI_COMBO = { 2: "2 từ liên tiếp! 🔥", 3: "3 liên tiếp! Con đang bay! 🚀", 4: "4 liên tiếp! Siêu nhí! 💪", 5: "5 liên tiếp! Hoàn hảo! 🏆" };
 // Các loại nấm: màu mũ, màu chấm, kiểu chấm
@@ -282,6 +309,54 @@ function veNam(k) {
     <path d="M44 80 Q50 75 56 80" fill="none" stroke="#2B2640" stroke-width="2.4" stroke-linecap="round"/>
   </svg>`;
 }
+
+/* ===== HÌNH VẼ RIÊNG TỪNG QUÁI VẬT (SVG, vẽ tay bằng code) ===== */
+const MAT = (x1, x2, y, r) => `<g class="chop"><circle cx="${x1}" cy="${y}" r="${r}" fill="#fff" stroke="#2B2640" stroke-width="2"/><circle cx="${x2}" cy="${y}" r="${r}" fill="#fff" stroke="#2B2640" stroke-width="2"/>` +
+  `<circle cx="${x1 + 1}" cy="${y + 1.5}" r="${r * .5}" fill="#2B2640"/><circle cx="${x2 - 1}" cy="${y + 1.5}" r="${r * .5}" fill="#2B2640"/></g>`;
+const QUAI_SVG = {
+  mouse: () => `<svg viewBox="0 0 120 120"><path d="M92 96 Q118 96 112 66" fill="none" stroke="#e8a0b0" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="30" cy="36" r="17" fill="#aab3c5" stroke="#7b859b" stroke-width="3"/><circle cx="30" cy="36" r="9" fill="#ffb6c8"/>
+    <circle cx="90" cy="36" r="17" fill="#aab3c5" stroke="#7b859b" stroke-width="3"/><circle cx="90" cy="36" r="9" fill="#ffb6c8"/>
+    <ellipse cx="60" cy="76" rx="38" ry="34" fill="#aab3c5" stroke="#7b859b" stroke-width="3"/><ellipse cx="60" cy="90" rx="22" ry="18" fill="#e3e8f2"/>
+    ${MAT(46, 74, 62, 8)}<path d="M36 52 L52 58 M84 52 L68 58" stroke="#2B2640" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="60" cy="76" r="5" fill="#ff8fab"/><path d="M52 82 Q60 92 68 82" fill="none" stroke="#2B2640" stroke-width="2.6" stroke-linecap="round"/>
+    <rect x="55" y="85" width="5" height="8" rx="1.5" fill="#fff" stroke="#2B2640" stroke-width="1.5"/><rect x="60" y="85" width="5" height="8" rx="1.5" fill="#fff" stroke="#2B2640" stroke-width="1.5"/>
+    <path d="M30 78 L10 72 M30 84 L10 88 M90 78 L110 72 M90 84 L110 88" stroke="#7b859b" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="40" cy="108" rx="12" ry="6" fill="#8b95ab"/><ellipse cx="80" cy="108" rx="12" ry="6" fill="#8b95ab"/></svg>`,
+  fire: () => `<svg viewBox="0 0 120 120"><g class="lua"><path d="M60 4 C72 30 100 44 100 78 C100 102 82 116 60 116 C38 116 20 102 20 78 C20 58 36 50 40 32 C48 42 52 46 54 52 C58 36 56 22 60 4Z" fill="#ff7a18" stroke="#d9480f" stroke-width="3"/>
+    <path d="M60 50 C69 66 84 74 84 92 C84 106 73 114 60 114 C47 114 36 106 36 92 C36 76 51 68 60 50Z" fill="#ffd43b"/></g>
+    ${MAT(50, 70, 90, 7)}<path d="M40 79 L55 85 M80 79 L65 85" stroke="#2B2640" stroke-width="3" stroke-linecap="round"/>
+    <path d="M50 102 Q60 110 70 102 Q60 98 50 102Z" fill="#c92a2a" stroke="#2B2640" stroke-width="2"/></svg>`,
+  paper: () => `<svg viewBox="0 0 120 120"><path d="M26 8 H84 L100 24 V100 H26Z" fill="#fff" stroke="#8d93ad" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M84 8 V24 H100Z" fill="#dde1ee" stroke="#8d93ad" stroke-width="3" stroke-linejoin="round"/>
+    ${MAT(48, 76, 46, 8)}<path d="M50 62 Q62 74 74 62" fill="none" stroke="#2B2640" stroke-width="3" stroke-linecap="round"/>
+    <path d="M36 82 H90 M36 91 H80" stroke="#c9cde0" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="62" r="5" fill="#ffb3c1" opacity=".8"/><circle cx="86" cy="62" r="5" fill="#ffb3c1" opacity=".8"/>
+    <path d="M26 60 L12 70 M100 60 L114 50" stroke="#8d93ad" stroke-width="4" stroke-linecap="round"/><path d="M44 100 V112 M82 100 V112" stroke="#8d93ad" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="42" cy="114" rx="9" ry="4.5" fill="#ff6b6b"/><ellipse cx="84" cy="114" rx="9" ry="4.5" fill="#ff6b6b"/></svg>`,
+  germ: () => { let g = ""; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5, x = 60 + 44 * Math.cos(a), y = 62 + 44 * Math.sin(a);
+      g += `<path d="M${60 + 32 * Math.cos(a)} ${62 + 32 * Math.sin(a)} L${x} ${y}" stroke="#3f9b2c" stroke-width="5" stroke-linecap="round"/><circle cx="${x}" cy="${y}" r="5.5" fill="#a3e635" stroke="#3f9b2c" stroke-width="2.5"/>`; }
+    return `<svg viewBox="0 0 120 124"><g class="phap">${g}<circle cx="60" cy="62" r="36" fill="#7bd35b" stroke="#3f9b2c" stroke-width="3"/>
+    <circle cx="42" cy="78" r="5" fill="#5bb43f"/><circle cx="82" cy="46" r="4" fill="#5bb43f"/><circle cx="76" cy="80" r="3.5" fill="#5bb43f"/></g>
+    ${MAT(47, 73, 56, 9)}<path d="M36 44 L54 50 M84 44 L66 50" stroke="#2B2640" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M42 72 Q60 94 78 72Z" fill="#2B2640"/><path d="M48 72 V77 M56 72 V80 M64 72 V80 M72 72 V77" stroke="#fff" stroke-width="3.5"/></svg>`; },
+  ice: () => `<svg viewBox="0 0 120 120"><g class="run"><rect x="20" y="24" width="80" height="80" rx="16" fill="#bfeaff" stroke="#5bb0e0" stroke-width="3.5"/>
+    <path d="M30 40 Q30 32 40 32 H56" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".9"/><path d="M82 90 L94 80" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></g>
+    ${MAT(46, 74, 60, 8)}<path d="M36 48 L52 54 M84 48 L68 54" stroke="#2B2640" stroke-width="3" stroke-linecap="round"/>
+    <path d="M46 82 L52 76 L58 82 L64 76 L70 82 L76 76" fill="none" stroke="#2B2640" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M14 22 l4 8 l8 4 l-8 4 l-4 8 l-4 -8 l-8 -4 l8 -4z" fill="#fff" stroke="#9bd3f2" stroke-width="1.5"/><path d="M104 10 l3 6 l6 3 l-6 3 l-3 6 l-3 -6 l-6 -3 l6 -3z" fill="#fff" stroke="#9bd3f2" stroke-width="1.5"/>
+    <ellipse cx="42" cy="110" rx="12" ry="5" fill="#7cc4ec"/><ellipse cx="78" cy="110" rx="12" ry="5" fill="#7cc4ec"/></svg>`,
+  dark: () => `<svg viewBox="0 0 120 124"><path d="M18 74 C18 26 102 26 102 74 V108 Q92 98 82 108 Q72 98 62 108 Q52 98 42 108 Q32 98 18 108Z" fill="#3b2d63" stroke="#241a45" stroke-width="3"/>
+    <circle cx="36" cy="46" r="2.5" fill="#ffd43b"/><circle cx="86" cy="40" r="2" fill="#fff"/><circle cx="92" cy="60" r="2.5" fill="#ffd43b"/><circle cx="28" cy="70" r="2" fill="#fff"/>
+    <g class="chop"><circle cx="46" cy="66" r="11" fill="#ffe066"/><circle cx="76" cy="66" r="11" fill="#ffe066"/><circle cx="47" cy="68" r="5" fill="#241a45"/><circle cx="75" cy="68" r="5" fill="#241a45"/></g>
+    <path d="M32 50 L54 58 M90 50 L68 58" stroke="#ffe066" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M46 88 Q61 100 76 88" fill="#241a45" stroke="#ffe066" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+  cold: () => `<svg viewBox="0 0 120 124"><path d="M30 34 L36 12 L44 32 M52 28 L60 6 L68 28 M76 32 L84 12 L90 34" fill="#e4f6ff" stroke="#7cc4ec" stroke-width="2.5" stroke-linejoin="round"/>
+    <g class="run"><circle cx="60" cy="72" r="40" fill="#a5dcff" stroke="#5bb0e0" stroke-width="3.5"/><circle cx="40" cy="92" r="4" fill="#fff" opacity=".8"/><circle cx="84" cy="96" r="3" fill="#fff" opacity=".8"/></g>
+    <path d="M38 62 L52 66 L38 70 M82 62 L68 66 L82 70" fill="none" stroke="#2B2640" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="60" cy="78" r="6" fill="#4f8df5"/><path d="M42 94 L48 88 L54 94 L60 88 L66 94 L72 88 L78 94" fill="none" stroke="#2B2640" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="34" cy="80" r="5" fill="#8fb7ff" opacity=".8"/><circle cx="86" cy="80" r="5" fill="#8fb7ff" opacity=".8"/></svg>`
+};
+const veQuai = en => (QUAI_SVG[en] ? QUAI_SVG[en]() : "");
 
 /* ===== ÂM THANH ===== */
 let ac = null;
@@ -341,7 +416,7 @@ let be = { x: 40, huong: 1, che: "tuanTra", dich: 0 }, tBatDau = 0, dem = 0;
 
 function vaoCap(c, danhSach) {
   moAmThanh(); cap = c; dangChoi = true;
-  const nguon = danhSach || (gioi === 1 ? tron(BAI).map(b => ({ bai: b, e: b.quai.e, en: b.quai.en + " → " + b.dung[0].en })) : tron(TU).slice(0, SO_VONG));
+  const nguon = danhSach || (gioi === 1 ? tron(BAI).slice(0, SO_VONG_DD).map(b => ({ bai: b, e: b.quai.e, en: b.quai.en + " → " + b.dung[0].en })) : tron(TU).slice(0, SO_VONG));
   dsVong = nguon; iVong = 0; combo = 0; ketQua = nguon.map(() => ({ dungLanDau: true }));
   document.querySelectorAll(".roi").forEach(x => x.remove()); hienMan("manChoi"); $("combo").textContent = ""; $("beChay").firstElementChild.innerHTML = BE_SVG; be.x = 20; $("giup").style.opacity = 0;
   dauVong();
@@ -370,14 +445,14 @@ function dauVongDoiDau() {
   const item = dsVong[iVong], b = item.bai, c = CAP[cap]; khoa = false; ++dem; be.che = "dung"; be.x = 14; be.huong = 1;
   $("beChay").classList.remove("chay"); $("tien").textContent = `⭐ ${iVong}/${dsVong.length}`; document.body.dataset.tu = b.dung[0].en;
   const lua = tron([Object.assign({ dung: true }, b.dung[0])].concat(tron(b.sai).slice(0, c.n - 1).map(x => Object.assign({ dung: false }, x))));
-  const nen = $("nenNam"); nen.innerHTML = `<div class="quaiBox"><div class="qe">${b.quai.e}</div><div class="chuNam">${b.quai.en}</div></div>`;
+  const nen = $("nenNam"); nen.innerHTML = `<div class="quaiBox"><div class="qe">${veQuai(b.quai.en)}</div><div class="chuNam">${b.quai.en}</div></div>`;
   const k = $("khungChu"); k.className = "c" + c.n; k.innerHTML = "";
   lua.forEach(t => { const bt = document.createElement("button"); bt.className = "chu"; bt.textContent = t.en; bt.dataset.en = t.en; bt.onclick = () => bamDoiDau(bt, t, item); k.appendChild(bt); });
   datBongDD(item); tBatDau = performance.now(); setTimeout(() => noi(b.quai.en), 500);
 }
 function datBongDD(item) {
   const b = item.bai, bg = $("bong"); bg.className = "";
-  bg.innerHTML = `<span class="hinh">${b.quai.e}</span><span>🔊 ${CAP[cap].hinh ? b.hoi : "Chọn bạn giúp được!"}</span>`;
+  bg.innerHTML = `<span class="hinh">${veQuai(b.quai.en)}</span><span>🔊 ${CAP[cap].hinh ? b.hoi : "Chọn bạn giúp được!"}</span>`;
   bg.onclick = () => { moAmThanh(); noi(b.quai.en); };
 }
 async function bamDoiDau(nut, t, item) {
@@ -482,10 +557,11 @@ function ketThuc() {
 $("beDau").innerHTML = BE_SVG; $("beDau").classList.add("chay");
 document.querySelectorAll("[data-gioi]").forEach(b => b.onclick = () => { gioi = +b.dataset.gioi;
   document.querySelectorAll("[data-gioi]").forEach(x => x.classList.toggle("chon", x === b)); });
+if (location.hash === "#doidau") document.querySelector('[data-gioi="1"]').click();
 document.querySelectorAll("[data-cap]").forEach(b => b.onclick = () => vaoCap(+b.dataset.cap));
 for (let i = 0; i < 4; i++) { const m = document.createElement("div"); m.className = "may"; m.textContent = "☁️";
   m.style.top = (4 + i * 14) + "%"; m.style.animationDuration = (24 + i * 7) + "s"; m.style.animationDelay = (-i * 6) + "s"; $("canh").prepend(m); }
 </script>
 </body>
 </html>
-<!-- 14/10/2026 - BƯỚC: HT_00 -->
+<!-- 14/10/2026 - BƯỚC: TC_00 -->
