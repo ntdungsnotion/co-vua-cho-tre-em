@@ -8,6 +8,9 @@
 //            riêng của 1 trang).
 // BƯỚC: TT_01
 // NGÀY: 17/07/2026
+// CẬP NHẬT: KC_00B - 14/10/2026 21:57: mở trang bằng địa chỉ có đuôi
+//   #dang-ky-phu-huynh (link "Đăng ký tài khoản phụ huynh" ở màn hình đăng
+//   nhập chung của Cờ Vua) thì hiện thẳng form đăng ký phụ huynh.
 // PHỤ THUỘC: kc_config.js, kc_api.js, kc_auth.js phải nạp TRƯỚC file này.
 //            Lắng nghe sự kiện "kcSanSang" do kc_auth.js bắn ra (hợp đồng ở
 //            đầu file kc_auth.js), đọc biến toàn cục kcTaiKhoanHienTai.
@@ -62,6 +65,8 @@ function ttPhXuLySanSang(su) {
   if (!daDangNhap) {
     if (oDangKy) oDangKy.style.display = "none";
     if (oKhuPhuHuynh) oKhuPhuHuynh.style.display = "none";
+    // KC_00B: đến từ link "Đăng ký tài khoản phụ huynh" -> mở thẳng form đăng ký
+    if (window.location.hash === "#dang-ky-phu-huynh") ttPhMoDangKy();
     return;
   }
 

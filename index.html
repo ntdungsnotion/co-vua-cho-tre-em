@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cờ Vua Cho Trẻ Em</title>
 
-  <!-- NGÀY: 12/07/2026 - BƯỚC: NC_07-3 (thêm nút "🎯 Thử Thách" -> trang
+  <!-- NGÀY: 14/10/2026 21:57 - BƯỚC: KC_00B (hợp nhất đăng nhập với Kids
+       Challenge): 3 nút Học Tập/Khám Phá/Thử Thách nay trỏ sang bộ trang
+       /kc/ (dùng CHUNG phiên đăng nhập với Cờ Vua - xem app.js); màn hình
+       đăng nhập thêm dòng hướng dẫn cho bố mẹ (đăng nhập chung 1 chỗ, đăng ký
+       tài khoản phụ huynh ở trang Thử Thách).
+       LỊCH SỬ: NGÀY: 12/07/2026 - BƯỚC: NC_07-3 (thêm nút "🎯 Thử Thách" -> trang
        thuthach_NC.html mới, KHUNG giới thiệu). 3 nút Học Tập/Khám Phá/Thử Thách
        là hạt giống "dự án Kids Challenge" (tách sang dự án riêng - xem KẾ HOẠCH);
        không còn nút "sắp có" (disabled) nào trên thanh điều hướng.
@@ -113,9 +118,9 @@
     <a class="nutTabLienKet" id="tabHaiNguoi" href="choi2nguoi_NC.html">👫 2 Người</a>
     <button class="nutTab" id="tabRank" data-tab="rank">🏆 Xếp Hạng</button>
     <a class="nutTabLienKet" id="tabCuaHang" href="cuahang_NC.html">🛍️ Cửa Hàng</a>
-    <a class="nutTabLienKet" id="tabHocTap" href="hoctap_NC.html">📚 Học Tập</a>
-    <a class="nutTabLienKet" id="tabKhamPha" href="khampha_NC.html">🧭 Khám Phá</a>
-    <a class="nutTabLienKet" id="tabThuThach" href="thuthach_NC.html">🎯 Thử Thách</a>
+    <a class="nutTabLienKet" id="tabHocTap" href="kc/hoctap_NC.html">📚 Học Tập</a>
+    <a class="nutTabLienKet" id="tabKhamPha" href="kc/khampha_NC.html">🧭 Khám Phá</a>
+    <a class="nutTabLienKet" id="tabThuThach" href="kc/thuthach_NC.html">🎯 Thử Thách</a>
     <a class="nutTabLienKet" id="tabQuanTri" href="admin_NC.html" title="Trang Quản Trị (chỉ dành cho quản trị viên)" style="display:none;">🛠️ Quản Trị</a>
   </nav>
 
@@ -145,6 +150,15 @@
 
     <!-- Nơi hiển thị thông báo thành công/thất bại trả về từ api.js -->
     <div id="thongBaoAuth"></div>
+
+    <!-- KC_00B: bố mẹ dùng CHUNG ô đăng nhập ở trên (app.js tự đưa tài khoản
+         phụ huynh sang trang Thử Thách). Đăng ký phụ huynh nằm ở trang Thử
+         Thách (#dang-ky-phu-huynh mở thẳng form đăng ký - xem tt_phuhuynh.js). -->
+    <p id="ghiChuPhuHuynh" style="text-align:center;font-size:0.9rem;margin-top:16px;">
+      👨‍👩‍👧 Bố mẹ cũng đăng nhập ở đây.
+      Chưa có tài khoản phụ huynh?
+      <a href="kc/thuthach_NC.html#dang-ky-phu-huynh">Đăng ký tài khoản phụ huynh</a>
+    </p>
   </section>
 
   <!-- ================================================= -->
