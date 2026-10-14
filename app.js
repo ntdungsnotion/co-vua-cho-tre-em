@@ -5,7 +5,17 @@
 //            level/danh hiệu/hạng) - dùng chung cho mọi trang con (board.js,
 //            rank.js, taikhoan_NC.js).
 // BƯỚC: NC_05 (nâng cấp từ MIG_04) - NGÀY: 10/07/2026
+// CẬP NHẬT: KC_00B (hợp nhất đăng nhập với Kids Challenge) - 14/10/2026 21:57
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "app" để tránh xung đột
+//
+// ĐIỂM MỚI KC_00B (nguyên tắc "trải nghiệm như 1 ứng dụng duy nhất"):
+//   - Kids Challenge (/kc/kc_auth.js) nay dùng CHUNG khóa phiên
+//     APP_KHOA_LUU_PHIEN và cùng cấu trúc dữ liệu -> đăng nhập 1 lần dùng
+//     cho cả 2 app; đăng xuất ở đâu cũng là đăng xuất cả 2.
+//   - Vai trò 'phu_huynh' (tài khoản phụ huynh của Kids Challenge): đăng nhập
+//     ở trang này thì được đưa thẳng sang khu phụ huynh /kc/thuthach_NC.html
+//     (appDuaPhuHuynhSangKhuRieng) - Cờ Vua không có màn hình cho phụ huynh.
+//   - Quay lại trang bằng nút Back mà phiên đã đổi ở trang khác -> tự tải lại.
 //
 // ĐIỂM MỚI NC_05 (KẾ HOẠCH mục NC_05, HƯỚNG DẪN mục 3):
 //   - appTaiKhoanDangNhap nay luu THEM vaiTro, kinhNghiem, maPhien, trangBi (da
@@ -35,7 +45,11 @@
 var appTaiKhoanDangNhap = null;
 
 // Khóa dùng để lưu phiên đăng nhập vào sessionStorage (giữ đăng nhập qua F5)
+// KC_00B: DÙNG CHUNG với Kids Challenge (KC_KHOA_PHIEN trong kc/kc_auth.js)
 var APP_KHOA_LUU_PHIEN = "coVuaTaiKhoanDangNhap";
+
+// KC_00B: trang riêng của phụ huynh (Kids Challenge - Thử Thách)
+var APP_TRANG_PHU_HUYNH = "kc/thuthach_NC.html";
 
 // NC_05: dữ liệu ĐANG HIỂN THỊ trên Thanh Thông Tin Trên Cùng (cache nhẹ để các
 // hàm cập nhật cục bộ như appCapNhatTrangBiCucBo không cần gọi lại máy chủ)
@@ -99,6 +113,7 @@ function appKhoiTao() {
   // Thử khôi phục phiên đăng nhập đã lưu (giữ đăng nhập qua F5)
   var phienDaLuu = appKhoiPhucPhienDangNhap();
   if (phienDaLuu && phienDaLuu.tenDangNhap) {
+    if (appDuaPhuHuynhSangKhuRieng(phienDaLuu.vaiTro)) return;
     appTaiKhoanDangNhap = phienDaLuu;
     appCapNhatGiaoDienHeader();
     appCapNhatMenuTheoVaiTro(phienDaLuu.vaiTro);
@@ -160,6 +175,7 @@ function appChuyenTab(tenTab) {
 function appDangNhapThanhCong(duLieuTaiKhoan) {
   appTaiKhoanDangNhap = duLieuTaiKhoan;
   appLuuPhienDangNhap();
+  if (appDuaPhuHuynhSangKhuRieng(duLieuTaiKhoan.vaiTro)) return;
   appCapNhatGiaoDienHeader();
   appCapNhatMenuTheoVaiTro(duLieuTaiKhoan.vaiTro);
   appHienThanhThongTinSoBo(duLieuTaiKhoan);
@@ -208,6 +224,17 @@ function appCapNhatGiaoDienHeader() {
     if (nutDangXuat) nutDangXuat.style.display = "none";
     if (tabDangNhap) tabDangNhap.style.display = "inline-block";
   }
+}
+
+/**
+ * KC_00B: Tài khoản phụ huynh không có màn hình nào bên Cờ Vua -> chuyển sang
+ * khu phụ huynh của Kids Challenge (phiên đã lưu chung nên bên đó đăng nhập
+ * sẵn). Trả về true nếu đã chuyển trang (nơi gọi dừng xử lý tiếp).
+ */
+function appDuaPhuHuynhSangKhuRieng(vaiTro) {
+  if (vaiTro !== "phu_huynh") return false;
+  window.location.replace(APP_TRANG_PHU_HUYNH);
+  return true;
 }
 
 /**
@@ -272,6 +299,7 @@ function appLamMoiThanhThongTin() {
       appTaiKhoanDangNhap.trangBi = tt.trangBi;
       appTaiKhoanDangNhap.vaiTro = tt.vaiTro;
       appLuuPhienDangNhap();
+      if (appDuaPhuHuynhSangKhuRieng(tt.vaiTro)) return;
 
       appCapNhatMenuTheoVaiTro(tt.vaiTro);
       appVeThanhThongTin(tt);
@@ -379,6 +407,19 @@ function appCapNhatTrangBiCucBo(trangBiMoi, avatarMoi) {
     appVeThanhThongTin(appThongTinHienThi);
   }
 }
+
+/**
+ * KC_00B: Trình duyệt có thể hiện lại trang cũ từ bộ nhớ đệm khi bấm Back (không
+ * chạy lại appKhoiTao). Nếu trong lúc đó đã đăng nhập/đăng xuất ở trang Kids
+ * Challenge thì trang này đang hiện trạng thái CŨ -> tải lại cho khớp.
+ */
+window.addEventListener("pageshow", function (suKien) {
+  if (!suKien.persisted) return;
+  var phien = appKhoiPhucPhienDangNhap();
+  var tenTrongPhien = phien && phien.tenDangNhap ? phien.tenDangNhap : null;
+  var tenDangHien = appTaiKhoanDangNhap ? appTaiKhoanDangNhap.tenDangNhap : null;
+  if (tenTrongPhien !== tenDangHien) window.location.reload();
+});
 
 // Chạy hàm khởi tạo ngay khi toàn bộ HTML đã được dựng xong
 document.addEventListener("DOMContentLoaded", appKhoiTao);

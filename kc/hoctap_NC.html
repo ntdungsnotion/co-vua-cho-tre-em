@@ -17,6 +17,9 @@
                   trang này VẪN CHỈ LÀ khung giới thiệu + thu ý tưởng.
        BƯỚC: KC_00
        NGÀY: 17/07/2026
+       CẬP NHẬT: KC_00B - 14/10/2026 21:57 (hợp nhất đăng nhập: dùng chung
+                 phiên với Cờ Vua qua kc_auth.js; tab "Cờ Vua" trên THANH TAB
+                 CHUNG ẩn với phụ huynh nhờ data-an-voi-phu-huynh)
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
                   kc_ytuong.js (đặt CÙNG THƯ MỤC /kc/).
        ================================================================ -->
@@ -36,14 +39,22 @@
     <div id="trangThaiDangNhap">
       <span id="kcTenNguoiChoi"></span>
       <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
-      <a class="kcNutLienKet" href="../index.html">⬅ Về Cờ Vua</a>
     </div>
   </header>
+
+  <!-- KC_00B: THANH TAB CHUNG - chuyển qua lại các mảng như 1 ứng dụng.
+       Tab "Cờ Vua" ẩn với phụ huynh (data-an-voi-phu-huynh, xem kc_auth.js). -->
+  <nav class="kcThanhTab" aria-label="Chuyển mảng">
+    <a class="kcTab" href="../index.html" data-an-voi-phu-huynh><span class="kcTabIcon">♟️</span> Cờ Vua</a>
+    <a class="kcTab" href="hoctap_NC.html" aria-current="page"><span class="kcTabIcon">📚</span> Học Tập</a>
+    <a class="kcTab" href="khampha_NC.html"><span class="kcTabIcon">🧭</span> Khám Phá</a>
+    <a class="kcTab" href="thuthach_NC.html"><span class="kcTabIcon">🎯</span> Thử Thách</a>
+  </nav>
 
   <!-- Khối đăng nhập RIÊNG của trang này (không đi qua index.html Cờ Vua) -->
   <div id="kcChuaDangNhap" style="display:none;">
     <h2>Con đăng nhập nhé!</h2>
-    <p>Dùng đúng tên đăng nhập và mật khẩu bên webapp Cờ Vua.</p>
+    <p>Một tài khoản dùng chung cho cả Cờ Vua và Thử Thách - Học Tập - Khám Phá. Đã đăng nhập bên Cờ Vua thì không cần đăng nhập lại.</p>
     <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
     <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
     <button id="kcNutDangNhap" type="button">Đăng nhập</button>

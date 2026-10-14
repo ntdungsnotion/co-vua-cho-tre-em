@@ -7,9 +7,21 @@
 //            Khi khôi phục phiên từ sessionStorage, LUÔN xác thực lại với
 //            máy chủ ngay lập tức bằng lay_thong_tin_ca_nhan - làm ĐÚNG MẪU
 //            app.js của Cờ Vua ngay từ đầu, KHÔNG lặp "nợ T3" (Sổ Tay D10).
-// BƯỚC: KC_00
-// NGÀY: 17/07/2026
+// BƯỚC: KC_00B (hợp nhất đăng nhập với Cờ Vua) - NGÀY: 14/10/2026 21:57
+// LỊCH SỬ: KC_00 (17/07/2026) - bản đầu, dùng khóa phiên RIÊNG.
 // PHỤ THUỘC: kc_config.js, kc_api.js phải nạp TRƯỚC file này.
+//
+// KC_00B - MỘT TÀI KHOẢN, MỘT LẦN ĐĂNG NHẬP CHO CẢ 2 APP (nguyên tắc tối cao
+//   "trải nghiệm như 1 ứng dụng duy nhất" - HƯỚNG DẪN mục 2):
+//   - Dùng CHUNG khóa sessionStorage "coVuaTaiKhoanDangNhap" với app.js Cờ Vua
+//     và CÙNG cấu trúc dữ liệu (duLieuTaiKhoan của RPC dang_nhap). Đăng nhập ở
+//     Cờ Vua thì sang /kc/ đã đăng nhập sẵn, và ngược lại.
+//   - Đăng xuất ở bất kỳ trang nào là đăng xuất khỏi cả 2 app.
+//   - Chỉ tự đăng xuất khi máy chủ báo "Khong tim thay" tài khoản (giống
+//     app.js). Lỗi mạng thì GIỮ phiên - nếu không, một lần rớt mạng ở trang
+//     /kc/ sẽ đá trẻ ra khỏi cả Cờ Vua.
+//   - Phiên cũ còn sót ở khóa riêng "kcTaiKhoanDangNhap" (bản KC_00) được
+//     chuyển sang khóa chung 1 lần rồi xoá.
 //
 // HỢP ĐỒNG VỚI CÁC MODULE KHÁC (vd: kc_ytuong.js, các module tương lai):
 //   - File này bắn ra 1 sự kiện DOM tên "kcSanSang" trên `document` khi đã
@@ -32,12 +44,16 @@
 //   #kcNoiDungCanDangNhap    (bọc toàn bộ nội dung cần đăng nhập mới thấy)
 //   #kcTenNguoiChoi (tùy chọn), button#kcNutDangXuat (tùy chọn)
 //
-// KHÓA sessionStorage: "kcTaiKhoanDangNhap" - KHÁC khóa "coVuaTaiKhoanDangNhap"
-//   của Cờ Vua để không giẫm phiên khi mở 2 app trong CÙNG 1 thẻ trình duyệt
-//   (Sổ Tay mục A5).
+// KHÓA sessionStorage: "coVuaTaiKhoanDangNhap" - DÙNG CHUNG với Cờ Vua (KC_00B,
+//   thay quy ước cũ "khóa riêng" ở Sổ Tay mục A5). PHẢI trùng
+//   APP_KHOA_LUU_PHIEN trong app.js.
+//
+// PHẦN TỬ TÙY CHỌN: phần tử có thuộc tính data-an-voi-phu-huynh (vd: tab
+//   "Cờ Vua" trên thanh tab chung) sẽ bị ẩn khi người đăng nhập là phụ huynh.
 // ================================================================
 
-var KC_KHOA_PHIEN = "kcTaiKhoanDangNhap";
+var KC_KHOA_PHIEN = "coVuaTaiKhoanDangNhap";
+var KC_KHOA_PHIEN_CU = "kcTaiKhoanDangNhap"; // khóa riêng của bản KC_00, chỉ để chuyển 1 lần
 
 var kcTaiKhoanHienTai = null; // null cho tới khi kcSanSang bắn với daDangNhap=true
 
@@ -62,16 +78,26 @@ function kcAuthKhoiTao() {
 
   kcGoiRpc("lay_thong_tin_ca_nhan", { p_ten: phienCu.tenDangNhap }).then(function (kq) {
     if (!kq || !kq.thanhCong || !kq.thongTin) {
-      // Tài khoản không còn hợp lệ (đổi mật khẩu ở nơi khác, tài khoản bị xoá...)
-      kcDangXuat();
-      kcBaoSanSang(false);
+      if (kq && kq.thongBao && kq.thongBao.indexOf("Khong tim thay") !== -1) {
+        // Tài khoản không còn tồn tại trên máy chủ -> đăng xuất an toàn
+        kcDangXuat();
+        kcBaoSanSang(false);
+        return;
+      }
+      // Lỗi mạng: giữ phiên + số liệu tạm đang hiện (đúng mẫu app.js)
+      kcBaoSanSang(true);
       return;
     }
-    // Cập nhật vài số liệu hay đổi (kim cương...) nhưng GIỮ maPhien cũ vì
+    // Đồng bộ lại các số liệu hay đổi nhưng GIỮ maPhien cũ vì
     // lay_thong_tin_ca_nhan không sinh phiên mới (chỉ dang_nhap mới sinh).
-    kcTaiKhoanHienTai.diemSo = kq.thongTin.diemSo;
-    kcTaiKhoanHienTai.vaiTro = kq.thongTin.vaiTro;
-    kcTaiKhoanHienTai.avatarDaChon = kq.thongTin.avatarDaChon;
+    // Cập nhật ĐỦ các trường app.js Cờ Vua dùng, vì 2 app chung 1 phiên.
+    var tt = kq.thongTin;
+    kcTaiKhoanHienTai.level = tt.level;
+    kcTaiKhoanHienTai.diemSo = tt.diemSo;
+    kcTaiKhoanHienTai.kinhNghiem = tt.kinhNghiem;
+    kcTaiKhoanHienTai.avatarDaChon = tt.avatarDaChon;
+    kcTaiKhoanHienTai.trangBi = tt.trangBi;
+    kcTaiKhoanHienTai.vaiTro = tt.vaiTro;
     kcLuuPhien(kcTaiKhoanHienTai);
     kcHienDaDangNhap(kcTaiKhoanHienTai);
     kcBaoSanSang(true);
@@ -92,6 +118,15 @@ function kcBaoSanSang(daDangNhap) {
 
 function kcDocPhien() {
   try {
+    // Chuyển phiên còn sót ở khóa riêng của bản KC_00 sang khóa chung (1 lần)
+    var chuoiCu = sessionStorage.getItem(KC_KHOA_PHIEN_CU);
+    if (chuoiCu) {
+      if (!sessionStorage.getItem(KC_KHOA_PHIEN)) {
+        sessionStorage.setItem(KC_KHOA_PHIEN, chuoiCu);
+      }
+      sessionStorage.removeItem(KC_KHOA_PHIEN_CU);
+    }
+
     var chuoi = sessionStorage.getItem(KC_KHOA_PHIEN);
     if (!chuoi) return null;
     return JSON.parse(chuoi);
@@ -184,6 +219,12 @@ function kcHienChuaDangNhap() {
   var khoiCan = document.getElementById("kcNoiDungCanDangNhap");
   if (khoiChua) khoiChua.style.display = "block";
   if (khoiCan) khoiCan.style.display = "none";
+
+  var oTen = document.getElementById("kcTenNguoiChoi");
+  if (oTen) oTen.textContent = "";
+  var oNutDangXuat = document.getElementById("kcNutDangXuat");
+  if (oNutDangXuat) oNutDangXuat.style.display = "none";
+  kcApDungHienThiTheoVaiTro(null);
 }
 
 function kcHienDaDangNhap(taiKhoan) {
@@ -197,6 +238,16 @@ function kcHienDaDangNhap(taiKhoan) {
 
   var oNutDangXuat = document.getElementById("kcNutDangXuat");
   if (oNutDangXuat) oNutDangXuat.style.display = "inline-block";
+
+  kcApDungHienThiTheoVaiTro(taiKhoan.vaiTro);
+}
+
+/** Ẩn các phần tử data-an-voi-phu-huynh khi người đăng nhập là phụ huynh */
+function kcApDungHienThiTheoVaiTro(vaiTro) {
+  var ds = document.querySelectorAll("[data-an-voi-phu-huynh]");
+  for (var i = 0; i < ds.length; i++) {
+    ds[i].style.display = (vaiTro === "phu_huynh") ? "none" : "";
+  }
 }
 
 function kcHienThongBaoDangNhap(text, loai) {
@@ -205,6 +256,20 @@ function kcHienThongBaoDangNhap(text, loai) {
   o.textContent = text;
   o.className = "hien " + (loai === "xau" ? "xau" : "tot");
 }
+
+// ================================================================
+// PHẦN 6: QUAY LẠI TRANG BẰNG NÚT "BACK" CỦA TRÌNH DUYỆT
+// ================================================================
+// Trình duyệt có thể hiện lại trang cũ từ bộ nhớ đệm (không chạy lại
+// DOMContentLoaded). Nếu trong lúc đó người dùng đã đăng nhập/đăng xuất ở
+// trang Cờ Vua thì trang này đang hiện trạng thái CŨ -> tải lại cho khớp.
+window.addEventListener("pageshow", function (su) {
+  if (!su.persisted) return;
+  var phien = kcDocPhien();
+  var tenTrongPhien = phien && phien.tenDangNhap ? phien.tenDangNhap : null;
+  var tenDangHien = kcTaiKhoanHienTai ? kcTaiKhoanHienTai.tenDangNhap : null;
+  if (tenTrongPhien !== tenDangHien) window.location.reload();
+});
 
 // ================================================================
 // KHỞI CHẠY

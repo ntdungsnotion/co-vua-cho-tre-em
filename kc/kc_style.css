@@ -6,6 +6,9 @@
               xanh cờ vua) để trẻ phân biệt ngay đây là "khu vui chơi" khác.
    BƯỚC: KC_00
    NGÀY: 17/07/2026
+   CẬP NHẬT: KC_00B - 14/10/2026 21:57: thêm THANH TAB CHUNG (.kcThanhTab)
+             dưới header của mọi trang - chuyển qua lại Cờ Vua / Học Tập /
+             Khám Phá / Thử Thách như 1 ứng dụng duy nhất.
    QUY ƯỚC:
      - Biến màu giữ NGUYÊN TÊN như bên Cờ Vua (--mau-chinh, --mau-vien...) để
        tái dùng trực tiếp cấu trúc HTML/CSS đã có sẵn trong 3 trang skeleton
@@ -105,6 +108,46 @@ button, input, textarea { font-family: inherit; }
 .kcNutLienKet:hover, .kcNutDangXuat:hover {
   background-color: #ffffff;
   color: var(--mau-chinh-dam);
+}
+
+/* ================================================================
+   THANH TAB CHUNG (KC_00B) - chuyển giữa các mảng như 1 ứng dụng
+   Dính trên cùng khi cuộn; điện thoại hẹp thì vuốt ngang để xem hết tab.
+   Tab của trang đang mở gắn aria-current="page".
+   ================================================================ */
+.kcThanhTab {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background-color: var(--mau-nen-khoi);
+  border-bottom: 2px solid var(--mau-vien);
+  box-shadow: 0 2px 10px rgba(75, 47, 176, 0.08);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.kcThanhTab::-webkit-scrollbar { display: none; }
+.kcTab {
+  flex: 0 0 auto;
+  text-decoration: none;
+  color: var(--mau-chinh-dam);
+  border: 2px solid var(--mau-vien);
+  background-color: var(--mau-nen-khoi);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: bold;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  transition: all 0.2s ease-in-out;
+}
+.kcTab:hover { border-color: var(--mau-chinh); background-color: var(--mau-chinh-nhat); }
+.kcTab[aria-current="page"] {
+  background-color: var(--mau-chinh);
+  border-color: var(--mau-chinh);
+  color: #ffffff;
 }
 
 /* ================================================================
@@ -317,4 +360,8 @@ button, input, textarea { font-family: inherit; }
 @media (max-width: 480px) {
   #headerChinh { padding: 14px; }
   #headerChinh h1 { font-size: 1.25rem; }
+  /* Điện thoại: các tab chia đều bề ngang để luôn thấy đủ, không phải vuốt */
+  .kcThanhTab { gap: 6px; padding: 8px; }
+  .kcTab { flex: 1 1 0; min-width: 0; padding: 6px 2px; font-size: 0.78rem; text-align: center; border-radius: 14px; line-height: 1.25; }
+  .kcTabIcon { display: block; font-size: 1.15rem; }
 }
