@@ -48,8 +48,8 @@
 //   thay quy ước cũ "khóa riêng" ở Sổ Tay mục A5). PHẢI trùng
 //   APP_KHOA_LUU_PHIEN trong app.js.
 //
-// PHẦN TỬ TÙY CHỌN: phần tử có thuộc tính data-an-voi-phu-huynh (vd: nút
-//   "Về Cờ Vua") sẽ bị ẩn khi người đăng nhập là phụ huynh.
+// PHẦN TỬ TÙY CHỌN: phần tử có thuộc tính data-an-voi-phu-huynh (vd: tab
+//   "Cờ Vua" trên thanh tab chung) sẽ bị ẩn khi người đăng nhập là phụ huynh.
 // ================================================================
 
 var KC_KHOA_PHIEN = "coVuaTaiKhoanDangNhap";
