@@ -13,7 +13,7 @@
                   (người dùng quyết 14/10/2026). Game mới sau này chỉ cần thêm
                   một thẻ vào lưới bên dưới.
        BƯỚC: TC_00 (bản thử)
-       NGÀY: 14/10/2026
+       NGÀY: 14/10/2026 (KC_00E 15/10/2026: thêm giao diện máy tính)
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js
        ================================================================ -->
 
@@ -32,6 +32,16 @@
     .tcTheCoVua { grid-column: 1 / -1; border-color: var(--mau-chinh); background: var(--mau-chinh-nhat); }
     .tcChoi { display: inline-block; background: var(--mau-phu); color: #5a3d00; font-family: "Baloo 2", sans-serif; font-weight: 700;
       font-size: 1.05rem; padding: 6px 22px; border-radius: 999px; box-shadow: 0 4px 0 #c48f00; }
+    /* KC_00E: GIAO DIỆN MÁY TÍNH (>= 1024px) - thẻ game to hơn, rê chuột nảy lên */
+    @media (min-width: 1024px) {
+      .tcThe { padding: 26px 22px; transition: transform 0.15s, border-color 0.15s; }
+      .tcThe:hover { transform: translateY(-4px); border-color: var(--mau-chinh); }
+      .tcThe .tcHinh { font-size: 4.4rem; }
+      .tcThe h3 { font-size: 1.45rem; }
+      .tcThe p { font-size: 1rem; }
+      .tcChoi { font-size: 1.2rem; padding: 8px 28px; }
+      .tcTheCoVua .tcHinh { font-size: 5.5rem; }
+    }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -112,4 +122,4 @@
 
 </body>
 </html>
-<!-- 14/10/2026 - BƯỚC: TC_00 | 15/10/2026 - BƯỚC: KC_00C-1 (thẻ Cờ Vua + tab Trang chủ) -->
+<!-- 14/10/2026 - BƯỚC: TC_00 | 15/10/2026 - BƯỚC: KC_00C-1 (thẻ Cờ Vua + tab Trang chủ) | 15/10/2026 - BƯỚC: KC_00E (giao diện máy tính) -->

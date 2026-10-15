@@ -6,6 +6,7 @@
               xanh cờ vua) để trẻ phân biệt ngay đây là "khu vui chơi" khác.
    BƯỚC: KC_00
    NGÀY: 17/07/2026
+   CẬP NHẬT: KC_00E - 15/10/2026: thêm GIAO DIỆN MÁY TÍNH (>= 1024px) ở cuối file.
    CẬP NHẬT: KC_00B - 14/10/2026 21:57: thêm THANH TAB CHUNG (.kcThanhTab)
              dưới header của mọi trang - chuyển qua lại Cờ Vua / Học Tập /
              Khám Phá / Thử Thách như 1 ứng dụng duy nhất.
@@ -364,4 +365,74 @@ button, input, textarea { font-family: inherit; }
   .kcThanhTab { gap: 6px; padding: 8px; }
   .kcTab { flex: 1 1 0; min-width: 0; padding: 6px 2px; font-size: 0.78rem; text-align: center; border-radius: 14px; line-height: 1.25; }
   .kcTabIcon { display: block; font-size: 1.15rem; }
+}
+
+/* ================================================================
+   GIAO DIỆN MÁY TÍNH (KC_00E - 15/10/2026, HƯỚNG DẪN mục 2 "Luôn có 2 giao diện")
+   Màn hình >= 1024px KHÔNG dùng bản điện thoại co lại ở giữa:
+     - thanh tab thành THANH BÊN trái cố định, tab to xếp dọc;
+     - nội dung rộng (tới 1200px, màn rất rộng 1400px), thẻ và chữ to hơn.
+   Dưới 1024px: giữ nguyên giao diện điện thoại phía trên.
+   ================================================================ */
+@media (min-width: 1024px) {
+  html { font-size: 17px; }
+  body { padding-left: 250px; }
+
+  .kcThanhTab {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 250px;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 0 16px 24px;
+    border-bottom: none;
+    border-right: 2px solid var(--mau-vien);
+    box-shadow: 2px 0 14px rgba(75, 47, 176, 0.08);
+    overflow-y: auto;
+  }
+  /* Ô trên cùng thanh bên: cùng màu header cho liền một khối */
+  .kcThanhTab::before {
+    content: "🦄🎮📚🧭";
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 -16px 10px;
+    min-height: 74px;
+    font-size: 1.7rem; letter-spacing: 4px;
+    background: linear-gradient(120deg, var(--mau-chinh), var(--mau-chinh-dam));
+  }
+  .kcTab {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 1.05rem;
+    white-space: normal;
+  }
+  .kcTabIcon { font-size: 1.7rem; line-height: 1; }
+
+  #headerChinh { padding: 20px 32px; min-height: 74px; }
+  #headerChinh h1 { font-size: 1.7rem; }
+
+  .kcGioiThieu { max-width: 1200px; margin-top: 32px; padding: 0 32px; }
+  .kcGioiThieu h2 { font-size: 2rem; }
+  .kcGioiThieu p { font-size: 1.1rem; }
+
+  .kcLuoiThe {
+    max-width: 1200px;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 24px;
+    padding: 0 32px;
+  }
+  .kcThe { padding: 30px 22px; }
+  .kcThe .kcIcon { font-size: 3.6rem; }
+  .kcThe h3 { font-size: 1.3rem; }
+  .kcThe p { font-size: 0.95rem; }
+
+  .kcNganCach { max-width: 900px; font-size: 0.95rem; }
+  .kcytKhoiYTuong { max-width: 900px; }
+
+  #kcChuaDangNhap { max-width: 460px; margin-top: 64px; padding: 36px 32px; }
+}
+
+@media (min-width: 1600px) {
+  .kcGioiThieu, .kcLuoiThe { max-width: 1400px; }
 }
