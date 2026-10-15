@@ -13,7 +13,8 @@
                   KC_00C-2: số liệu THẬT (💎 kim cương, hạng Cờ Vua của chính bé,
                   🎁 quà chưa nhận + nút "Nhận quà!") và TRANG CHỦ PHỤ HUYNH
                   (danh sách các con). Logic ở kc/kc_trangchu.js.
-       BƯỚC: KC_00C-2 (trước đó KC_00C-1)
+       KC_00E: giao diện MÁY TÍNH riêng (>= 1024px): Trang chủ 2 cột, cửa vào 2 cột.
+       BƯỚC: KC_00E (trước đó KC_00C-2, KC_00C-1)
        NGÀY: 15/10/2026
        PHỤ THUỘC: kc/kc_style.css, kc/kc_config.js, kc/kc_api.js, kc/kc_auth.js,
                   kc/kc_trangchu.js; SQL kc/supabase_kc00c_qua_tang.sql
@@ -98,6 +99,51 @@
     .tcRong { color: var(--mau-chu-nhat); margin: 0; }
     @media (prefers-reduced-motion: reduce) { #tcOQua.tcCoQua, #tcOKimCuong.tcNay { animation: none; } }
     #tcKhuBe, #tcKhuPhuHuynh { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+    /* ----- KC_00E: Cửa vào - cột chào mừng chỉ hiện trên máy tính ----- */
+    .tcCuaVaoTrai { display: none; }
+    /* ----- KC_00E: GIAO DIỆN MÁY TÍNH (>= 1024px), HƯỚNG DẪN mục 2 ----- */
+    @media (min-width: 1024px) {
+      #kcChuaDangNhap { max-width: 980px; padding: 0; overflow: hidden; text-align: left; }
+      .tcCuaVaoBoCuc { display: grid; grid-template-columns: 1fr 1fr; }
+      .tcCuaVaoTrai { display: flex; flex-direction: column; justify-content: center; padding: 48px 44px; color: #fff;
+        background: linear-gradient(140deg, var(--mau-chinh), var(--mau-chinh-dam)); }
+      .tcCuaVaoTrai h2 { color: #fff; font-size: 2.2rem; margin: 8px 0 16px; }
+      .tcCuaVaoTraiHinh { font-size: 5.5rem; line-height: 1; }
+      .tcCuaVaoTrai ul { list-style: none; padding: 0; margin: 0; font-size: 1.2rem; font-weight: 600; }
+      .tcCuaVaoTrai li { padding: 8px 0; }
+      .tcCuaVaoPhai { padding: 44px 40px; text-align: center; }
+      .tcCuaVaoPhai .tcCuaVaoHinh { display: none; }
+      #kcChuaDangNhap .tcCuaVaoPhai h2 { font-size: 1.8rem; }
+      #kcChuaDangNhap .tcCuaVaoTrai h2 { font-size: 2.2rem; text-align: left; }
+
+      .tcBoCuc { display: grid; grid-template-columns: minmax(320px, 420px) 1fr; gap: 32px; align-items: start;
+        max-width: 1400px; margin: 0 auto; padding: 32px; }
+      .tcCotTrai { position: sticky; top: 24px; background: var(--mau-nen-khoi); border: 3px solid var(--mau-vien);
+        border-radius: var(--bo-tron); box-shadow: var(--do-bong); padding: 28px 22px; }
+      .tcCotTrai .kcGioiThieu { margin: 0 0 6px; padding: 0; }
+      .tcChaoAvatar { width: 120px; height: 120px; font-size: 4.4rem; }
+      #tcKhuBe, #tcKhuPhuHuynh { padding: 0; }
+      .tcChip { font-size: 1.2rem; padding: 10px 18px; }
+      .tcKhuQua { margin-bottom: 0; box-shadow: none; }
+      .tcKhoiPhuHuynh { box-shadow: none; }
+      .tcKhoiPhuHuynh:last-child { margin-bottom: 0; }
+
+      .tcBoCuc > .kcLuoiThe { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 24px; max-width: none; margin: 0; padding: 0; }
+      .tcKhu { padding: 30px 22px; min-height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: transform 0.15s, border-color 0.15s; }
+      .tcKhu:hover { transform: translateY(-4px); border-color: var(--mau-chinh); }
+      .tcKhu .tcHinh { font-size: 5rem; }
+      .tcKhu h3 { font-size: 1.7rem; }
+      .tcKhu p { font-size: 1.05rem; }
+      .tcKhu .tcTienDo { font-size: 0.95rem; padding: 5px 14px; }
+    }
+    @media (min-width: 1280px) {
+      .tcBoCuc > .kcLuoiThe { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1600px) {
+      .tcBoCuc { grid-template-columns: 480px 1fr; max-width: 1600px; }
+      .tcKhu { min-height: 300px; }
+    }
     .tcGhiChuPhuHuynh { text-align: center; font-size: 0.85rem; color: var(--mau-chu-nhat); margin: 18px 0 0;
       border-top: 1px dashed var(--mau-vien); padding-top: 12px; }
   </style>
@@ -126,6 +172,19 @@
        đăng nhập). Khối đăng nhập dùng kc_auth.js; khối tạo tài khoản bé (RPC dang_ky,
        y như auth.js Cờ Vua) xử lý ở script cuối trang. -->
   <div id="kcChuaDangNhap" style="display:none;">
+   <div class="tcCuaVaoBoCuc">
+    <!-- KC_00E: chỉ hiện trên MÁY TÍNH - cột trái chào mừng to -->
+    <div class="tcCuaVaoTrai" aria-hidden="true">
+      <div class="tcCuaVaoTraiHinh">🦄</div>
+      <h2>Thế giới vui của con!</h2>
+      <ul>
+        <li>📚 Học mà vui</li>
+        <li>🎮 Chơi thật hay</li>
+        <li>🎯 Làm thử thách</li>
+        <li>🎁 Nhận quà, nhận kim cương</li>
+      </ul>
+    </div>
+    <div class="tcCuaVaoPhai">
     <div class="tcCuaVaoHinh">🦄🎮📚🧭</div>
     <div id="tcKhoiDangNhap">
       <h2>Chào con! 👋</h2>
@@ -148,9 +207,15 @@
     </div>
     <p class="tcGhiChuPhuHuynh">👨‍👩‍👧 Bố mẹ cũng đăng nhập ở đây.
       <a href="kc/thuthach_NC.html#dang-ky-phu-huynh">Đăng ký tài khoản phụ huynh</a></p>
+    </div>
+   </div>
   </div>
 
   <div id="kcNoiDungCanDangNhap" style="display:none;">
+   <!-- KC_00E: máy tính chia 2 cột (trái: lời chào + kim cương + quà; phải: các khu to).
+        Điện thoại: 2 khối này nằm chồng lên nhau như cũ. -->
+   <div class="tcBoCuc">
+    <div class="tcCotTrai">
 
     <div class="kcGioiThieu">
       <div class="tcChaoAvatar" id="tcChaoAvatar">🙂</div>
@@ -182,6 +247,8 @@
       </div>
     </div>
 
+    </div><!-- /tcCotTrai -->
+
     <div class="kcLuoiThe">
       <a class="tcKhu" href="kc/hoctap_NC.html"><span class="tcHinh">📚</span><h3>Học Tập</h3><p>Học mà vui, càng học càng giỏi.</p>
         <span class="tcTienDo tcSapCo" data-an-voi-phu-huynh>🏅 Hạng học tập: sắp có</span></a>
@@ -190,6 +257,8 @@
         <span class="tcTienDo" id="tcDongCoVua"><span id="tcHangCoVua">♟️ Cờ Vua</span></span></a>
       <a class="tcKhu" href="kc/thuthach_NC.html"><span class="tcHinh">🎯</span><h3>Thử Thách</h3><p>Nhận thử thách, nhận thưởng.</p></a>
     </div>
+
+   </div><!-- /tcBoCuc -->
 
     <div class="tcChucMung" id="tcChucMung" role="status" aria-live="polite"></div>
 
@@ -243,4 +312,4 @@
 
 </body>
 </html>
-<!-- 15/10/2026 - BƯỚC: KC_00C-2 -->
+<!-- 15/10/2026 - BƯỚC: KC_00E -->

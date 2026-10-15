@@ -18,7 +18,7 @@
                   CƠ CHẾ TẠO/XÁC NHẬN/THƯỞNG thử thách CHƯA làm ở bước này -
                   nằm ở TT_02/TT_03 (xem KẾ HOẠCH).
        BƯỚC: TT_01
-       NGÀY: 17/07/2026
+       NGÀY: 17/07/2026 (KC_00E 15/10/2026: thêm giao diện máy tính trong <style>)
        CẬP NHẬT: KC_00B - 14/10/2026 21:57 (hợp nhất đăng nhập: dùng chung
                  phiên với Cờ Vua qua kc_auth.js; tab "Cờ Vua" trên THANH TAB
                  CHUNG ẩn với phụ huynh nhờ data-an-voi-phu-huynh)
@@ -208,6 +208,14 @@
       font-family: inherit;
     }
     .ttNutGoLienKet:hover:not(:disabled) { background: var(--mau-that-bai); color: #fff; }
+    /* KC_00E: GIAO DIỆN MÁY TÍNH (>= 1024px) - các khối rộng hơn, chữ to hơn */
+    @media (min-width: 1024px) {
+      #ttQuyTrinh, #ttGhiChuPhuHuynh, #ttTuongLai, #ttKhuPhuHuynh { max-width: 1000px; }
+      #ttDangKyPhuHuynh { max-width: 460px; }
+      .ttBuoc { padding: 16px 18px; }
+      .ttBuocIcon { font-size: 2.4rem; }
+      .ttBuocChu { font-size: 0.95rem; }
+    }
   </style>
 </head>
 <body>
