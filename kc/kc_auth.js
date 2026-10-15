@@ -8,6 +8,7 @@
 //            máy chủ ngay lập tức bằng lay_thong_tin_ca_nhan - làm ĐÚNG MẪU
 //            app.js của Cờ Vua ngay từ đầu, KHÔNG lặp "nợ T3" (Sổ Tay D10).
 // BƯỚC: KC_00B (hợp nhất đăng nhập với Cờ Vua) - NGÀY: 14/10/2026 21:57
+// CẬP NHẬT: KC_00C-2 (15/10/2026) - giữ kcThongTinCaNhan cho Trang chủ.
 // LỊCH SỬ: KC_00 (17/07/2026) - bản đầu, dùng khóa phiên RIÊNG.
 // PHỤ THUỘC: kc_config.js, kc_api.js phải nạp TRƯỚC file này.
 //
@@ -56,6 +57,9 @@ var KC_KHOA_PHIEN = "coVuaTaiKhoanDangNhap";
 var KC_KHOA_PHIEN_CU = "kcTaiKhoanDangNhap"; // khóa riêng của bản KC_00, chỉ để chuyển 1 lần
 
 var kcTaiKhoanHienTai = null; // null cho tới khi kcSanSang bắn với daDangNhap=true
+// KC_00C-2 (15/10/2026): bản thongTin mới nhất của lay_thong_tin_ca_nhan (có hangThu,
+// danhHieu) để Trang chủ dùng lại, khỏi gọi máy chủ 2 lần. null nếu chưa lấy được.
+var kcThongTinCaNhan = null;
 
 // ================================================================
 // PHẦN 1: KHỞI ĐỘNG
@@ -92,6 +96,7 @@ function kcAuthKhoiTao() {
     // lay_thong_tin_ca_nhan không sinh phiên mới (chỉ dang_nhap mới sinh).
     // Cập nhật ĐỦ các trường app.js Cờ Vua dùng, vì 2 app chung 1 phiên.
     var tt = kq.thongTin;
+    kcThongTinCaNhan = tt;
     kcTaiKhoanHienTai.level = tt.level;
     kcTaiKhoanHienTai.diemSo = tt.diemSo;
     kcTaiKhoanHienTai.kinhNghiem = tt.kinhNghiem;
@@ -207,6 +212,7 @@ function kcGanSuKienDangXuat() {
 function kcDangXuat() {
   kcXoaPhien();
   kcTaiKhoanHienTai = null;
+  kcThongTinCaNhan = null;
   kcHienChuaDangNhap();
 }
 
