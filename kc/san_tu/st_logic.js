@@ -13,6 +13,8 @@
               phần âm thanh / giao diện phản ứng.
    BƯỚC: TC_00B
    NGÀY: 15/10/2026
+   CẬP NHẬT: 15/10/2026 - TC_00D: một lượt chơi = MỘT MÀN (cấu hình từ ST.taoManChoi),
+             thời gian theo màn; màn cuối (7) mới có lâu đài + mèo.
    TỌA ĐỘ: x = quãng đường (tăng về phía lâu đài), y = độ cao so với mặt đất.
            Nhân vật: x là TÂM người, y là CHÂN. Chướng ngại vật: x là MÉP TRÁI.
    THỨ TỰ XỬ LÝ MỖI BƯỚC (cố định để không chồng chéo):
@@ -85,8 +87,8 @@
         const n = ds.length;
         // không 3 cái giống nhau liên tiếp
         if (n >= 2 && ds[n - 1].loai === ma && ds[n - 2].loai === ma) continue;
-        // mức Dễ: không để 2 cái nguy hiểm (mất mạng) đứng liền nhau
-        if (dk.soPhuongAn <= 2 && n >= 1 && ds[n - 1].vaCham !== "khung" && ST.LOAI_CHUONG_NGAI[ma].vaCham !== "khung") continue;
+        // màn dễ: không để 3 cái nguy hiểm (mất mạng) đứng liền nhau
+        if (dk.soPhuongAn <= 2 && n >= 2 && ds[n - 1].vaCham !== "khung" && ds[n - 2].vaCham !== "khung" && ST.LOAI_CHUONG_NGAI[ma].vaCham !== "khung") continue;
         return ma;
       }
       return "cong";
@@ -125,11 +127,12 @@
      Trạng thái: menu | choi | hoiSinh (đang xử lý va chạm / hồi sinh) | tamDung | thang | thua
      ================================================================ */
   class TroChoi {
-    constructor(maDoKho, tuyChon) {
+    // man: cấu hình màn từ ST.taoManChoi(); truyền mã cấp từ (vd "de") thì chơi màn 1 Rừng xanh
+    constructor(man, tuyChon) {
       tuyChon = tuyChon || {};
       this.CH = ST.CAU_HINH;
-      this.maDoKho = maDoKho;
-      this.dk = ST.DO_KHO[maDoKho];
+      this.dk = typeof man === "string" ? ST.taoManChoi("rung", 1, man) : man;
+      this.maDoKho = this.dk.maCapTu;
       this.rng = tuyChon.ngauNhien || Math.random;
       this.suKien = tuyChon.suKien || function () {};
       this.soTay = tuyChon.soTay || null; // sổ ghi nhớ từ của bé (có thể không có)
@@ -148,7 +151,8 @@
       this.chuongNgai = duong.ds;
       this.tongChuongNgai = duong.ds.length;
       this.v = this.dk.tocDo;
-      this.thoiGian = CH.thoiGianChoi;
+      this.thoiGianToiDa = this.dk.thoiGianChoi || CH.thoiGianChoi;
+      this.thoiGian = this.thoiGianToiDa;
       this.tChoi = 0;
       this.tichLuy = 0;
       this.be = { x: 0, y: 0, che: "chay", tChe: 0, batTu: 0, nhay: null, tTiepDat: 9, tPhep: 9, tCham: 0 };
@@ -171,7 +175,7 @@
     batDau() {
       this.datLai();
       this.trangThai = "choi";
-      this.phat("batDau", { doKho: this.maDoKho });
+      this.phat("batDau", { man: this.dk });
     }
 
     get tienDo() { return Math.max(0, Math.min(1, this.be.x / this.doDai)); }
@@ -575,7 +579,7 @@
       this.tKetThuc = 0;
       this.dongThuThach(false);
       this.be.che = "thang"; this.be.nhay = null; this.be.y = 0;
-      this.phat("thang", { thoiGian: this.thoiGian });
+      this.phat("thang", { thoiGian: this.thoiGian, laManCuoi: !!this.dk.laManCuoi });
     }
     ketThuc(lyDo) {
       if (this.trangThai === "thang" || this.trangThai === "thua") return;
