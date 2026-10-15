@@ -8,13 +8,15 @@
   <!-- ================================================================
        FILE: index.html (gốc repo - địa chỉ mở app). KC_00C-1: chuyển từ
              kc/trangchu_NC.html lên đây; trang Cờ Vua cũ đổi tên covua_NC.html.
-       CHỨC NĂNG: CỬA VÀO + TRANG CHỦ (bản TẠM) - lời chào + avatar + các khu to dẫn vào
+       CHỨC NĂNG: CỬA VÀO + TRANG CHỦ - lời chào + avatar + các khu to dẫn vào
                   Học Tập / Khám Phá / Trò Chơi / Thử Thách.
-                  CHƯA có số liệu thật (kim cương, hạng, quà, huy hiệu số):
-                  làm ở KC_00C-2 (kế hoạch mục KC_00C).
-       BƯỚC: KC_00C-1
+                  KC_00C-2: số liệu THẬT (💎 kim cương, hạng Cờ Vua của chính bé,
+                  🎁 quà chưa nhận + nút "Nhận quà!") và TRANG CHỦ PHỤ HUYNH
+                  (danh sách các con). Logic ở kc/kc_trangchu.js.
+       BƯỚC: KC_00C-2 (trước đó KC_00C-1)
        NGÀY: 15/10/2026
-       PHỤ THUỘC: kc/kc_style.css, kc/kc_config.js, kc/kc_api.js, kc/kc_auth.js
+       PHỤ THUỘC: kc/kc_style.css, kc/kc_config.js, kc/kc_api.js, kc/kc_auth.js,
+                  kc/kc_trangchu.js; SQL kc/supabase_kc00c_qua_tang.sql
        ================================================================ -->
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,6 +44,60 @@
     .tcThongBao.hien { display: block; }
     .tcThongBao.tot { background: #d6f5e3; color: #1e8449; }
     .tcThongBao.xau { background: #fadbd8; color: #a93226; }
+    /* ----- KC_00C-2: hàng thông tin chung (kim cương + quà) ----- */
+    .tcHangChung { display: flex; gap: 10px; justify-content: center; margin: 4px 0 18px; flex-wrap: wrap; }
+    .tcChip { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 999px;
+      background: var(--mau-nen-khoi); border: 3px solid var(--mau-vien); font-weight: 700; font-size: 1.05rem;
+      color: var(--mau-chu); font-family: inherit; box-shadow: var(--do-bong); }
+    .tcChip .tcChipHinh { font-size: 1.4rem; line-height: 1; }
+    #tcOKimCuong { border-color: var(--mau-phu); }
+    #tcOKimCuong.tcNay { animation: tcNay 0.35s ease-in-out 3; }
+    #tcOQua { cursor: pointer; color: var(--mau-chu-nhat); }
+    #tcOQua:disabled { cursor: default; }
+    #tcOQua.tcCoQua { color: #fff; background: var(--mau-thanh-cong); border-color: var(--mau-thanh-cong); animation: tcLacQua 1.6s ease-in-out infinite; }
+    @keyframes tcNay { 50% { transform: scale(1.15); } }
+    @keyframes tcLacQua { 0%, 70%, 100% { transform: rotate(0); } 78% { transform: rotate(-6deg); } 86% { transform: rotate(6deg); } 94% { transform: rotate(-3deg); } }
+    /* ----- Khu quà tặng ----- */
+    .tcKhuQua { background: linear-gradient(135deg, #fff6d6, #ffe9f3); border: 3px solid var(--mau-phu); border-radius: var(--bo-tron);
+      padding: 14px; margin-bottom: 18px; box-shadow: var(--do-bong); }
+    .tcKhuQua h3 { margin: 0 0 10px; text-align: center; }
+    .tcTheQua { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: var(--bo-tron-nho); padding: 10px 12px;
+      margin-top: 10px; transition: opacity 0.6s, transform 0.6s; }
+    .tcTheQua.tcDangMo .tcQuaHinh { animation: tcLacQua 0.5s linear infinite; }
+    .tcTheQua.tcDaNhan { opacity: 0; transform: scale(0.85); }
+    .tcQuaHinh { font-size: 2.4rem; line-height: 1; }
+    .tcQuaGiua { flex: 1; min-width: 0; }
+    .tcQuaGiua strong { display: block; color: var(--mau-chinh-dam); }
+    .tcQuaGiua p { margin: 2px 0; font-size: 0.85rem; color: var(--mau-chu-nhat); }
+    .tcQuaKimCuong { font-weight: 700; color: var(--mau-phu-dam); }
+    .tcNutNhanQua { border: none; border-radius: 999px; padding: 10px 14px; background: var(--mau-thanh-cong); color: #fff;
+      font-weight: 700; font-size: 0.95rem; cursor: pointer; white-space: nowrap; font-family: inherit; }
+    .tcNutNhanQua:disabled { background: #a9d9c0; cursor: default; }
+    .tcChucMung { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%) scale(0.6); opacity: 0; pointer-events: none;
+      background: #fff; border: 4px solid var(--mau-phu); border-radius: var(--bo-tron); padding: 16px 22px; font-size: 1.25rem;
+      font-weight: 700; color: var(--mau-chinh-dam); box-shadow: 0 12px 40px rgba(0,0,0,0.2); transition: all 0.3s; z-index: 50;
+      text-align: center; max-width: 90vw; }
+    .tcChucMung.hien { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .tcHatKimCuong { position: fixed; top: -40px; z-index: 40; pointer-events: none; animation: tcRoi 1.8s ease-in forwards; }
+    @keyframes tcRoi { to { transform: translateY(105vh) rotate(260deg); } }
+    /* ----- Thông tin riêng trên thẻ khu ----- */
+    .tcKhu .tcTienDo { display: inline-block; margin-top: 8px; padding: 3px 10px; border-radius: 999px; font-size: 0.8rem;
+      font-weight: 600; background: var(--mau-chinh-nhat); color: var(--mau-chinh-dam); }
+    .tcKhu .tcTienDo.tcSapCo { background: #f1eff6; color: var(--mau-chu-nhat); }
+    /* ----- Trang chủ phụ huynh ----- */
+    .tcKhoiPhuHuynh { background: var(--mau-nen-khoi); border: 3px solid var(--mau-vien); border-radius: var(--bo-tron);
+      padding: 14px; margin-bottom: 16px; box-shadow: var(--do-bong); }
+    .tcKhoiPhuHuynh h3 { margin: 0 0 8px; }
+    .tcTheCon { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px dashed var(--mau-vien); }
+    .tcTheCon:first-child { border-top: none; }
+    .tcTheCon strong { flex: 1; }
+    .tcConAvatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; background: var(--mau-chinh-nhat); overflow: hidden; }
+    .tcConAvatar img { width: 100%; height: 100%; object-fit: cover; }
+    .tcConKimCuong { font-weight: 700; color: var(--mau-phu-dam); }
+    .tcRong { color: var(--mau-chu-nhat); margin: 0; }
+    @media (prefers-reduced-motion: reduce) { #tcOQua.tcCoQua, #tcOKimCuong.tcNay { animation: none; } }
+    #tcKhuBe, #tcKhuPhuHuynh { max-width: 860px; margin: 0 auto; padding: 0 16px; }
     .tcGhiChuPhuHuynh { text-align: center; font-size: 0.85rem; color: var(--mau-chu-nhat); margin: 18px 0 0;
       border-top: 1px dashed var(--mau-vien); padding-top: 12px; }
   </style>
@@ -99,21 +155,50 @@
     <div class="kcGioiThieu">
       <div class="tcChaoAvatar" id="tcChaoAvatar">🙂</div>
       <h2 id="tcLoiChao">Chào con!</h2>
-      <p>Hôm nay con muốn đi đâu nào?</p>
+      <p id="tcLoiChaoPhu">Hôm nay con muốn đi đâu nào?</p>
+    </div>
+
+    <!-- KC_00C-2: phần của BÉ - thông tin chung (kim cương + quà) dùng cho mọi khu -->
+    <div id="tcKhuBe">
+      <div class="tcHangChung">
+        <div class="tcChip" id="tcOKimCuong" title="Kim cương của con"><span class="tcChipHinh">💎</span><span id="tcSoKimCuong">0</span></div>
+        <button class="tcChip" id="tcOQua" type="button" disabled><span class="tcChipHinh">🎁</span><span id="tcSoQua">Chưa có quà</span></button>
+      </div>
+      <div class="tcKhuQua" id="tcKhuQua" style="display:none;">
+        <h3>🎁 Quà tặng của con</h3>
+        <div id="tcDanhSachQua"></div>
+      </div>
+    </div>
+
+    <!-- KC_00C-2: TRANG CHỦ PHỤ HUYNH (các con + việc chờ duyệt) -->
+    <div id="tcKhuPhuHuynh" style="display:none;">
+      <div class="tcKhoiPhuHuynh">
+        <h3>👧👦 Các con</h3>
+        <div id="tcDanhSachCon"></div>
+      </div>
+      <div class="tcKhoiPhuHuynh">
+        <h3>📝 Việc chờ duyệt</h3>
+        <p class="tcRong">Sắp có: khi con báo làm xong thử thách, việc cần bố mẹ duyệt sẽ hiện ở đây.</p>
+      </div>
     </div>
 
     <div class="kcLuoiThe">
-      <a class="tcKhu" href="kc/hoctap_NC.html"><span class="tcHinh">📚</span><h3>Học Tập</h3><p>Học mà vui, càng học càng giỏi.</p></a>
+      <a class="tcKhu" href="kc/hoctap_NC.html"><span class="tcHinh">📚</span><h3>Học Tập</h3><p>Học mà vui, càng học càng giỏi.</p>
+        <span class="tcTienDo tcSapCo" data-an-voi-phu-huynh>🏅 Hạng học tập: sắp có</span></a>
       <a class="tcKhu" href="kc/khampha_NC.html"><span class="tcHinh">🧭</span><h3>Khám Phá</h3><p>Điều kỳ diệu quanh con.</p></a>
-      <a class="tcKhu" href="kc/trochoi_NC.html"><span class="tcHinh">🎮</span><h3>Trò Chơi</h3><p>Cờ Vua và nhiều trò hay.</p></a>
+      <a class="tcKhu" href="kc/trochoi_NC.html"><span class="tcHinh">🎮</span><h3>Trò Chơi</h3><p>Nhiều trò chơi hay đang chờ.</p>
+        <span class="tcTienDo" id="tcDongCoVua"><span id="tcHangCoVua">♟️ Cờ Vua</span></span></a>
       <a class="tcKhu" href="kc/thuthach_NC.html"><span class="tcHinh">🎯</span><h3>Thử Thách</h3><p>Nhận thử thách, nhận thưởng.</p></a>
     </div>
+
+    <div class="tcChucMung" id="tcChucMung" role="status" aria-live="polite"></div>
 
   </div>
 
   <script src="kc/kc_config.js"></script>
   <script src="kc/kc_api.js"></script>
   <script src="kc/kc_auth.js"></script>
+  <script src="kc/kc_trangchu.js"></script>
   <script>
     // KC_00C-1: chuyển qua lại giữa Đăng nhập và Tạo tài khoản
     function tcHienKhoi(dangKy) {
@@ -153,26 +238,9 @@
       });
     });
 
-    // Lời chào + avatar lấy từ phiên đăng nhập chung (avatar là URL -> <img>, Sổ Tay D7).
-    // Vẽ NGAY khi trang tải (từ phiên đã lưu) rồi vẽ lại khi kc_auth.js xác thực xong.
-    function tcVeLoiChao(tk) {
-      if (!tk || !tk.tenDangNhap) return;
-      document.getElementById("tcLoiChao").textContent = "Chào " + tk.tenDangNhap + "!";
-      var o = document.getElementById("tcChaoAvatar");
-      var av = tk.avatarDaChon;
-      o.textContent = "🙂";
-      if (av && av.indexOf("http") === 0) {
-        var img = document.createElement("img");
-        img.src = av; img.alt = "";
-        o.textContent = ""; o.appendChild(img);
-      } else if (av) { o.textContent = av; }
-    }
-    document.addEventListener("DOMContentLoaded", function () { tcVeLoiChao(kcTaiKhoanHienTai); });
-    document.addEventListener("kcSanSang", function (su) {
-      if (su.detail && su.detail.daDangNhap) tcVeLoiChao(su.detail.taiKhoan);
-    });
+    // Lời chào, kim cương, quà, trang chủ phụ huynh: xem kc/kc_trangchu.js (KC_00C-2)
   </script>
 
 </body>
 </html>
-<!-- 15/10/2026 - BƯỚC: KC_00C-1 -->
+<!-- 15/10/2026 - BƯỚC: KC_00C-2 -->
