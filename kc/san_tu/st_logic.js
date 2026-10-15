@@ -132,6 +132,7 @@
       this.dk = ST.DO_KHO[maDoKho];
       this.rng = tuyChon.ngauNhien || Math.random;
       this.suKien = tuyChon.suKien || function () {};
+      this.soTay = tuyChon.soTay || null; // sổ ghi nhớ từ của bé (có thể không có)
       this.trangThai = "menu";
       this.datLai();
       this.trangThai = "menu";
@@ -141,7 +142,7 @@
 
     datLai() {
       const CH = this.CH;
-      this.khoTu = new ST.KhoTuVung(this.dk, this.rng);
+      this.khoTu = new ST.KhoTuVung(this.dk, this.rng, this.soTay);
       const duong = sinhDuongDi(this.dk, this.rng, this.khoTu);
       this.doDai = duong.dai;
       this.chuongNgai = duong.ds;
@@ -408,6 +409,7 @@
       // Hết hạn: bé đã tới điểm phải hành động mà chưa chọn đúng
       if (tt && tt.trangThai === "mo" && this.khoangTam(tt.o) <= khoangHetHan(tt.o, this.v)) {
         tt.trangThai = "het"; tt.o.trangThai = "truot";
+        this.ghiKetQuaTu(tt, false);
         this.thongKe.truot++;
         this.phat("hetHanThuThach", { tt });
       }
@@ -444,9 +446,18 @@
       const con = (this.khoangTam(tt.o) - khoangHetHan(tt.o, this.v)) / tocDoKhep(tt.o, this.v);
       return Math.max(0, Math.min(1, con / tt.thoiHan));
     }
-    dongThuThach() {
+    // ghiSo = false khi lượt chơi kết thúc giữa chừng: bé chưa kịp đọc nên không tính là chưa thuộc
+    dongThuThach(ghiSo = true) {
       const tt = this.thuThach;
-      if (tt && tt.trangThai === "mo") { tt.trangThai = "het"; tt.o.trangThai = "truot"; }
+      if (tt && tt.trangThai === "mo") { tt.trangThai = "het"; tt.o.trangThai = "truot"; if (ghiSo) this.ghiKetQuaTu(tt, false); }
+    }
+    // Ghi vào sổ của bé: đúng ngay lần bấm đầu = nhớ từ; sai rồi mới đúng / không kịp = chưa thuộc
+    ghiKetQuaTu(tt, thuoc) {
+      if (tt.daGhi) return;
+      tt.daGhi = true;
+      if (thuoc) this.thongKe.tuThuoc = (this.thongKe.tuThuoc || 0) + 1;
+      if (this.soTay) { try { this.soTay.ghi(tt.tu.en, thuoc); } catch (e) { /* bỏ qua */ } }
+      this.phat("ketQuaTu", { tu: tt.tu, thuoc });
     }
 
     // Người chơi bấm một phương án. Trả về { kq: "dung" | "sai" | "boQua" }
@@ -464,6 +475,7 @@
         return { kq: "sai" };
       }
       tt.trangThai = "dung";
+      this.ghiKetQuaTu(tt, tt.daSai.length === 0);
       const o = tt.o;
       o.trangThai = "daTraLoi";
       this.thongKe.dung++;
@@ -561,7 +573,7 @@
       if (this.trangThai !== "choi") return;
       this.trangThai = "thang";
       this.tKetThuc = 0;
-      this.dongThuThach();
+      this.dongThuThach(false);
       this.be.che = "thang"; this.be.nhay = null; this.be.y = 0;
       this.phat("thang", { thoiGian: this.thoiGian });
     }
@@ -570,7 +582,7 @@
       this.trangThai = "thua";
       this.lyDoThua = lyDo;
       this.tKetThuc = 0;
-      this.dongThuThach();
+      this.dongThuThach(false);
       this.dan = [];
       this.phat("thua", { lyDo });
     }

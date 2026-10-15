@@ -7,9 +7,11 @@
               nghiệm thu: thắng/thua, mạng, kim cương, đổi mạng, tạm dừng, chơi lại.
    BƯỚC: TC_00B
    NGÀY: 15/10/2026
+   CẬP NHẬT: 15/10/2026 - kiểm thử kho từ lớn + sổ ghi nhớ từ (mục 10, 11).
    ================================================================ */
 "use strict";
 require("./st_cau_hinh.js");
+require("./st_kho_tu.js");
 require("./st_tu_vung.js");
 require("./st_logic.js");
 const ST = globalThis.ST;
@@ -22,7 +24,7 @@ function chay(maDoKho, hat, naoBo, tuyChon) {
   tuyChon = tuyChon || {};
   const rng = ST.taoNgauNhien(hat);
   const suKien = [];
-  const g = new ST.TroChoi(maDoKho, { ngauNhien: rng, suKien: (t, d) => suKien.push({ t, d, luc: g ? g.tChoi : 0 }) });
+  const g = new ST.TroChoi(maDoKho, { ngauNhien: rng, soTay: tuyChon.soTay, suKien: (t, d) => suKien.push({ t, d, luc: g ? g.tChoi : 0 }) });
   g.batDau();
   const dt = tuyChon.dt || 1 / 60;
   let lich = null, buoc = 0;
@@ -200,6 +202,67 @@ for (const ma of ST.THU_TU_DO_KHO) for (let hat = 100; hat < 160; hat++) {
   } });
   kiem(!loi, `${ma}#${hat}: ${loi}`);
   kiem(r.g.trangThai === "thang" || r.g.trangThai === "thua", `${ma}#${hat}: lượt chơi phải kết thúc (${r.g.trangThai})`);
+}
+
+console.log("10. Kho từ: đủ nhiều, không trùng, đủ hình + nghĩa, khó dần theo cấp");
+{
+  const tatCa = [];
+  for (const cap of [1, 2, 3, 4]) {
+    const ds = ST.KHO_TU[cap];
+    kiem(ds && ds.length >= 80, `cấp ${cap}: phải có ít nhất 80 từ (đang ${ds && ds.length})`);
+    ds.forEach(([en, e, vi]) => {
+      kiem(/^[a-z]{3,}$/.test(en), `từ "${en}" phải là chữ thường, ít nhất 3 chữ`);
+      kiem(!!e && !!vi, `từ "${en}" thiếu hình hoặc nghĩa`);
+      tatCa.push(en);
+    });
+  }
+  kiem(new Set(tatCa).size === tatCa.length, "kho từ không được trùng");
+  const tb = c => ST.KHO_TU[c].reduce((a, [en]) => a + en.length, 0) / ST.KHO_TU[c].length;
+  kiem(tb(1) < tb(2) && tb(2) < tb(3) && tb(3) < tb(4), "độ dài trung bình phải tăng theo cấp");
+}
+
+console.log("11. Sổ ghi nhớ: từ bé đã thuộc ít xuất hiện, từ mới được ưu tiên, lưu riêng từng bé");
+{
+  const kho = {};
+  globalThis.localStorage = { getItem: k => (k in kho ? kho[k] : null), setItem: (k, v) => { kho[k] = String(v); } };
+  const so = new ST.SoTayTu("be_a");
+  const N = ST.SoTayTu.SO_DUNG_DE_THUOC;
+  for (let i = 0; i < N; i++) so.ghi("cat", true);
+  kiem(so.daThuoc("cat"), "đúng ngay lần đầu đủ số lần liên tiếp thì thuộc");
+  so.ghi("dog", true); so.ghi("dog", true); so.ghi("dog", false);
+  kiem(!so.daThuoc("dog") && so.lay("dog").lien === 0, "sai một lần thì chuỗi thuộc về 0");
+  kiem(so.trongSo("cat") < so.trongSo("sun") / 10, "từ đã thuộc phải hiếm hơn từ mới rất nhiều");
+  kiem(so.trongSo("dog") > so.trongSo("cat"), "từ vừa sai được gặp lại nhiều hơn từ đã thuộc");
+  kiem(new ST.SoTayTu("be_a").daThuoc("cat"), "sổ phải còn sau khi mở lại game");
+  kiem(!new ST.SoTayTu("be_b").daThuoc("cat"), "mỗi bé một sổ riêng");
+  // Đánh dấu thuộc nửa đầu cấp 1, bốc nhiều lần: từ đã thuộc phải ít hơn hẳn
+  const so2 = new ST.SoTayTu("be_c"), dk = ST.DO_KHO.de;
+  const ds1 = ST.KHO_TU[1].map(t => t[0]), thuoc = new Set(ds1.slice(0, ds1.length >> 1));
+  thuoc.forEach(en => { for (let i = 0; i < N; i++) so2.ghi(en, true); });
+  kiem(so2.demThuoc(1) === thuoc.size, "đếm số từ đã thuộc đúng");
+  let gapThuoc = 0, tong = 0;
+  for (let lan = 0; lan < 60; lan++) {
+    const k = new ST.KhoTuVung({ ...dk, capTu: [1] }, ST.taoNgauNhien(500 + lan), so2);
+    for (let i = 0; i < 12; i++) { tong++; if (thuoc.has(k.layTu().en)) gapThuoc++; }
+  }
+  kiem(gapThuoc / tong < 0.15, `từ đã thuộc chỉ nên chiếm phần nhỏ (đang ${(100 * gapThuoc / tong).toFixed(1)}%)`);
+  // Thuộc hết thì vẫn có từ để chơi (để ôn)
+  const so3 = new ST.SoTayTu("be_d");
+  ds1.forEach(en => { for (let i = 0; i < N; i++) so3.ghi(en, true); });
+  const k3 = new ST.KhoTuVung({ ...dk, capTu: [1] }, ST.taoNgauNhien(9), so3);
+  kiem(Array.from({ length: 200 }, () => k3.layTu()).every(t => !!t && !!t.en), "thuộc hết vẫn bốc được từ để ôn");
+  // Chơi thật: luôn đúng ngay lần đầu thì sổ ghi thuộc; không bấm thì ghi chưa thuộc
+  const so4 = new ST.SoTayTu("be_e");
+  const r = chay("vua", 21, nao.luonDung(0.8), { soTay: so4 });
+  const ghi = r.suKien.filter(e => e.t === "ketQuaTu");
+  kiem(ghi.length > 5 && ghi.every(e => e.d.thuoc), "luôn đúng: mọi từ được ghi là nhớ");
+  kiem(new Set(ghi.map(e => e.d.tu.en)).size === ghi.length, "mỗi thử thách chỉ ghi một lần");
+  kiem(ghi.every(e => so4.lay(e.d.tu.en) && so4.lay(e.d.tu.en).d >= 1), "sổ đã lưu kết quả");
+  const so5 = new ST.SoTayTu("be_f");
+  const r2 = chay("de", 22, nao.khongBam, { soTay: so5 });
+  const ghi2 = r2.suKien.filter(e => e.t === "ketQuaTu");
+  kiem(ghi2.length > 0 && ghi2.every(e => !e.d.thuoc), "không bấm: ghi là chưa thuộc");
+  delete globalThis.localStorage;
 }
 
 console.log(`\n${soKiem - soLoi}/${soKiem} kiểm tra đạt` + (soLoi ? ` - ${soLoi} LỖI` : " ✓"));

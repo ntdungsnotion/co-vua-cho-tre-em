@@ -6,6 +6,8 @@
               Bàn phím (máy tính): phím 1-4 chọn từ, P hoặc Esc tạm dừng, Enter bắt đầu.
    BƯỚC: TC_00B
    NGÀY: 15/10/2026
+   CẬP NHẬT: 15/10/2026 - sổ ghi nhớ từ của từng bé: nút độ khó hiện số từ đã thuộc,
+             màn kết quả khen các từ bé vừa thuộc (từ thuộc rồi sẽ ít gặp lại).
    ================================================================ */
 (function () {
   "use strict";
@@ -17,6 +19,11 @@
   const ve = new ST.BoVe($("manHinh"));
   let g = null;              // lượt chơi hiện tại
   let maDoKho = "de";
+  // Sổ ghi nhớ từ: tách riêng theo tên đăng nhập của bé (máy dùng chung)
+  let tenBe = "";
+  try { tenBe = (JSON.parse(sessionStorage.getItem("coVuaTaiKhoanDangNhap") || "null") || {}).tenDangNhap || ""; } catch (e) { tenBe = ""; }
+  const soTay = new ST.SoTayTu(tenBe);
+  let tuMoiThuoc = [];       // các từ bé vừa thuộc trong lượt này
   try { const d = localStorage.getItem(KHOA_DO_KHO); if (d && ST.DO_KHO[d]) maDoKho = d; } catch (e) { /* bỏ qua */ }
   let daHienKetQua = false;
   let idDangHien = -1;       // thử thách đang hiện trên khung chọn
@@ -33,7 +40,9 @@
     ST.THU_TU_DO_KHO.forEach(ma => {
       const d = ST.DO_KHO[ma], b = document.createElement("button");
       b.type = "button"; b.className = "nutDoKho" + (ma === maDoKho ? " chon" : "");
-      b.innerHTML = `<b>${d.bieuTuong} ${d.ten}</b><span>${d.moTa}</span>`;
+      const cacCap = [...new Set(d.capTu)];
+      const tong = cacCap.reduce((a, c) => a + ST.KHO_TU[c].length, 0), thuoc = cacCap.reduce((a, c) => a + soTay.demThuoc(c), 0);
+      b.innerHTML = `<b>${d.bieuTuong} ${d.ten}</b><span>${d.moTa}</span><i>📚 Đã thuộc ${thuoc}/${tong} từ</i>`;
       b.setAttribute("aria-pressed", ma === maDoKho);
       b.onclick = () => { maDoKho = ma; am.mo(); am.phat("nut"); try { localStorage.setItem(KHOA_DO_KHO, ma); } catch (e) { /* bỏ qua */ } veChonDoKho(); };
       hop.appendChild(b);
@@ -60,7 +69,8 @@
   /* ---------------- BẮT ĐẦU / TẠM DỪNG / KẾT THÚC ---------------- */
   function batDau() {
     am.mo(); am.phat("nut");
-    g = new ST.TroChoi(maDoKho, { suKien });
+    g = new ST.TroChoi(maDoKho, { suKien, soTay });
+    tuMoiThuoc = [];
     daHienKetQua = false; idDangHien = -1; lanThuThach = 0;
     ve.hat = [];
     $("thongBao").innerHTML = "";
@@ -99,11 +109,15 @@
     $("kqDung").textContent = tk.dung;
     $("kqKC").textContent = g.tongKimCuong;
     $("kqGio").textContent = Math.ceil(g.thoiGian);
+    const kqThuoc = $("kqThuocMoi");
+    kqThuoc.style.display = tuMoiThuoc.length ? "" : "none";
+    kqThuoc.textContent = `🎓 Con vừa thuộc thêm ${tuMoiThuoc.length} từ mới! Lần sau sẽ gặp từ mới khác nhé.`;
     const hop = $("tuDaHoc"); hop.innerHTML = "";
     $("nhanTuDaHoc").style.display = tk.tuDung.length ? "" : "none";
     tk.tuDung.forEach(t => {
       const b = document.createElement("button");
-      b.type = "button"; b.className = "chipTu"; b.textContent = `${t.e} ${t.en}`; b.title = t.vi;
+      const moi = tuMoiThuoc.includes(t.en);
+      b.type = "button"; b.className = "chipTu" + (moi ? " moiThuoc" : ""); b.textContent = `${moi ? "🎓" : t.e} ${t.en}`; b.title = t.vi;
       b.onclick = () => { am.mo(); am.doc(t.en); };
       hop.appendChild(b);
     });
@@ -193,6 +207,12 @@
         am.phat("sai");
         const n = nutCuaTu(d.tu); if (n) { n.classList.add("sai"); n.disabled = true; }
         loiNhan(`Chưa đúng rồi. Tìm chữ "${d.tt.tu.en}" nhé!`, "xau");
+        break;
+      }
+      case "ketQuaTu": {
+        // Vừa chạm đúng ngưỡng thuộc ở lượt này thì khen ở màn kết quả
+        const t = soTay.lay(d.tu.en);
+        if (d.thuoc && t && t.lien === ST.SoTayTu.SO_DUNG_DE_THUOC) tuMoiThuoc.push(d.tu.en);
         break;
       }
       case "hetHanThuThach":
