@@ -8,9 +8,12 @@
    BƯỚC: TC_00B
    NGÀY: 15/10/2026
    CẬP NHẬT: 15/10/2026 - kiểm thử kho từ lớn + sổ ghi nhớ từ (mục 10, 11).
+   CẬP NHẬT: 15/10/2026 - TC_00D: chạy kiểm thử trên cả 7 màn; thêm mục 12 (màn khó dần,
+             tiến độ màn / đường đua).
    ================================================================ */
 "use strict";
 require("./st_cau_hinh.js");
+require("./st_tien_do.js");
 require("./st_kho_tu.js");
 require("./st_tu_vung.js");
 require("./st_logic.js");
@@ -19,12 +22,20 @@ const ST = globalThis.ST;
 let soLoi = 0, soKiem = 0;
 function kiem(dk, moTa) { soKiem++; if (!dk) { soLoi++; console.log("  ✗ " + moTa); } }
 
+// 7 màn của đường Rừng xanh, mỗi màn ghép một cấp từ khác nhau (cấp từ chỉ đổi từ vựng)
+const MAN_THU = {};
+for (let m = 1; m <= ST.SO_MAN; m++) {
+  const man = ST.taoManChoi("rung", m, ST.THU_TU_DO_KHO[(m - 1) % 4]);
+  MAN_THU[man.ma] = man;
+}
+const DS_MAN = Object.keys(MAN_THU);
+
 // Chạy một lượt với "bộ não" quyết định khi nào bấm gì
 function chay(maDoKho, hat, naoBo, tuyChon) {
   tuyChon = tuyChon || {};
   const rng = ST.taoNgauNhien(hat);
   const suKien = [];
-  const g = new ST.TroChoi(maDoKho, { ngauNhien: rng, soTay: tuyChon.soTay, suKien: (t, d) => suKien.push({ t, d, luc: g ? g.tChoi : 0 }) });
+  const g = new ST.TroChoi(MAN_THU[maDoKho] || maDoKho, { ngauNhien: rng, soTay: tuyChon.soTay, suKien: (t, d) => suKien.push({ t, d, luc: g ? g.tChoi : 0 }) });
   g.batDau();
   const dt = tuyChon.dt || 1 / 60;
   let lich = null, buoc = 0;
@@ -51,7 +62,7 @@ const nao = {
 const dem = (sk, t) => sk.filter(e => e.t === t).length;
 
 console.log("1. Luôn trả lời đúng -> thắng, không mất mạng, nhặt đủ kim cương");
-for (const ma of ST.THU_TU_DO_KHO) {
+for (const ma of DS_MAN) {
   let thoiGianMin = 999, soCN = [];
   for (let hat = 1; hat <= 25; hat++) {
     const { g, suKien } = chay(ma, hat, nao.luonDung(0.5 + (hat % 5) * 0.4));
@@ -72,7 +83,7 @@ for (const ma of ST.THU_TU_DO_KHO) {
 }
 
 console.log("2. Không bấm gì -> va ống cống chỉ khựng; quái / hố làm mất mạng; hết mạng thì thua ngay");
-for (const ma of ST.THU_TU_DO_KHO) for (let hat = 1; hat <= 15; hat++) {
+for (const ma of DS_MAN) for (let hat = 1; hat <= 15; hat++) {
   const { g, suKien } = chay(ma, hat, nao.khongBam);
   kiem(g.trangThai === "thua", `${ma}#${hat}: phải thua`);
   const matDoVatCan = suKien.filter(e => e.t === "matMang" && e.d.o && e.d.o.vaCham === "khung").length;
@@ -83,12 +94,12 @@ for (const ma of ST.THU_TU_DO_KHO) for (let hat = 1; hat <= 15; hat++) {
     const x = g.be.x, tg = g.thoiGian; g.capNhat(0.5); g.capNhat(0.5);
     kiem(g.be.x === x && g.thoiGian === tg, `${ma}#${hat}: thua rồi mà bé vẫn chạy / đồng hồ vẫn chạy`);
   }
-  // đồng hồ vẫn chạy khi khựng: tổng thời gian chơi = 120 - thời gian còn
-  kiem(Math.abs(g.tChoi - (ST.CAU_HINH.thoiGianChoi - g.thoiGian)) < 1e-6, `${ma}#${hat}: đồng hồ`);
+  // đồng hồ vẫn chạy khi khựng: tổng thời gian chơi = thời gian màn - thời gian còn
+  kiem(Math.abs(g.tChoi - (g.thoiGianToiDa - g.thoiGian)) < 1e-6, `${ma}#${hat}: đồng hồ`);
 }
 
 console.log("3. Chọn sai rồi đúng / bấm dồn dập / trả lời sát giờ");
-for (const ma of ST.THU_TU_DO_KHO) for (let hat = 1; hat <= 10; hat++) {
+for (const ma of DS_MAN) for (let hat = 1; hat <= 10; hat++) {
   let r = chay(ma, hat, nao.saiRoiDung);
   kiem(r.g.trangThai === "thang", `${ma}#${hat} sai-rồi-đúng: phải thắng (${r.g.trangThai})`);
   kiem(r.g.thongKe.sai >= r.g.tongChuongNgai, `${ma}#${hat}: phải đếm lần chọn sai`);
@@ -136,7 +147,7 @@ console.log("5. Tạm dừng / thử thách cũ / chơi lại");
   kiem(g.chonDapAn(tt.id, tt.tu.en).kq === "boQua", "bấm lại lần 2 bị bỏ qua");
   g.kimCuong = 7; g.mangDuTru = 2; g.thoiGian = 3;
   g.batDau();
-  kiem(g.kimCuong === 0 && g.mangDuTru === 0 && g.thoiGian === ST.CAU_HINH.thoiGianChoi && g.be.x === 0 && !g.thuThach && g.mang === ST.CAU_HINH.mangBanDau,
+  kiem(g.kimCuong === 0 && g.mangDuTru === 0 && g.thoiGian === g.thoiGianToiDa && g.be.x === 0 && !g.thuThach && g.mang === ST.CAU_HINH.mangBanDau,
     "chơi lại phải đặt lại toàn bộ");
 }
 
@@ -147,15 +158,15 @@ console.log("6. Hết giờ thì thua dù còn mạng; tới lâu đài thì đ�
   for (let i = 0; i < 200; i++) g.capNhat(1 / 60);
   kiem(g.trangThai === "thua" && g.lyDoThua === "hetGio" && g.tongMang > 0, "hết giờ");
   kiem(g.chonDapAn(1, "cat").kq === "boQua", "thua rồi không nhận đáp án");
-  const r = chay("de", 2, nao.luonDung(0.5));
+  const r = chay(DS_MAN[0], 2, nao.luonDung(0.5));
   const tg = r.g.thoiGian; r.g.capNhat(0.2); r.g.capNhat(0.2);
   kiem(r.g.thoiGian === tg && r.g.trangThai === "thang", "thắng rồi đồng hồ phải dừng");
   kiem(r.g.tamDung() === false, "thắng rồi không tạm dừng được");
 }
 
 console.log("7. Đường đi hợp lệ: không chồng lấn, cái đầu là ống cống, đủ khoảng phản ứng");
-for (const ma of ST.THU_TU_DO_KHO) for (let hat = 1; hat <= 40; hat++) {
-  const dk = ST.DO_KHO[ma], v = dk.tocDo;
+for (const ma of DS_MAN) for (let hat = 1; hat <= 40; hat++) {
+  const dk = MAN_THU[ma], v = dk.tocDo;
   const d = ST.sinhDuongDi(dk, ST.taoNgauNhien(hat), new ST.KhoTuVung(dk, ST.taoNgauNhien(hat)));
   kiem(d.ds[0].loai === "cong", `${ma}#${hat}: cái đầu phải là ống cống`);
   for (let i = 1; i < d.ds.length; i++) {
@@ -171,8 +182,8 @@ for (const ma of ST.THU_TU_DO_KHO) for (let hat = 1; hat <= 40; hat++) {
   kiem(maxLien <= dk.kimCuongLienTiepToiDa, `${ma}#${hat}: kim cương liên tiếp ${maxLien}`);
 }
 console.log("8. Phương án: đúng số lượng, không trùng, có đáp án đúng, vị trí đáp án đúng thay đổi");
-for (const ma of ST.THU_TU_DO_KHO) {
-  const dk = ST.DO_KHO[ma], kho = new ST.KhoTuVung(dk, ST.taoNgauNhien(11)), viTri = new Set();
+for (const ma of DS_MAN) {
+  const dk = MAN_THU[ma], kho = new ST.KhoTuVung(dk, ST.taoNgauNhien(11)), viTri = new Set();
   for (let i = 0; i < 200; i++) {
     const t = kho.layTu(), pa = kho.taoPhuongAn(t);
     kiem(pa.length === dk.soPhuongAn && new Set(pa).size === pa.length && pa.indexOf(t.en) >= 0, `${ma}: phương án ${pa}`);
@@ -183,7 +194,7 @@ for (const ma of ST.THU_TU_DO_KHO) {
 }
 
 console.log("9. Người chơi lung tung (đúng/sai/không bấm, khung hình giật): bất biến luôn đúng");
-for (const ma of ST.THU_TU_DO_KHO) for (let hat = 100; hat < 160; hat++) {
+for (const ma of DS_MAN) for (let hat = 100; hat < 160; hat++) {
   const rngNao = ST.taoNgauNhien(hat * 7);
   const naoLungTung = {
     tre: (tt) => rngNao() < 0.25 ? 1e9 : rngNao() * tt.thoiHan * 1.2,
@@ -196,7 +207,7 @@ for (const ma of ST.THU_TU_DO_KHO) for (let hat = 100; hat < 160; hat++) {
     if (g.tongKimCuong !== g.kimCuong + g.thongKe.mangDoi * CH.kimCuongDoiMang) loi = "kim cương lệch";
     else if (g.mangDuTru > CH.mangDuTruToiDa || g.mangDuTru < 0 || g.mang < 0) loi = "mạng sai";
     else if (g.kimCuong >= CH.kimCuongDoiMang && g.mangDuTru < CH.mangDuTruToiDa) loi = "đủ kim cương mà chưa đổi";
-    else if (g.tChoi > CH.thoiGianChoi + 0.01) loi = "quá 120 giây";
+    else if (g.tChoi > g.thoiGianToiDa + 0.01) loi = "quá thời gian màn";
     else if (g.trangThai === "choi" && g.be.y === 0 && !g.be.nhay && g.chuongNgai.some(o => o.nhom === "ho" && g.be.x > o.x + 6 && g.be.x < o.x + o.rong - 6)) loi = "đứng giữa hố";
     if (b % 97 === 0 && g.dangChoi) { g.tamDung(); g.capNhat(0.5); g.tiepTuc(); }
   } });
@@ -253,7 +264,7 @@ console.log("11. Sổ ghi nhớ: từ bé đã thuộc ít xuất hiện, từ m
   kiem(Array.from({ length: 200 }, () => k3.layTu()).every(t => !!t && !!t.en), "thuộc hết vẫn bốc được từ để ôn");
   // Chơi thật: luôn đúng ngay lần đầu thì sổ ghi thuộc; không bấm thì ghi chưa thuộc
   const so4 = new ST.SoTayTu("be_e");
-  const r = chay("vua", 21, nao.luonDung(0.8), { soTay: so4 });
+  const r = chay(DS_MAN[6], 21, nao.luonDung(0.8), { soTay: so4 });
   const ghi = r.suKien.filter(e => e.t === "ketQuaTu");
   kiem(ghi.length > 5 && ghi.every(e => e.d.thuoc), "luôn đúng: mọi từ được ghi là nhớ");
   kiem(new Set(ghi.map(e => e.d.tu.en)).size === ghi.length, "mỗi thử thách chỉ ghi một lần");
@@ -263,6 +274,47 @@ console.log("11. Sổ ghi nhớ: từ bé đã thuộc ít xuất hiện, từ m
   const ghi2 = r2.suKien.filter(e => e.t === "ketQuaTu");
   kiem(ghi2.length > 0 && ghi2.every(e => !e.d.thuoc), "không bấm: ghi là chưa thuộc");
   delete globalThis.localStorage;
+}
+
+console.log("12. Đường đua: 10 đường x 7 màn, màn sau khó hơn màn trước; tiến độ mở khóa đúng");
+{
+  kiem(ST.DUONG_DUA.length === 10 && ST.SO_MAN === 7, "phải có 10 đường đua, mỗi đường 7 màn");
+  kiem(new Set(ST.DUONG_DUA.map(d => d.ma)).size === 10, "mã đường đua không trùng");
+  for (let m = 2; m <= ST.SO_MAN; m++) {
+    const a = ST.MAN_CHOI[m - 2], b = ST.MAN_CHOI[m - 1];
+    kiem(b.tocDo > a.tocDo, `màn ${m}: phải chạy nhanh hơn màn trước`);
+    kiem(b.thoiGianPhanUng < a.thoiGianPhanUng, `màn ${m}: thời gian chọn phải ngắn hơn`);
+    kiem(b.soPhuongAn >= a.soPhuongAn && b.doGiong > a.doGiong, `màn ${m}: phương án phải khó hơn`);
+    kiem(b.thoiGianChoi === 60, `màn ${m}: mỗi màn 1 phút`);
+  }
+  const m7 = ST.taoManChoi("rung", 7, "kho"), m1 = ST.taoManChoi("rung", 0, "khongCo");
+  kiem(m7.laManCuoi && !ST.taoManChoi("rung", 6, "kho").laManCuoi, "chỉ màn 7 là màn cuối (cứu mèo)");
+  kiem(m1.soMan === 1 && m1.maCapTu === "de", "màn / cấp không hợp lệ thì về màn 1, cấp 1");
+  kiem(String(m7.capTu) === String(ST.DO_KHO.kho.capTu), "cấp từ quyết định từ vựng");
+  // Không bấm gì thì không qua được màn nào; luôn đúng thì màn nào cũng qua (đã chạy ở mục 1, 2)
+
+  const kho = {};
+  globalThis.localStorage = { getItem: k => (k in kho ? kho[k] : null), setItem: (k, v) => { kho[k] = String(v); } };
+  const td = new ST.TienDoDuongDua("be_x");
+  kiem(td.duongMo("rung") && td.manMo("rung") === 1, "mới chơi: mở Rừng xanh màn 1");
+  kiem(!td.manChoiDuoc("rung", 2), "chưa qua màn 1 thì chưa chơi màn 2");
+  kiem(!td.duongMo("keo"), "đường thứ 2 khóa khi chưa xong đường 1");
+  let kq = td.ghiThang("rung", 1, 2);
+  kiem(kq.manMoi && !kq.xongDuong && td.manMo("rung") === 2 && td.sao("rung", 1) === 2, "qua màn 1: mở màn 2, ghi 2 sao");
+  kq = td.ghiThang("rung", 1, 1);
+  kiem(!kq.manMoi && td.sao("rung", 1) === 2, "chơi lại kém hơn: giữ số sao cao nhất");
+  for (let m = 2; m <= 6; m++) td.ghiThang("rung", m, 3);
+  kq = td.ghiThang("rung", 7, 3);
+  kiem(kq.xongDuong && td.daXong("rung") && td.manMo("rung") === 7, "qua màn 7: xong đường đua");
+  kiem(td.tongSao("rung") === 20, `tổng sao ${td.tongSao("rung")}`);
+  kiem(!ST.layDuongDua("keo").daCo || td.duongMo("keo"), "xong đường 1 thì mở đường 2 (khi đã có hình)");
+  kiem(!td.ghiThang("rung", 7, 3).xongDuong, "chơi lại màn 7 không báo xong đường lần nữa");
+  kiem(new ST.TienDoDuongDua("be_x").manMo("rung") === 7, "tiến độ còn sau khi mở lại game");
+  kiem(new ST.TienDoDuongDua("be_y").manMo("rung") === 1, "mỗi bé một tiến độ riêng");
+  kho.kc_santu_tien_do_hong = "{không phải json";
+  kiem(new ST.TienDoDuongDua("hong").manMo("rung") === 1, "dữ liệu hỏng thì bắt đầu lại, không lỗi");
+  delete globalThis.localStorage;
+  kiem(new ST.TienDoDuongDua("khong_luu").manMo("rung") === 1, "trình duyệt chặn lưu: vẫn chơi được");
 }
 
 console.log(`\n${soKiem - soLoi}/${soKiem} kiểm tra đạt` + (soLoi ? ` - ${soLoi} LỖI` : " ✓"));

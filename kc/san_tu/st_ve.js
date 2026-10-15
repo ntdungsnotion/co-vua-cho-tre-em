@@ -95,14 +95,14 @@
       this.veNen(camX, tienDo);
       this.veDat(camX, choi ? g.chuongNgai : [], doDai);
       if (choi) {
-        this.veLauDai(g, camX);
+        if (g.dk.laManCuoi) this.veLauDai(g, camX); else this.veCongMan(g, camX);
         this.veVachXuatPhat(camX);
         g.chuongNgai.forEach(o => this.veChuongNgai(o, g, camX));
         g.kimCuongs.forEach(k => { if (!k.daNhat) this.veKimCuong(k.x - camX, this.dat - k.y, 1, k.tHien); });
         g.dan.forEach(d => this.veDan(d, camX));
       }
       this.veBe(be, g, camX);
-      if (choi && g.trangThai === "thang") this.veMeoDiRa(g, camX);
+      if (choi && g.trangThai === "thang" && g.dk.laManCuoi) this.veMeoDiRa(g, camX);
       this.veHat(camX);
       if (choi) this.veMuiTenSapToi(g, camX);
     }
@@ -273,6 +273,41 @@
         c.fillStyle = "#e5484d"; c.font = "800 17px " + FONT; c.fillText("Meo! Cứu!", lx + 42, ly - 111);
       }
       c.restore();
+    }
+    // Cổng về đích của màn 1-6: hai cột sọc, băng rôn "Màn n", cờ caro; biển chỉ đường tới lâu đài
+    veCongMan(g, camX) {
+      const x0 = g.doDai + 40 - camX, y0 = this.dat;
+      if (x0 < -260 || x0 > this.rong + 260) return;
+      const c = this.c, cao = 150, rong = 150, qua = g.trangThai === "thang";
+      // hai cột sọc
+      [-rong / 2, rong / 2].forEach(dx => {
+        c.fillStyle = "#fff"; c.fillRect(x0 + dx - 9, y0 - cao, 18, cao);
+        c.fillStyle = "#ff7eb6";
+        for (let i = 0; i < 6; i++) c.fillRect(x0 + dx - 9, y0 - cao + i * 26, 18, 13);
+        c.fillStyle = "#ffd23f"; c.beginPath(); c.arc(x0 + dx, y0 - cao - 6, 10, 0, PI2); c.fill();
+      });
+      // băng rôn
+      const lac = Math.sin(this.t * 3) * 2;
+      c.fillStyle = qua ? "#2BB673" : "#6C4CE0";
+      c.beginPath(); c.roundRect(x0 - rong / 2 - 6, y0 - cao + 6 + lac, rong + 12, 38, 12); c.fill();
+      c.fillStyle = "#fff"; c.font = "800 20px " + FONT; c.textAlign = "center"; c.textBaseline = "middle";
+      c.fillText(qua ? "Qua màn! ✓" : "Đích màn " + g.dk.soMan, x0, y0 - cao + 26 + lac);
+      // cờ caro trên cột phải
+      const cx = x0 + rong / 2, cy = y0 - cao - 16;
+      c.fillStyle = "#7a4b25"; c.fillRect(cx - 2, cy - 54, 4, 54);
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) {
+        const song = Math.sin(this.t * 6 + i * 0.8) * 3;
+        c.fillStyle = (i + j) % 2 ? "#2B2640" : "#fff";
+        c.fillRect(cx + 2 + i * 9, cy - 54 + j * 9 + song, 9, 9);
+      }
+      // biển chỉ đường: lâu đài còn bao nhiêu màn
+      const bx = x0 + rong / 2 + 70, con = ST.SO_MAN - g.dk.soMan;
+      c.fillStyle = "#9a6a3c"; c.fillRect(bx - 3, y0 - 70, 6, 70);
+      c.fillStyle = "#fff6d6"; c.beginPath(); c.roundRect(bx - 56, y0 - 104, 112, 44, 10); c.fill();
+      c.strokeStyle = "#c48f00"; c.lineWidth = 3; c.stroke();
+      c.fillStyle = "#7a5600"; c.font = "800 15px " + FONT;
+      c.fillText(g.dk.duong.bieuTuongDich + " Bé mèo 🐱", bx, y0 - 90);
+      c.fillText("còn " + con + " màn ➜", bx, y0 - 72);
     }
     veMeo(x, y, k, vui, huong) {
       const c = this.c;
