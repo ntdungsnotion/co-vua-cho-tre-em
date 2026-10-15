@@ -29,6 +29,7 @@
     .tcThe .tcHinh { font-size: 3.4rem; display: block; line-height: 1.1; }
     .tcThe h3 { margin: 8px 0 4px; color: var(--mau-chinh-dam); font-size: 1.2rem; }
     .tcThe p { margin: 0 0 10px; font-size: 0.88rem; color: var(--mau-chu-nhat); }
+    .tcTheCoVua { grid-column: 1 / -1; border-color: var(--mau-chinh); background: var(--mau-chinh-nhat); }
     .tcChoi { display: inline-block; background: var(--mau-phu); color: #5a3d00; font-family: "Baloo 2", sans-serif; font-weight: 700;
       font-size: 1.05rem; padding: 6px 22px; border-radius: 999px; box-shadow: 0 4px 0 #c48f00; }
   </style>
@@ -46,7 +47,7 @@
   </header>
 
   <nav class="kcThanhTab" aria-label="Chuyển mảng">
-    <a class="kcTab" href="../index.html" data-an-voi-phu-huynh><span class="kcTabIcon">♟️</span> Cờ Vua</a>
+    <a class="kcTab" href="../index.html"><span class="kcTabIcon">🏠</span> Trang chủ</a>
     <a class="kcTab" href="hoctap_NC.html"><span class="kcTabIcon">📚</span> Học Tập</a>
     <a class="kcTab" href="khampha_NC.html"><span class="kcTabIcon">🧭</span> Khám Phá</a>
     <a class="kcTab" href="trochoi_NC.html" aria-current="page"><span class="kcTabIcon">🎮</span> Trò Chơi</a>
@@ -70,6 +71,13 @@
     </div>
 
     <div class="kcLuoiThe">
+      <!-- KC_00C-1: Cờ Vua là một game trong Trò Chơi (thẻ đầu danh sách). Ẩn với phụ huynh. -->
+      <a class="tcThe tcTheCoVua" href="../covua_NC.html" data-an-voi-phu-huynh>
+        <span class="tcHinh">♟️</span>
+        <h3>Cờ Vua</h3>
+        <p>Đấu cờ với máy, lên hạng, mua đồ ở Cửa Hàng. Vào chơi cờ nào!</p>
+        <span class="tcChoi">▶ Chơi</span>
+      </a>
       <a class="tcThe" href="game_tu_vung_thu.html#nam">
         <span class="tcHinh">🍄</span>
         <h3>Săn Từ: Nấm Quái Vật</h3>
@@ -104,4 +112,4 @@
 
 </body>
 </html>
-<!-- 14/10/2026 - BƯỚC: TC_00 -->
+<!-- 14/10/2026 - BƯỚC: TC_00 | 15/10/2026 - BƯỚC: KC_00C-1 (thẻ Cờ Vua + tab Trang chủ) -->

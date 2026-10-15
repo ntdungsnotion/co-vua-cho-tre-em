@@ -3,369 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cờ Vua Cho Trẻ Em</title>
+  <title>Trang chủ</title>
 
-  <!-- NGÀY: 14/10/2026 21:57 - BƯỚC: KC_00B (hợp nhất đăng nhập với Kids
-       Challenge): 3 nút Học Tập/Khám Phá/Thử Thách nay trỏ sang bộ trang
-       /kc/ (dùng CHUNG phiên đăng nhập với Cờ Vua - xem app.js); màn hình
-       đăng nhập thêm dòng hướng dẫn cho bố mẹ (đăng nhập chung 1 chỗ, đăng ký
-       tài khoản phụ huynh ở trang Thử Thách); nạp thêm taptrung_NC.js (chế
-       độ tập trung khi chơi cờ trên điện thoại).
-       LỊCH SỬ: NGÀY: 12/07/2026 - BƯỚC: NC_07-3 (thêm nút "🎯 Thử Thách" -> trang
-       thuthach_NC.html mới, KHUNG giới thiệu). 3 nút Học Tập/Khám Phá/Thử Thách
-       là hạt giống "dự án Kids Challenge" (tách sang dự án riêng - xem KẾ HOẠCH);
-       không còn nút "sắp có" (disabled) nào trên thanh điều hướng.
-       LỊCH SỬ: NC_07-2 (kích hoạt "Khám Phá" -> khampha_NC.html + reframe nghĩa
-       rộng); NC_07-1 (kích hoạt "Học Tập" -> hoctap_NC.html); NC_06B
-       (kích hoạt 2 nút "Cửa Hàng" -> trang cuahang_NC.html: nút trên thanh
-       điều hướng + link trong tab Tài Khoản); NC_06A (kích hoạt nút "Quản
-       Trị" -> admin_NC.html); NC_05 (Thanh Thông Tin Trên Cùng + Trang Tài
-       Khoản + Menu Theo Vai Trò - thay Tab "Bảng Điều Khiển" cũ) -->
+  <!-- ================================================================
+       FILE: index.html (gốc repo - địa chỉ mở app). KC_00C-1: chuyển từ
+             kc/trangchu_NC.html lên đây; trang Cờ Vua cũ đổi tên covua_NC.html.
+       CHỨC NĂNG: CỬA VÀO + TRANG CHỦ (bản TẠM) - lời chào + avatar + các khu to dẫn vào
+                  Học Tập / Khám Phá / Trò Chơi / Thử Thách.
+                  CHƯA có số liệu thật (kim cương, hạng, quà, huy hiệu số):
+                  làm ở KC_00C-2 (kế hoạch mục KC_00C).
+       BƯỚC: KC_00C-1
+       NGÀY: 15/10/2026
+       PHỤ THUỘC: kc/kc_style.css, kc/kc_config.js, kc/kc_api.js, kc/kc_auth.js
+       ================================================================ -->
 
-  <!-- File định dạng giao diện (đã tách khỏi thẻ <style>, dùng làm file .css thường) -->
-  <link rel="stylesheet" href="style.css">
-
-  <!-- THƯ VIỆN NGOÀI -->
-  <!-- supabase-js: nạp qua CDN (luôn cần mạng để gọi Supabase nên CDN không thiệt gì) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- chess.js 0.12.0: THƯ VIỆN CỐT LÕI, nạp từ file trong repo (đường dẫn tương đối).
-       TUYỆT ĐỐI KHÔNG dùng bản 0.13.4 (cú pháp ES module, làm vỡ bàn cờ). -->
-  <script src="chess.min.js"></script>
-
-  <!-- Lưới an toàn: nếu vì lý do nào đó chess.min.js chưa có trong repo hoặc tải hỏng,
-       tự động nạp lại từ CDN để bàn cờ vẫn chạy được. -->
-  <script>
-    if (typeof Chess === "undefined") {
-      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.12.0/chess.min.js"><\/script>');
-    }
-  </script>
-
-  <!-- Ghi chú: stockfish (bộ não AI) được nạp lúc chạy bên trong board.js,
-       ưu tiên file stockfish.wasm.js / stockfish.js trong repo, dự phòng CDN. -->
-
-  <!-- NC_04: định dạng riêng cho nút LIÊN KẾT sang trang khác trên thanh điều hướng.
-       Cố tình KHÔNG dùng class "nutTab" để app.js không gán sự kiện chuyển tab
-       (đây là thẻ <a> đi sang trang khác, không phải tab trong cùng trang). -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kc/kc_style.css">
   <style>
-    .nutTabLienKet {
-      display: inline-block;
-      text-decoration: none;
-      background-color: transparent;
-      border: 2px solid var(--mau-chinh);
-      color: var(--mau-chinh-dam);
-      padding: 10px 20px;
-      border-radius: 999px;
-      font-weight: bold;
-      font-size: 0.95rem;
-      transition: all 0.2s ease-in-out;
-    }
-    .nutTabLienKet:hover {
-      background-color: var(--mau-chinh);
-      color: #ffffff;
-    }
+    .tcChaoAvatar { width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center;
+      justify-content: center; font-size: 3rem; background: var(--mau-chinh-nhat); border: 3px solid var(--mau-chinh); overflow: hidden; }
+    .tcChaoAvatar img { width: 100%; height: 100%; object-fit: cover; }
+    .tcKhu { display: block; text-decoration: none; color: inherit; background: var(--mau-nen-khoi); border: 3px solid var(--mau-vien);
+      border-radius: var(--bo-tron); padding: 20px 14px; text-align: center; box-shadow: var(--do-bong); }
+    .tcKhu:active { transform: translateY(3px); }
+    .tcKhu .tcHinh { font-size: 3.4rem; display: block; line-height: 1.1; }
+    .tcKhu h3 { margin: 8px 0 4px; color: var(--mau-chinh-dam); font-size: 1.2rem; }
+    .tcKhu p { margin: 0; font-size: 0.88rem; color: var(--mau-chu-nhat); }
+    .tcCuaVaoHinh { text-align: center; font-size: 2.2rem; letter-spacing: 4px; margin-bottom: 6px; }
+    #kcChuaDangNhap h2 { text-align: center; }
+    #kcChuaDangNhap > div > p { text-align: center; }
+    .tcLienKetPhu { display: block; text-align: center; margin-top: 14px; font-weight: 600; color: var(--mau-chinh-dam); }
+    .tcNutChinh { width: 100%; margin-top: 14px; padding: 11px 14px; border: none; border-radius: var(--bo-tron-nho);
+      background: var(--mau-chinh); color: #fff; font-weight: bold; font-size: 1rem; cursor: pointer; }
+    .tcNutChinh:disabled { background: #c9c0ec; cursor: not-allowed; }
+    .tcThongBao { display: none; margin-top: 12px; padding: 8px 12px; border-radius: var(--bo-tron-nho); font-size: 0.9rem; }
+    .tcThongBao.hien { display: block; }
+    .tcThongBao.tot { background: #d6f5e3; color: #1e8449; }
+    .tcThongBao.xau { background: #fadbd8; color: #a93226; }
+    .tcGhiChuPhuHuynh { text-align: center; font-size: 0.85rem; color: var(--mau-chu-nhat); margin: 18px 0 0;
+      border-top: 1px dashed var(--mau-vien); padding-top: 12px; }
   </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <!-- ================================================= -->
-  <!-- KHUNG TIÊU ĐỀ CHÍNH CỦA TRANG -->
-  <!-- ================================================= -->
   <header id="headerChinh">
-    <h1>Cờ Vua Cho Trẻ Em</h1>
-    <!-- Hiển thị nhanh trạng thái đăng nhập, điều khiển bởi app.js -->
+    <h1>🏠 Trang chủ</h1>
     <div id="trangThaiDangNhap">
-      <span id="hienThiTenDangNhap"></span>
-      <button id="btnDangXuat" style="display:none;">Đăng Xuất</button>
+      <span id="kcTenNguoiChoi"></span>
+      <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
     </div>
   </header>
 
-  <!-- ================================================= -->
-  <!-- NC_05: THANH THÔNG TIN TRÊN CÙNG -->
-  <!-- Ẩn/hiện + điền dữ liệu do app.js đảm nhiệm (appVeThanhThongTin), lấy từ
-       RPC lay_thong_tin_ca_nhan, tự cập nhật sau mỗi ván/giao dịch. -->
-  <!-- ================================================= -->
-  <div id="thanhThongTin" style="display:none;">
-    <div id="thanhThongTinAvatar">❓</div>
-    <div id="thanhThongTinSo">
-      <span class="thanhThongTinMuc" id="ttKimCuong">💎 0</span>
-      <span class="thanhThongTinMuc" id="ttExp">⭐ EXP 0</span>
-      <span class="thanhThongTinMuc" id="ttLevel">🎚️ Lv 1</span>
-      <span class="thanhThongTinMuc" id="ttHang">🏅 Hạng —</span>
-    </div>
-    <div id="thanhThongTinDanhHieu">Chưa Xác Định</div>
-  </div>
-
-  <!-- ================================================= -->
-  <!-- THANH ĐIỀU HƯỚNG: MENU THEO VAI TRÒ (NC_05) -->
-  <!-- Các nút .nutTab được gán sự kiện click trong app.js -->
-  <!-- "2 Người" là thẻ <a> mở trang choi2nguoi_NC.html (NC_04) -->
-  <!-- NC_06A: "Quản Trị" nay là thẻ <a> mở trang admin_NC.html (hết "sắp có").
-       Vẫn giữ nguyên id="tabQuanTri" nên app.js (appCapNhatMenuTheoVaiTro) tiếp
-       tục điều khiển ẩn/hiện theo vai trò mà KHÔNG phải sửa app.js. Cố tình
-       KHÔNG dùng class "nutTab" để app.js không gán sự kiện chuyển tab. -->
-  <!-- NC_06B: "Cửa Hàng" nay là thẻ <a> mở trang cuahang_NC.html (hết "sắp có").
-       Cố tình KHÔNG dùng class "nutTab" để app.js không gán sự kiện chuyển tab
-       (giống "2 Người" và "Quản Trị"). NC_07-1: "Học Tập" nay là thẻ <a> mở
-       trang hoctap_NC.html (hết "sắp có"), cùng lý do trên. NC_07-2: "Khám Phá"
-       nay cũng là thẻ <a> mở trang khampha_NC.html. NC_07-3: THÊM "🎯 Thử Thách"
-       là thẻ <a> mở trang khung thuthach_NC.html - cùng dạng thẻ <a> (không phải
-       "nutTab") nên app.js không gán sự kiện. Không còn nút "sắp có" nào. -->
-  <!-- ================================================= -->
-  <nav id="thanhDieuHuong">
-    <button class="nutTab" id="tabAuth" data-tab="auth">Đăng Nhập</button>
-    <button class="nutTab" id="tabTaiKhoan" data-tab="taikhoan">👤 Tài Khoản</button>
-    <button class="nutTab" id="tabPlay" data-tab="play">♟️ Chơi Cờ</button>
-    <a class="nutTabLienKet" id="tabHaiNguoi" href="choi2nguoi_NC.html">👫 2 Người</a>
-    <button class="nutTab" id="tabRank" data-tab="rank">🏆 Xếp Hạng</button>
-    <a class="nutTabLienKet" id="tabCuaHang" href="cuahang_NC.html">🛍️ Cửa Hàng</a>
-    <a class="nutTabLienKet" id="tabHocTap" href="kc/hoctap_NC.html">📚 Học Tập</a>
-    <a class="nutTabLienKet" id="tabKhamPha" href="kc/khampha_NC.html">🧭 Khám Phá</a>
-    <a class="nutTabLienKet" id="tabThuThach" href="kc/thuthach_NC.html">🎯 Thử Thách</a>
-    <a class="nutTabLienKet" id="tabQuanTri" href="admin_NC.html" title="Trang Quản Trị (chỉ dành cho quản trị viên)" style="display:none;">🛠️ Quản Trị</a>
+  <nav class="kcThanhTab" aria-label="Chuyển mảng">
+    <a class="kcTab" href="index.html" aria-current="page"><span class="kcTabIcon">🏠</span> Trang chủ</a>
+    <a class="kcTab" href="kc/hoctap_NC.html"><span class="kcTabIcon">📚</span> Học Tập</a>
+    <a class="kcTab" href="kc/khampha_NC.html"><span class="kcTabIcon">🧭</span> Khám Phá</a>
+    <a class="kcTab" href="kc/trochoi_NC.html"><span class="kcTabIcon">🎮</span> Trò Chơi</a>
+    <a class="kcTab" href="kc/thuthach_NC.html"><span class="kcTabIcon">🎯</span> Thử Thách</a>
   </nav>
 
-  <!-- ================================================= -->
-  <!-- TAB 1: AUTH - ĐĂNG NHẬP / ĐĂNG KÝ -->
-  <!-- Đối ứng với api.js: apiDangNhap(), apiDangKy() -->
-  <!-- ================================================= -->
-  <section class="noiDungTab" id="section-auth">
-    <h2>Đăng Nhập / Đăng Ký</h2>
+  <!-- KC_00C-1: đây là CỬA VÀO của cả app (covua_NC.html chuyển về đây khi chưa
+       đăng nhập). Khối đăng nhập dùng kc_auth.js; khối tạo tài khoản bé (RPC dang_ky,
+       y như auth.js Cờ Vua) xử lý ở script cuối trang. -->
+  <div id="kcChuaDangNhap" style="display:none;">
+    <div class="tcCuaVaoHinh">🦄🎮📚🧭</div>
+    <div id="tcKhoiDangNhap">
+      <h2>Chào con! 👋</h2>
+      <p>Đăng nhập để vào học, chơi và nhận thử thách nhé.</p>
+      <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+      <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+      <button id="kcNutDangNhap" type="button">Vào thôi!</button>
+      <div id="kcThongBaoDangNhap"></div>
+      <a href="#" id="tcMoDangKy" class="tcLienKetPhu">Chưa có tài khoản? Tạo tài khoản mới</a>
+    </div>
+    <div id="tcKhoiDangKy" style="display:none;">
+      <h2>Tạo tài khoản mới ✨</h2>
+      <p>Tên đăng nhập dùng chữ không dấu, số hoặc dấu gạch dưới (3-20 ký tự).</p>
+      <input class="kcODangNhap" id="tcDkTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+      <input class="kcODangNhap" id="tcDkMatKhau" type="password" placeholder="Mật khẩu" autocomplete="new-password">
+      <input class="kcODangNhap" id="tcDkMatKhau2" type="password" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
+      <button id="tcNutDangKy" class="tcNutChinh" type="button">Tạo tài khoản</button>
+      <div id="tcThongBaoDangKy" class="tcThongBao"></div>
+      <a href="#" id="tcQuayLaiDangNhap" class="tcLienKetPhu">Đã có tài khoản? Đăng nhập</a>
+    </div>
+    <p class="tcGhiChuPhuHuynh">👨‍👩‍👧 Bố mẹ cũng đăng nhập ở đây.
+      <a href="kc/thuthach_NC.html#dang-ky-phu-huynh">Đăng ký tài khoản phụ huynh</a></p>
+  </div>
 
-    <!-- Khối Đăng Nhập -->
-    <div class="khoiForm" id="khoiDangNhap">
-      <h3>Đăng Nhập</h3>
-      <input type="text" id="inputTenDangNhapLogin" placeholder="Tên đăng nhập">
-      <input type="password" id="inputMatKhauLogin" placeholder="Mật khẩu">
-      <button id="btnDangNhap">Đăng Nhập</button>
+  <div id="kcNoiDungCanDangNhap" style="display:none;">
+
+    <div class="kcGioiThieu">
+      <div class="tcChaoAvatar" id="tcChaoAvatar">🙂</div>
+      <h2 id="tcLoiChao">Chào con!</h2>
+      <p>Hôm nay con muốn đi đâu nào?</p>
     </div>
 
-    <!-- Khối Đăng Ký -->
-    <div class="khoiForm" id="khoiDangKy">
-      <h3>Đăng Ký Tài Khoản Mới</h3>
-      <input type="text" id="inputTenDangNhapDangKy" placeholder="Tên đăng nhập">
-      <input type="password" id="inputMatKhauDangKy" placeholder="Mật khẩu">
-      <input type="password" id="inputXacNhanMatKhau" placeholder="Nhập lại mật khẩu">
-      <button id="btnDangKy">Đăng Ký</button>
+    <div class="kcLuoiThe">
+      <a class="tcKhu" href="kc/hoctap_NC.html"><span class="tcHinh">📚</span><h3>Học Tập</h3><p>Học mà vui, càng học càng giỏi.</p></a>
+      <a class="tcKhu" href="kc/khampha_NC.html"><span class="tcHinh">🧭</span><h3>Khám Phá</h3><p>Điều kỳ diệu quanh con.</p></a>
+      <a class="tcKhu" href="kc/trochoi_NC.html"><span class="tcHinh">🎮</span><h3>Trò Chơi</h3><p>Cờ Vua và nhiều trò hay.</p></a>
+      <a class="tcKhu" href="kc/thuthach_NC.html"><span class="tcHinh">🎯</span><h3>Thử Thách</h3><p>Nhận thử thách, nhận thưởng.</p></a>
     </div>
 
-    <!-- Nơi hiển thị thông báo thành công/thất bại trả về từ api.js -->
-    <div id="thongBaoAuth"></div>
+  </div>
 
-    <!-- KC_00B: bố mẹ dùng CHUNG ô đăng nhập ở trên (app.js tự đưa tài khoản
-         phụ huynh sang trang Thử Thách). Đăng ký phụ huynh nằm ở trang Thử
-         Thách (#dang-ky-phu-huynh mở thẳng form đăng ký - xem tt_phuhuynh.js). -->
-    <p id="ghiChuPhuHuynh" style="text-align:center;font-size:0.9rem;margin-top:16px;">
-      👨‍👩‍👧 Bố mẹ cũng đăng nhập ở đây.
-      Chưa có tài khoản phụ huynh?
-      <a href="kc/thuthach_NC.html#dang-ky-phu-huynh">Đăng ký tài khoản phụ huynh</a>
-    </p>
-  </section>
+  <script src="kc/kc_config.js"></script>
+  <script src="kc/kc_api.js"></script>
+  <script src="kc/kc_auth.js"></script>
+  <script>
+    // KC_00C-1: chuyển qua lại giữa Đăng nhập và Tạo tài khoản
+    function tcHienKhoi(dangKy) {
+      document.getElementById("tcKhoiDangNhap").style.display = dangKy ? "none" : "block";
+      document.getElementById("tcKhoiDangKy").style.display = dangKy ? "block" : "none";
+    }
+    document.getElementById("tcMoDangKy").addEventListener("click", function (su) { su.preventDefault(); tcHienKhoi(true); });
+    document.getElementById("tcQuayLaiDangNhap").addEventListener("click", function (su) { su.preventDefault(); tcHienKhoi(false); });
 
-  <!-- ================================================= -->
-  <!-- TAB 2: TÀI KHOẢN (NC_05 - thay "Bảng Điều Khiển" cũ) -->
-  <!-- Toàn bộ nội dung do taikhoan_NC.js điền (RPC lay_ho_so + lay_thong_ke_doi_thu) -->
-  <!-- ================================================= -->
-  <section class="noiDungTab" id="section-taikhoan">
-    <h2>Tài Khoản Của Con</h2>
+    function tcThongBaoDangKy(text, tot) {
+      var o = document.getElementById("tcThongBaoDangKy");
+      o.textContent = text;
+      o.className = "tcThongBao hien " + (tot ? "tot" : "xau");
+    }
 
-    <!-- Khối tổng quan: avatar lớn + kim cương/EXP/level/danh hiệu/hạng -->
-    <div id="taikhoanTongQuan">
-      <div id="taikhoanAvatarLon">❓</div>
-      <div id="taikhoanThongTinChinh">
-        <p>Tên đăng nhập: <strong id="taikhoanTen">---</strong></p>
-        <p>💎 Kim cương: <strong id="taikhoanKimCuong">---</strong></p>
-        <p>⭐ EXP: <strong id="taikhoanExp">---</strong></p>
-        <p>🎚️ Level: <strong id="taikhoanLevel">---</strong> — <span id="taikhoanDanhHieu">---</span></p>
-        <p>🏅 Hạng trên bảng xếp hạng: <strong id="taikhoanHang">---</strong></p>
-      </div>
-    </div>
+    // Tạo tài khoản bé: cùng RPC dang_ky + cùng luật kiểm tra với auth.js Cờ Vua.
+    // Thành công thì đăng nhập luôn (lưu phiên chung như kc_auth.js).
+    document.getElementById("tcNutDangKy").addEventListener("click", function () {
+      var ten = document.getElementById("tcDkTen").value.trim();
+      var mk = document.getElementById("tcDkMatKhau").value;
+      var mk2 = document.getElementById("tcDkMatKhau2").value;
+      if (!ten || !mk) return tcThongBaoDangKy("Con nhập đủ tên đăng nhập và mật khẩu nhé!", false);
+      if (ten.length < 3 || ten.length > 20) return tcThongBaoDangKy("Tên đăng nhập dài từ 3 đến 20 ký tự nhé.", false);
+      if (!/^[a-zA-Z0-9_]+$/.test(ten)) return tcThongBaoDangKy("Tên chỉ dùng chữ không dấu, số và dấu gạch dưới nhé.", false);
+      if (mk !== mk2) return tcThongBaoDangKy("Hai lần nhập mật khẩu chưa giống nhau, con xem lại nhé.", false);
+      var nut = document.getElementById("tcNutDangKy");
+      nut.disabled = true;
+      tcThongBaoDangKy("Đang tạo tài khoản...", true);
+      kcGoiRpc("dang_ky", { p_ten: ten, p_mat_khau: mk }).then(function (kq) {
+        nut.disabled = false;
+        kq = kq || {};
+        if (!kq.thanhCong || !kq.duLieuTaiKhoan) return tcThongBaoDangKy(kq.thongBao || "Chưa tạo được, con thử lại nhé.", false);
+        kcTaiKhoanHienTai = kq.duLieuTaiKhoan;
+        kcLuuPhien(kcTaiKhoanHienTai);
+        kcHienDaDangNhap(kcTaiKhoanHienTai);
+        kcBaoSanSang(true);
+      });
+    });
 
-    <!-- Chọn avatar miễn phí (bộ emoji cố định trong taikhoan_NC.js) -->
-    <div class="taikhoanKhoi" id="khoiChonAvatar">
-      <h3>🖼️ Chọn Avatar</h3>
-      <div id="luoiAvatarMienPhi"><!-- taikhoan_NC.js điền --></div>
-    </div>
-
-    <!-- Trang bị vật phẩm số đã sở hữu (bộ quân cờ, bàn cờ, hiệu ứng, avatar cao cấp) -->
-    <div class="taikhoanKhoi" id="khoiTrangBi">
-      <h3>🎒 Vật Phẩm Đã Sở Hữu</h3>
-      <div id="danhSachVatPhamSoHuu"><p class="taikhoanRong">Đang tải...</p></div>
-      <a class="nutTabLienKet" id="lienKetCuaHang" href="cuahang_NC.html">Đến Cửa Hàng 🛍️</a>
-    </div>
-
-    <!-- Thành tích -->
-    <div class="taikhoanKhoi" id="khoiThanhTich">
-      <h3>🏆 Thành Tích</h3>
-      <div id="luoiThanhTich">
-        <div class="theThanhTich"><span class="theThanhTichSo" id="ttThangMay">0</span><span class="theThanhTichNhan">Thắng Đấu Máy</span></div>
-        <div class="theThanhTich"><span class="theThanhTichSo" id="ttKhacMay">0</span><span class="theThanhTichNhan">Ván Khác (Máy)</span></div>
-        <div class="theThanhTich"><span class="theThanhTichSo" id="tt2nThang">0</span><span class="theThanhTichNhan">Thắng 2 Người</span></div>
-        <div class="theThanhTich"><span class="theThanhTichSo" id="tt2nThua">0</span><span class="theThanhTichNhan">Thua 2 Người</span></div>
-        <div class="theThanhTich"><span class="theThanhTichSo" id="tt2nHoa">0</span><span class="theThanhTichNhan">Hòa 2 Người</span></div>
-      </div>
-    </div>
-
-    <!-- Thống kê theo đối thủ (RPC lay_thong_ke_doi_thu) -->
-    <div class="taikhoanKhoi" id="khoiThongKeDoiThu">
-      <h3>📊 Thống Kê Theo Đối Thủ</h3>
-      <table class="taikhoanBang" id="bangThongKeDoiThu">
-        <thead>
-          <tr>
-            <th>Đối Thủ</th>
-            <th>Chế Độ</th>
-            <th>Tổng Trận</th>
-            <th>Thắng</th>
-            <th>Thua</th>
-            <th>Hòa</th>
-          </tr>
-        </thead>
-        <tbody id="thanBangThongKeDoiThu"></tbody>
-      </table>
-    </div>
-
-    <!-- Lịch sử 50 trận gần nhất -->
-    <div class="taikhoanKhoi" id="khoiLichSuTran">
-      <h3>📜 50 Trận Gần Nhất <button id="btnLamMoiLichSuTran" type="button">🔄 Làm Mới</button></h3>
-      <table class="taikhoanBang" id="bangLichSuTran">
-        <thead>
-          <tr>
-            <th>Thời Gian</th>
-            <th>Đối Thủ</th>
-            <th>Chế Độ</th>
-            <th>Kết Quả</th>
-          </tr>
-        </thead>
-        <tbody id="thanBangLichSuTran"></tbody>
-      </table>
-    </div>
-
-    <!-- Lịch sử đổi thưởng (chỉ XEM - hành động đổi thuộc Cửa Hàng, NC_06B) -->
-    <div class="taikhoanKhoi" id="khoiLichSuDoiQua">
-      <h3>🎁 Lịch Sử Đổi Thưởng</h3>
-      <div id="danhSachLichSuDoiQua"><p class="taikhoanRong">Chưa có lịch sử đổi thưởng.</p></div>
-    </div>
-  </section>
-
-  <!-- ================================================= -->
-  <!-- TAB 3: PLAY - MÀN HÌNH CHƠI CỜ -->
-  <!-- Bàn cờ thực tế sẽ do board.js vẽ, dùng thư viện chess.js -->
-  <!-- ================================================= -->
-  <section class="noiDungTab" id="section-play">
-    <h2>Bàn Cờ Vua</h2>
-
-    <div id="khoiChonDoiThu">
-      <label for="chonLevelMay">Chọn Level Máy (Đối Thủ):</label>
-      <select id="chonLevelMay">
-        <!-- 20 lựa chọn Level sẽ được board.js điền vào -->
-      </select>
-      <button id="btnBatDauVan">Bắt Đầu Ván Mới</button>
-    </div>
-
-    <!-- Khu vực bàn cờ + thẻ thông tin trận đấu (NC_02) -->
-    <!-- Màn hình rộng (ngang/máy tính): thẻ đặt bên phải bàn cờ (xem style.css) -->
-    <div id="khuVucBanCoVaThe">
-      <!-- Khung chứa bàn cờ -->
-      <div id="banCo"></div>
-
-      <!-- 2 thẻ thông tin: đối thủ ở trên, người chơi ở dưới -->
-      <div id="theThongTinTranDau">
-        <div id="theDoiThu" class="theNguoiChoi">
-          <div class="theAvatar">🤖</div>
-          <div class="theChiTiet">
-            <p class="theTen">Máy Tính</p>
-            <p class="theLevel" id="theDoiThuLevel">Cấp 1</p>
-          </div>
-          <span class="coHieuLuot">🚩</span>
-        </div>
-        <div id="theBanThan" class="theNguoiChoi">
-          <div class="theAvatar" id="theBanThanAvatar">❓</div>
-          <div class="theChiTiet">
-            <p class="theTen" id="theBanThanTen">Bạn</p>
-            <p class="theLevel" id="theBanThanLevel">Level 1</p>
-          </div>
-          <span class="coHieuLuot">🚩</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Khu vực nút Gợi Ý (NC_03).
-         NC_03B: khi trẻ lâu không đi, trợ lý CHỈ hỏi bằng giọng nói và nút này
-         NHẤP NHÁY để mời bấm (class "boardNutGoiYNhapNhay" do board.js gán).
-         Không còn hộp thoại/bong bóng che màn hình nữa. -->
-    <div id="khoiGoiY">
-      <button id="btnGoiY" type="button">💡 Gợi Ý</button>
-      <span id="ghiChuGoiY"></span>
-    </div>
-
-    <!-- Thông tin ván đấu đang diễn ra -->
-    <div id="thongTinVanDau">
-      <p>Lượt đi: <span id="hienThiLuotDi">---</span></p>
-      <p>Trạng thái: <span id="hienThiTrangThaiVan">Chưa bắt đầu</span></p>
-    </div>
-
-    <!-- Khung hiển thị kết quả sau khi kết thúc ván -->
-    <div id="thongBaoKetQuaVan" style="display:none;">
-      <p id="ketQuaThangThua"></p>
-      <p>Điểm vừa cộng: <span id="ketQuaDiemVuaCong"></span></p>
-      <p>Level: <span id="ketQuaLevelCu"></span> → <span id="ketQuaLevelMoi"></span></p>
-      <div id="hieuUngDatMocMoi" style="display:none;"></div>
-    </div>
-  </section>
-
-  <!-- ================================================= -->
-  <!-- TAB 4: RANK - BẢNG XẾP HẠNG (NC_05: đổi cột EXP + tự sắp 7 kiểu) -->
-  <!-- ================================================= -->
-  <section class="noiDungTab" id="section-rank">
-    <h2>Bảng Xếp Hạng</h2>
-
-    <div id="khoiDieuKhienXepHang">
-      <button id="btnLamMoiXepHang">🔄 Làm Mới Xếp Hạng</button>
-      <label for="chonKieuXepHang">Sắp theo:</label>
-      <select id="chonKieuXepHang">
-        <option value="kinhNghiem">⭐ EXP</option>
-        <option value="tongThang">🏆 Tổng Số Trận Thắng</option>
-        <option value="thangMay">🤖 Thắng Đấu Máy</option>
-        <option value="thangNguoi">👫 Thắng Đấu Người</option>
-        <option value="tyLeThang">📈 Tỷ Lệ Thắng Chung</option>
-        <option value="tyLeThangNguoi">📈 Tỷ Lệ Thắng Đấu Người</option>
-        <option value="tyLeThangMay">📈 Tỷ Lệ Thắng Đấu Máy</option>
-      </select>
-    </div>
-
-    <!-- rank.js sẽ điền dữ liệu danhSachXepHang vào bảng này -->
-    <table id="bangXepHang">
-      <thead>
-        <tr>
-          <th>Hạng</th>
-          <th>Tên Đăng Nhập</th>
-          <th>Level</th>
-          <th id="cotChinhTieuDe" class="cotSapXepDuocBam" title="Bấm để đổi kiểu sắp xếp">EXP ▼</th>
-          <th>Tổng Trận</th>
-          <th>Danh Hiệu</th>
-        </tr>
-      </thead>
-      <tbody id="thanBangXepHang">
-        <!-- Các hàng dữ liệu sẽ được chèn bằng JavaScript trong rank.js -->
-      </tbody>
-    </table>
-  </section>
-
-  <!-- ================================================= -->
-  <!-- CÁC FILE JAVASCRIPT CỦA DỰ ÁN -->
-  <!-- Thứ tự nạp BẮT BUỘC: config -> api -> app -> auth -> board -> rank -->
-  <!-- -> taikhoan_NC (file _NC nạp sau cùng - HƯỚNG DẪN mục 2) -->
-  <!-- ================================================= -->
-  <script src="config.js"></script>
-  <script src="api.js"></script>
-  <script src="app.js"></script>
-  <script src="auth.js"></script>
-  <script src="board.js"></script>
-  <script src="rank.js"></script>
-  <script src="taikhoan_NC.js"></script>
-  <!-- KC_00B: chế độ tập trung khi chơi cờ trên điện thoại (tự ẩn menu khi
-       bắt đầu ván, có nút "Ra menu" + nút Back để thoát) -->
-  <script src="taptrung_NC.js"></script>
+    // Lời chào + avatar lấy từ phiên đăng nhập chung (avatar là URL -> <img>, Sổ Tay D7).
+    // Vẽ NGAY khi trang tải (từ phiên đã lưu) rồi vẽ lại khi kc_auth.js xác thực xong.
+    function tcVeLoiChao(tk) {
+      if (!tk || !tk.tenDangNhap) return;
+      document.getElementById("tcLoiChao").textContent = "Chào " + tk.tenDangNhap + "!";
+      var o = document.getElementById("tcChaoAvatar");
+      var av = tk.avatarDaChon;
+      o.textContent = "🙂";
+      if (av && av.indexOf("http") === 0) {
+        var img = document.createElement("img");
+        img.src = av; img.alt = "";
+        o.textContent = ""; o.appendChild(img);
+      } else if (av) { o.textContent = av; }
+    }
+    document.addEventListener("DOMContentLoaded", function () { tcVeLoiChao(kcTaiKhoanHienTai); });
+    document.addEventListener("kcSanSang", function (su) {
+      if (su.detail && su.detail.daDangNhap) tcVeLoiChao(su.detail.taiKhoan);
+    });
+  </script>
 
 </body>
 </html>
+<!-- 15/10/2026 - BƯỚC: KC_00C-1 -->
