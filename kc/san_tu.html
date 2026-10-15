@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<!--
+  FILE: san_tu.html
+  CHỨC NĂNG: Game "Săn Từ: Đường Đến Lâu Đài" - mảng TRÒ CHƠI (Kids Challenge).
+             Em bé tự chạy về lâu đài để giải cứu chú mèo; trên đường gặp ống cống, đá,
+             gốc cây, hố sâu, nấm, nhím, thạch khổng lồ, vịt bay, ong bay. Mỗi chướng ngại
+             vật mang một từ tiếng Anh: bé chọn đúng từ ở khung bên dưới thì nhân vật nhảy
+             qua / bắn phép. Từ có kim cương: gom đủ 10 viên đổi 1 mạng dự trữ.
+             120 giây, 4 mức độ khó, nhạc nền + giọng đọc + hiệu ứng bật/tắt riêng.
+             Trang độc lập (luật 3.12): chưa nối tài khoản; kim cương trong game là bộ đếm
+             RIÊNG của lượt chơi, KHÔNG cộng vào kim cương chung của app (làm ở TC_01).
+  BƯỚC: TC_00B (thay game thử TC_00 "Nấm Quái Vật")
+  NGÀY: 15/10/2026
+  CODE: san_tu/st_cau_hinh.js (tham số), st_tu_vung.js (kho từ), st_logic.js (lõi game),
+        st_am_thanh.js (âm thanh), st_ve.js (vẽ), st_giao_dien.js (giao diện + vòng lặp).
+        Kiểm thử lõi game: node kc/san_tu/st_kiem_thu_node.js
+-->
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4B2FB0">
+<title>Săn Từ: Đường Đến Lâu Đài</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --chinh: #6C4CE0; --chinh-dam: #4B2FB0; --chinh-nhat: #EFE9FD;
+    --vang: #FFB800; --vang-dam: #c48f00; --xanh: #2BB673; --do: #E5484D; --chu: #2B2640; --chu-nhat: #6b6489;
+    --nen: #FAF8FF;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #241a52; color: var(--chu); overflow: hidden;
+    font-family: "Be Vietnam Pro", system-ui, sans-serif; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  h1, h2, h3, .baloo { font-family: "Baloo 2", system-ui, sans-serif; }
+  button { font-family: inherit; cursor: pointer; }
+
+  #ung { position: relative; height: 100vh; height: 100dvh; display: flex; flex-direction: column; background: var(--nen); overflow: hidden; }
+
+  /* ----- KHU CHƠI: canvas + thanh thông tin ----- */
+  #khuChoi { position: relative; flex: 1 1 auto; min-height: 0; }
+  #manHinh { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #hud { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 6px;
+    padding: max(6px, env(safe-area-inset-top)) 8px 6px; pointer-events: none; }
+  .hudO { pointer-events: auto; background: rgba(255,255,255,0.92); border-radius: 14px; padding: 3px 9px; display: flex; align-items: center; gap: 4px;
+    font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 17px; color: var(--chinh-dam); box-shadow: 0 3px 0 rgba(75,47,176,0.25); white-space: nowrap; }
+  #hudGio.gap { color: #fff; background: var(--do); animation: nhipTim .5s infinite alternate; }
+  @keyframes nhipTim { to { transform: scale(1.08); } }
+  #hudTienDo { flex: 1; min-width: 70px; }
+  #thanhTienDo { position: relative; flex: 1; height: 12px; background: #e3dcfa; border-radius: 99px; margin: 0 14px 0 4px; }
+  #tienDoDay { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, #ffd23f, #ff7eb6); }
+  #tienDoBe { position: absolute; top: 50%; left: 0; transform: translate(-50%, -50%); font-size: 18px; }
+  #hudMang .tim { font-size: 15px; }
+  #hudMang .tim.mat { filter: grayscale(1); opacity: .35; }
+  #hudMang.rung, #hudKC.nay { animation: rung .4s; }
+  @keyframes rung { 25% { transform: translateX(-4px) scale(1.1); } 75% { transform: translateX(4px) scale(1.1); } }
+  #hudKC small { font-size: 12px; color: var(--chu-nhat); }
+  #nutTamDung { pointer-events: auto; border: 0; width: 40px; height: 36px; border-radius: 12px; background: var(--chinh); color: #fff; font-size: 18px; box-shadow: 0 3px 0 var(--chinh-dam); }
+  #thongBao { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; z-index: 3; }
+  .bao { background: #fff; border: 3px solid var(--vang); border-radius: 16px; padding: 4px 16px; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 20px;
+    color: var(--chinh-dam); animation: hienBao 1.8s forwards; white-space: nowrap; }
+  .bao.xau { border-color: var(--do); color: var(--do); }
+  @keyframes hienBao { 0% { transform: scale(.4); opacity: 0; } 12% { transform: scale(1.1); opacity: 1; } 20% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
+
+  /* ----- KHU CHỌN TỪ ----- */
+  #khuChon { flex: 0 0 auto; background: linear-gradient(#fff, var(--chinh-nhat)); border-top: 4px solid var(--chinh); padding: 8px 10px max(10px, env(safe-area-inset-bottom)); }
+  #theTu { display: flex; align-items: center; gap: 10px; min-height: 56px; }
+  #hinhTu { font-size: 38px; line-height: 1; width: 46px; text-align: center; }
+  #chuTu { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 30px; line-height: 1; color: var(--chu); letter-spacing: .5px; }
+  #nghiaTu { font-size: 14px; color: var(--chu-nhat); }
+  #theTu .phai { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  #kcTu { display: none; background: #e3f7ff; border: 2px solid #3fc8ff; color: #0b6fa4; border-radius: 99px; padding: 0 10px; font-weight: 800; font-size: 15px;
+    box-shadow: 0 0 12px rgba(63,200,255,.6); animation: sang 1s infinite alternate; }
+  @keyframes sang { to { box-shadow: 0 0 2px rgba(63,200,255,.3); } }
+  #hanhDongTu { font-size: 13px; font-weight: 700; color: var(--chinh-dam); background: var(--chinh-nhat); border-radius: 99px; padding: 1px 9px; }
+  #demNguoc { height: 8px; background: #e3dcfa; border-radius: 99px; margin: 6px 0 8px; overflow: hidden; }
+  #demNguocDay { height: 100%; width: 0; background: var(--xanh); border-radius: 99px; transition: background .3s; }
+  #demNguocDay.gap { background: var(--do); }
+  #cacNut { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  #cacNut.n3 { grid-template-columns: repeat(3, 1fr); }
+  .nutTu { min-height: 58px; border: 3px solid var(--chinh); background: #fff; border-radius: 16px; font-family: "Baloo 2", sans-serif; font-weight: 800;
+    --co: 25px; font-size: calc(var(--co) * min(1, 7 / var(--dai, 1))); color: var(--chu); box-shadow: 0 5px 0 var(--chinh-dam); padding: 2px 6px; white-space: nowrap; line-height: 1.05; position: relative; }
+  .nutTu:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--chinh-dam); }
+  .nutTu:disabled { cursor: default; }
+  .nutTu .so { position: absolute; top: 3px; left: 7px; font-size: 12px; color: var(--chu-nhat); display: none; }
+  .nutTu.dung { background: var(--xanh); border-color: #1f8a55; color: #fff; box-shadow: 0 5px 0 #1f8a55; animation: nayLen .4s; }
+  .nutTu.sai { background: #ffe9ea; border-color: var(--do); color: var(--do); box-shadow: 0 5px 0 #b8383c; animation: lacNut .4s; opacity: .75; }
+  .nutTu.mo { opacity: .35; }
+  .nutTu.trong { border-style: dashed; border-color: #d6cdf6; box-shadow: none; color: transparent; background: transparent; }
+  @keyframes nayLen { 50% { transform: scale(1.08); } }
+  @keyframes lacNut { 20% { transform: translateX(-7px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(4px); } }
+  #loiNhan { min-height: 22px; margin-top: 6px; text-align: center; font-weight: 700; font-size: 15px; color: var(--chinh-dam); }
+  #loiNhan.tot { color: #1f8a55; } #loiNhan.xau { color: var(--do); }
+
+  /* ----- CÁC MÀN PHỦ: bắt đầu / tạm dừng / kết quả ----- */
+  .lop { position: absolute; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; padding: 14px;
+    background: rgba(36,26,82,0.55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); overflow-y: auto; }
+  .lop.hien { display: flex; }
+  .the { background: #fff; border-radius: 24px; padding: 18px; width: 100%; max-width: 480px; box-shadow: 0 10px 0 rgba(36,26,82,.35); text-align: center; margin: auto; }
+  .the h1 { margin: 0; font-size: 31px; line-height: 1.05; color: var(--chinh-dam); }
+  .the h2 { margin: 0 0 6px; font-size: 26px; color: var(--chinh-dam); }
+  .phuDe { color: var(--chu-nhat); margin: 4px 0 10px; font-size: 15px; }
+  .cachChoi { list-style: none; margin: 0 0 12px; padding: 0; text-align: left; display: grid; gap: 6px; font-size: 14.5px; }
+  .cachChoi li { display: flex; gap: 8px; align-items: center; background: var(--chinh-nhat); border-radius: 12px; padding: 6px 10px; }
+  .cachChoi b { font-size: 22px; }
+  .nhan { font-weight: 700; color: var(--chinh-dam); margin: 8px 0 6px; font-size: 15px; text-align: left; }
+  #chonDoKho { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .nutDoKho { border: 3px solid #e3dcfa; background: #fff; border-radius: 16px; padding: 6px 4px; font-family: "Baloo 2", sans-serif; }
+  .nutDoKho b { display: block; font-size: 19px; color: var(--chu); }
+  .nutDoKho span { font-size: 12px; color: var(--chu-nhat); font-family: "Be Vietnam Pro", sans-serif; }
+  .nutDoKho.chon { border-color: var(--chinh); background: var(--chinh-nhat); box-shadow: 0 4px 0 var(--chinh); }
+  .caiDatAm { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .nutAm { border: 3px solid var(--xanh); background: #eafff3; border-radius: 99px; padding: 5px 12px; font-weight: 700; font-size: 14px; color: #1f8a55; }
+  .nutAm.tat { border-color: #ccc; background: #f2f2f2; color: #888; text-decoration: line-through; }
+  .nutLon { display: block; width: 100%; border: 0; border-radius: 18px; padding: 10px; margin-top: 14px; font-family: "Baloo 2", sans-serif; font-weight: 800;
+    font-size: 26px; color: #5a3d00; background: var(--vang); box-shadow: 0 6px 0 var(--vang-dam); }
+  .nutLon:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--vang-dam); }
+  .nutVua { border: 0; border-radius: 14px; padding: 8px 14px; font-weight: 700; font-size: 16px; color: #fff; background: var(--chinh); box-shadow: 0 4px 0 var(--chinh-dam); margin: 8px 4px 0; }
+  .nutVua.nhat { background: var(--chinh-nhat); color: var(--chinh-dam); box-shadow: 0 4px 0 #cfc3f5; }
+  .veTroChoi { display: inline-block; margin-top: 12px; color: var(--chinh-dam); font-weight: 700; text-decoration: none; }
+  #ketQuaHinh { font-size: 60px; line-height: 1.1; }
+  #ketQuaSao { font-size: 34px; letter-spacing: 4px; min-height: 40px; }
+  .soLieu { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
+  .soLieu div { background: var(--chinh-nhat); border-radius: 12px; padding: 6px 2px; font-size: 12.5px; color: var(--chu-nhat); }
+  .soLieu b { display: block; font-family: "Baloo 2", sans-serif; font-size: 22px; color: var(--chinh-dam); }
+  #tuDaHoc { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-height: 140px; overflow-y: auto; }
+  .chipTu { border: 2px solid #e3dcfa; background: #fff; border-radius: 99px; padding: 2px 10px; font-weight: 700; font-size: 15px; }
+  .ghiChu { font-size: 12.5px; color: var(--chu-nhat); margin-top: 8px; }
+
+  #theTu { flex-wrap: wrap; }
+  #demNguoc { flex: 0 0 100%; }
+
+  /* ----- ĐIỆN THOẠI DỌC: khu chơi gần vuông, phần còn lại cho nút chữ TO, dễ bấm ----- */
+  @media (max-aspect-ratio: 4/5) and (max-width: 1023px) {
+    #khuChoi { flex: 0 0 auto; height: min(86vw, calc(100dvh - 270px)); }
+    #khuChon { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+    .nutTu { min-height: 70px; --co: 28px; }
+    #cacNut { gap: 10px; }
+  }
+
+  /* ----- ĐIỆN THOẠI NẰM NGANG: khung chữ sang bên phải ----- */
+  @media (orientation: landscape) and (max-height: 520px) {
+    #ung { flex-direction: row; }
+    #khuChon { width: 40%; max-width: 380px; border-top: 0; border-left: 4px solid var(--chinh); display: flex; flex-direction: column; justify-content: center; overflow-y: auto; }
+    #cacNut, #cacNut.n3 { grid-template-columns: repeat(2, 1fr); }
+    .nutTu { min-height: 48px; --co: 21px; }
+    #chuTu { font-size: 25px; }
+    #hinhTu { font-size: 30px; }
+  }
+
+  /* ----- MÁY TÍNH (>= 1024px): khu chơi rộng toàn màn, khung chữ là một hàng ngang lớn ----- */
+  @media (min-width: 1024px) {
+    #hud { padding: 12px 18px; gap: 12px; }
+    .hudO { font-size: 22px; padding: 5px 16px; border-radius: 18px; }
+    #hudMang .tim { font-size: 21px; }
+    #tienDoBe { font-size: 24px; }
+    #thanhTienDo { height: 16px; }
+    #nutTamDung { width: 52px; height: 46px; font-size: 22px; }
+    #thongBao { top: 80px; }
+    .bao { font-size: 28px; padding: 6px 24px; }
+    #khuChon { display: grid; grid-template-columns: minmax(300px, 26%) 1fr; grid-template-rows: auto auto; column-gap: 24px; padding: 16px 28px 18px; }
+    #theTu { grid-row: 1 / span 2; flex-wrap: wrap; align-content: center; background: #fff; border: 3px solid #e3dcfa; border-radius: 22px; padding: 12px 16px; }
+    #hinhTu { font-size: 64px; width: 72px; }
+    #chuTu { font-size: 44px; }
+    #nghiaTu { font-size: 17px; }
+    #theTu .phai { margin-left: 0; width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+    #demNguoc { margin: 8px 0 0; height: 10px; }
+    #cacNut, #cacNut.n3 { grid-template-columns: repeat(var(--soCot, 4), 1fr); gap: 16px; }
+    .nutTu { min-height: 96px; --co: clamp(26px, 2.7vw, 44px); border-radius: 22px; border-width: 4px; box-shadow: 0 7px 0 var(--chinh-dam); }
+    .nutTu .so { display: block; font-size: 15px; }
+    .nutTu:hover:not(:disabled):not(.trong) { background: var(--chinh-nhat); transform: translateY(-2px); }
+    #loiNhan { font-size: 19px; margin-top: 10px; }
+    .the { max-width: 980px; padding: 28px 34px; border-radius: 30px; }
+    #manBatDau .the { display: grid; grid-template-columns: 1fr 1fr; gap: 0 36px; text-align: left; }
+    #manBatDau .the .dau { grid-column: 1 / -1; text-align: center; margin-bottom: 12px; }
+    .the h1 { font-size: 48px; }
+    .the h2 { font-size: 38px; }
+    .phuDe { font-size: 18px; }
+    .cachChoi { font-size: 17px; gap: 10px; }
+    .cachChoi b { font-size: 28px; }
+    .nhan { font-size: 18px; }
+    #chonDoKho { gap: 12px; }
+    .nutDoKho { padding: 12px 6px; }
+    .nutDoKho b { font-size: 24px; }
+    .nutDoKho span { font-size: 14px; }
+    .nutAm { font-size: 16px; padding: 8px 16px; }
+    .caiDatAm { justify-content: flex-start; }
+    .nutLon { font-size: 32px; padding: 14px; }
+    #manTamDung .the, #manKetQua .the { max-width: 760px; }
+    #manTamDung .caiDatAm { justify-content: center; }
+    #ketQuaHinh { font-size: 90px; }
+    #ketQuaSao { font-size: 48px; }
+    .soLieu b { font-size: 32px; }
+    .soLieu div { font-size: 15px; padding: 10px 4px; }
+    .chipTu { font-size: 18px; padding: 4px 14px; }
+    #tuDaHoc { max-height: 200px; }
+    .nutVua { font-size: 19px; padding: 10px 20px; }
+  }
+  @media (min-width: 1600px) {
+    #khuChon { padding: 18px 48px 22px; }
+    .nutTu { min-height: 110px; }
+  }
+</style>
+</head>
+<body>
+<div id="ung">
+  <div id="khuChoi">
+    <canvas id="manHinh" aria-label="Màn chơi: em bé chạy về lâu đài"></canvas>
+    <div id="hud">
+      <div class="hudO" id="hudGio" title="Thời gian còn lại">⏱ <span id="soGio">120</span></div>
+      <div class="hudO" id="hudTienDo" title="Tiến độ đến lâu đài"><div id="thanhTienDo"><div id="tienDoDay"></div><span id="tienDoBe">👶</span></div>🏰</div>
+      <div class="hudO" id="hudMang" title="Mạng (vàng là mạng dự trữ đổi từ kim cương)"></div>
+      <div class="hudO" id="hudKC" title="Kim cương: đủ 10 viên đổi 1 mạng">💎 <span id="soKC">0</span><small>/10</small></div>
+      <button id="nutTamDung" type="button" aria-label="Tạm dừng">⏸</button>
+    </div>
+    <div id="thongBao" aria-live="polite"></div>
+  </div>
+
+  <div id="khuChon">
+    <div id="theTu">
+      <span id="hinhTu">🏃</span>
+      <div><div id="chuTu">...</div><div id="nghiaTu">Bé đang chạy</div></div>
+      <div class="phai"><span id="kcTu">💎</span><span id="hanhDongTu">Sẵn sàng</span></div>
+      <div id="demNguoc"><div id="demNguocDay"></div></div>
+    </div>
+    <div id="cacNut"></div>
+    <div id="loiNhan"></div>
+  </div>
+
+  <!-- MÀN BẮT ĐẦU -->
+  <section class="lop hien" id="manBatDau" aria-label="Màn bắt đầu">
+    <div class="the">
+      <div class="dau">
+        <h1>Săn Từ: Đường Đến Lâu Đài</h1>
+        <p class="phuDe">Chạy thật nhanh, đọc thật giỏi, cứu bé mèo trong lâu đài! 🐱</p>
+      </div>
+      <div>
+        <ul class="cachChoi">
+          <li><b>👶</b><span>Bé tự chạy về phía lâu đài. Con có <b style="font-size:inherit">120 giây</b>.</span></li>
+          <li><b>🔤</b><span>Mỗi chướng ngại vật có một từ. Bấm <b style="font-size:inherit">đúng từ đó</b> ở khung dưới để bé nhảy qua hoặc phóng phép thuật.</span></li>
+          <li><b>💎</b><span>Từ có kim cương: chọn đúng để bé nhảy lên nhặt. Đủ 10 viên đổi 1 mạng.</span></li>
+          <li><b>❤️</b><span>Va vào quái vật hay rơi xuống hố thì mất mạng. Va ống cống chỉ bị khựng lại.</span></li>
+        </ul>
+      </div>
+      <div>
+        <div class="nhan">Chọn độ khó</div>
+        <div id="chonDoKho"></div>
+        <div class="nhan">Âm thanh</div>
+        <div class="caiDatAm"></div>
+        <button class="nutLon" id="nutBatDau" type="button">▶ Bắt đầu</button>
+        <a class="veTroChoi" href="trochoi_NC.html">← Về Trò Chơi</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- MÀN TẠM DỪNG -->
+  <section class="lop" id="manTamDung" aria-label="Tạm dừng">
+    <div class="the">
+      <h2>⏸ Đang tạm dừng</h2>
+      <p class="phuDe">Đồng hồ và mọi thứ đều đứng yên. Nghỉ chút rồi chạy tiếp nhé!</p>
+      <div class="caiDatAm"></div>
+      <button class="nutLon" id="nutTiepTuc" type="button">▶ Chơi tiếp</button>
+      <button class="nutVua nhat" id="nutChoiLaiTD" type="button">↻ Chơi lại từ đầu</button>
+      <button class="nutVua nhat" id="nutDoiDoKhoTD" type="button">Đổi độ khó</button>
+    </div>
+  </section>
+
+  <!-- MÀN KẾT QUẢ: thắng / thua -->
+  <section class="lop" id="manKetQua" aria-label="Kết quả">
+    <div class="the">
+      <div id="ketQuaHinh">🐱</div>
+      <h2 id="ketQuaTieuDe"></h2>
+      <div id="ketQuaSao"></div>
+      <p class="phuDe" id="ketQuaLoi"></p>
+      <div class="soLieu">
+        <div><b id="kqDung">0</b>từ đúng</div>
+        <div><b id="kqKC">0</b>kim cương</div>
+        <div><b id="kqGio">0</b>giây còn lại</div>
+      </div>
+      <div class="nhan" style="text-align:center" id="nhanTuDaHoc">Từ con đã chọn đúng (bấm để nghe lại)</div>
+      <div id="tuDaHoc"></div>
+      <button class="nutLon" id="nutChoiLai" type="button">↻ Chơi lại</button>
+      <button class="nutVua nhat" id="nutDoiDoKho" type="button">Đổi độ khó</button>
+      <a class="nutVua nhat" href="trochoi_NC.html" style="text-decoration:none;display:inline-block">← Về Trò Chơi</a>
+      <p class="ghiChu">Kim cương trong game dùng để đổi mạng, chưa cộng vào kim cương của tài khoản.</p>
+    </div>
+  </section>
+</div>
+
+<script src="san_tu/st_cau_hinh.js"></script>
+<script src="san_tu/st_tu_vung.js"></script>
+<script src="san_tu/st_logic.js"></script>
+<script src="san_tu/st_am_thanh.js"></script>
+<script src="san_tu/st_ve.js"></script>
+<script src="san_tu/st_giao_dien.js"></script>
+</body>
+</html>
+<!-- 15/10/2026 - BƯỚC: TC_00B -->
