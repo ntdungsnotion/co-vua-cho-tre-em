@@ -7,7 +7,8 @@
 // BƯỚC: NC_05 (nâng cấp từ MIG_04) - NGÀY: 10/07/2026
 // CẬP NHẬT: KC_00B (hợp nhất đăng nhập với Kids Challenge) - 14/10/2026 21:57
 // CẬP NHẬT: KC_00C-1 - 15/10/2026: chưa đăng nhập / đăng xuất -> về Trang chủ
-//   chung kc/trangchu_NC.html (APP_TRANG_CHU); đăng nhập/đăng ký nằm ở đó.
+//   chung index.html (APP_TRANG_CHU); đăng nhập/đăng ký nằm ở đó. Trang Cờ Vua
+//   (trước là index.html) nay là covua_NC.html - một game trong Trò Chơi.
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "app" để tránh xung đột
 //
 // ĐIỂM MỚI KC_00B (nguyên tắc "trải nghiệm như 1 ứng dụng duy nhất"):
@@ -54,7 +55,7 @@ var APP_KHOA_LUU_PHIEN = "coVuaTaiKhoanDangNhap";
 var APP_TRANG_PHU_HUYNH = "kc/thuthach_NC.html";
 
 // KC_00C-1: Trang chủ chung (đăng nhập/đăng ký nằm ở đây, giao diện Kids Challenge)
-var APP_TRANG_CHU = "kc/trangchu_NC.html";
+var APP_TRANG_CHU = "index.html";
 
 // NC_05: dữ liệu ĐANG HIỂN THỊ trên Thanh Thông Tin Trên Cùng (cache nhẹ để các
 // hàm cập nhật cục bộ như appCapNhatTrangBiCucBo không cần gọi lại máy chủ)
@@ -130,7 +131,7 @@ function appKhoiTao() {
     // (Trang Tài Khoản tự tải hồ sơ chi tiết riêng - xem taikhoan_NC.js)
     appLamMoiThanhThongTin();
   } else {
-    // KC_00C-1: chưa đăng nhập -> về Trang chủ chung (index.html đã chuyển ngay
+    // KC_00C-1: chưa đăng nhập -> về Trang chủ chung (covua_NC.html đã chuyển ngay
     // trong <head>; dòng này dự phòng). Chỉ còn ở lại đây khi sessionStorage bị chặn.
     if (appCoTheLuuPhien()) { window.location.replace(APP_TRANG_CHU); return; }
     // Trạng thái ban đầu: chưa đăng nhập -> hiện Tab Đăng Nhập
