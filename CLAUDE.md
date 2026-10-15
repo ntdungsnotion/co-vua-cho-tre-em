@@ -14,7 +14,7 @@ Repo này chứa **toàn bộ code** của webapp Cờ Vua cho trẻ em (thư m�
 3. Không có quyền vào `repo_rieng`: báo người dùng, không tự suy đoán quy tắc.
 
 ## Chỉ nhắc 4 điều bắt buộc (chi tiết ở repo_rieng)
-- Code sửa trên nhánh làm việc, mở Pull Request vào `main`; **chỉ merge khi người dùng đồng ý**.
+- Code sửa trên nhánh làm việc, mở Pull Request vào `main`; **Claude luôn tự merge** sau khi đã tự kiểm tra xong (người dùng chốt 15/10/2026), trừ bước còn chờ người dùng chạy SQL Supabase.
 - **Không** đưa tài liệu, kế hoạch, nhật ký vào repo này.
 - Mỗi phiên một việc có sản phẩm cụ thể; chạy `/khoi-tao` để bắt đầu, `/ket-thuc` sau khi người dùng xác nhận xong.
 - Nguyên tắc tối cao: Cờ Vua và Kids Challenge phải như **một ứng dụng duy nhất** với người dùng.
