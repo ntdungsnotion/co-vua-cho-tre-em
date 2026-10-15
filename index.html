@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cờ Vua Cho Trẻ Em</title>
 
+  <!-- KC_00C-1 (15/10/2026): CHƯA đăng nhập thì mở app là về TRANG CHỦ chung
+       (kc/trangchu_NC.html - có khung đăng nhập/đăng ký). Chạy NGAY trong <head>
+       để trẻ không thấy trang Cờ Vua cũ nháy lên. sessionStorage bị chặn (chế độ
+       riêng tư) thì KHÔNG chuyển, tránh vòng lặp, giữ đăng nhập kiểu cũ. -->
+  <script>
+    (function () {
+      try {
+        if (!sessionStorage.getItem("coVuaTaiKhoanDangNhap")) {
+          window.location.replace("kc/trangchu_NC.html");
+        }
+      } catch (loi) { /* bị chặn sessionStorage -> ở lại trang này */ }
+    })();
+  </script>
+
   <!-- NGÀY: 14/10/2026 21:57 - BƯỚC: KC_00B (hợp nhất đăng nhập với Kids
        Challenge): 3 nút Học Tập/Khám Phá/Thử Thách nay trỏ sang bộ trang
        /kc/ (dùng CHUNG phiên đăng nhập với Cờ Vua - xem app.js); màn hình
@@ -113,6 +127,8 @@
        "nutTab") nên app.js không gán sự kiện. Không còn nút "sắp có" nào. -->
   <!-- ================================================= -->
   <nav id="thanhDieuHuong">
+    <!-- KC_00C-1: Học Tập/Khám Phá/Trò Chơi/Thử Thách đã nằm ở Trang chủ chung -> bỏ khỏi
+         thanh này cho gọn; thanh này chỉ còn nút của riêng Cờ Vua + nút về Trang chủ. -->
     <a class="nutTabLienKet" id="tabTrangChu" href="kc/trangchu_NC.html">🏠 Trang chủ</a>
     <button class="nutTab" id="tabAuth" data-tab="auth">Đăng Nhập</button>
     <button class="nutTab" id="tabTaiKhoan" data-tab="taikhoan">👤 Tài Khoản</button>
@@ -120,10 +136,6 @@
     <a class="nutTabLienKet" id="tabHaiNguoi" href="choi2nguoi_NC.html">👫 2 Người</a>
     <button class="nutTab" id="tabRank" data-tab="rank">🏆 Xếp Hạng</button>
     <a class="nutTabLienKet" id="tabCuaHang" href="cuahang_NC.html">🛍️ Cửa Hàng</a>
-    <a class="nutTabLienKet" id="tabHocTap" href="kc/hoctap_NC.html">📚 Học Tập</a>
-    <a class="nutTabLienKet" id="tabKhamPha" href="kc/khampha_NC.html">🧭 Khám Phá</a>
-    <a class="nutTabLienKet" id="tabTroChoi" href="kc/trochoi_NC.html">🎮 Trò Chơi</a>
-    <a class="nutTabLienKet" id="tabThuThach" href="kc/thuthach_NC.html">🎯 Thử Thách</a>
     <a class="nutTabLienKet" id="tabQuanTri" href="admin_NC.html" title="Trang Quản Trị (chỉ dành cho quản trị viên)" style="display:none;">🛠️ Quản Trị</a>
   </nav>
 

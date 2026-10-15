@@ -30,6 +30,19 @@
     .tcKhu .tcHinh { font-size: 3.4rem; display: block; line-height: 1.1; }
     .tcKhu h3 { margin: 8px 0 4px; color: var(--mau-chinh-dam); font-size: 1.2rem; }
     .tcKhu p { margin: 0; font-size: 0.88rem; color: var(--mau-chu-nhat); }
+    .tcCuaVaoHinh { text-align: center; font-size: 2.2rem; letter-spacing: 4px; margin-bottom: 6px; }
+    #kcChuaDangNhap h2 { text-align: center; }
+    #kcChuaDangNhap > div > p { text-align: center; }
+    .tcLienKetPhu { display: block; text-align: center; margin-top: 14px; font-weight: 600; color: var(--mau-chinh-dam); }
+    .tcNutChinh { width: 100%; margin-top: 14px; padding: 11px 14px; border: none; border-radius: var(--bo-tron-nho);
+      background: var(--mau-chinh); color: #fff; font-weight: bold; font-size: 1rem; cursor: pointer; }
+    .tcNutChinh:disabled { background: #c9c0ec; cursor: not-allowed; }
+    .tcThongBao { display: none; margin-top: 12px; padding: 8px 12px; border-radius: var(--bo-tron-nho); font-size: 0.9rem; }
+    .tcThongBao.hien { display: block; }
+    .tcThongBao.tot { background: #d6f5e3; color: #1e8449; }
+    .tcThongBao.xau { background: #fadbd8; color: #a93226; }
+    .tcGhiChuPhuHuynh { text-align: center; font-size: 0.85rem; color: var(--mau-chu-nhat); margin: 18px 0 0;
+      border-top: 1px dashed var(--mau-vien); padding-top: 12px; }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -52,13 +65,32 @@
     <a class="kcTab" href="thuthach_NC.html"><span class="kcTabIcon">🎯</span> Thử Thách</a>
   </nav>
 
+  <!-- KC_00C-1: đây là CỬA VÀO của cả app (index.html Cờ Vua chuyển về đây khi chưa
+       đăng nhập). Khối đăng nhập dùng kc_auth.js; khối tạo tài khoản bé (RPC dang_ky,
+       y như auth.js Cờ Vua) xử lý ở script cuối trang. -->
   <div id="kcChuaDangNhap" style="display:none;">
-    <h2>Con đăng nhập nhé!</h2>
-    <p>Một tài khoản dùng chung cho cả Cờ Vua và Thử Thách - Học Tập - Khám Phá - Trò Chơi.</p>
-    <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
-    <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
-    <button id="kcNutDangNhap" type="button">Đăng nhập</button>
-    <div id="kcThongBaoDangNhap"></div>
+    <div class="tcCuaVaoHinh">🦄🎮📚🧭</div>
+    <div id="tcKhoiDangNhap">
+      <h2>Chào con! 👋</h2>
+      <p>Đăng nhập để vào học, chơi và nhận thử thách nhé.</p>
+      <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+      <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+      <button id="kcNutDangNhap" type="button">Vào thôi!</button>
+      <div id="kcThongBaoDangNhap"></div>
+      <a href="#" id="tcMoDangKy" class="tcLienKetPhu">Chưa có tài khoản? Tạo tài khoản mới</a>
+    </div>
+    <div id="tcKhoiDangKy" style="display:none;">
+      <h2>Tạo tài khoản mới ✨</h2>
+      <p>Tên đăng nhập dùng chữ không dấu, số hoặc dấu gạch dưới (3-20 ký tự).</p>
+      <input class="kcODangNhap" id="tcDkTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+      <input class="kcODangNhap" id="tcDkMatKhau" type="password" placeholder="Mật khẩu" autocomplete="new-password">
+      <input class="kcODangNhap" id="tcDkMatKhau2" type="password" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
+      <button id="tcNutDangKy" class="tcNutChinh" type="button">Tạo tài khoản</button>
+      <div id="tcThongBaoDangKy" class="tcThongBao"></div>
+      <a href="#" id="tcQuayLaiDangNhap" class="tcLienKetPhu">Đã có tài khoản? Đăng nhập</a>
+    </div>
+    <p class="tcGhiChuPhuHuynh">👨‍👩‍👧 Bố mẹ cũng đăng nhập ở đây.
+      <a href="thuthach_NC.html#dang-ky-phu-huynh">Đăng ký tài khoản phụ huynh</a></p>
   </div>
 
   <div id="kcNoiDungCanDangNhap" style="display:none;">
@@ -82,6 +114,44 @@
   <script src="kc_api.js"></script>
   <script src="kc_auth.js"></script>
   <script>
+    // KC_00C-1: chuyển qua lại giữa Đăng nhập và Tạo tài khoản
+    function tcHienKhoi(dangKy) {
+      document.getElementById("tcKhoiDangNhap").style.display = dangKy ? "none" : "block";
+      document.getElementById("tcKhoiDangKy").style.display = dangKy ? "block" : "none";
+    }
+    document.getElementById("tcMoDangKy").addEventListener("click", function (su) { su.preventDefault(); tcHienKhoi(true); });
+    document.getElementById("tcQuayLaiDangNhap").addEventListener("click", function (su) { su.preventDefault(); tcHienKhoi(false); });
+
+    function tcThongBaoDangKy(text, tot) {
+      var o = document.getElementById("tcThongBaoDangKy");
+      o.textContent = text;
+      o.className = "tcThongBao hien " + (tot ? "tot" : "xau");
+    }
+
+    // Tạo tài khoản bé: cùng RPC dang_ky + cùng luật kiểm tra với auth.js Cờ Vua.
+    // Thành công thì đăng nhập luôn (lưu phiên chung như kc_auth.js).
+    document.getElementById("tcNutDangKy").addEventListener("click", function () {
+      var ten = document.getElementById("tcDkTen").value.trim();
+      var mk = document.getElementById("tcDkMatKhau").value;
+      var mk2 = document.getElementById("tcDkMatKhau2").value;
+      if (!ten || !mk) return tcThongBaoDangKy("Con nhập đủ tên đăng nhập và mật khẩu nhé!", false);
+      if (ten.length < 3 || ten.length > 20) return tcThongBaoDangKy("Tên đăng nhập dài từ 3 đến 20 ký tự nhé.", false);
+      if (!/^[a-zA-Z0-9_]+$/.test(ten)) return tcThongBaoDangKy("Tên chỉ dùng chữ không dấu, số và dấu gạch dưới nhé.", false);
+      if (mk !== mk2) return tcThongBaoDangKy("Hai lần nhập mật khẩu chưa giống nhau, con xem lại nhé.", false);
+      var nut = document.getElementById("tcNutDangKy");
+      nut.disabled = true;
+      tcThongBaoDangKy("Đang tạo tài khoản...", true);
+      kcGoiRpc("dang_ky", { p_ten: ten, p_mat_khau: mk }).then(function (kq) {
+        nut.disabled = false;
+        kq = kq || {};
+        if (!kq.thanhCong || !kq.duLieuTaiKhoan) return tcThongBaoDangKy(kq.thongBao || "Chưa tạo được, con thử lại nhé.", false);
+        kcTaiKhoanHienTai = kq.duLieuTaiKhoan;
+        kcLuuPhien(kcTaiKhoanHienTai);
+        kcHienDaDangNhap(kcTaiKhoanHienTai);
+        kcBaoSanSang(true);
+      });
+    });
+
     // Lời chào + avatar lấy từ phiên đăng nhập chung (avatar là URL -> <img>, Sổ Tay D7)
     document.addEventListener("kcSanSang", function (su) {
       if (!su.detail || !su.detail.daDangNhap) return;
