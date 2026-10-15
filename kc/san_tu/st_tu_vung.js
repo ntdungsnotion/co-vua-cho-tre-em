@@ -1,62 +1,20 @@
 /* ================================================================
    FILE: san_tu/st_tu_vung.js
-   CHỨC NĂNG: KHO TỪ VỰNG (VocabularyManager) của game Săn Từ: từ chia theo cấp,
-              chọn từ cho từng chướng ngại vật (không lặp trong một lượt) và tạo
-              các phương án nhiễu theo độ khó (dễ: ngẫu nhiên; khó: gần giống chữ).
+   CHỨC NĂNG: QUẢN LÝ TỪ VỰNG (VocabularyManager) của game Săn Từ:
+              - chọn từ cho từng chướng ngại vật (không lặp trong một lượt), từ bé ĐÃ
+                THUỘC thì ít được chọn lại, từ mới / từ hay sai thì được ưu tiên;
+              - tạo các phương án nhiễu theo độ khó (dễ: ngẫu nhiên; khó: gần giống chữ);
+              - SoTayTu: sổ ghi nhớ từng từ của từng bé (lưu trong trình duyệt).
    BƯỚC: TC_00B
    NGÀY: 15/10/2026
-   THÊM TỪ: thêm một dòng { en, e (hình emoji), vi } vào đúng cấp. Chỉ dùng TỪ
-            HOÀN CHỈNH, viết thường, không dấu cách.
+   CẬP NHẬT: 15/10/2026 - kho từ tách sang st_kho_tu.js; thêm sổ ghi nhớ để đổi từ mới.
    ================================================================ */
 (function (goc) {
   "use strict";
   const ST = goc.ST = goc.ST || {};
 
-  // Cấp 1: từ ngắn, quen thuộc (Dễ) - cấp 2: từ thông dụng (Trung bình)
-  // Cấp 3: từ dài hơn (Khó) - cấp 4: từ ít quen hơn, dễ nhầm (Thử thách)
-  const KHO = {
-    1: [
-      ["cat", "🐱", "con mèo"], ["dog", "🐶", "con chó"], ["sun", "☀️", "mặt trời"], ["hat", "👒", "cái mũ"],
-      ["cup", "☕", "cái cốc"], ["bus", "🚌", "xe buýt"], ["egg", "🥚", "quả trứng"], ["pig", "🐷", "con heo"],
-      ["cow", "🐮", "con bò"], ["fox", "🦊", "con cáo"], ["bee", "🐝", "con ong"], ["car", "🚗", "xe hơi"],
-      ["bed", "🛏️", "cái giường"], ["box", "📦", "cái hộp"], ["pen", "🖊️", "cây bút"], ["ant", "🐜", "con kiến"],
-      ["owl", "🦉", "con cú"], ["key", "🔑", "chìa khóa"], ["fish", "🐟", "con cá"], ["duck", "🦆", "con vịt"],
-      ["frog", "🐸", "con ếch"], ["ball", "⚽", "quả bóng"], ["book", "📕", "quyển sách"], ["cake", "🍰", "bánh ngọt"],
-      ["moon", "🌙", "mặt trăng"], ["star", "⭐", "ngôi sao"], ["tree", "🌳", "cái cây"], ["milk", "🥛", "sữa"],
-      ["bird", "🐦", "con chim"], ["door", "🚪", "cửa ra vào"], ["bear", "🐻", "con gấu"], ["lion", "🦁", "sư tử"]
-    ],
-    2: [
-      ["apple", "🍎", "quả táo"], ["happy", "😊", "vui vẻ"], ["water", "💧", "nước"], ["house", "🏠", "ngôi nhà"],
-      ["horse", "🐴", "con ngựa"], ["train", "🚆", "tàu hỏa"], ["chair", "🪑", "cái ghế"], ["bread", "🍞", "bánh mì"],
-      ["green", "🟢", "màu xanh lá"], ["smile", "😄", "nụ cười"], ["cloud", "☁️", "đám mây"], ["grape", "🍇", "quả nho"],
-      ["tiger", "🐯", "con hổ"], ["mouse", "🐭", "con chuột"], ["sheep", "🐑", "con cừu"], ["snake", "🐍", "con rắn"],
-      ["juice", "🧃", "nước ép"], ["lemon", "🍋", "quả chanh"], ["piano", "🎹", "đàn piano"], ["clock", "⏰", "đồng hồ"],
-      ["shoes", "👟", "đôi giày"], ["plant", "🪴", "cây trồng"], ["beach", "🏖️", "bãi biển"], ["robot", "🤖", "người máy"],
-      ["pizza", "🍕", "bánh pizza"], ["queen", "👸", "nữ hoàng"], ["river", "🏞️", "dòng sông"], ["light", "💡", "ánh sáng"],
-      ["sweet", "🍬", "ngọt"], ["truck", "🚚", "xe tải"]
-    ],
-    3: [
-      ["rabbit", "🐰", "con thỏ"], ["garden", "🌷", "khu vườn"], ["morning", "🌅", "buổi sáng"], ["monkey", "🐒", "con khỉ"],
-      ["flower", "🌸", "bông hoa"], ["school", "🏫", "trường học"], ["pencil", "✏️", "bút chì"], ["window", "🪟", "cửa sổ"],
-      ["orange", "🍊", "quả cam"], ["banana", "🍌", "quả chuối"], ["turtle", "🐢", "con rùa"], ["rocket", "🚀", "tên lửa"],
-      ["castle", "🏰", "lâu đài"], ["dragon", "🐉", "con rồng"], ["bridge", "🌉", "cây cầu"], ["planet", "🪐", "hành tinh"],
-      ["kitchen", "🍳", "nhà bếp"], ["chicken", "🐔", "con gà"], ["rainbow", "🌈", "cầu vồng"], ["teacher", "🧑‍🏫", "giáo viên"],
-      ["doctor", "🩺", "bác sĩ"], ["guitar", "🎸", "đàn ghi-ta"], ["jacket", "🧥", "áo khoác"], ["button", "🔘", "cái nút"],
-      ["carrot", "🥕", "củ cà rốt"], ["butter", "🧈", "bơ"], ["bottle", "🍼", "cái chai"], ["island", "🏝️", "hòn đảo"],
-      ["winter", "⛄", "mùa đông"], ["summer", "🏖️", "mùa hè"], ["mitten", "🧤", "găng tay"], ["kitten", "🐈", "mèo con"]
-    ],
-    4: [
-      ["elephant", "🐘", "con voi"], ["butterfly", "🦋", "con bướm"], ["umbrella", "☂️", "cái ô"], ["dinosaur", "🦕", "khủng long"],
-      ["strawberry", "🍓", "dâu tây"], ["helicopter", "🚁", "trực thăng"], ["telescope", "🔭", "kính thiên văn"], ["penguin", "🐧", "chim cánh cụt"],
-      ["giraffe", "🦒", "hươu cao cổ"], ["octopus", "🐙", "bạch tuộc"], ["vegetable", "🥦", "rau củ"], ["mountain", "⛰️", "ngọn núi"],
-      ["library", "📚", "thư viện"], ["birthday", "🎂", "sinh nhật"], ["pumpkin", "🎃", "quả bí ngô"], ["kangaroo", "🦘", "chuột túi"],
-      ["airplane", "✈️", "máy bay"], ["scissors", "✂️", "cái kéo"], ["treasure", "💰", "kho báu"], ["thunder", "⛈️", "sấm sét"],
-      ["compass", "🧭", "la bàn"], ["squirrel", "🐿️", "con sóc"], ["dolphin", "🐬", "cá heo"], ["sandwich", "🥪", "bánh mì kẹp"],
-      ["backpack", "🎒", "ba lô"], ["princess", "👸", "công chúa"], ["volcano", "🌋", "núi lửa"], ["astronaut", "🧑‍🚀", "phi hành gia"],
-      ["crocodile", "🐊", "cá sấu"], ["chocolate", "🍫", "sô-cô-la"], ["notebook", "📓", "quyển vở"], ["firework", "🎆", "pháo hoa"],
-      ["fountain", "⛲", "đài phun nước"], ["captain", "🧑‍✈️", "thuyền trưởng"], ["blanket", "🛌", "cái chăn"], ["pancake", "🥞", "bánh kếp"]
-    ]
-  };
+  // Kho từ nằm ở st_kho_tu.js (nạp trước file này)
+  const KHO = ST.KHO_TU;
 
   // Khoảng cách chỉnh sửa (Levenshtein): số chữ phải sửa để biến từ này thành từ kia
   function khoangCachChu(a, b) {
@@ -75,10 +33,44 @@
       + Math.abs(a.length - b.length) * 0.05;
   }
 
+  /* ----- SỔ GHI NHỚ TỪ: mỗi từ ghi số lần đúng ngay lần bấm đầu, số lần sai/không kịp,
+     và chuỗi đúng liên tiếp. Lưu theo tên đăng nhập của bé (máy dùng chung vẫn tách
+     riêng từng bé); chưa đăng nhập thì lưu chung tên "khach". ----- */
+  const SO_DUNG_DE_THUOC = 3; // đúng ngay lần đầu 3 lần liên tiếp = đã thuộc
+  class SoTayTu {
+    constructor(tenBe) {
+      this.khoa = "kc_santu_so_tay_" + (tenBe || "khach");
+      this.du = {};
+      try { this.du = JSON.parse(localStorage.getItem(this.khoa) || "{}") || {}; } catch (e) { this.du = {}; }
+    }
+    lay(en) { return this.du[en] || null; }
+    // thuoc = true khi bé chọn đúng ngay lần bấm đầu tiên
+    ghi(en, thuoc) {
+      const t = this.du[en] || { d: 0, s: 0, lien: 0 };
+      if (thuoc) { t.d++; t.lien++; } else { t.s++; t.lien = 0; }
+      t.luc = Date.now();
+      this.du[en] = t;
+      try { localStorage.setItem(this.khoa, JSON.stringify(this.du)); } catch (e) { /* hết chỗ / chặn lưu: bỏ qua */ }
+    }
+    daThuoc(en) { const t = this.du[en]; return !!t && t.lien >= SO_DUNG_DE_THUOC; }
+    demThuoc(cap) { return (KHO[cap] || []).filter(([en]) => this.daThuoc(en)).length; }
+    // Trọng số được chọn: từ bé càng hay đúng thì càng ít xuất hiện
+    trongSo(en) {
+      const t = this.du[en];
+      if (!t) return 1.2;                                // từ mới: ưu tiên cho bé học
+      if (t.lien >= SO_DUNG_DE_THUOC) return 0.05;       // đã thuộc: rất hiếm khi gặp lại (để ôn)
+      let w = 1 / (1 + 1.2 * t.lien + 0.25 * Math.min(t.d, 8));
+      if (t.lien === 0 && t.s > 0) w *= 1.5;             // vừa sai / không kịp: cho gặp lại để học
+      return w;
+    }
+  }
+  SoTayTu.SO_DUNG_DE_THUOC = SO_DUNG_DE_THUOC;
+
   class KhoTuVung {
-    constructor(doKho, ngauNhien) {
+    constructor(doKho, ngauNhien, soTay) {
       this.dk = doKho;
       this.rng = ngauNhien || Math.random;
+      this.soTay = soTay || null;
       this.daDung = new Set();
     }
     static tatCa(cap) { return KHO[cap].map(([en, e, vi]) => ({ en, e, vi, cap })); }
@@ -95,7 +87,13 @@
         KhoTuVung.tatCa(cap).forEach(t => this.daDung.delete(t.en));
         ds = KhoTuVung.tatCa(cap);
       }
-      const tu = ds[Math.floor(this.rng() * ds.length)];
+      // Bốc theo trọng số: từ đã thuộc ít được chọn, từ mới / từ hay sai được ưu tiên
+      let tu = ds[Math.floor(this.rng() * ds.length)];
+      if (this.soTay) {
+        const ts = ds.map(t => this.soTay.trongSo(t.en));
+        let tong = ts.reduce((a, b) => a + b, 0), r = this.rng() * tong;
+        for (let i = 0; i < ds.length; i++) { r -= ts[i]; if (r <= 0) { tu = ds[i]; break; } }
+      }
       this.daDung.add(tu.en);
       return tu;
     }
@@ -119,5 +117,6 @@
 
   ST.KHO_TU = KHO;
   ST.KhoTuVung = KhoTuVung;
+  ST.SoTayTu = SoTayTu;
   ST.khoangCachChu = khoangCachChu;
 })(typeof window !== "undefined" ? window : globalThis);
