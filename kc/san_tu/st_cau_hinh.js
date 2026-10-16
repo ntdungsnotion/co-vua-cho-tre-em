@@ -30,6 +30,8 @@
    CẬP NHẬT: 16/10/2026 - TC_00E: mỗi đường đua có KHO QUÁI riêng theo chủ đề (DUONG_DUA[i].kho, 7 phần
              tử ứng với 7 màn) và màn Tập chơi riêng (tapChoi). Đường 2 "Xứ sở kẹo ngọt": 23 loại quái /
              vật cản kẹo (KEO1..KEO6, cùng cấu trúc nhóm và cùng cách mở dần như Rừng xanh), hố sô-cô-la.
+   CẬP NHẬT: 16/10/2026 - TC_00F: ST.themDuongDua / ST.taoKhoDuong: đường 3..10 khai báo ở file riêng
+             st_duong_<mã>.js (nạp ngay sau file này).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -174,6 +176,34 @@
     { ma: "vuTru",   ten: "Vũ trụ",               bieuTuong: "🚀", cachDi: "tau",   daCo: false, dich: "Trạm vũ trụ",    bieuTuongDich: "🛰️" }
   ];
   ST.layDuongDua = ma => ST.DUONG_DUA.find(d => d.ma === ma) || ST.DUONG_DUA[0];
+
+  /* ----- KHAI BÁO MỘT ĐƯỜNG ĐUA MỚI (TC_00F, dùng cho đường 3..10) -----
+     Mỗi đường có file dữ liệu riêng st_duong_<mã>.js gọi ST.themDuongDua(mã, cấu hình):
+       loai: các loại quái / vật cản của đường (cùng dạng ST.LOAI_CHUONG_NGAI);
+       nhom: { thap: [6 vật cản thấp], cao: [2 vật cao phải bắn], dat: [5 quái đất, 3 cái đầu chậm nhất],
+               khongLo: [2 quái khổng lồ], bay: [4 quái bay], ho: "hố của đường" };
+       tenHang: tên hang bí mật.
+     Kho 7 màn tự xếp theo đúng cách mở dần của Rừng xanh (ST.taoKhoDuong); bài Tập chơi tự lấy
+     vật / quái của đường theo đúng thứ tự nhóm của bài Rừng xanh. */
+  ST.taoKhoDuong = function (n) {
+    const w = (ds, so) => { const o = {}; ds.forEach(t => { o[t] = so; }); return o; };
+    const k1 = Object.assign(w(n.thap.slice(0, 4), 2), w(n.thap.slice(4), 1), w(n.dat.slice(0, 3), 2), { [n.ho]: 3 });
+    const k2 = Object.assign({}, k1, w(n.dat.slice(3, 4), 2), w(n.bay.slice(0, 2), 1));
+    const k3 = Object.assign({}, k2, w(n.dat.slice(4), 2), w(n.bay.slice(2, 3), 1), w(n.cao, 1));
+    const k4 = Object.assign({}, k3, w(n.bay.slice(3), 1));
+    const k5 = Object.assign({}, k4, w(n.khongLo, 1));
+    const k6 = Object.assign({}, k5, w(n.khongLo, 2), { [n.ho]: 4, [n.cao[0]]: 2 });
+    return [k1, k2, k3, k4, k5, k6, k6];
+  };
+  ST.themDuongDua = function (ma, ch) {
+    Object.assign(ST.LOAI_CHUONG_NGAI, ch.loai);
+    const d = ST.DUONG_DUA.find(x => x.ma === ma), n = ch.nhom;
+    Object.assign(d, {
+      daCo: true, kho: ST.taoKhoDuong(n), tenHang: ch.tenHang,
+      tapChoi: [{ loai: n.thap[0] }, { loai: "kimCuong", so: 3 }, { loai: n.thap[1] }, { loai: n.ho }, { loai: n.dat[0] }, { loai: n.dat[0], mau: 2 }, { loai: n.cao[0], mau: 2 }]
+    });
+    return d;
+  };
 
   // Ghép đường đua + số màn (1..7) + cấp từ vựng thành cấu hình đầy đủ cho một màn chơi
   ST.taoManChoi = function (maDuong, soMan, maCapTu) {

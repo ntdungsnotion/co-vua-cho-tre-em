@@ -23,6 +23,8 @@
              ST.CHU_DE_VE[<mã>] (nen, dat, mieng, nenHang, mauGoHang, lauDai, bongLauDai, cong)
              và ST.VE_QUAI (hình quái riêng); thiếu phần nào thì dùng hình Rừng xanh. Menu vẽ
              cảnh của đường đua đang chọn (maDuongMenu). Tên hang lấy theo đường đua (tenHang).
+   CẬP NHẬT: 16/10/2026 - TC_00F: phương tiện của bé theo đường đua (ST.CHU_DE_VE[mã].phuongTien:
+             sau / truoc / nang): ván trượt, khủng long, vây bơi, đôi cánh, tàu vũ trụ. Hộp va chạm không đổi.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -48,6 +50,22 @@
     };
   }
   const bam = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }; // "ngẫu nhiên" cố định theo số
+  /* Công cụ dùng chung cho các file vẽ theo chủ đề (st_ve_<mã>.js) */
+  ST.VE_CHUNG = {
+    PI2, lerp, tronMau, bam,
+    // Chia mặt đường trong khung nhìn thành các đoạn đất liền và các miệng hố (tọa độ màn hình)
+    chiaDuong(bv, camX, ds) {
+      const W = bv.rong;
+      const ho = ds.filter(o => o.nhom === "ho" && o.x - camX < W + 20 && o.x + o.rong - camX > -20)
+        .map(o => [o.x - camX, o.x + o.rong - camX]).sort((a, b) => a[0] - b[0]);
+      const doan = []; let x0 = -10;
+      ho.forEach(([a, b]) => { if (a > x0) doan.push([x0, a]); x0 = Math.max(x0, b); });
+      doan.push([x0, W + 10]);
+      return { ho, doan };
+    },
+    // Vòng lặp vẽ vật trang trí cố định theo vị trí thế giới trong đoạn [a, b] (buoc: khoảng cách)
+    moiBuoc(camX, a, b, buoc, fn) { for (let i = Math.floor((a + camX) / buoc); i <= Math.ceil((b + camX) / buoc); i++) fn(i, i * buoc - camX); }
+  };
 
   class BoVe {
     constructor(canvas) {
@@ -919,6 +937,11 @@
       const dangChay = che === "chay" && !thang;
       const nhay = che === "nhay" || (thang && y < this.dat - 2);
       const phep = be.tPhep < 0.35; // vừa bắn: giơ đũa
+      // phương tiện theo đường đua (ván trượt, khủng long, vây bơi, đôi cánh, tàu...): phần phía sau bé,
+      // rồi nâng bé lên (nang) nếu bé ngồi / đứng trên phương tiện; phần phía trước vẽ sau cùng
+      const pt = this.cd && this.cd.phuongTien, ttPT = { che, pha, nhay, dangChay, thang, t };
+      if (pt && pt.sau) { c.save(); pt.sau.call(this, ttPT); c.restore(); }
+      if (pt && pt.nang) c.translate(0, -pt.nang);
       // chân
       c.fillStyle = "#ffcfa6"; c.strokeStyle = "#ffcfa6"; c.lineWidth = 8;
       const chan = (goc, dx) => { c.save(); c.translate(dx, -18); c.rotate(goc); c.beginPath(); c.moveTo(0, 0); c.lineTo(0, 14); c.stroke(); c.fillStyle = "#ff6b6b"; c.beginPath(); c.ellipse(3, 17, 7, 4.5, 0, 0, PI2); c.fill(); c.restore(); };
@@ -966,7 +989,9 @@
         else { c.beginPath(); c.arc(dx + 1, -49, 4, 0.2, Math.PI - 0.2); c.stroke(); }
       }
       c.fillStyle = "rgba(255,120,150,0.45)"; c.beginPath(); c.arc(dx - 12, -50, 3.6, 0, PI2); c.arc(dx + 14, -50, 3.6, 0, PI2); c.fill();
+      if (pt && pt.truoc) { c.save(); pt.truoc.call(this, ttPT); c.restore(); }
       c.restore();
+      y -= (pt && pt.nang) || 0;
       // chóng mặt: sao xoay quanh đầu
       if (che === "khung") for (let i = 0; i < 3; i++) { const a = t * 5 + i * 2.1; this.veSao(x + Math.cos(a) * 18, y - 86 + Math.sin(a) * 5, 5, "#ffd23f", a); }
       // vừa hồi sinh: lấp lánh

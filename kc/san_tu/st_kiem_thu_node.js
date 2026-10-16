@@ -23,6 +23,7 @@
    ================================================================ */
 "use strict";
 require("./st_cau_hinh.js");
+require("fs").readdirSync(__dirname).filter(f => /^st_duong_.*\.js$/.test(f)).sort().forEach(f => require("./" + f)); // đường 3..10
 require("./st_tien_do.js");
 require("./st_kho_tu.js");
 require("./st_tu_vung.js");
