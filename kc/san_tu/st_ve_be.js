@@ -271,7 +271,7 @@
     const kieu = (pt && pt.tuThe) || "chay";
     const noi = kieu === "boi" || kieu === "bay" || kieu === "ngoi"; // bơi / bay / ngồi tàu: lơ lửng, bóng nhạt hơn
     // bóng dưới chân (không vẽ khi đang rơi hố)
-    if (che !== "roi") {
+    if (che !== "roi" && !(pt && pt.khongBong)) { // khongBong: bay giữa không gian thì không có bóng
       c.fillStyle = noi ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.15)"; const r = (noi ? 24 : 17) - Math.min(10, be.y / 12);
       c.beginPath(); c.ellipse(x, this.dat + 2, r, 4, 0, 0, PI2); c.fill();
     }

@@ -8,6 +8,8 @@
               Quy ước giống st_ve_keo.js: gốc tọa độ giữa đáy vật, mặt quay sang TRÁI, "this" là BoVe.
    BƯỚC: TC_00F
    CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js), bé NGỒI trong tàu.
+   CẬP NHẬT: 16/10/2026 - TC_00G2: không còn mặt trăng / mặt đường: tàu bay giữa tinh không (sao, tinh vân,
+             thiên hà trôi bên dưới); hố là LỖ ĐEN (người dùng yêu cầu).
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -20,7 +22,7 @@
     cong: { soc: "#3fd6c8", nut: "#ff6ab8" },
     mauGoHang: ["#3a3a6a", "#8ae8ff"],
     phuongTien: {
-      tuThe: "ngoi", nang: 22,
+      tuThe: "ngoi", nang: 22, khongBong: true, // trong không gian: không có bóng dưới tàu
       sau(tt) { // tàu vũ trụ nhỏ: lửa phụt, đuôi tàu phía sau bé (bé ngồi trong khoang lái)
         const c = this.c, t = tt.t, lua = tt.nhay ? 1.7 : 1, y0 = tt.k.hong.y + 8; // y0: đáy khoang lái
         c.translate(0, y0);
@@ -90,48 +92,57 @@
         const a = Math.min(1, (p - 0.45) / 0.15), x = W + 60 - (p - 0.45) / 0.55 * W * 0.35;
         c.globalAlpha = 0.6 * a; ST.CHU_DE_VE.vuTru.bongLauDai.call(this, x, dat - 70, 0.45); c.globalAlpha = 1;
       }
-      // đồi mặt trăng xa
-      this.veLop(camX, 0.3, 320, dat, (x, y, i) => {
-        c.fillStyle = "#4a4a72"; c.beginPath(); c.moveTo(x - 60, dat); c.quadraticCurveTo(x + 80 + bam(i) * 60, dat - 70 - bam(i + 1) * 50, x + 340, dat); c.fill();
-        c.fillStyle = "#3a3a62"; c.beginPath(); c.ellipse(x + 120, dat - 20, 24, 6, 0, 0, PI2); c.fill();
-      });
-      // đá và tinh thể phía sau đường
-      this.veLop(camX, 0.65, 170, dat, (x, y, i) => {
-        const xx = x + 40 + bam(i) * 70, k = 0.7 + bam(i + 2) * 0.5;
-        if (bam(i + 5) < 0.55) { c.fillStyle = "#5a5a82"; c.beginPath(); c.ellipse(xx, dat - 2, 24 * k, 16 * k, 0, Math.PI, PI2); c.fill(); }
-        else { c.fillStyle = i % 2 ? "#7ae8ff" : "#d88aff"; c.beginPath(); c.moveTo(xx - 6 * k, dat); c.lineTo(xx - 4 * k, dat - 22 * k); c.lineTo(xx, dat - 30 * k); c.lineTo(xx + 5 * k, dat - 20 * k); c.lineTo(xx + 7 * k, dat); c.fill(); }
-      });
+      // không có mặt trăng / đường: chỉ có tinh không (người dùng yêu cầu 16/10/2026)
     },
 
-    dat(camX, ds, doDai) {
-      const c = this.c, y = this.dat, H = this.cao, t = this.t;
-      const { ho, doan } = chiaDuong(this, camX, ds);
-      ho.forEach(([a, b]) => { // nhìn xuyên xuống vũ trụ sâu thẳm
-        c.fillStyle = "#05051a"; c.fillRect(a, y + 4, b - a, H - y);
-        for (let k = 0; k < 8; k++) { const sang = 0.5 + Math.sin(t * 3 + k) * 0.4; c.fillStyle = `rgba(255,255,255,${sang})`; c.beginPath(); c.arc(a + bam(k + a * 0.01) * (b - a), y + 14 + bam(k + 20) * (H - y - 20), 1.4, 0, PI2); c.fill(); }
+    dat(camX, ds, doDai) { // không có đường: dưới tàu là tinh không với sao, tinh vân, thiên hà trôi qua
+      const c = this.c, y = this.dat, H = this.cao, W = this.rong, t = this.t;
+      const gr = c.createLinearGradient(0, y - 40, 0, H);
+      gr.addColorStop(0, "rgba(42,26,90,0)"); gr.addColorStop(0.35, "#1c1248"); gr.addColorStop(1, "#0a0820");
+      c.fillStyle = gr; c.fillRect(0, y - 40, W, H - y + 40);
+      // vệt sáng mờ chỉ hướng bay (không phải mặt đường)
+      c.fillStyle = "rgba(140,200,255,0.10)"; c.fillRect(0, y + 2, W, 5);
+      moiBuoc(camX, -40, W + 40, 46, (i, x) => { c.fillStyle = `rgba(170,220,255,${0.25 + bam(i) * 0.25})`; c.fillRect(x, y + 3, 14, 2); });
+      // tinh vân và thiên hà trôi theo tốc độ bay (cùng nhịp với quái nên bé thấy mình đang lao đi)
+      moiBuoc(camX, -260, W + 260, 260, (i, x) => {
+        const xx = x + bam(i) * 120, yy = y + 26 + bam(i + 1) * Math.max(10, H - y - 50), loai = bam(i + 2);
+        if (loai < 0.4) { // tinh vân
+          const m = ["rgba(255,110,210,", "rgba(90,200,255,", "rgba(170,110,255,"][i % 3];
+          c.fillStyle = m + "0.16)"; c.beginPath(); c.ellipse(xx, yy, 90, 26, 0.15, 0, PI2); c.fill();
+          c.fillStyle = m + "0.14)"; c.beginPath(); c.ellipse(xx + 30, yy - 6, 50, 16, -0.2, 0, PI2); c.fill();
+        } else if (loai < 0.75) { // thiên hà xoắn ốc
+          c.save(); c.translate(xx, yy); c.rotate(t * 0.15 + i); c.scale(1, 0.45);
+          c.fillStyle = "rgba(255,240,200,0.55)"; c.beginPath(); c.arc(0, 0, 6, 0, PI2); c.fill();
+          c.strokeStyle = "rgba(190,170,255,0.45)"; c.lineWidth = 3;
+          for (const g of [0, Math.PI]) { c.beginPath(); for (let k = 0; k <= 20; k++) { const a = g + k * 0.22, r = 4 + k * 1.6; k ? c.lineTo(Math.cos(a) * r, Math.sin(a) * r) : c.moveTo(Math.cos(a) * r, Math.sin(a) * r); } c.stroke(); }
+          c.restore();
+        } else { // hành tinh tí hon
+          c.fillStyle = ["#7ad0ff", "#ffb36b", "#c79bff"][i % 3]; c.beginPath(); c.arc(xx, yy, 7 + bam(i + 3) * 6, 0, PI2); c.fill();
+        }
       });
-      doan.forEach(([a, b]) => {
-        c.fillStyle = "#8a8aa8"; c.fillRect(a, y + 10, b - a, H - y);
-        c.save(); c.beginPath(); c.rect(a, y + 10, b - a, H - y); c.clip();
-        moiBuoc(camX, a, b, 90, (i, x) => { // miệng núi nhỏ
-          const xx = x + bam(i) * 40, yy = y + 30 + bam(i + 1) * 30, r = 8 + bam(i + 2) * 10;
-          c.fillStyle = "#6a6a88"; c.beginPath(); c.ellipse(xx, yy, r, r * 0.45, 0, 0, PI2); c.fill();
-          c.fillStyle = "#a8a8c4"; c.beginPath(); c.ellipse(xx, yy + 2, r * 0.7, r * 0.25, 0, 0, Math.PI); c.fill();
-        });
-        c.restore();
-        c.fillStyle = "#c8c8dc"; c.beginPath(); c.roundRect(a - 2, y - 3, b - a + 4, 15, 7); c.fill();
-        c.fillStyle = "#a8a8c4";
-        moiBuoc(camX, a, b, 60, (i, x) => { if (x < a + 10 || x > b - 10 || bam(i) < 0.4) return; c.beginPath(); c.ellipse(x, y + 3, 8, 2.5, 0, 0, PI2); c.fill(); });
-        moiBuoc(camX, a, b, 110, (i, x) => { // dấu chân phi hành gia
-          if (bam(i * 3) > 0.4 || x < a + 8 || x > b - 8 || x > doDai - camX + 40) return;
-          c.fillStyle = "#9a9ab8"; c.beginPath(); c.roundRect(x, y + 2, 9, 4, 2); c.roundRect(x + 14, y + 5, 9, 4, 2); c.fill();
-        });
+      moiBuoc(camX, -10, W + 10, 23, (i, x) => { // sao lấp lánh dưới tàu
+        const yy = y + 12 + bam(i + 7) * Math.max(10, H - y - 16), sang = 0.45 + Math.sin(t * 3 + i) * 0.35;
+        c.fillStyle = `rgba(255,255,255,${sang})`; c.beginPath(); c.arc(x + bam(i) * 20, yy, 0.8 + bam(i + 3) * 1.4, 0, PI2); c.fill();
       });
     },
-    mieng(x, w) { // gờ đá mặt trăng
-      const c = this.c, y = this.dat;
-      c.fillStyle = "#c8c8dc";
-      for (const ex of [x, x + w]) { c.beginPath(); c.arc(ex, y + 5, 8, 0, PI2); c.fill(); }
+    mieng(x, w) { // HỐ = LỖ ĐEN: tâm đen, đĩa sáng xoay quanh, sao bị hút vào
+      const c = this.c, y = this.dat, t = this.t, cx = x + w / 2, r = w / 2;
+      const cy = y + r * 0.2;
+      const hao = c.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 1.25);
+      hao.addColorStop(0, "rgba(255,170,90,0.0)"); hao.addColorStop(0.55, "rgba(255,140,80,0.35)"); hao.addColorStop(1, "rgba(120,60,200,0)");
+      c.fillStyle = hao; c.beginPath(); c.arc(cx, cy, r * 1.25, 0, PI2); c.fill();
+      c.save(); c.translate(cx, cy); c.scale(1, 0.38);
+      for (let k = 0; k < 3; k++) { // đĩa bồi tụ xoay
+        c.strokeStyle = ["rgba(255,210,120,0.9)", "rgba(255,130,80,0.75)", "rgba(200,110,255,0.6)"][k]; c.lineWidth = 5 - k;
+        c.beginPath(); c.arc(0, 0, r * (0.95 - k * 0.12), t * (2 + k) + k, t * (2 + k) + k + Math.PI * 1.5); c.stroke();
+      }
+      c.restore();
+      c.fillStyle = "#000"; c.beginPath(); c.arc(cx, cy, r * 0.5, 0, PI2); c.fill();
+      c.strokeStyle = "rgba(255,220,160,0.9)"; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, r * 0.52, 0, PI2); c.stroke();
+      for (let k = 0; k < 5; k++) { // sao xoáy vào tâm
+        const u = (t * 0.6 + k / 5) % 1, a = k * 1.3 + u * 5, rr = r * (1.1 - u * 0.7);
+        c.fillStyle = `rgba(255,255,255,${1 - u})`; c.beginPath(); c.arc(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.38, 1.6, 0, PI2); c.fill();
+      }
     },
 
     nenHang(camX) { // hang pha lê sao băng: tím thẫm, cụm pha lê hồng tím phát sáng, bụi sao

@@ -7,6 +7,7 @@
               Quy ước giống st_ve_keo.js: gốc tọa độ giữa đáy vật, mặt quay sang TRÁI, "this" là BoVe.
    BƯỚC: TC_00F
    CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js), bé BAY.
+   CẬP NHẬT: 16/10/2026 - TC_00G2: đôi cánh bướm vỗ xòe hai bên (người dùng yêu cầu).
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -22,17 +23,26 @@
     mauGoHang: ["#b8a8e8", "#fff4ff"],
     phuongTien: {
       tuThe: "bay", nang: 6,
-      sau(tt) { // đôi cánh lông trắng sau lưng, vỗ chậm khi lướt, vỗ mạnh khi bay vọt
-        const c = this.c, k = tt.k, toc = tt.nhay ? 16 : 6, vo = Math.sin(tt.t * toc) * (tt.nhay ? 0.45 : 0.22);
-        c.translate(k.lung.x, k.lung.y); c.rotate(k.than);
-        [[-0.35, 0.82], [0, 1]].forEach(([lech, kk]) => {
-          c.save(); c.translate(0, -4); c.rotate(-0.7 + lech - vo);
-          c.fillStyle = kk < 1 ? "#e6e0ff" : "#fff"; c.strokeStyle = VIEN; c.lineWidth = 1.6;
-          c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-16 * kk, -30 * kk, -40 * kk, -26 * kk);
-          for (let j = 0; j < 4; j++) c.quadraticCurveTo(-38 * kk + j * 9 * kk, (-12 + j * 7) * kk, -32 * kk + j * 9 * kk, (-8 + j * 7) * kk);
-          c.quadraticCurveTo(-8 * kk, 6 * kk, 0, 0); c.fill(); c.stroke();
+      sau(tt) { // đôi cánh BƯỚM sau lưng (người dùng yêu cầu 16/10/2026): hai cánh xòe hai bên thân rồi khép lại
+        const c = this.c, k = tt.k, toc = tt.nhay ? 15 : 8;
+        const nhip = Math.sin(tt.t * toc);                  // -1 khép .. 1 xòe
+        c.translate(k.lung.x, k.lung.y); c.rotate(k.than);   // hệ thân: -x là phía lưng, -y là phía đầu
+        // cánh xa (sau thân) nhạt hơn, lệch nhịp một chút; cánh gần vẽ sau cùng
+        [[0.55, 0.78, "#d9c8ff", "#b9a3f5", 0.35], [1, 1, "#ffb3e6", "#c89bff", 0]].forEach(([mo, kk, m1, m2, lech]) => {
+          const xoe = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(tt.t * toc + lech)); // độ dài cánh nhìn từ bên (khép thì ngắn lại)
+          c.save(); c.translate(0, -3); c.rotate(-0.25 + nhip * 0.12); c.scale(xoe * kk, kk);
+          c.globalAlpha = 0.6 + 0.4 * mo;
+          const gr = c.createLinearGradient(0, 0, -44, 0); gr.addColorStop(0, m2); gr.addColorStop(1, m1);
+          c.fillStyle = gr; c.strokeStyle = VIEN; c.lineWidth = 1.6;
+          // cánh trên (to, hướng về phía đầu) + cánh dưới (nhỏ, hướng về phía chân)
+          c.beginPath(); c.moveTo(0, 0); c.bezierCurveTo(-14, -30, -46, -30, -44, -8); c.bezierCurveTo(-42, 2, -18, 2, 0, 0); c.fill(); c.stroke();
+          c.beginPath(); c.moveTo(0, 2); c.bezierCurveTo(-12, 4, -34, 10, -30, 24); c.bezierCurveTo(-24, 32, -6, 18, 0, 2); c.fill(); c.stroke();
+          c.fillStyle = "rgba(255,255,255,0.75)"; // chấm hoa văn
+          c.beginPath(); c.arc(-30, -14, 5, 0, PI2); c.arc(-18, 14, 3.5, 0, PI2); c.fill();
+          c.fillStyle = "#ffd23f"; c.beginPath(); c.arc(-38, -9, 2.5, 0, PI2); c.fill();
           c.restore();
         });
+        c.globalAlpha = 1;
       },
       truoc(tt) { // vòng hào quang vàng trên đầu
         const c = this.c, t = this.t;
