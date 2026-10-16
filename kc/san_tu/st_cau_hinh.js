@@ -31,7 +31,7 @@
              tử ứng với 7 màn) và màn Tập chơi riêng (tapChoi). Đường 2 "Xứ sở kẹo ngọt": 23 loại quái /
              vật cản kẹo (KEO1..KEO6, cùng cấu trúc nhóm và cùng cách mở dần như Rừng xanh), hố sô-cô-la.
    CẬP NHẬT: 16/10/2026 - TC_00F: ST.themDuongDua / ST.taoKhoDuong: đường 3..10 khai báo ở file riêng
-             st_duong_<mã>.js (nạp ngay sau file này).
+             st_duong_<mã>.js (nạp ngay sau file này). Tên loại trùng với đường khác thì báo lỗi ngay.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -196,6 +196,8 @@
     return [k1, k2, k3, k4, k5, k6, k6];
   };
   ST.themDuongDua = function (ma, ch) {
+    const trung = Object.keys(ch.loai).filter(k => ST.LOAI_CHUONG_NGAI[k]); // tên loại trùng sẽ đè mất loại của đường khác
+    if (trung.length) throw new Error("Đường " + ma + ": trùng tên loại " + trung.join(", "));
     Object.assign(ST.LOAI_CHUONG_NGAI, ch.loai);
     const d = ST.DUONG_DUA.find(x => x.ma === ma), n = ch.nhom;
     Object.assign(d, {
