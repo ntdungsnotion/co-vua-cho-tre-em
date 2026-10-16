@@ -16,6 +16,7 @@
   CẬP NHẬT: 15/10/2026 - TC_00D: màn hình chọn đường đua + chọn màn, cổng qua màn, nút màn tiếp.
   CẬP NHẬT: 16/10/2026 - TC_00D2: bấm hình ở khung từ để nghe lại (cấp từ 3-4 ẩn chữ).
   CẬP NHẬT: 16/10/2026 - TC_00D2: trợ giúp nói về vật cản chung (kho quái / vật cản mở rộng).
+  CẬP NHẬT: 16/10/2026 - TC_00D2: máy tính: khung chữ căn giữa, lời nhắc ngay dưới khung game; trợ giúp có hang kim cương.
   CẬP NHẬT: 16/10/2026 - TC_00D2: đổi tên game hiển thị thành "Giải Cứu Mèo Con" (người dùng yêu cầu).
   CẬP NHẬT: 16/10/2026 - TC_00D2 (sau khi người dùng thử): màn "Tập chơi" (nút trước màn 1), bảng ôn tập
             cuối màn (ghép hình - chữ, ghép hết mới mở màn tiếp, có lời cổ vũ).
@@ -226,8 +227,12 @@
     #nutTamDung { width: 52px; height: 46px; font-size: 22px; }
     #thongBao { top: 80px; }
     .bao { font-size: 28px; padding: 6px 24px; }
-    #khuChon { display: grid; grid-template-columns: minmax(300px, 26%) 1fr; grid-template-rows: auto auto; column-gap: 24px; padding: 16px 28px 18px; }
-    #theTu { grid-row: 1 / span 2; flex-wrap: wrap; align-content: center; background: #fff; border: 3px solid #e3dcfa; border-radius: 22px; padding: 12px 16px; }
+    /* khung chữ căn giữa (rộng tối đa 1400px); lời nhắc nằm NGAY DƯỚI khung game, giữa màn hình */
+    #khuChon { display: grid; grid-template-columns: minmax(300px, 26%) 1fr; grid-template-rows: auto auto; column-gap: 24px;
+      padding: 8px max(28px, calc((100% - 1400px) / 2)) 18px; }
+    #loiNhan { grid-column: 1 / -1; grid-row: 1; margin: 0 0 10px; min-height: 28px; }
+    #cacNut { grid-column: 2; grid-row: 2; align-self: center; }
+    #theTu { grid-row: 2; flex-wrap: wrap; align-content: center; background: #fff; border: 3px solid #e3dcfa; border-radius: 22px; padding: 12px 16px; }
     #hinhTu { font-size: 64px; width: 72px; }
     #chuTu { font-size: 44px; }
     #nghiaTu { font-size: 17px; }
@@ -239,7 +244,7 @@
     .nutTu { min-height: 96px; --co: clamp(26px, 2.7vw, 44px); border-radius: 22px; border-width: 4px; box-shadow: 0 7px 0 var(--chinh-dam); }
     .nutTu .so { display: block; font-size: 15px; }
     .nutTu:hover:not(:disabled):not(.trong) { background: var(--chinh-nhat); transform: translateY(-2px); }
-    #loiNhan { font-size: 19px; margin-top: 10px; }
+    #loiNhan { font-size: 20px; }
     .the { max-width: 980px; padding: 28px 34px; border-radius: 30px; }
     #manBatDau .the { display: grid; grid-template-columns: 1fr 1fr; gap: 0 36px; text-align: left; }
     #manBatDau .the .dau { grid-column: 1 / -1; text-align: center; margin-bottom: 12px; }
@@ -296,7 +301,7 @@
     #onTapXong { font-size: 32px; }
   }
   @media (min-width: 1600px) {
-    #khuChon { padding: 18px 48px 22px; }
+    #khuChon { padding: 10px max(48px, calc((100% - 1500px) / 2)) 22px; }
     .nutTu { min-height: 110px; }
   }
 </style>
@@ -347,6 +352,7 @@
             <li><b>🔤</b><span>Mỗi chướng ngại vật có một từ. Bấm <b style="font-size:inherit">đúng từ đó</b> ở khung dưới để bé nhảy qua hoặc phóng phép thuật.</span></li>
             <li><b>💎</b><span>Cụm kim cương lơ lửng trên cao cũng có chữ riêng: bấm đúng chữ lúc bé tới gần để nhảy lên lấy. Đủ 10 viên đổi 1 mạng.</span></li>
             <li><b>📚</b><span>Qua màn thì ghép hình với chữ để ôn lại. Ghép hết là mở màn tiếp!</span></li>
+            <li><b>✨</b><span>Thỉnh thoảng rơi xuống hố lại gặp <b style="font-size:inherit">hang kim cương bí mật</b>: nhặt kim cương rồi bấm đúng từ để nhảy vào cửa ánh sáng!</span></li>
             <li><b>❤️</b><span>Va vào quái vật hay rơi xuống hố thì mất mạng. Va vật cản (ống cống, khúc gỗ, hàng rào...) chỉ bị khựng lại.</span></li>
             <li><b>🏰</b><span>Qua màn 7 là tới nơi giải cứu bé mèo, mở đường đua mới!</span></li>
           </ul>

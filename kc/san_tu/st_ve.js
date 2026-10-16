@@ -10,13 +10,15 @@
    NGÀY: 15/10/2026
    KHUNG NHÌN: luôn thấy ít nhất 560 đơn vị bề ngang và 330 đơn vị bề cao. Màn rộng
                (máy tính) thấy xa hơn về phía trước, màn dọc (điện thoại) thấy nhiều trời hơn.
+               Máy tính (16/10/2026): ít nhất 1000 đơn vị bề ngang, bé đứng ở 17% bên trái.
    CẬP NHẬT: 16/10/2026 - TC_00D2: thanh máu trên đầu quái / vật cản phải bắn, tường đá
              (cao hơn cú nhảy), vạch "Nhảy!" trên đường ở màn 1-2 để bé tập canh lúc bấm.
              Cấp từ 3-4 (anChu): biển chữ hiện hình + 🔊 thay cho chữ, đúng rồi mới hiện chữ.
              Dải "Nhảy ở đây" CHỈ có ở màn Tập chơi (người dùng yêu cầu 16/10/2026).
              Cụm kim cương có từ riêng: biển chữ cắm trên đất dưới cụm, không vẽ thân vật.
              Kho mở rộng: vẽ thêm khúc gỗ, hàng rào, bụi gai, thùng gỗ, cột tô-tem, ốc sên, cua,
-             ếch, sâu róm, cây biết đi, dơi, chim sẻ, bọ rùa bay.
+             ếch, sâu róm, cây biết đi, dơi, chim sẻ, bọ rùa bay. Hang kim cương (veHang) khi rơi hố
+             may mắn; báo cho lõi game khoảng nhìn thấy phía trước (g.tamNhin).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -58,7 +60,10 @@
       const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
       this.cv.width = Math.round(w * dpr); this.cv.height = Math.round(h * dpr);
       // màn dọc (điện thoại) cần nhân vật to hơn: khung tối thiểu hẹp hơn một chút
-      this.k = Math.min(w / (w < h * 1.1 ? 500 : 560), h / 330, 2.2);
+      // máy tính (màn rộng): thu cảnh nhỏ lại để thấy xa hơn, nhìn thấy quái từ sớm (người dùng yêu cầu 16/10/2026)
+      this.pc = w >= 1024 && w > h * 1.25;
+      this.k = this.pc ? Math.min(w / 1000, h / 340, 1.75) : Math.min(w / (w < h * 1.1 ? 500 : 560), h / 330, 2.2);
+      this.viTriBe = this.pc ? 0.17 : 0.24;          // bé đứng ở phần trái khung, phía trước rộng hơn trên máy tính
       this.rong = w / this.k; this.cao = h / this.k;  // kích thước khung nhìn (đơn vị thế giới)
       this.dat = this.cao - 64;                       // vị trí mặt đất trên màn
       this.tiLe = dpr * this.k;
@@ -91,13 +96,15 @@
       c.setTransform(this.tiLe, 0, 0, this.tiLe, 0, 0);
       c.lineJoin = "round"; c.lineCap = "round";
       const choi = g && g.trangThai !== "menu";
+      if (choi) g.tamNhin = this.rong * (1 - this.viTriBe) - 20; // quái cách bé bao xa thì đã hiện trên màn hình (để chạy chậm lại)
+      if (choi && g.hang && g.hang.pha !== "roi") { this.veHang(g); return; }
       const be = choi ? g.be : { x: this.t * 150, y: 0, che: "chay", batTu: 0, tTiepDat: 9, tPhep: 9, tChe: 0 };
       const doDai = choi ? g.doDai : 1e9;
       const tienDo = choi ? g.tienDo : 0.08;
       // camera: bám theo bé, dừng lại khi lâu đài đã vào khung
-      let camX = be.x - this.rong * 0.24;
+      let camX = be.x - this.rong * this.viTriBe;
       if (choi) camX = Math.min(camX, doDai + 300 - this.rong);
-      if (choi && g.trangThai === "thang") camX = Math.min(doDai - this.rong * 0.24, doDai + 300 - this.rong);
+      if (choi && g.trangThai === "thang") camX = Math.min(doDai - this.rong * this.viTriBe, doDai + 300 - this.rong);
       this.camX = camX;
       this.veNen(camX, tienDo);
       this.veDat(camX, choi ? g.chuongNgai : [], doDai);
@@ -113,6 +120,84 @@
       if (choi && g.trangThai === "thang" && g.dk.laManCuoi) this.veMeoDiRa(g, camX);
       this.veHat(camX);
       if (choi) this.veMuiTenSapToi(g, camX);
+    }
+
+    /* ---------------- HANG KIM CƯƠNG (rơi hố may mắn) ----------------
+       Hang tím tối có nhũ đá, pha lê phát sáng, hàng kim cương trên nền; cuối hang là gờ đá
+       với CỬA ÁNH SÁNG (biển chữ phía trên). Tọa độ hang riêng: x từ 0 tới cuaX. */
+    veHang(g) {
+      const H = g.hang, c = this.c, W = this.rong, Hc = this.cao, dat = this.dat, t = this.t;
+      const camX = Math.max(0, Math.min(H.x - W * 0.3, H.cuaX + 220 - W));
+      this.camX = camX;
+      const gr = c.createLinearGradient(0, 0, 0, dat);
+      gr.addColorStop(0, "#160d33"); gr.addColorStop(1, "#3a2470");
+      c.fillStyle = gr; c.fillRect(0, 0, W, Hc);
+      // vách đá phía xa (cuộn chậm)
+      c.fillStyle = "#2a1a55";
+      for (let i = Math.floor(camX * 0.4 / 120) - 1; i < (camX * 0.4 + W) / 120 + 1; i++) {
+        const x = i * 120 - camX * 0.4, h = 70 + ((i * 37) % 5) * 18;
+        c.beginPath(); c.ellipse(x, dat - 10, 80, h, 0, Math.PI, PI2); c.fill();
+      }
+      // pha lê phát sáng phía xa
+      const mauPL = ["#7fe0ff", "#ff7eb6", "#b98be0", "#7dffb0"];
+      for (let i = Math.floor(camX * 0.7 / 170) - 1; i < (camX * 0.7 + W) / 170 + 1; i++) {
+        const x = i * 170 + 60 - camX * 0.7, m = mauPL[((i % 4) + 4) % 4], nhip = 0.55 + Math.sin(t * 2 + i) * 0.25;
+        c.fillStyle = m; c.globalAlpha = 0.22 * nhip; c.beginPath(); c.arc(x, dat - 26, 34, 0, PI2); c.fill(); c.globalAlpha = 0.85;
+        [[-10, 30, -0.25], [2, 44, 0], [12, 26, 0.3]].forEach(([dx, h, nghieng]) => {
+          c.save(); c.translate(x + dx, dat - 6); c.rotate(nghieng);
+          c.beginPath(); c.moveTo(-6, 0); c.lineTo(-6, -h * 0.75); c.lineTo(0, -h); c.lineTo(6, -h * 0.75); c.lineTo(6, 0); c.fill(); c.restore();
+        });
+        c.globalAlpha = 1;
+      }
+      // nhũ đá trên trần
+      c.fillStyle = "#24164a";
+      for (let i = Math.floor(camX / 64) - 1; i < (camX + W) / 64 + 1; i++) {
+        const x = i * 64 - camX, h = 26 + ((i * 53) % 7) * 9;
+        c.beginPath(); c.moveTo(x - 18, 0); c.lineTo(x, h); c.lineTo(x + 18, 0); c.fill();
+      }
+      // nền hang
+      c.fillStyle = "#4a3384"; c.fillRect(0, dat, W, Hc - dat);
+      c.fillStyle = "#6a4fb0"; c.fillRect(0, dat, W, 8);
+      c.fillStyle = "#3b2870";
+      for (let i = Math.floor(camX / 70); i < (camX + W) / 70 + 1; i++) c.fillRect(i * 70 - camX + 6, dat + 18 + (i % 2) * 14, 40, 8);
+      // gờ đá + cửa ánh sáng
+      const gx = H.cuaX - camX, dinh = dat - H.doCaoGo;
+      c.fillStyle = "#5b4590"; c.beginPath(); c.roundRect(gx - 60, dinh, 220, H.doCaoGo + 4, 10); c.fill();
+      c.fillStyle = "#7a60c0"; c.fillRect(gx - 60, dinh, 220, 8);
+      const sang = 0.75 + Math.sin(t * 4) * 0.2;
+      const hq = c.createRadialGradient(gx, dinh - 52, 6, gx, dinh - 52, 120);
+      hq.addColorStop(0, `rgba(255,250,210,${0.9 * sang})`); hq.addColorStop(1, "rgba(255,240,180,0)");
+      c.fillStyle = hq; c.beginPath(); c.arc(gx, dinh - 52, 120, 0, PI2); c.fill();
+      c.save(); c.translate(gx, dinh - 52); c.rotate(t * 0.5); c.fillStyle = "rgba(255,245,200,0.25)";
+      for (let i = 0; i < 8; i++) { c.rotate(Math.PI / 4); c.beginPath(); c.moveTo(-6, 0); c.lineTo(0, -110); c.lineTo(6, 0); c.fill(); }
+      c.restore();
+      c.fillStyle = "#8a6a3c"; c.beginPath(); c.roundRect(gx - 38, dinh - 108, 76, 108, [38, 38, 4, 4]); c.fill();
+      const cua = c.createLinearGradient(0, dinh - 100, 0, dinh);
+      cua.addColorStop(0, "#fffbe0"); cua.addColorStop(1, "#ffe27a");
+      c.fillStyle = cua; c.beginPath(); c.roundRect(gx - 30, dinh - 100, 60, 100, [30, 30, 2, 2]); c.fill();
+      // biển chữ của cửa (giống biển chữ trên đường)
+      if (H.tt) {
+        const daDung = H.tt.daDung, chu = g.dk.anChu && !daDung ? H.tt.tu.e + " 🔊" : H.tt.tu.en;
+        c.font = "800 19px " + FONT; c.textAlign = "center"; c.textBaseline = "middle";
+        const w = Math.max(64, c.measureText(chu).width + 24), by = Math.max(64, dinh - 150) + (daDung ? 0 : Math.sin(t * 7) * 3);
+        c.fillStyle = daDung ? "#e6fff0" : "#fff"; c.beginPath(); c.roundRect(gx - w / 2, by, w, 30, 10); c.fill();
+        c.lineWidth = daDung ? 2.5 : 4; c.strokeStyle = daDung ? "#2BB673" : "#FFB800"; c.stroke();
+        c.fillStyle = daDung ? "#1f8a55" : "#2B2640"; c.fillText(chu, gx, by + 16);
+      }
+      // kim cương
+      H.kimCuongs.forEach(k => { if (!k.daNhat) this.veKimCuong(k.x - camX, dat - k.y, 1, k.tHien); });
+      // bé
+      this.veBe({ x: H.x, y: H.y, che: H.che, batTu: 0, tTiepDat: H.pha === "chay" && H.t < 0.12 ? H.t : 9, tPhep: 9, tChe: 0 }, null, camX);
+      this.veHat(camX);
+      // tên hang + số kim cương đã nhặt
+      c.font = "800 20px " + FONT; c.textAlign = "center"; c.textBaseline = "middle";
+      const nhan = `💎 Hang kim cương bí mật · ${H.daLay}/${H.so}`, wn = c.measureText(nhan).width + 28;
+      const yn = dat + 18; // trên nền hang, dưới chân bé: không đè thanh thông tin / thông báo
+      c.fillStyle = "rgba(255,255,255,0.92)"; c.beginPath(); c.roundRect(W / 2 - wn / 2, yn, wn, 32, 16); c.fill();
+      c.fillStyle = "#4B2FB0"; c.fillText(nhan, W / 2, yn + 17);
+      // vào cửa: lóe sáng trắng
+      if (H.pha === "sang") { c.fillStyle = `rgba(255,252,230,${Math.min(1, H.t / 0.5)})`; c.fillRect(0, 0, W, Hc); }
+      if (H.pha === "vao" && H.t < 0.3) { c.fillStyle = `rgba(10,5,30,${1 - H.t / 0.3})`; c.fillRect(0, 0, W, Hc); }
     }
 
     /* ---------------- NỀN ---------------- */
