@@ -24,7 +24,7 @@
              và ST.VE_QUAI (hình quái riêng); thiếu phần nào thì dùng hình Rừng xanh. Menu vẽ
              cảnh của đường đua đang chọn (maDuongMenu). Tên hang lấy theo đường đua (tenHang).
    CẬP NHẬT: 16/10/2026 - TC_00F: phương tiện của bé theo đường đua (ST.CHU_DE_VE[mã].phuongTien:
-             sau / truoc / nang): ván trượt, khủng long, vây bơi, đôi cánh, tàu vũ trụ. Hộp va chạm không đổi.
+             sau / truoc / nang / dungYen): ván trượt, khủng long, vây bơi, đôi cánh, tàu vũ trụ. Hộp va chạm không đổi.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -934,12 +934,13 @@
       if (g && g.trangThai === "thua" && che === "roi") { const k = Math.max(0.2, 1 - (g.tKetThuc + 1) * 0.4); sx = sy = k; nghieng = (g.tKetThuc + 1) * 4; c.translate(0, g.tKetThuc * 120); }
       c.rotate(nghieng); c.scale(sx, sy);
       const pha = (be.x || 0) * 0.075;   // nhịp bước theo quãng đường -> mượt ở mọi tốc độ khung hình
-      const dangChay = che === "chay" && !thang;
+      const pt = this.cd && this.cd.phuongTien;
+      const dangChay = che === "chay" && !thang && !(pt && pt.dungYen); // dungYen: bé đứng trên ván / ngồi trên lưng, chân không bước
       const nhay = che === "nhay" || (thang && y < this.dat - 2);
       const phep = be.tPhep < 0.35; // vừa bắn: giơ đũa
       // phương tiện theo đường đua (ván trượt, khủng long, vây bơi, đôi cánh, tàu...): phần phía sau bé,
       // rồi nâng bé lên (nang) nếu bé ngồi / đứng trên phương tiện; phần phía trước vẽ sau cùng
-      const pt = this.cd && this.cd.phuongTien, ttPT = { che, pha, nhay, dangChay, thang, t };
+      const ttPT = { che, pha, nhay, dangChay: che === "chay" && !thang, thang, t };
       if (pt && pt.sau) { c.save(); pt.sau.call(this, ttPT); c.restore(); }
       if (pt && pt.nang) c.translate(0, -pt.nang);
       // chân
