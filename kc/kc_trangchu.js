@@ -10,7 +10,7 @@
 // NGÀY: 15/10/2026
 // PHỤ THUỘC: kc_config.js, kc_api.js, kc_auth.js (sự kiện kcSanSang, biến
 //   kcTaiKhoanHienTai, kcThongTinCaNhan, hàm kcLuuPhien) phải nạp TRƯỚC.
-// SQL: kc/supabase_kc00c_qua_tang.sql (chưa chạy SQL thì khu quà tự ẩn,
+// SQL: supabase_kc00c_qua_tang.sql (lưu ở repo riêng, thư mục SQL/ - TC_01) (chưa chạy SQL thì khu quà tự ẩn,
 //   trang không vỡ).
 // QUY ƯỚC: hạng KHÔNG so giữa các bé - chỉ hiện hạng của chính bé (KẾ HOẠCH
 //   KC_00C). Kim cương chỉ cộng khi bé tự bấm nhận quà (HƯỚNG DẪN 3.0).
