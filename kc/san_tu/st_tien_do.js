@@ -6,8 +6,12 @@
               tài khoản (để TC_01).
               Luật mở khóa: qua màn n thì mở màn n+1; qua màn cuối (7) = xong đường
               đua, mở đường đua kế tiếp (nếu đường đó đã làm xong hình - daCo).
-   BƯỚC: TC_00D
-   NGÀY: 15/10/2026
+              LƯỢT ĐUA (TC_00G3, 16/10/2026): 3 mạng dùng CHUNG cho cả màn 1-7 của một đường,
+              không hồi lại mỗi màn. Mạng, mạng dự trữ, kim cương đang để dành được lưu
+              trong d.luot; hết sạch mạng ở đường chưa xong thì phải chơi lại từ màn 1
+              (sao đã đạt vẫn giữ). Qua màn 7 thì lượt kết thúc, lượt sau lại có 3 mạng.
+   BƯỚC: TC_00D, TC_00G3
+   NGÀY: 15/10/2026, 16/10/2026
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -44,8 +48,34 @@
       d.sao[soMan] = Math.max(d.sao[soMan] | 0, Math.max(0, Math.min(3, soSao | 0)));
       d.mo = Math.max(moTruoc, soMan + 1);
       this.du[maDuong] = d;
+      if (soMan === ST.SO_MAN) delete d.luot; // cứu được mèo: lượt kết thúc, lượt sau lại đủ mạng
       this.luu();
       return { manMoi: d.mo > moTruoc && soMan < ST.SO_MAN, xongDuong: soMan === ST.SO_MAN && moTruoc <= ST.SO_MAN };
+    }
+    /* ---- Lượt đua: mạng dùng chung cho màn 1-7 ---- */
+    // Mạng của lượt đang chơi; chưa có lượt thì là lượt mới đủ mạng
+    layLuot(maDuong) {
+      const l = this.cua(maDuong).luot, CH = ST.CAU_HINH;
+      const so = (x, toiDa) => Math.max(0, Math.min(toiDa, x | 0));
+      if (l && typeof l === "object" && (l.mang | 0) + (l.duTru | 0) > 0)
+        return { mang: so(l.mang, CH.mangBanDau), mangDuTru: so(l.duTru, CH.mangDuTruToiDa), kimCuong: so(l.kc, 1e6), dangDo: true };
+      return { mang: CH.mangBanDau, mangDuTru: 0, kimCuong: 0, dangDo: false };
+    }
+    luuLuot(maDuong, l) {
+      const d = this.cua(maDuong);
+      d.luot = { mang: l.mang | 0, duTru: l.mangDuTru | 0, kc: l.kimCuong | 0 };
+      this.du[maDuong] = d;
+      this.luu();
+    }
+    // Hết sạch mạng: lượt kết thúc. Đường chưa xong thì khóa lại về màn 1 (giữ sao).
+    // Trả về true nếu bé phải chơi lại từ màn 1.
+    hetLuot(maDuong) {
+      const d = this.cua(maDuong), veMan1 = !this.daXong(maDuong);
+      delete d.luot;
+      if (veMan1) d.mo = 1;
+      this.du[maDuong] = d;
+      this.luu();
+      return veMan1;
     }
   }
   ST.TienDoDuongDua = TienDoDuongDua;

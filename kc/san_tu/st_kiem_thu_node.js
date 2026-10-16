@@ -48,7 +48,7 @@ function chay(maDoKho, hat, naoBo, tuyChon) {
   tuyChon = tuyChon || {};
   const rng = ST.taoNgauNhien(hat);
   const suKien = [];
-  const g = new ST.TroChoi(MAN_THU[maDoKho] || maDoKho, { ngauNhien: rng, soTay: tuyChon.soTay, suKien: (t, d) => suKien.push({ t, d, luc: g ? g.tChoi : 0 }) });
+  const g = new ST.TroChoi(MAN_THU[maDoKho] || maDoKho, { ngauNhien: rng, soTay: tuyChon.soTay, luot: tuyChon.luot, suKien: (t, d) => suKien.push({ t, d, luc: g ? g.tChoi : 0 }) });
   g.batDau();
   const dt = tuyChon.dt || 1 / 60;
   let lich = null, buoc = 0, dongHo = 0; // dongHo: giờ thật của bé (đồng hồ màn đứng yên trong hang kim cương)
@@ -746,6 +746,69 @@ console.log("26. Hình bé (khung xương): mọi tư thế đều hợp lệ, c
     const [ma, tt] = x.split(":"), f = require("fs").readFileSync(require("path").join(__dirname, "st_ve_" + ma.toLowerCase() + ".js"), "utf8");
     kiem(f.includes(`tuThe: "${tt}"`), `đường ${ma}: bé ${tt}`);
   });
+}
+
+console.log("27. Lượt đua: 3 mạng dùng chung cho cả màn 1-7, không hồi lại mỗi màn");
+{
+  const CH = ST.CAU_HINH;
+  const g0 = new ST.TroChoi(MAN_THU[DS_MAN[2]], { ngauNhien: ST.taoNgauNhien(1) }); g0.batDau();
+  kiem(g0.mang === CH.mangBanDau && g0.mangDuTru === 0 && g0.kimCuong === 0, "không có lượt: đủ mạng như cũ");
+  const g1 = new ST.TroChoi(MAN_THU[DS_MAN[2]], { ngauNhien: ST.taoNgauNhien(1), luot: { mang: 1, mangDuTru: 1, kimCuong: 7 } }); g1.batDau();
+  kiem(g1.mang === 1 && g1.mangDuTru === 1 && g1.kimCuong === 7, "màn sau nhận đúng mạng + kim cương để dành của màn trước");
+  g1.batDau();
+  kiem(g1.mang === 1 && g1.tongMang === 2, "chơi lại màn: không hồi đầy mạng");
+  const g2 = new ST.TroChoi(MAN_THU[DS_MAN[2]], { luot: { mang: 0, mangDuTru: 0, kimCuong: 0 } });
+  kiem(g2.mang === CH.mangBanDau, "lượt hỏng (0 mạng): bắt đầu lượt mới đủ mạng");
+  // còn 1 mạng mà không bấm gì: hết mạng sau đúng 1 lần mất mạng, và vẫn không qua màn
+  let thuaSom = true;
+  for (const ma of DS_MAN.slice(0, 14)) {
+    const r = chay(ma, 3, nao.khongBam, { luot: { mang: 1, mangDuTru: 0, kimCuong: 0 } });
+    if (r.g.trangThai === "thang" || (r.g.lyDoThua === "hetMang" && r.g.thongKe.matMang !== 1)) thuaSom = false;
+  }
+  kiem(thuaSom, "còn 1 mạng: mất 1 mạng là hết lượt; không bấm vẫn không qua màn");
+  // chạy cả 7 màn của một đường: mạng đầu màn sau = mạng cuối màn trước (cộng mạng đổi kim cương)
+  const khoL = {};
+  globalThis.localStorage = { getItem: k => (k in khoL ? khoL[k] : null), setItem: (k, v) => { khoL[k] = String(v); } };
+  const td = new ST.TienDoDuongDua("be_luot");
+  let l = td.layLuot("rung");
+  kiem(!l.dangDo && l.mang === CH.mangBanDau, "lượt mới: 3 mạng");
+  let noi = true, khongTang = true, man = 1, soMan = 0;
+  const naoKhaVung = { tre: () => 0.3, bam: (g, tt) => (g.thongKe.dung + g.thongKe.sai) % 9 === 4 && tt.o.hanhDong === "nhay" ? undefined : bamDung(g, tt) };
+  while (man <= ST.SO_MAN && soMan < 12) {
+    soMan++;
+    const vao = td.layLuot("rung");
+    const r = chay(ST.taoManChoi("rung", man, "de"), 40 + soMan, naoKhaVung, { luot: vao });
+    const g = r.g;
+    if (g.mang + g.mangDuTru > vao.mang + vao.mangDuTru + g.thongKe.mangDoi) khongTang = false;
+    if (g.trangThai === "thang") {
+      td.luuLuot("rung", g); td.ghiThang("rung", man, g.soSao());
+      if (man < ST.SO_MAN) { const sau = td.layLuot("rung"); if (sau.mang !== g.mang || sau.mangDuTru !== g.mangDuTru || sau.kimCuong !== g.kimCuong) noi = false; }
+      man++;
+    } else if (g.lyDoThua === "hetMang") { td.hetLuot("rung"); man = 1; }
+    else td.luuLuot("rung", g);
+  }
+  console.log(`   chuỗi thử: ${soMan} lần chơi, tới màn ${Math.min(man, ST.SO_MAN)}${man > ST.SO_MAN ? " (cứu được mèo)" : ""}`);
+  kiem(noi && soMan >= ST.SO_MAN, "qua màn: mạng còn lại mang nguyên sang màn sau");
+  kiem(khongTang, "mạng không tự hồi khi sang màn (chỉ tăng khi đổi kim cương)");
+  kiem(!td.cua("rung").luot || man <= ST.SO_MAN, "qua màn 7: lượt kết thúc");
+  // hết mạng ở đường chưa xong: về màn 1, giữ sao
+  const td2 = new ST.TienDoDuongDua("be_het");
+  td2.ghiThang("rung", 1, 3); td2.ghiThang("rung", 2, 2); td2.luuLuot("rung", { mang: 1, mangDuTru: 0, kimCuong: 4 });
+  kiem(td2.layLuot("rung").dangDo && td2.layLuot("rung").mang === 1 && td2.layLuot("rung").kimCuong === 4, "lượt đang dở được lưu");
+  kiem(new ST.TienDoDuongDua("be_het").layLuot("rung").mang === 1, "mở lại game: vẫn còn 1 mạng (thoát ra không hồi mạng)");
+  kiem(td2.hetLuot("rung") === true && td2.manMo("rung") === 1 && !td2.manChoiDuoc("rung", 2), "hết mạng: khóa lại, chơi từ màn 1");
+  kiem(td2.sao("rung", 1) === 3 && td2.sao("rung", 2) === 2, "hết mạng: sao đã đạt vẫn giữ");
+  kiem(td2.layLuot("rung").mang === CH.mangBanDau && !td2.layLuot("rung").dangDo, "lượt mới sau khi hết mạng: lại đủ 3 mạng");
+  // đường đã cứu mèo: hết mạng không khóa lại
+  const td3 = new ST.TienDoDuongDua("be_xong");
+  for (let m = 1; m <= ST.SO_MAN; m++) td3.ghiThang("rung", m, 3);
+  kiem(!td3.cua("rung").luot, "cứu được mèo: lượt kết thúc");
+  td3.luuLuot("rung", { mang: 1, mangDuTru: 0, kimCuong: 0 });
+  kiem(td3.hetLuot("rung") === false && td3.manChoiDuoc("rung", 7), "đường đã xong: hết mạng vẫn chơi được mọi màn");
+  khoL.kc_santu_tien_do_be_hong = JSON.stringify({ rung: { mo: 3, luot: { mang: 99, duTru: -4, kc: "x" } } });
+  const lh = new ST.TienDoDuongDua("be_hong").layLuot("rung");
+  kiem(lh.mang === CH.mangBanDau && lh.mangDuTru === 0 && lh.kimCuong === 0, "dữ liệu lượt hỏng: giới hạn lại, không lỗi");
+  delete globalThis.localStorage;
 }
 
 console.log(`\n${soKiem - soLoi}/${soKiem} kiểm tra đạt` + (soLoi ? ` - ${soLoi} LỖI` : " ✓"));

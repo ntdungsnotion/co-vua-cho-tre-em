@@ -256,6 +256,7 @@
       this.maDoKho = this.dk.maCapTu;
       this.rng = tuyChon.ngauNhien || Math.random;
       this.suKien = tuyChon.suKien || function () {};
+      this.luotVao = tuyChon.luot || null; // { mang, mangDuTru, kimCuong } còn lại của lượt đua
       this.soTay = tuyChon.soTay || null; // sổ ghi nhớ từ của bé (có thể không có)
       this.trangThai = "menu";
       this.datLai();
@@ -277,9 +278,12 @@
       this.tChoi = 0;
       this.tichLuy = 0;
       this.be = { x: 0, y: 0, che: "chay", tChe: 0, batTu: 0, nhay: null, tTiepDat: 9, tPhep: 9, tCham: 0 };
-      this.mang = CH.mangBanDau;
-      this.mangDuTru = 0;
-      this.kimCuong = 0;        // số đang tích lũy (chưa đổi)
+      // lượt đua (TC_00G3): mạng dùng chung cả màn 1-7, nên nhận mạng còn lại từ màn trước
+      const l = this.luotVao;
+      this.mang = l ? l.mang : CH.mangBanDau;
+      this.mangDuTru = l ? l.mangDuTru : 0;
+      if (this.mang + this.mangDuTru <= 0) { this.mang = CH.mangBanDau; this.mangDuTru = 0; }
+      this.kimCuong = l ? l.kimCuong : 0;        // số đang tích lũy (chưa đổi), mang theo cả lượt
       this.tongKimCuong = 0;    // tổng đã nhặt cả lượt
       this.thuThach = null;
       this.soThuThach = 0;

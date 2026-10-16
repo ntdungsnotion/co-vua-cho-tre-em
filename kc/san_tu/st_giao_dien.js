@@ -27,6 +27,9 @@
              chọn; lời nhắc Tập chơi dùng tên vật / hố của từng đường. Xem thử cho bố mẹ: thêm
              #xem-<mã đường> vào địa chỉ (vd #xem-keo) để mở mọi màn của đường đó mà chưa cần qua
              đường trước (chỉ trong lần mở trang đó, không lưu).
+   CẬP NHẬT: 16/10/2026 - TC_00G3: LƯỢT ĐUA, 3 mạng dùng chung cho cả màn 1-7 của một đường (không
+             hồi lại mỗi màn). Mạng còn lại mang sang màn sau, lưu ngay khi mất / đổi mạng; hết sạch
+             mạng ở đường chưa xong thì chơi lại từ màn 1. Menu và màn kết quả báo số mạng còn lại.
    ================================================================ */
 (function () {
   "use strict";
@@ -59,6 +62,10 @@
   let soManChon = manMacDinh(maDuong);
   if (xemThu && maDuong === xemThu) soManChon = 0; // xem thử: bắt đầu từ Tập chơi của đường đó
   let ketQuaMan = null;      // { manMoi, xongDuong } của lần qua màn vừa rồi
+  let veMan1 = false;        // vừa hết sạch mạng của lượt: phải chơi lại từ màn 1
+  // Lưu mạng còn lại của lượt đua (gọi ngay khi mất / đổi mạng để thoát giữa chừng không hồi mạng)
+  function luuLuot() { if (g && !g.dk.laHuongDan && g.dk.soMan) tienDo.luuLuot(g.dk.maDuong, g); }
+  const timChu = n => n > 0 ? "❤️".repeat(n) : "0";
   let tuMoiThuoc = [];       // các từ bé vừa thuộc trong lượt này
   let tuDaGap = [], tuSai = []; // các từ đã hiện trong lượt / các từ bé làm sai, không kịp (cho bảng ôn tập)
   let bang = null;           // bảng ôn tập đang mở
@@ -136,7 +143,10 @@
   function veMenuChon() {
     ve.maDuongMenu = maDuong; // cảnh nền menu theo đường đua đang chọn
     veChonDuong(); veChonMan();
-    $("ghiChuDuong").textContent = "";
+    const l = tienDo.layLuot(maDuong), tong = l.mang + l.mangDuTru;
+    $("ghiChuDuong").textContent = soManChon === 0 ? "" : l.dangDo
+      ? `${timChu(l.mang)}${"💛".repeat(l.mangDuTru)} Con còn ${tong} mạng cho các màn còn lại đến khi cứu bé mèo.`
+      : `❤️❤️❤️ Con có ${CH.mangBanDau} mạng cho cả ${ST.SO_MAN} màn. Hết mạng thì chơi lại từ màn 1 nhé!`;
     $("nutBatDau").textContent = soManChon === 0 ? "▶ Tập chơi" : `▶ Chơi màn ${soManChon}`;
     capNhatHud(true);
   }
@@ -161,9 +171,11 @@
   /* ---------------- BẮT ĐẦU / TẠM DỪNG / KẾT THÚC ---------------- */
   function batDau() {
     am.mo(); am.phat("nut");
-    if (soManChon === 0 ? !tienDo.duongMo(maDuong) : !tienDo.manChoiDuoc(maDuong, soManChon)) { maDuong = "rung"; soManChon = tienDo.manMo("rung"); }
-    g = new ST.TroChoi(ST.taoManChoi(maDuong, soManChon, maDoKho), { suKien, soTay });
-    tuMoiThuoc = []; ketQuaMan = null; tuDaGap = []; tuSai = []; bang = null;
+    if (!tienDo.duongMo(maDuong)) { maDuong = "rung"; soManChon = tienDo.manMo("rung"); }
+    else if (soManChon !== 0 && !tienDo.manChoiDuoc(maDuong, soManChon)) soManChon = tienDo.manMo(maDuong);
+    // Tập chơi: luôn đủ mạng, không tính vào lượt đua. Màn 1-7: nhận mạng còn lại của lượt.
+    g = new ST.TroChoi(ST.taoManChoi(maDuong, soManChon, maDoKho), { suKien, soTay, luot: soManChon ? tienDo.layLuot(maDuong) : null });
+    tuMoiThuoc = []; ketQuaMan = null; veMan1 = false; tuDaGap = []; tuSai = []; bang = null;
     daHienKetQua = false; idDangHien = -1; lanThuThach = 0; daGapQuaiMau = false;
     ve.hat = [];
     $("thongBao").innerHTML = "";
@@ -207,7 +219,7 @@
     const cuoi = thang && dk.laManCuoi, conLai = ST.SO_MAN - dk.soMan, tap = !!dk.laHuongDan;
     $("ketQuaHinh").textContent = cuoi ? "🐱💖👧" : thang ? (tap ? "🎓👧🎉" : "🚩👧🎉") : g.lyDoThua === "hetGio" ? "⏰" : "💔";
     $("ketQuaTieuDe").textContent = cuoi ? "Giải cứu bé mèo thành công!" : thang ? (tap ? "Con tập chơi xong rồi!" : `Qua màn ${dk.soMan} rồi!`)
-      : g.lyDoThua === "hetGio" ? "Hết giờ mất rồi!" : "Hết mạng mất rồi!";
+      : g.lyDoThua === "hetGio" ? "Hết giờ mất rồi!" : tap ? "Hết mạng mất rồi!" : `Hết ${CH.mangBanDau} mạng mất rồi!`;
     $("ketQuaSao").textContent = thang && !tap ? saoChu(g.soSao()) : "";
     const iDuong = ST.DUONG_DUA.indexOf(d), duongSau = ST.DUONG_DUA[iDuong + 1];
     $("ketQuaLoi").textContent = cuoi
@@ -216,13 +228,15 @@
       : thang && tap ? "Con đã biết nhảy, bắn quái và lấy kim cương rồi. Vào màn 1 giải cứu mèo con thôi!"
       : tap ? "Không sao đâu, tập lại một lần nữa nhé. Con làm được mà! 💪"
       : thang ? `Bé mèo đang chờ ở ${d.dich.toLowerCase()}, còn ${conLai} màn nữa. Cố lên!` + (ketQuaMan && ketQuaMan.manMoi ? ` Đã mở màn ${dk.soMan + 1} 🔓` : "")
-      : g.lyDoThua === "hetGio" ? `Con đã đi được ${Math.round(g.tienDo * 100)}% đường màn ${dk.soMan}, thử lại nhanh hơn nhé!`
+        + ` Con còn ${g.tongMang} mạng ${timChu(g.mang)}${"💛".repeat(g.mangDuTru)} mang sang màn ${dk.soMan + 1}.`
+      : g.lyDoThua === "hetGio" ? `Con đã đi được ${Math.round(g.tienDo * 100)}% đường màn ${dk.soMan}, thử lại nhanh hơn nhé! Con vẫn còn ${timChu(g.mang)}${"💛".repeat(g.mangDuTru)}.`
+      : veMan1 ? `Con đã đi tới ${Math.round(g.tienDo * 100)}% đường màn ${dk.soMan}. Mèo con vẫn chờ, mình chạy lại từ màn 1 với ${CH.mangBanDau} mạng mới nhé! Sao con đã đạt vẫn được giữ. 💪`
         : `Cẩn thận quái vật và hố sâu nhé. Con đã đi được ${Math.round(g.tienDo * 100)}% đường màn ${dk.soMan}!`;
     const coManTiep = thang && !cuoi;
     $("nutManTiep").style.display = coManTiep ? "" : "none";
     $("nutManTiep").textContent = tap ? "▶ Vào màn 1" : `▶ Màn ${dk.soMan + 1}`;
     $("nutChoiLai").className = coManTiep ? "nutVua nhat" : "nutLon";
-    $("nutChoiLai").textContent = tap ? "↻ Tập lại" : thang ? "↻ Chơi lại màn này" : "↻ Chơi lại";
+    $("nutChoiLai").textContent = tap ? "↻ Tập lại" : thang ? "↻ Chơi lại màn này" : veMan1 ? "↻ Chơi lại từ màn 1" : "↻ Chơi lại";
     $("kqDung").textContent = tk.dung;
     $("kqKC").textContent = g.tongKimCuong;
     $("kqKCOnTap").textContent = g.kimCuongOnTap ? `(ôn tập +${g.kimCuongOnTap})` : "";
@@ -533,7 +547,7 @@
         ve.phun(d.k.x, d.k.y, "lapLanh", 12, "#7fe0ff");
         rung("hudKC", "nay");
         break;
-      case "doiMang": am.phat("doiMang"); bao("+1 mạng 💛"); rung("hudMang", "rung"); break;
+      case "doiMang": am.phat("doiMang"); bao("+1 mạng 💛"); rung("hudMang", "rung"); luuLuot(); break;
       case "khung":
         am.phat("khung");
         khoaCacNut();
@@ -562,6 +576,7 @@
         break;
       case "matMang":
         bao("-1 mạng", true); rung("hudMang", "rung");
+        if (g.tongMang > 0) luuLuot();
         khoaCacNut();
         { const hut = d.o ? lyDoNhayHut(d.o) : "", them = hut ? ` Bé nhảy ${hut} quá, lần sau canh lúc bấm nhé!` : "";
           loiNhan((d.lyDo === "roi" ? "Ối! Bé rơi xuống hố rồi." : `Ối! ${d.o ? d.o.ten : "Quái vật"} chạm vào bé rồi.`) + them, "xau"); }
@@ -569,6 +584,7 @@
       case "hoiSinh": am.phat("hoiSinh"); loiNhan("Bé quay lại rồi! Chạy tiếp nào 💪", "tot"); break;
       case "thang":
         am.dungNhac(); am.phat("thang");
+        luuLuot(); // mạng còn lại mang sang màn sau (qua màn 7 thì ghiThang kết thúc lượt)
         // Tiến độ (mở màn tiếp) chỉ lưu khi bé ôn tập xong (hoanTatMan)
         idDangHien = -1; veKhungChon();
         if (d.laManCuoi) {
@@ -580,7 +596,13 @@
         }
         for (let i = 0; i < 4; i++) setTimeout(() => ve.phun(g ? g.doDai + 120 : 0, 200, "giay", 30, ["#ff7eb6", "#ffd23f", "#6C4CE0", "#2BB673", "#3fc8ff"][i]), i * 400);
         break;
-      case "thua": am.dungNhac(); am.phat("thua"); khoaCacNut(); break;
+      case "thua":
+        am.dungNhac(); am.phat("thua"); khoaCacNut();
+        if (!g.dk.laHuongDan && g.dk.soMan) {
+          if (d.lyDo === "hetMang") { veMan1 = tienDo.hetLuot(g.dk.maDuong); if (veMan1) soManChon = 1; }
+          else luuLuot(); // hết giờ: chơi lại màn này với số mạng đang còn
+        }
+        break;
     }
   }
 
@@ -591,7 +613,9 @@
     const dkHud = g ? g.dk : ST.taoManChoi(maDuong, soManChon, maDoKho);
     const tg = g ? Math.ceil(g.thoiGian) : dkHud.thoiGianChoi;
     const td = g ? g.tienDo : 0;
-    const mang = g ? g.mang : CH.mangBanDau, duTru = g ? g.mangDuTru : 0, kc = g ? g.kimCuong : 0;
+    const luotHud = !g && soManChon ? tienDo.layLuot(maDuong) : null;
+    const mang = g ? g.mang : luotHud ? luotHud.mang : CH.mangBanDau, duTru = g ? g.mangDuTru : luotHud ? luotHud.mangDuTru : 0;
+    const kc = g ? g.kimCuong : luotHud ? luotHud.kimCuong : 0;
     const khoa = [tg, Math.round(td * 200), mang, duTru, kc, dkHud.ma].join("|");
     if (khoa === hudTruoc) return;
     hudTruoc = khoa;
