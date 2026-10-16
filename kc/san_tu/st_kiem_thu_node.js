@@ -20,11 +20,14 @@
    CẬP NHẬT: 16/10/2026 - TC_00E: mọi mục chạy trên MỌI đường đua đã có (Rừng xanh + Kẹo ngọt);
              mục 18, 20, 22 theo kho / Tập chơi riêng của từng đường; thêm mục 23 (kho theo chủ đề
              đúng cấu trúc nhóm) và mục 24 (không bấm thì không qua: 7 màn x 4 cấp x 40 hạt mỗi đường).
+   CẬP NHẬT: 16/10/2026 - TC_01: mục 28 (cất kim cương vào kho: số còn lại sau đổi mạng, hàng chờ
+             khi mất mạng, gửi bù, không gửi trùng, máy chủ từ chối thì bỏ / giữ đúng loại).
    ================================================================ */
 "use strict";
 require("./st_cau_hinh.js");
 require("fs").readdirSync(__dirname).filter(f => /^st_duong_.*\.js$/.test(f)).sort().forEach(f => require("./" + f)); // đường 3..10
 require("./st_tien_do.js");
+require("./st_kho_kc.js");
 require("./st_kho_tu.js");
 require("./st_tu_vung.js");
 require("./st_logic.js");
@@ -811,5 +814,84 @@ console.log("27. Lượt đua: 3 mạng dùng chung cho cả màn 1-7, không h�
   delete globalThis.localStorage;
 }
 
-console.log(`\n${soKiem - soLoi}/${soKiem} kiểm tra đạt` + (soLoi ? ` - ${soLoi} LỖI` : " ✓"));
-process.exit(soLoi ? 1 : 0);
+console.log("28. Cất kim cương vào kho (TC_01): số còn lại sau khi đổi mạng, hàng chờ khi mất mạng, gửi bù, không gửi trùng");
+async function kiemKho() {
+  const CH = ST.CAU_HINH;
+  // số còn lại = nhặt - 10 x số lần đổi mạng, không âm; chạy thật nhiều màn
+  let dungCongThuc = true, coDoiMang = false;
+  for (const ma of DS_MAN.slice(0, 21)) {
+    const r = chay(ma, 5, nao.luonDung(0.3));
+    const so = ST.kimCuongCatDuoc(r.g), mong = Math.max(0, r.g.tongKimCuong - r.g.thongKe.mangDoi * CH.kimCuongDoiMang);
+    if (so !== mong || so < 0 || so > r.g.tongKimCuong) dungCongThuc = false;
+    if (r.g.thongKe.mangDoi > 0) coDoiMang = true;
+  }
+  kiem(dungCongThuc, "số cất = nhặt được - số đã đổi mạng (không âm, không quá số nhặt)");
+  kiem(coDoiMang, "trong các màn thử có màn đổi kim cương lấy mạng");
+  kiem(ST.kimCuongCatDuoc({ tongKimCuong: 5, thongKe: { mangDoi: 2 } }) === 0, "đổi mạng bằng kim cương để dành từ màn trước: cất 0, không trừ kho");
+  kiem(ST.kimCuongCatDuoc(null) === 0, "không có màn: 0");
+
+  const khoL = {};
+  globalThis.localStorage = { getItem: k => (k in khoL ? khoL[k] : null), setItem: (k, v) => { khoL[k] = String(v); }, removeItem: k => { delete khoL[k]; } };
+  const phien = { tenDangNhap: "thu", maPhien: "uuid-phien-1234" };
+  let mang = false, daNhan = {}, soGoi = 0, tuChoi = null, kho = 0;
+  const mayChu = (ten, ts) => {
+    soGoi++;
+    if (ten !== "kc_santu_cat_kim_cuong" || !/^[A-Za-z0-9_-]{8,64}$/.test(ts.p_ma_luot) || ts.p_ten !== "thu") return Promise.resolve({ thanhCong: false, ma: "ma_luot_sai" });
+    if (mang) return Promise.resolve({ thanhCong: false, thongBao: "Không kết nối được máy chủ, con thử lại nhé." });
+    if (tuChoi) return Promise.resolve({ thanhCong: false, ma: tuChoi });
+    if (!daNhan[ts.p_ma_luot]) { daNhan[ts.p_ma_luot] = ts.p_so; kho += ts.p_so; }
+    return Promise.resolve({ thanhCong: true, ma: "", soCong: ts.p_so, soXin: ts.p_so, daDuTran: false, tranNgay: 200, diemSoMoi: kho });
+  };
+  const k = new ST.KhoKimCuong("thu", mayChu, () => phien);
+  kiem(k.them(0, {}) === null && k.docCho().length === 0, "0 kim cương: không ghi gì");
+  const m1 = k.them(12, { duong: "rung", man: 1, cap: "de", thang: true });
+  kiem(/^[A-Za-z0-9_-]{8,64}$/.test(m1.maLuot), "mã lượt đúng định dạng máy chủ");
+  let t = await k.gui();
+  kiem(t.ketQua[m1.maLuot] && t.ketQua[m1.maLuot].soCong === 12 && kho === 12 && k.docCho().length === 0, "gửi được: cộng 12, hàng chờ trống");
+  kiem(t.diemSoMoi === 12 && k.daGui[m1.maLuot], "trả về số kim cương mới trong kho");
+  // mất mạng: giữ lại, rồi gửi bù
+  mang = true;
+  const m2 = k.them(7, { duong: "rung", man: 2 }), m3 = k.them(5, { duong: "rung", man: 3 });
+  t = await k.gui();
+  kiem(t.loiMang && k.docCho().length === 2 && kho === 12 && k.soDangCho() === 12, "mất mạng: 2 màn được giữ trong hàng chờ, kho chưa đổi");
+  kiem(new ST.KhoKimCuong("thu", mayChu, () => phien).docCho().length === 2, "mở lại game: hàng chờ vẫn còn");
+  mang = false;
+  t = await new ST.KhoKimCuong("thu", mayChu, () => phien).gui();
+  kiem(kho === 24 && k.docCho().length === 0 && t.ketQua[m2.maLuot] && t.ketQua[m3.maLuot], "có mạng lại: gửi bù đủ 2 màn");
+  // gửi 2 lần cùng lúc: mỗi màn chỉ gọi máy chủ một lần
+  soGoi = 0;
+  const m4 = k.them(9, {});
+  await Promise.all([k.gui(), k.gui(), k.gui()]);
+  kiem(soGoi === 1 && kho === 33 && k.daGui[m4.maLuot], "bấm gửi dồn dập: chỉ gọi máy chủ 1 lần cho mỗi màn");
+  // phiên hết hạn: giữ lại; không phải tài khoản trẻ: bỏ
+  tuChoi = "phien_het_han"; k.them(4, {});
+  t = await k.gui();
+  kiem(!t.loiMang && k.docCho().length === 1, "phiên hết hạn: giữ lại chờ đăng nhập lại");
+  tuChoi = "khong_phai_tre";
+  t = await k.gui();
+  kiem(k.docCho().length === 0 && kho === 33, "không phải tài khoản trẻ: bỏ, không cộng");
+  tuChoi = null;
+  // chưa đăng nhập / đổi bé khác trên cùng máy: không gửi
+  const kKhach = new ST.KhoKimCuong("", mayChu, () => null);
+  kiem(kKhach.them(5, {}) === null && !kKhach.coTheCat, "chưa đăng nhập: không ghi, không gửi");
+  const kKhac = new ST.KhoKimCuong("thu", mayChu, () => ({ tenDangNhap: "be_khac", maPhien: "uuid-phien-9999" }));
+  soGoi = 0; kKhac.them(6, {}); await kKhac.gui();
+  kiem(soGoi === 0 && kKhac.docCho().length === 1, "phiên đang là bé khác: không gửi kim cương của bé này dưới tên bé kia");
+  khoL[kKhac.khoa] = "[]";
+  // máy chủ chưa có hàm / thư viện lỗi ngay khi gọi: giữ lại, không vỡ game
+  const kLoi = new ST.KhoKimCuong("thu", () => { throw new Error("kcSupabaseClient is not defined"); }, () => phien);
+  kLoi.them(3, {}); t = await kLoi.gui();
+  kiem(t.loiMang && kLoi.docCho().length === 1, "lỗi ngay khi gọi máy chủ: giữ lại, không vỡ game");
+  // màn chờ quá 14 ngày thì bỏ; dữ liệu hỏng không lỗi
+  khoL[kLoi.khoa] = JSON.stringify([{ maLuot: "cu_qua_lau_1", so: 5, luc: Date.now() - 20 * 864e5 }, "rac", null]);
+  soGoi = 0; t = await new ST.KhoKimCuong("thu", mayChu, () => phien).gui();
+  kiem(soGoi === 0 && t.conCho === 0, "màn chờ quá 14 ngày / dữ liệu hỏng: bỏ, không lỗi");
+  khoL[kLoi.khoa] = "{hỏng";
+  kiem(new ST.KhoKimCuong("thu", mayChu, () => phien).docCho().length === 0, "hàng chờ hỏng: coi như trống");
+  delete globalThis.localStorage;
+}
+
+kiemKho().catch(e => { soLoi++; console.log("  ✗ lỗi khi kiểm mục 28: " + e.stack); }).then(() => {
+  console.log(`\n${soKiem - soLoi}/${soKiem} kiểm tra đạt` + (soLoi ? ` - ${soLoi} LỖI` : " ✓"));
+  process.exit(soLoi ? 1 : 0);
+});

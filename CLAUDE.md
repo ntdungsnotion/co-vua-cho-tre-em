@@ -1,6 +1,6 @@
 # Chỉ dẫn cho Claude: repo code (công khai)
 
-> Cập nhật: 14/10/2026, bước QT_02. File này CHỈ là con trỏ, không chứa kế hoạch hay tài liệu dự án.
+> Cập nhật: 16/10/2026, bước TC_01 (SQL chuyển sang repo_rieng). File này CHỈ là con trỏ, không chứa kế hoạch hay tài liệu dự án.
 
 Repo này chứa **toàn bộ code** của webapp Cờ Vua cho trẻ em (thư mục gốc) và Kids Challenge (`/kc/`). Repo là **công khai** và chạy GitHub Pages: `main` chính là trang web đang chạy.
 
@@ -15,6 +15,6 @@ Repo này chứa **toàn bộ code** của webapp Cờ Vua cho trẻ em (thư m�
 
 ## Chỉ nhắc 4 điều bắt buộc (chi tiết ở repo_rieng)
 - Code sửa trên nhánh làm việc, mở Pull Request vào `main`; **Claude luôn tự merge** sau khi đã tự kiểm tra xong (người dùng chốt 15/10/2026), trừ bước còn chờ người dùng chạy SQL Supabase.
-- **Không** đưa tài liệu, kế hoạch, nhật ký vào repo này.
+- **Không** đưa tài liệu, kế hoạch, nhật ký vào repo này. Repo này **chỉ chứa file để chạy app**: file SQL Supabase đặt ở `repo_rieng/SQL/` (người dùng chốt 16/10/2026).
 - Mỗi phiên một việc có sản phẩm cụ thể; chạy `/khoi-tao` để bắt đầu, `/ket-thuc` sau khi người dùng xác nhận xong.
 - Nguyên tắc tối cao: Cờ Vua và Kids Challenge phải như **một ứng dụng duy nhất** với người dùng.
