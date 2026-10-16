@@ -47,7 +47,10 @@
     leQuaChuongNgai: 130,       // đã đi qua chướng ngại vật thêm chừng này mới mở thử thách mới
     leHoiSinh: 80,              // hồi sinh cách mép sau chướng ngại vật chừng này
     kichThuocKimCuong: 26,
-    kimCuongTamChayToiDa: 9,    // kim cương ở tầm chạy (không cần bấm cũng nhặt được) < số đổi 1 mạng
+    kimCuongDoCao: 170,         // kim cương lơ lửng gần đỉnh cú nhảy: chạy dưới đất không chạm, phải nhảy lên
+    kimCuongChoDoc: 0.8,        // giây để bé đọc từ trước cú nhảy lấy kim cương sớm nhất
+    kimCuongChoBamLai: 0.5,     // giây để bé bấm lại sau khi đáp đất, trước cửa sổ nhảy qua vật
+    soCapOnTap: 6,              // bảng ôn tập cuối màn: tối đa chừng này cặp hình - chữ
     khoaLuuCaiDat: "kc_santu_cai_dat" // localStorage: bật/tắt âm thanh
   };
 
@@ -72,12 +75,12 @@
      là "đệm" cho các lần khựng / gặp nạn);
      loai: chướng ngại vật nào xuất hiện + trọng số (màn đầu chưa có quái khó);
      Kim cương rải NGẪU NHIÊN trên đường (không gắn với quái hay từ), số lượng theo CẤP TỪ
-       (ST.DO_KHO.kimCuongToiDa): ở tầm chạy (chạy qua là nhặt) tối đa kimCuongTamChayToiDa viên,
-       phần còn lại lơ lửng trên vật cản (chỉ nhảy đúng lúc mới chạm được);
+       (ST.DO_KHO.kimCuongToiDa): luôn lơ lửng trên không ở đoạn đường TRƯỚC vật phải nhảy (không
+       treo trên quái / vật cản); bé bấm đúng từ để nhảy lên lấy rồi bấm lại để nhảy qua vật;
      tiLeNguyHiemToiThieu: tỉ lệ tối thiểu quái / hố: không bấm gì thì không thể qua màn;
      mauQuai: số viên phải bắn trúng để hạ quái có thanh máu / vật cản cao (càng về cuối càng nhiều);
      tiLeCoMau: xác suất một quái được mang thanh máu (luôn giữ KHÔNG QUÁ 1/4 tổng số quái). */
-  const chung = { thoiGianChoi: 60, tiLeKimCuongTrenCao: 0.35, tiLeNguyHiemToiThieu: 0.6, tiLeCoMau: 0.6 };
+  const chung = { thoiGianChoi: 60, tiLeNguyHiemToiThieu: 0.6, tiLeCoMau: 0.6 };
   ST.MAN_CHOI = [
     { mauQuai: 2, soPhuongAn: 2, doGiong: 0,    tocDo: 140, thoiGianPhanUng: 4.6, khoangThem: [30, 140], thoiGianDiDuKien: 49,
       loai: { cong: 3, da: 2, gocCay: 2, nam: 3, ho: 2 } },
@@ -95,6 +98,17 @@
       loai: { cong: 1, da: 1, gocCay: 1, nam: 2, nhim: 2, slime: 3, ho: 3, vit: 2, ong: 2, tuongDa: 2 } }
   ].map((m, i) => Object.assign({}, chung, m, { soMan: i + 1 }));
   ST.SO_MAN = ST.MAN_CHOI.length;
+
+  /* ----- MÀN "TẬP CHƠI" (màn 0, người dùng yêu cầu 16/10/2026) -----
+     Chạy chậm, nhiều giờ đọc, các chướng ngại vật xếp SẴN theo thứ tự để bé lần lượt học:
+     nhảy qua vật cản, nhảy lấy kim cương rồi nhảy tiếp, nhảy qua hố, nhảy qua quái không có
+     thanh máu, bắn quái có thanh máu, bắn vỡ tường đá. CHỈ màn này có dải xanh hướng dẫn nhảy.
+     Không tính sao, không mở khóa gì; chơi lại bao nhiêu lần cũng được. */
+  ST.MAN_HUONG_DAN = Object.assign({}, chung, {
+    soMan: 0, laHuongDan: true, mauQuai: 2, soPhuongAn: 2, doGiong: 0, tocDo: 120, thoiGianPhanUng: 5.2,
+    khoangThem: [60, 120], thoiGianChoi: 150, loai: { cong: 1 },
+    thuTu: [{ loai: "cong" }, { loai: "da" }, { loai: "ho" }, { loai: "nam" }, { loai: "nam", mau: 2 }, { loai: "tuongDa", mau: 2 }]
+  });
 
   /* ----- 10 ĐƯỜNG ĐUA: mỗi đường một chủ đề, 7 màn cùng chủ đề -----
      cachDi: chay | truot | cuoi | boi | bay | tau (cách bé di chuyển);
@@ -117,8 +131,14 @@
   // Ghép đường đua + số màn (1..7) + cấp từ vựng thành cấu hình đầy đủ cho một màn chơi
   ST.taoManChoi = function (maDuong, soMan, maCapTu) {
     const duong = ST.layDuongDua(maDuong);
-    const n = Math.max(1, Math.min(ST.SO_MAN, soMan | 0 || 1));
+    const huongDan = soMan === 0; // màn 0 = màn "Tập chơi"
+    const n = huongDan ? 0 : Math.max(1, Math.min(ST.SO_MAN, soMan | 0 || 1));
     const cap = ST.DO_KHO[maCapTu] || ST.DO_KHO.de;
+    if (huongDan) return Object.assign({}, ST.MAN_HUONG_DAN, {
+      ma: duong.ma + "-0-" + cap.ma, maDuong: duong.ma, duong, laManCuoi: false, ten: "Tập chơi",
+      maCapTu: cap.ma, capTu: cap.capTu, capNhieu: cap.capNhieu, tenCap: cap.ten, anChu: !!cap.anChu,
+      soKimCuong: [Math.min(3, cap.kimCuongToiDa), Math.min(3, cap.kimCuongToiDa)]
+    });
     return Object.assign({}, ST.MAN_CHOI[n - 1], {
       ma: duong.ma + "-" + n + "-" + cap.ma, maDuong: duong.ma, duong, soMan: n, laManCuoi: n === ST.SO_MAN,
       maCapTu: cap.ma, ten: "Màn " + n, capTu: cap.capTu, capNhieu: cap.capNhieu, tenCap: cap.ten,

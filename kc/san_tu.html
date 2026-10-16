@@ -15,7 +15,9 @@
   CẬP NHẬT: 15/10/2026 - TC_00D: màn hình chọn đường đua + chọn màn, cổng qua màn, nút màn tiếp.
   CẬP NHẬT: 16/10/2026 - TC_00D2: bấm hình ở khung từ để nghe lại (cấp từ 3-4 ẩn chữ).
   CẬP NHẬT: 16/10/2026 - TC_00D2: đổi tên game hiển thị thành "Giải Cứu Mèo Con" (người dùng yêu cầu).
-  CODE: san_tu/st_cau_hinh.js (tham số, 10 đường đua, 7 màn), st_tien_do.js (tiến độ màn), st_tu_vung.js (kho từ), st_logic.js (lõi game),
+  CẬP NHẬT: 16/10/2026 - TC_00D2 (sau khi người dùng thử): màn "Tập chơi" (nút trước màn 1), bảng ôn tập
+            cuối màn (ghép hình - chữ, ghép hết mới mở màn tiếp, có lời cổ vũ).
+  CODE: san_tu/st_cau_hinh.js (tham số, 10 đường đua, 7 màn), st_tien_do.js (tiến độ màn), st_tu_vung.js (kho từ), st_logic.js (lõi game), st_on_tap.js (bảng ôn tập),
         st_am_thanh.js (âm thanh), st_ve.js (vẽ), st_giao_dien.js (giao diện + vòng lặp).
         Kiểm thử lõi game: node kc/san_tu/st_kiem_thu_node.js
 -->
@@ -168,6 +170,32 @@
   #soMan { font-size: 14px; color: var(--chu-nhat); }
   #dichHud { font-size: 18px; }
 
+  /* ----- MÀN TẬP CHƠI (nút trước màn 1) ----- */
+  #hopTapChoi { margin: 0 0 8px; }
+  .nutTapChoi { width: 100%; display: flex; align-items: center; gap: 10px; border: 3px solid #bfeccf; background: #eafff3; border-radius: 16px; padding: 6px 10px; text-align: left; }
+  .nutTapChoi .bt { font-size: 28px; }
+  .nutTapChoi b { display: block; font-family: "Baloo 2", sans-serif; font-size: 17px; color: #1f8a55; line-height: 1.1; }
+  .nutTapChoi i { display: block; font-style: normal; font-size: 12px; color: var(--chu-nhat); }
+  .nutTapChoi.chon { border-color: var(--xanh); box-shadow: 0 4px 0 var(--xanh); }
+
+  /* ----- BẢNG ÔN TẬP cuối màn: ghép hình với chữ ----- */
+  #manOnTap .the { max-width: 520px; }
+  #onTapCoVu { min-height: 26px; font-weight: 800; font-size: 18px; color: var(--chinh-dam); margin: 2px 0 8px; }
+  #onTapCoVu.tot { color: #1f8a55; } #onTapCoVu.xau { color: #c2410c; }
+  #onTapBang { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cotOnTap { display: grid; gap: 8px; align-content: start; }
+  .cotOnTap .tieuDe { font-weight: 700; font-size: 13px; color: var(--chu-nhat); }
+  .theOnTap { min-height: 58px; border: 3px solid #e3dcfa; background: #fff; border-radius: 16px; box-shadow: 0 4px 0 #d6cdf6;
+    font-family: "Baloo 2", sans-serif; font-weight: 800; color: var(--chu); transition: transform .15s, opacity .35s; }
+  .theOnTap.hinh { font-size: 34px; line-height: 1; }
+  .theOnTap.chu { font-size: 22px; }
+  .theOnTap.chon { border-color: var(--vang-dam); background: #fff6d6; transform: scale(1.05); box-shadow: 0 4px 0 var(--vang-dam); }
+  .theOnTap.sai { border-color: var(--do); animation: lacNut .4s; }
+  .theOnTap.dung { border-color: var(--xanh); background: #eafff3; animation: nayLen .35s; }
+  .theOnTap.biMat { opacity: 0; transform: scale(.4); pointer-events: none; }
+  #onTapDem { margin-top: 10px; font-weight: 700; color: var(--chu-nhat); }
+  #onTapXong { display: none; font-size: 22px; font-weight: 800; color: #1f8a55; margin-top: 8px; }
+
   /* ----- ĐIỆN THOẠI DỌC: khu chơi gần vuông, phần còn lại cho nút chữ TO, dễ bấm ----- */
   @media (max-aspect-ratio: 4/5) and (max-width: 1023px) {
     #khuChoi { flex: 0 0 auto; height: min(86vw, calc(100dvh - 270px)); }
@@ -248,6 +276,22 @@
     .chipTu { font-size: 18px; padding: 4px 14px; }
     #tuDaHoc { max-height: 200px; }
     .nutVua { font-size: 19px; padding: 10px 20px; }
+    .nutTapChoi { padding: 8px 14px; }
+    .nutTapChoi .bt { font-size: 36px; }
+    .nutTapChoi b { font-size: 21px; }
+    .nutTapChoi i { font-size: 14px; }
+    /* ôn tập trên máy tính: thẻ hình một hàng, thẻ chữ một hàng, thẻ to */
+    #manOnTap .the { max-width: 1080px; }
+    #onTapCoVu { font-size: 26px; min-height: 36px; }
+    #onTapBang { grid-template-columns: 1fr; gap: 18px; }
+    .cotOnTap { grid-template-columns: repeat(var(--soThe, 6), 1fr); gap: 14px; }
+    .cotOnTap .tieuDe { grid-column: 1 / -1; font-size: 17px; text-align: left; }
+    .theOnTap { min-height: 110px; border-radius: 22px; border-width: 4px; }
+    .theOnTap.hinh { font-size: 60px; }
+    .theOnTap.chu { font-size: clamp(24px, 2.4vw, 36px); }
+    .theOnTap:hover:not(.biMat) { transform: translateY(-3px); }
+    #onTapDem { font-size: 19px; }
+    #onTapXong { font-size: 32px; }
   }
   @media (min-width: 1600px) {
     #khuChon { padding: 18px 48px 22px; }
@@ -292,13 +336,15 @@
         <div id="chonDuong"></div>
         <div id="ghiChuDuong"></div>
         <div class="nhan" id="nhanChonMan">Chọn màn</div>
+        <div id="hopTapChoi"></div>
         <div id="chonMan"></div>
         <details id="cachChoi">
           <summary>❓ Cách chơi</summary>
           <ul class="cachChoi">
             <li><b>👶</b><span>Bé tự chạy tới cờ đích. Mỗi màn có <b style="font-size:inherit">1 phút</b>, màn sau nhanh hơn màn trước.</span></li>
             <li><b>🔤</b><span>Mỗi chướng ngại vật có một từ. Bấm <b style="font-size:inherit">đúng từ đó</b> ở khung dưới để bé nhảy qua hoặc phóng phép thuật.</span></li>
-            <li><b>💎</b><span>Từ có kim cương: chọn đúng để bé nhảy lên nhặt. Đủ 10 viên đổi 1 mạng.</span></li>
+            <li><b>💎</b><span>Kim cương lơ lửng trên cao: bấm đúng từ để bé nhảy lên lấy, đáp xuống rồi bấm lại để nhảy tiếp. Đủ 10 viên đổi 1 mạng.</span></li>
+            <li><b>📚</b><span>Qua màn thì ghép hình với chữ để ôn lại. Ghép hết là mở màn tiếp!</span></li>
             <li><b>❤️</b><span>Va vào quái vật hay rơi xuống hố thì mất mạng. Va ống cống chỉ bị khựng lại.</span></li>
             <li><b>🏰</b><span>Qua màn 7 là tới nơi giải cứu bé mèo, mở đường đua mới!</span></li>
           </ul>
@@ -312,6 +358,21 @@
         <button class="nutLon" id="nutBatDau" type="button">▶ Bắt đầu</button>
         <a class="veTroChoi" href="trochoi_NC.html">← Về Trò Chơi</a>
       </div>
+    </div>
+  </section>
+
+  <!-- BẢNG ÔN TẬP cuối màn: ghép hình với chữ, ghép hết mới mở màn tiếp -->
+  <section class="lop" id="manOnTap" aria-label="Ôn tập">
+    <div class="the">
+      <h2>📚 Ôn tập nào!</h2>
+      <p class="phuDe" id="onTapHuongDan">Bấm một hình rồi bấm chữ đúng của hình đó. Đúng thì cả hai biến mất!</p>
+      <div id="onTapCoVu" aria-live="polite"></div>
+      <div id="onTapBang">
+        <div class="cotOnTap" id="onTapHinh"></div>
+        <div class="cotOnTap" id="onTapChu"></div>
+      </div>
+      <div id="onTapDem"></div>
+      <div id="onTapXong">🎉 Con ôn xong rồi! Giỏi quá!</div>
     </div>
   </section>
 
@@ -356,6 +417,7 @@
 <script src="san_tu/st_kho_tu.js"></script>
 <script src="san_tu/st_tu_vung.js"></script>
 <script src="san_tu/st_logic.js"></script>
+<script src="san_tu/st_on_tap.js"></script>
 <script src="san_tu/st_am_thanh.js"></script>
 <script src="san_tu/st_ve.js"></script>
 <script src="san_tu/st_giao_dien.js"></script>

@@ -10,6 +10,8 @@
               Thiếu Web Audio hoặc giọng đọc: game vẫn chạy bình thường, chỉ im lặng.
    BƯỚC: TC_00B
    NGÀY: 15/10/2026
+   CẬP NHẬT: 16/10/2026 - TC_00D2: docTu() cho nút chữ bé bấm: bấm đúng từ đang đọc dở thì
+             đọc tiếp cho xong, bấm từ khác thì dừng từ đang đọc, đọc từ bé bấm (người dùng yêu cầu).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -225,7 +227,7 @@
       this.xongDoc();
     }
     xongDoc() {
-      this.dangDoc = false;
+      this.dangDoc = false; this.tuDangDoc = "";
       if (this.ac && this.bat.nhac) this.lamMuot(this.gNhac.gain, AM_LUONG.nhac, 0.4);
     }
     // Chính sách thống nhất: từ mới luôn DỪNG từ đang đọc rồi mới đọc, không bao giờ chồng tiếng
@@ -233,7 +235,7 @@
       if (!this.bat.giong || !tu) return;
       this.dungDoc();
       const lan = this.lanDoc;
-      this.dangDoc = true;
+      this.dangDoc = true; this.tuDangDoc = tu;
       if (this.ac && this.bat.nhac) this.lamMuot(this.gNhac.gain, AM_LUONG.nhacKhiDoc, 0.08); // nhạc nhỏ lại để nghe rõ giọng
       const xong = () => { if (lan === this.lanDoc) this.xongDoc(); };
       setTimeout(xong, 2500);
@@ -247,6 +249,11 @@
         } catch (e) { /* rơi xuống giọng máy */ }
       }
       this.docMay(tu, lan, xong);
+    }
+    // Bé bấm nút chữ: trùng từ đang đọc dở thì để đọc tiếp cho xong, khác thì đọc từ bé bấm
+    docTu(tu) {
+      if (this.dangDoc && this.tuDangDoc === tu) return;
+      this.doc(tu);
     }
     docMay(tu, lan, xong) {
       if (!this.coGiongDoc()) { xong(); return; }
