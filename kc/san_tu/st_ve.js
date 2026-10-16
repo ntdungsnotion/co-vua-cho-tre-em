@@ -13,6 +13,7 @@
    CẬP NHẬT: 16/10/2026 - TC_00D2: thanh máu trên đầu quái / vật cản phải bắn, tường đá
              (cao hơn cú nhảy), vạch "Nhảy!" trên đường ở màn 1-2 để bé tập canh lúc bấm.
              Cấp từ 3-4 (anChu): biển chữ hiện hình + 🔊 thay cho chữ, đúng rồi mới hiện chữ.
+             Dải "Nhảy ở đây" CHỈ có ở màn Tập chơi (người dùng yêu cầu 16/10/2026).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -295,7 +296,7 @@
       c.fillStyle = qua ? "#2BB673" : "#6C4CE0";
       c.beginPath(); c.roundRect(x0 - rong / 2 - 6, y0 - cao + 6 + lac, rong + 12, 38, 12); c.fill();
       c.fillStyle = "#fff"; c.font = "800 20px " + FONT; c.textAlign = "center"; c.textBaseline = "middle";
-      c.fillText(qua ? "Qua màn! ✓" : "Đích màn " + g.dk.soMan, x0, y0 - cao + 26 + lac);
+      c.fillText(qua ? (g.dk.laHuongDan ? "Giỏi lắm! ✓" : "Qua màn! ✓") : g.dk.laHuongDan ? "Đích tập chơi" : "Đích màn " + g.dk.soMan, x0, y0 - cao + 26 + lac);
       // cờ caro trên cột phải
       const cx = x0 + rong / 2, cy = y0 - cao - 16;
       c.fillStyle = "#7a4b25"; c.fillRect(cx - 2, cy - 54, 4, 54);
@@ -311,7 +312,7 @@
       c.strokeStyle = "#c48f00"; c.lineWidth = 3; c.stroke();
       c.fillStyle = "#7a5600"; c.font = "800 15px " + FONT;
       c.fillText(g.dk.duong.bieuTuongDich + " Bé mèo 🐱", bx, y0 - 90);
-      c.fillText("còn " + con + " màn ➜", bx, y0 - 72);
+      c.fillText(g.dk.laHuongDan ? "vào màn 1 ➜" : "còn " + con + " màn ➜", bx, y0 - 72);
     }
     veMeo(x, y, k, vui, huong) {
       const c = this.c;
@@ -390,10 +391,10 @@
         c.beginPath(); c.roundRect(tamX - w / 2 + 4 + i * (o1 + khe), y + 4, o1, 10, 3); c.fill();
       }
     }
-    // Màn 1-2: dải xanh trên đường = chỗ bé nên đứng khi bấm nhảy (dạy bé canh lúc bấm)
+    // Chỉ màn Tập chơi: dải xanh trên đường = chỗ bé nên đứng khi bấm nhảy (dạy bé canh lúc bấm)
     veVungNhay(g, camX) {
       const tt = g.thuThach;
-      if (!tt || tt.trangThai !== "mo" || tt.o.hanhDong !== "nhay" || g.dk.soMan > 2 || g.trangThai !== "choi") return;
+      if (!tt || tt.trangThai !== "mo" || tt.o.hanhDong !== "nhay" || !g.dk.laHuongDan || g.trangThai !== "choi") return;
       const [gan, xa] = ST.cuaSoNhay(tt.o, g.v), tam = tt.o.x + tt.o.rong / 2;
       const x1 = tam - xa - camX, x2 = tam - gan - camX, c = this.c, y = this.dat;
       if (x2 < 0 || x1 > this.rong) return;

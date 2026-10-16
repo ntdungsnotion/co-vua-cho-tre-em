@@ -14,6 +14,11 @@
              chọn từ giữ nguyên, bé bấm lại đúng từ để bắn tiếp (báo "còn N viên"); chạm vì
              nhảy sớm / trễ thì nhắc bé canh lúc bấm. Cấp từ 3-4: ẩn chữ, bé chỉ nghe đọc từ
              + nhìn hình để chọn (bấm hình để nghe lại).
+   CẬP NHẬT: 16/10/2026 - TC_00D2 (sau khi người dùng thử): bé nhảy được nhiều lần (nút chữ không
+             khóa sau cú nhảy, bấm lại để nhảy tiếp); màn "Tập chơi" (màn 0) trước màn 1 với lời
+             hướng dẫn từng chướng ngại vật; BẢNG ÔN TẬP cuối màn: ghép hình - chữ, ghép hết mới
+             lưu qua màn / mở màn tiếp, có lời khen và động viên. Từ hiện ra là đọc to ngay; bé bấm
+             chữ thì đọc lại chữ đó (trùng từ đang đọc dở thì đọc tiếp cho xong).
    ================================================================ */
 (function () {
   "use strict";
@@ -33,9 +38,13 @@
   const tienDo = new ST.TienDoDuongDua(tenBe); // bé đã mở tới màn nào, mỗi màn mấy sao
   let maDuong = "rung";
   try { const d = localStorage.getItem(KHOA_DUONG); if (d && tienDo.duongMo(d)) maDuong = d; } catch (e) { /* bỏ qua */ }
-  let soManChon = tienDo.manMo(maDuong);
+  // Bé mới (chưa qua màn nào) thì chọn sẵn màn "Tập chơi" (màn 0)
+  const manMacDinh = d => (d === ST.DUONG_DUA[0].ma && tienDo.manMo(d) === 1 && tienDo.tongSao(d) === 0) ? 0 : tienDo.manMo(d);
+  let soManChon = manMacDinh(maDuong);
   let ketQuaMan = null;      // { manMoi, xongDuong } của lần qua màn vừa rồi
   let tuMoiThuoc = [];       // các từ bé vừa thuộc trong lượt này
+  let tuDaGap = [], tuSai = []; // các từ đã hiện trong lượt / các từ bé làm sai, không kịp (cho bảng ôn tập)
+  let bang = null;           // bảng ôn tập đang mở
   try { const d = localStorage.getItem(KHOA_DO_KHO); if (d && ST.DO_KHO[d]) maDoKho = d; } catch (e) { /* bỏ qua */ }
   let daHienKetQua = false;
   let idDangHien = -1;       // thử thách đang hiện trên khung chọn
@@ -45,7 +54,7 @@
   const ngauNhien = a => a[Math.floor(Math.random() * a.length)];
 
   /* ---------------- MÀN PHỦ ---------------- */
-  function hienLop(id) { ["manBatDau", "manTamDung", "manKetQua"].forEach(m => $(m).classList.toggle("hien", m === id)); }
+  function hienLop(id) { ["manBatDau", "manTamDung", "manKetQua", "manOnTap"].forEach(m => $(m).classList.toggle("hien", m === id)); }
 
   function veChonDoKho() {
     const hop = $("chonDoKho"); hop.innerHTML = "";
@@ -76,7 +85,7 @@
             : `🔒 Qua hết 7 màn của ${ST.DUONG_DUA[i - 1].ten} để mở ${d.ten} nhé!`;
           return;
         }
-        maDuong = d.ma; soManChon = tienDo.manMo(d.ma);
+        maDuong = d.ma; soManChon = manMacDinh(d.ma);
         try { localStorage.setItem(KHOA_DUONG, d.ma); } catch (e) { /* bỏ qua */ }
         veMenuChon();
       };
@@ -86,6 +95,13 @@
   function veChonMan() {
     const hop = $("chonMan"), d = ST.layDuongDua(maDuong); hop.innerHTML = "";
     $("nhanChonMan").textContent = `Chọn màn: ${d.bieuTuong} ${d.ten}`;
+    // Màn "Tập chơi": luôn mở, chơi lại bao nhiêu lần cũng được
+    const tap = document.createElement("button");
+    tap.type = "button"; tap.className = "nutTapChoi" + (soManChon === 0 ? " chon" : "");
+    tap.setAttribute("aria-pressed", soManChon === 0);
+    tap.innerHTML = `<span class="bt">🎓</span><span><b>Tập chơi</b><i>Học cách nhảy, bắn quái và lấy kim cương</i></span>`;
+    tap.onclick = () => { am.mo(); am.phat("nut"); soManChon = 0; veMenuChon(); };
+    $("hopTapChoi").innerHTML = ""; $("hopTapChoi").appendChild(tap);
     for (let m = 1; m <= ST.SO_MAN; m++) {
       const mo = tienDo.manChoiDuoc(maDuong, m), cuoi = m === ST.SO_MAN, b = document.createElement("button");
       b.type = "button"; b.className = "nutMan" + (cuoi ? " cuoi" : "") + (mo ? "" : " khoa") + (m === soManChon ? " chon" : "");
@@ -103,7 +119,7 @@
   function veMenuChon() {
     veChonDuong(); veChonMan();
     $("ghiChuDuong").textContent = "";
-    $("nutBatDau").textContent = `▶ Chơi màn ${soManChon}`;
+    $("nutBatDau").textContent = soManChon === 0 ? "▶ Tập chơi" : `▶ Chơi màn ${soManChon}`;
     capNhatHud(true);
   }
   const NHOM_AM = [["nhac", "🎵 Nhạc nền"], ["giong", "🗣️ Giọng đọc"], ["hieuUng", "🔔 Hiệu ứng"]];
@@ -127,9 +143,9 @@
   /* ---------------- BẮT ĐẦU / TẠM DỪNG / KẾT THÚC ---------------- */
   function batDau() {
     am.mo(); am.phat("nut");
-    if (!tienDo.manChoiDuoc(maDuong, soManChon)) { maDuong = "rung"; soManChon = tienDo.manMo("rung"); }
+    if (soManChon === 0 ? !tienDo.duongMo(maDuong) : !tienDo.manChoiDuoc(maDuong, soManChon)) { maDuong = "rung"; soManChon = tienDo.manMo("rung"); }
     g = new ST.TroChoi(ST.taoManChoi(maDuong, soManChon, maDoKho), { suKien, soTay });
-    tuMoiThuoc = []; ketQuaMan = null;
+    tuMoiThuoc = []; ketQuaMan = null; tuDaGap = []; tuSai = []; bang = null;
     daHienKetQua = false; idDangHien = -1; lanThuThach = 0; daGapQuaiMau = false;
     ve.hat = [];
     $("thongBao").innerHTML = "";
@@ -137,10 +153,12 @@
     hienLop(null);
     veKhungChon();
     const d = g.dk.duong;
-    bao(`${d.bieuTuong} Màn ${g.dk.soMan}${g.dk.laManCuoi ? " · Cứu bé mèo!" : ""}`);
+    bao(g.dk.laHuongDan ? "🎓 Tập chơi" : `${d.bieuTuong} Màn ${g.dk.soMan}${g.dk.laManCuoi ? " · Cứu bé mèo!" : ""}`);
+    if (g.dk.laHuongDan) loiNhan("Bé tự chạy. Từ sẽ hiện ở đây, con làm theo lời nhắc nhé! 😊", "tot");
   }
   function manTiep() {
-    if (soManChon < ST.SO_MAN && tienDo.manChoiDuoc(maDuong, soManChon + 1)) soManChon++;
+    if (soManChon === 0) soManChon = 1; // tập chơi xong: vào màn 1
+    else if (soManChon < ST.SO_MAN && tienDo.manChoiDuoc(maDuong, soManChon + 1)) soManChon++;
     batDau();
   }
   function tamDung() {
@@ -168,23 +186,25 @@
   function hienKetQua() {
     daHienKetQua = true;
     const thang = g.trangThai === "thang", tk = g.thongKe, dk = g.dk, d = dk.duong;
-    const cuoi = thang && dk.laManCuoi, conLai = ST.SO_MAN - dk.soMan;
-    $("ketQuaHinh").textContent = cuoi ? "🐱💖👶" : thang ? "🚩👶🎉" : g.lyDoThua === "hetGio" ? "⏰" : "💔";
-    $("ketQuaTieuDe").textContent = cuoi ? "Giải cứu bé mèo thành công!" : thang ? `Qua màn ${dk.soMan} rồi!`
+    const cuoi = thang && dk.laManCuoi, conLai = ST.SO_MAN - dk.soMan, tap = !!dk.laHuongDan;
+    $("ketQuaHinh").textContent = cuoi ? "🐱💖👶" : thang ? (tap ? "🎓👶🎉" : "🚩👶🎉") : g.lyDoThua === "hetGio" ? "⏰" : "💔";
+    $("ketQuaTieuDe").textContent = cuoi ? "Giải cứu bé mèo thành công!" : thang ? (tap ? "Con tập chơi xong rồi!" : `Qua màn ${dk.soMan} rồi!`)
       : g.lyDoThua === "hetGio" ? "Hết giờ mất rồi!" : "Hết mạng mất rồi!";
-    $("ketQuaSao").textContent = thang ? saoChu(g.soSao()) : "";
+    $("ketQuaSao").textContent = thang && !tap ? saoChu(g.soSao()) : "";
     const iDuong = ST.DUONG_DUA.indexOf(d), duongSau = ST.DUONG_DUA[iDuong + 1];
     $("ketQuaLoi").textContent = cuoi
       ? `Con đã hoàn thành đường đua ${d.ten}! Mèo con cảm ơn con nhiều lắm!` + (duongSau
         ? (duongSau.daCo ? ` Đường đua ${duongSau.bieuTuong} ${duongSau.ten} đã mở!` : ` Đường đua ${duongSau.bieuTuong} ${duongSau.ten} sắp ra mắt nhé!`) : "")
+      : thang && tap ? "Con đã biết nhảy, bắn quái và lấy kim cương rồi. Vào màn 1 giải cứu mèo con thôi!"
+      : tap ? "Không sao đâu, tập lại một lần nữa nhé. Con làm được mà! 💪"
       : thang ? `Bé mèo đang chờ ở ${d.dich.toLowerCase()}, còn ${conLai} màn nữa. Cố lên!` + (ketQuaMan && ketQuaMan.manMoi ? ` Đã mở màn ${dk.soMan + 1} 🔓` : "")
       : g.lyDoThua === "hetGio" ? `Con đã đi được ${Math.round(g.tienDo * 100)}% đường màn ${dk.soMan}, thử lại nhanh hơn nhé!`
         : `Cẩn thận quái vật và hố sâu nhé. Con đã đi được ${Math.round(g.tienDo * 100)}% đường màn ${dk.soMan}!`;
     const coManTiep = thang && !cuoi;
     $("nutManTiep").style.display = coManTiep ? "" : "none";
-    $("nutManTiep").textContent = `▶ Màn ${dk.soMan + 1}`;
+    $("nutManTiep").textContent = tap ? "▶ Vào màn 1" : `▶ Màn ${dk.soMan + 1}`;
     $("nutChoiLai").className = coManTiep ? "nutVua nhat" : "nutLon";
-    $("nutChoiLai").textContent = thang ? "↻ Chơi lại màn này" : "↻ Chơi lại";
+    $("nutChoiLai").textContent = tap ? "↻ Tập lại" : thang ? "↻ Chơi lại màn này" : "↻ Chơi lại";
     $("kqDung").textContent = tk.dung;
     $("kqKC").textContent = g.tongKimCuong;
     $("kqGio").textContent = Math.ceil(g.thoiGian);
@@ -197,16 +217,86 @@
       const b = document.createElement("button");
       const moi = tuMoiThuoc.includes(t.en);
       b.type = "button"; b.className = "chipTu" + (moi ? " moiThuoc" : ""); b.textContent = `${moi ? "🎓" : t.e} ${t.en}`; b.title = t.vi;
-      b.onclick = () => { am.mo(); am.doc(t.en); };
+      b.onclick = () => { am.mo(); am.docTu(t.en); };
       hop.appendChild(b);
     });
     hienLop("manKetQua");
   }
 
+  /* ---------------- BẢNG ÔN TẬP CUỐI MÀN ----------------
+     Qua màn xong: các từ vừa gặp hiện thành thẻ hình + thẻ chữ, bé ghép từng cặp cho hết.
+     Ôn xong mới lưu qua màn / mở màn tiếp, rồi tới màn kết quả. */
+  const KHEN_ON = ["Đúng rồi! Giỏi quá! 🎉", "Tuyệt vời! ⭐", "Con nhớ từ giỏi lắm! 👏", "Chính xác! 🌟", "Siêu quá! 🚀", "Hay lắm! 💖"];
+  const DONG_VIEN = ["Chưa đúng, thử lại nhé! 💪", "Gần đúng rồi, con cố lên! 🌈", "Không sao đâu, thử thẻ khác nhé! 😊", "Nhìn kỹ hình nào, con làm được mà! 👀"];
+  function coVu(chu, kieu) { const e = $("onTapCoVu"); e.textContent = chu; e.className = kieu || ""; }
+  function hoanTatMan() {
+    // màn Tập chơi không tính sao, không mở khóa gì
+    if (g && g.trangThai === "thang" && !g.dk.laHuongDan) ketQuaMan = tienDo.ghiThang(g.dk.maDuong, g.dk.soMan, g.soSao());
+    hienKetQua();
+  }
+  function hienOnTap() {
+    daHienKetQua = true;
+    const ds = ST.chonTuOnTap(tuDaGap, tuSai, CH.soCapOnTap);
+    if (ds.length < 2) { hoanTatMan(); return; } // quá ít từ thì khỏi ôn
+    bang = new ST.BangOnTap(ds);
+    $("onTapXong").style.display = "none";
+    coVu(g.dk.laHuongDan ? "Con tập giỏi lắm! Giờ ôn lại các từ vừa gặp nhé 😊" : `Qua màn ${g.dk.soMan} rồi! Ôn lại từ vừa gặp để mở màn tiếp nhé 🔓`, "tot");
+    veOnTap();
+    hienLop("manOnTap");
+  }
+  function veOnTap() {
+    const hopHinh = $("onTapHinh"), hopChu = $("onTapChu");
+    hopHinh.innerHTML = '<div class="tieuDe">🖼️ Hình</div>'; hopChu.innerHTML = '<div class="tieuDe">🔤 Chữ</div>';
+    [hopHinh, hopChu].forEach(h => h.style.setProperty("--soThe", bang.tu.length));
+    const taoThe = (ben, en) => {
+      const t = bang.layTu(en), b = document.createElement("button");
+      b.type = "button"; b.className = "theOnTap " + ben; b.dataset.ben = ben; b.dataset.en = en;
+      b.textContent = ben === "hinh" ? t.e : t.en;
+      b.setAttribute("aria-label", ben === "hinh" ? "Hình: " + t.vi : "Chữ: " + t.en);
+      b.onclick = () => bamTheOnTap(b);
+      return b;
+    };
+    bang.hinh.forEach(en => hopHinh.appendChild(taoThe("hinh", en)));
+    bang.chu.forEach(en => hopChu.appendChild(taoThe("chu", en)));
+    capNhatDemOnTap();
+  }
+  function capNhatDemOnTap() {
+    $("onTapDem").textContent = bang.xong ? "" : `Còn ${bang.conLai} cặp hình - chữ`;
+  }
+  const theOnTap = (ben, en) => document.querySelector(`#manOnTap .theOnTap[data-ben="${ben}"][data-en="${CSS.escape(en)}"]`);
+  function bamTheOnTap(b) {
+    if (!bang || bang.xong) return;
+    am.mo();
+    const ben = b.dataset.ben, en = b.dataset.en;
+    if (ben === "chu") am.docTu(en); // bấm chữ thì nghe đọc từ đó
+    const kq = bang.bam(ben, en);
+    document.querySelectorAll("#manOnTap .theOnTap.chon").forEach(e => e.classList.remove("chon"));
+    if (kq.kq === "chon") { b.classList.add("chon"); am.phat("nut"); return; }
+    if (kq.kq === "sai") {
+      am.phat("sai");
+      const a = theOnTap(kq.truoc.ben, kq.truoc.en);
+      [a, b].forEach(e => { if (e) { e.classList.remove("sai"); void e.offsetWidth; e.classList.add("sai"); } });
+      coVu(ngauNhien(DONG_VIEN), "xau");
+      return;
+    }
+    if (kq.kq !== "dung") return;
+    am.phat("dung");
+    const a = theOnTap("hinh", en), c = theOnTap("chu", en);
+    [a, c].forEach(e => { if (e) { e.classList.add("dung"); setTimeout(() => e.classList.add("biMat"), 350); } });
+    capNhatDemOnTap();
+    if (!kq.xong) { coVu(bang.conLai === 1 ? "Còn 1 cặp nữa thôi, cố lên! 💪" : ngauNhien(KHEN_ON), "tot"); return; }
+    // ôn xong: khen to rồi sang màn kết quả
+    coVu(bang.soLanSai === 0 ? "Không sai cặp nào, con siêu quá! 🏆" : "Con ghép đúng hết rồi! 🎉", "tot");
+    $("onTapXong").style.display = "block";
+    setTimeout(() => am.phat("thang"), 300);
+    const bangNay = bang;
+    setTimeout(() => { if (bang === bangNay && $("manOnTap").classList.contains("hien")) hoanTatMan(); }, 2200);
+  }
+
   /* ---------------- KHUNG CHỌN TỪ ---------------- */
   function veKhungChon() {
     const tt = g && g.thuThach, cacNut = $("cacNut");
-    const so = g ? g.dk.soPhuongAn : ST.MAN_CHOI[soManChon - 1].soPhuongAn;
+    const so = g ? g.dk.soPhuongAn : (soManChon ? ST.MAN_CHOI[soManChon - 1] : ST.MAN_HUONG_DAN).soPhuongAn;
     cacNut.className = so === 3 ? "n3" : "";
     cacNut.style.setProperty("--soCot", so);
     if (!tt || tt.trangThai !== "mo") {
@@ -244,12 +334,24 @@
     });
     $("loiNhan").className = "";
     const timTu = g.dk.anChu ? "từ con vừa NGHE" : "từ GIỐNG chữ trên biển";
-    $("loiNhan").textContent = lanThuThach <= 2 && g.dk.soMan === 1 ? (tt.o.hanhDong === "nhay"
-      ? `👆 Chờ bé chạy tới dải xanh rồi bấm ${timTu} để nhảy!` : `👆 Bấm ${timTu} để bắn!`)
+    $("loiNhan").textContent = g.dk.laHuongDan ? loiTapChoi(tt, timTu)
+      : lanThuThach <= 2 && g.dk.soMan === 1 ? (tt.o.hanhDong === "nhay"
+      ? `👆 Bấm ${timTu} lúc bé tới gần để nhảy qua!` : `👆 Bấm ${timTu} để bắn!`)
       : tt.o.hanhDong === "ban" && !daGapQuaiMau ? `💥 ${tt.o.ten} có thanh máu: bấm đúng từ ${tt.o.mau} lần để bắn hạ!` : "";
     if (tt.o.hanhDong === "ban") daGapQuaiMau = true;
   }
   let daGapQuaiMau = false; // lần đầu gặp quái có máu trong lượt: giải thích cách bắn
+  // Màn Tập chơi: lời nhắc riêng cho từng chướng ngại vật
+  function loiTapChoi(tt, timTu) {
+    const o = tt.o, ten = o.ten.toLowerCase();
+    if (o.hanhDong === "ban") return o.loai === "tuongDa"
+      ? `🧱 Tường đá cao quá, không nhảy qua được! Bấm ${timTu} ${o.mau} lần để bắn vỡ.`
+      : `💥 Quái có thanh máu trên đầu: phải bắn! Bấm ${timTu} ${o.mau} lần để bắn hạ.`;
+    if (g.kimCuongs.some(k => !k.daNhat && k.x < o.x && k.x > g.be.x)) return `💎 Kim cương trên cao! Bấm ${timTu} để nhảy lên lấy, đáp xuống rồi bấm lại để nhảy qua ${ten}.`;
+    if (o.nhom === "ho") return `🕳️ Hố sâu! Chờ bé vào dải xanh rồi bấm ${timTu} để nhảy qua.`;
+    if (o.nhom === "quaiDat" || o.nhom === "quaiBay") return `🍄 Quái KHÔNG có thanh máu: nhảy qua là được! Chờ dải xanh rồi bấm ${timTu}.`;
+    return `👆 Chờ bé chạy vào dải xanh rồi bấm ${timTu} để nhảy qua ${ten}!`;
+  }
   function veHanhDong(tt) {
     const o = tt.o;
     $("hanhDongTu").textContent = o.hanhDong === "nhay" ? "⤴ Nhảy qua " + o.ten.toLowerCase()
@@ -267,7 +369,8 @@
     if (!tt || tt.id !== id) return; // lần bấm sót lại của thử thách cũ: bỏ qua
     am.mo();
     const kq = g.chonDapAn(id, nut.dataset.tu);
-    if (kq.kq === "dung" || kq.kq === "sai") am.doc(nut.dataset.tu); // phát âm từ vừa chọn, cả khi sai
+    // phát âm từ vừa chọn, cả khi sai (đúng từ đang đọc dở thì đọc tiếp cho xong)
+    if (kq.kq === "dung" || kq.kq === "sai" || kq.lyDo === "dangNhay") am.docTu(nut.dataset.tu);
   }
   function nutCuaTu(tu) { return Array.from($("cacNut").children).find(b => b.dataset.tu === tu); }
   function khoaCacNut() { Array.from($("cacNut").children).forEach(b => { b.disabled = true; }); }
@@ -287,6 +390,7 @@
       case "batDau": am.batDauNhac(); break;
       case "thuThachMoi":
         lanThuThach++;
+        if (!tuDaGap.some(t => t.en === d.tt.tu.en)) tuDaGap.push(d.tt.tu);
         veKhungChon();
         am.phat("hienTu");
         am.doc(d.tt.tu.en);
@@ -300,11 +404,18 @@
           if (d.lan === 1) loiNhan(ngauNhien(KHEN) + " Bấm tiếp để bắn!", "tot");
           break;
         }
-        khoaCacNut();
+        // Nhảy: nút không khóa, bé còn bấm lại được để nhảy tiếp (vd vừa nhảy lấy kim cương)
+        if (n) { n.classList.remove("dung"); void n.offsetWidth; n.classList.add("dung"); setTimeout(() => { if (n.isConnected && !n.disabled) n.classList.remove("dung"); }, 300); }
+        loiNhan(d.lan > 1 ? "Nhảy tiếp nào! ⤴" : ngauNhien(KHEN), "tot");
+        ve.phun(be.x, be.y + 60, "lapLanh", 8, "#ffe14d");
+        break;
+      }
+      case "vuotQua": {
+        // đã nhảy qua hẳn vật: khóa khung chọn, chờ từ mới
+        const n = nutCuaTu(d.tt.tu.en); khoaCacNut();
         Array.from($("cacNut").children).forEach(b => { if (b !== n) b.classList.add("mo"); });
         if (n) n.classList.add("dung");
-        loiNhan(ngauNhien(KHEN), "tot");
-        ve.phun(be.x, be.y + 60, "lapLanh", 8, "#ffe14d");
+        $("hanhDongTu").textContent = "✓ Qua rồi!";
         break;
       }
       case "trungDan": {
@@ -316,6 +427,7 @@
       case "chonSai": {
         am.phat("sai");
         const n = nutCuaTu(d.tu); if (n) { n.classList.add("sai"); n.disabled = true; }
+        if (tuSai.indexOf(d.tt.tu.en) < 0) tuSai.push(d.tt.tu.en);
         if (g.dk.anChu) { loiNhan("Chưa đúng rồi. Nghe lại nhé!", "xau"); setTimeout(() => { if (g && g.thuThach === d.tt && d.tt.trangThai === "mo") am.doc(d.tt.tu.en); }, 700); }
         else loiNhan(`Chưa đúng rồi. Tìm chữ "${d.tt.tu.en}" nhé!`, "xau");
         break;
@@ -328,10 +440,18 @@
       }
       case "hetHanThuThach":
         khoaCacNut();
+        if (tuSai.indexOf(d.tt.tu.en) < 0) tuSai.push(d.tt.tu.en);
         loiNhan("Ối, không kịp rồi! Từ sau bấm nhanh hơn nhé.", "xau");
         break;
       case "nhay": am.phat("nhay"); ve.phun(be.x - 10, 4, "bui", 5); break;
-      case "tiepDat": am.phat("tiepDat"); ve.phun(be.x, 4, "bui", 4); break;
+      case "tiepDat": {
+        am.phat("tiepDat"); ve.phun(be.x, 4, "bui", 4);
+        // đáp đất mà vật vẫn ở phía trước (vừa nhảy lấy kim cương): nhắc bấm lại
+        const tt = g.thuThach;
+        if (tt && tt.trangThai === "mo" && tt.daDung && tt.o.hanhDong === "nhay" && g.khoangTam(tt.o) > 0)
+          loiNhan(`Bấm lại "${g.dk.anChu ? "từ vừa nghe" : tt.tu.en}" để nhảy qua ${tt.o.ten.toLowerCase()}!`, "tot");
+        break;
+      }
       case "phep": am.phat("phep"); break;
       case "haQuai": {
         am.phat("haQuai");
@@ -368,15 +488,14 @@
       case "hoiSinh": am.phat("hoiSinh"); loiNhan("Bé quay lại rồi! Chạy tiếp nào 💪", "tot"); break;
       case "thang":
         am.dungNhac(); am.phat("thang");
-        // Lưu tiến độ NGAY (bé có thể thoát trong lúc xem hoạt cảnh)
-        ketQuaMan = tienDo.ghiThang(g.dk.maDuong, g.dk.soMan, g.soSao());
+        // Tiến độ (mở màn tiếp) chỉ lưu khi bé ôn tập xong (hoanTatMan)
         idDangHien = -1; veKhungChon();
         if (d.laManCuoi) {
           $("hinhTu").textContent = "🏰"; $("chuTu").textContent = "castle"; $("nghiaTu").textContent = "lâu đài - tới nơi rồi!";
           loiNhan("Tới lâu đài rồi! Giải cứu bé mèo nào! 🐱", "tot");
         } else {
           $("hinhTu").textContent = "🚩"; $("chuTu").textContent = "finish"; $("nghiaTu").textContent = "về đích - qua màn rồi!";
-          loiNhan(`Qua màn ${g.dk.soMan} rồi! 🎉`, "tot");
+          loiNhan(g.dk.laHuongDan ? "Tập chơi xong rồi! 🎉" : `Qua màn ${g.dk.soMan} rồi! 🎉`, "tot");
         }
         for (let i = 0; i < 4; i++) setTimeout(() => ve.phun(g ? g.doDai + 120 : 0, 200, "giay", 30, ["#ff7eb6", "#ffd23f", "#6C4CE0", "#2BB673", "#3fc8ff"][i]), i * 400);
         break;
@@ -395,7 +514,7 @@
     const khoa = [tg, Math.round(td * 200), mang, duTru, kc, dkHud.ma].join("|");
     if (khoa === hudTruoc) return;
     hudTruoc = khoa;
-    $("soMan").textContent = `${dkHud.soMan}/${ST.SO_MAN}`;
+    $("soMan").textContent = dkHud.laHuongDan ? "🎓" : `${dkHud.soMan}/${ST.SO_MAN}`;
     $("dichHud").textContent = dkHud.laManCuoi ? dkHud.duong.bieuTuongDich : "🚩";
     $("soGio").textContent = tg;
     $("hudGio").classList.toggle("gap", !!g && g.dangChoi && tg <= 15);
@@ -424,7 +543,8 @@
       if (g) {
         if (g.thuThach && g.thuThach.id !== idDangHien && g.thuThach.trangThai === "mo") veKhungChon();
         if (g.dangChoi) am.datCaoTrao(g.tienDo > 0.75 ? (g.tienDo - 0.75) / 0.17 : 0);
-        if (!daHienKetQua && ((g.trangThai === "thang" && g.tKetThuc > (g.dk.laManCuoi ? 3.6 : 2.4)) || (g.trangThai === "thua" && g.tKetThuc > 1.6))) hienKetQua();
+        if (!daHienKetQua && g.trangThai === "thang" && g.tKetThuc > (g.dk.laManCuoi ? 3.6 : 2.4)) hienOnTap();
+        if (!daHienKetQua && g.trangThai === "thua" && g.tKetThuc > 1.6) hienKetQua();
       }
       capNhatHud();
       capNhatDemNguoc();
@@ -473,7 +593,7 @@
   const bam = location.hash.replace("#", "");
   if (ST.DO_KHO[bam]) { maDoKho = bam; veChonDoKho(); }
   // để kiểm thử tự động
-  window.__sanTu = { layTroChoi: () => g, batDau, tamDung, tiepTuc, am, tienDo,
+  window.__sanTu = { layTroChoi: () => g, batDau, tamDung, tiepTuc, am, tienDo, layBangOnTap: () => bang,
     chonMan: (duong, so) => { maDuong = duong; soManChon = so; veMenuChon(); } };
   requestAnimationFrame(khung);
 })();
