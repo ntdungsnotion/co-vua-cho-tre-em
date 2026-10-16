@@ -9,6 +9,12 @@
    CẬP NHẬT: 15/10/2026 - TC_00D: chia thành 10 ĐƯỜNG ĐUA x 7 MÀN, mỗi màn 1 phút,
              màn sau khó hơn màn trước (ST.MAN_CHOI); độ khó cũ thành CẤP TỪ VỰNG
              (chỉ quyết định từ khó hay dễ). ST.taoManChoi() ghép 2 phần thành một màn.
+   CẬP NHẬT: 16/10/2026 - TC_00D2: bấm đúng là hành động NGAY; cú nhảy cự ly cố định
+             (cuLyNhay); chỉ quái có THANH MÁU (tối đa 1/4 số quái) và vật cản cao hơn cú
+             nhảy mới phải bắn, mỗi lần bấm đúng = 1 viên; máu tăng theo màn (mauQuai).
+             Kim cương rải ngẫu nhiên trên đường, không gắn với quái / từ; số kim cương tối đa
+             mỗi màn theo CẤP TỪ (cấp 1: 5, cấp 2: 8, cấp 3: 12, cấp 4: 15). Cấp 3-4 ẩn chữ:
+             bé chỉ nghe đọc từ + nhìn hình để chọn (anChu).
    ĐƠN VỊ: khoảng cách tính bằng "đơn vị thế giới" (nhân vật cao 66 đơn vị),
            thời gian tính bằng giây, tốc độ = đơn vị/giây.
    ================================================================ */
@@ -28,31 +34,33 @@
     thoiGianChamSauKhung: 1.6,  // sau khi leo qua, bé còn chạy chậm thêm chừng này giây
     tiLeTocDoCham: 0.55,        // tốc độ lúc chạy chậm (so với bình thường)
     thoiGianGapNan: 1.5,        // giây diễn hoạt cảnh gặp nạn trước khi hồi sinh
-    doCaoNhay: 125,             // độ cao cú nhảy vượt chướng ngại vật
-    doCaoNhayKimCuong: 115,     // độ cao cú nhảy nhặt kim cương (sau khi bắn phép)
-    thoiGianNhayKimCuong: 0.8,  // thời gian cú nhảy nhặt kim cương
-    thoiGianNhayToiThieu: 0.72, // cú nhảy ngắn nhất (giây)
-    leNhay: 40,                 // khoảng an toàn mỗi bên khi nhảy qua vật cản
+    doCaoNhay: 150,             // độ cao cú nhảy vượt chướng ngại vật (vật cao hơn mức này phải bắn)
+    cuLyNhay: 280,              // cự ly CỐ ĐỊNH của một cú nhảy (bé tự canh lúc bấm)
+    leNhay: 4,                  // khoảng an toàn khi tính "cửa sổ" bấm nhảy (để không sượt qua mép)
+    coVaCham: 5,                // thu nhỏ hộp va chạm của chướng ngại vật cho dễ thở
     nhanVat: { rong: 40, cao: 66 },
     tocDoDan: 1000,             // tốc độ viên phép thuật
-    khoangPhepToiThieu: 90,     // quái phải còn cách ít nhất chừng này thì mới kịp bắn
-    tamBanPhep: 330,            // trả lời đúng sớm: bé giơ đũa chờ, quái vào tầm này (trong màn hình) mới bắn
+    khoangPhepToiThieu: 90,     // quái có máu: thanh đếm ngược hết khi quái còn cách chừng này
+    thoiGianThemMoiVien: 0.45,  // quái nhiều máu: thêm chừng này giây đọc từ cho mỗi viên từ viên thứ 2
     choTruocKhiVaoDuong: 2.4,   // giây chạy khởi động trước chướng ngại vật đầu tiên
     khoangCuoiTruocLauDai: 420, // khoảng trống cuối đường trước cổng lâu đài
     leQuaChuongNgai: 130,       // đã đi qua chướng ngại vật thêm chừng này mới mở thử thách mới
     leHoiSinh: 80,              // hồi sinh cách mép sau chướng ngại vật chừng này
     kichThuocKimCuong: 26,
+    kimCuongTamChayToiDa: 9,    // kim cương ở tầm chạy (không cần bấm cũng nhặt được) < số đổi 1 mạng
     khoaLuuCaiDat: "kc_santu_cai_dat" // localStorage: bật/tắt âm thanh
   };
 
   /* ----- CẤP TỪ VỰNG (bé / phụ huynh chọn): chỉ quyết định từ dễ hay khó -----
-     capTu: lấy từ ở cấp nào (st_kho_tu.js); capNhieu: phương án nhiễu lấy từ cấp nào.
+     capTu: lấy từ ở cấp nào (st_kho_tu.js); capNhieu: phương án nhiễu lấy từ cấp nào;
+     kimCuongToiDa: số kim cương nhiều nhất xuất hiện trong MỘT màn (7 màn: 35 / 56 / 84 / 105);
+     anChu: ẩn chữ tiếng Anh (biển chữ, khung từ): bé chỉ NGHE đọc từ và nhìn HÌNH để chọn.
      (Giữ tên ST.DO_KHO / mã de, vua, kho, thuThach để không vỡ cài đặt đã lưu.) */
   ST.DO_KHO = {
-    de:       { ma: "de",       ten: "Cấp 1", moTa: "Từ quen thuộc", bieuTuong: "🌱", capTu: [1], capNhieu: [1] },
-    vua:      { ma: "vua",      ten: "Cấp 2", moTa: "Từ thường gặp", bieuTuong: "🌼", capTu: [2], capNhieu: [2] },
-    kho:      { ma: "kho",      ten: "Cấp 3", moTa: "Từ khó hơn",    bieuTuong: "🔥", capTu: [3], capNhieu: [3, 2] },
-    thuThach: { ma: "thuThach", ten: "Cấp 4", moTa: "Từ dài, khó",   bieuTuong: "👑", capTu: [4, 4, 3], capNhieu: [4, 3] }
+    de:       { ma: "de",       ten: "Cấp 1", moTa: "Từ quen thuộc", bieuTuong: "🌱", capTu: [1], capNhieu: [1], kimCuongToiDa: 5 },
+    vua:      { ma: "vua",      ten: "Cấp 2", moTa: "Từ thường gặp", bieuTuong: "🌼", capTu: [2], capNhieu: [2], kimCuongToiDa: 8 },
+    kho:      { ma: "kho",      ten: "Cấp 3", moTa: "Nghe + nhìn hình, từ khó hơn", bieuTuong: "🔥", capTu: [3], capNhieu: [3, 2], kimCuongToiDa: 12, anChu: true },
+    thuThach: { ma: "thuThach", ten: "Cấp 4", moTa: "Nghe + nhìn hình, từ dài", bieuTuong: "👑", capTu: [4, 4, 3], capNhieu: [4, 3], kimCuongToiDa: 15, anChu: true }
   };
   ST.THU_TU_DO_KHO = ["de", "vua", "kho", "thuThach"];
 
@@ -63,24 +71,28 @@
      thoiGianDiDuKien: quãng đường = tocDo x số giây này (phần còn lại của thoiGianChoi
      là "đệm" cho các lần khựng / gặp nạn);
      loai: chướng ngại vật nào xuất hiện + trọng số (màn đầu chưa có quái khó);
-     tiLeKimCuong / soVienKimCuong: xác suất một từ có kim cương, mỗi từ mấy viên;
-     tiLeNguyHiemToiThieu: tỉ lệ tối thiểu quái / hố: không bấm gì thì không thể qua màn. */
-  const chung = { thoiGianChoi: 60, soVienKimCuong: [1, 3], kimCuongLienTiepToiDa: 2, tiLeNguyHiemToiThieu: 0.6 };
+     Kim cương rải NGẪU NHIÊN trên đường (không gắn với quái hay từ), số lượng theo CẤP TỪ
+       (ST.DO_KHO.kimCuongToiDa): ở tầm chạy (chạy qua là nhặt) tối đa kimCuongTamChayToiDa viên,
+       phần còn lại lơ lửng trên vật cản (chỉ nhảy đúng lúc mới chạm được);
+     tiLeNguyHiemToiThieu: tỉ lệ tối thiểu quái / hố: không bấm gì thì không thể qua màn;
+     mauQuai: số viên phải bắn trúng để hạ quái có thanh máu / vật cản cao (càng về cuối càng nhiều);
+     tiLeCoMau: xác suất một quái được mang thanh máu (luôn giữ KHÔNG QUÁ 1/4 tổng số quái). */
+  const chung = { thoiGianChoi: 60, tiLeKimCuongTrenCao: 0.35, tiLeNguyHiemToiThieu: 0.6, tiLeCoMau: 0.6 };
   ST.MAN_CHOI = [
-    { soPhuongAn: 2, doGiong: 0,    tocDo: 140, thoiGianPhanUng: 4.6, khoangThem: [30, 140], thoiGianDiDuKien: 49,
-      loai: { cong: 3, da: 2, gocCay: 2, nam: 3, ho: 2 }, tiLeKimCuong: 0.55, soVienKimCuong: [2, 3] },
-    { soPhuongAn: 2, doGiong: 0.15, tocDo: 150, thoiGianPhanUng: 4.3, khoangThem: [30, 130], thoiGianDiDuKien: 49,
-      loai: { cong: 2, da: 2, gocCay: 2, nam: 2, ho: 2, vit: 2 }, tiLeKimCuong: 0.5, soVienKimCuong: [2, 3] },
-    { soPhuongAn: 3, doGiong: 0.25, tocDo: 160, thoiGianPhanUng: 4.0, khoangThem: [25, 120], thoiGianDiDuKien: 49,
-      loai: { cong: 2, da: 2, gocCay: 1, nam: 2, nhim: 2, ho: 2, vit: 2 }, tiLeKimCuong: 0.45 },
-    { soPhuongAn: 3, doGiong: 0.4,  tocDo: 175, thoiGianPhanUng: 3.7, khoangThem: [20, 110], thoiGianDiDuKien: 50,
-      loai: { cong: 2, da: 1, gocCay: 1, nam: 2, nhim: 2, ho: 2, vit: 2, ong: 1 }, tiLeKimCuong: 0.45 },
-    { soPhuongAn: 3, doGiong: 0.55, tocDo: 190, thoiGianPhanUng: 3.5, khoangThem: [20, 100], thoiGianDiDuKien: 50,
-      loai: { cong: 2, da: 1, gocCay: 1, nam: 2, nhim: 2, slime: 2, ho: 2, vit: 2, ong: 2 }, tiLeKimCuong: 0.4 },
-    { soPhuongAn: 4, doGiong: 0.7,  tocDo: 205, thoiGianPhanUng: 3.3, khoangThem: [15, 90], thoiGianDiDuKien: 50,
-      loai: { cong: 1, da: 1, gocCay: 1, nam: 2, nhim: 2, slime: 2, ho: 3, vit: 2, ong: 2 }, tiLeKimCuong: 0.4 },
-    { soPhuongAn: 4, doGiong: 0.85, tocDo: 220, thoiGianPhanUng: 3.1, khoangThem: [10, 80], thoiGianDiDuKien: 50,
-      loai: { cong: 1, da: 1, gocCay: 1, nam: 2, nhim: 2, slime: 3, ho: 3, vit: 2, ong: 2 }, tiLeKimCuong: 0.38 }
+    { mauQuai: 2, soPhuongAn: 2, doGiong: 0,    tocDo: 140, thoiGianPhanUng: 4.6, khoangThem: [30, 140], thoiGianDiDuKien: 49,
+      loai: { cong: 3, da: 2, gocCay: 2, nam: 3, ho: 2 } },
+    { mauQuai: 2, soPhuongAn: 2, doGiong: 0.15, tocDo: 150, thoiGianPhanUng: 4.3, khoangThem: [30, 130], thoiGianDiDuKien: 49,
+      loai: { cong: 2, da: 2, gocCay: 2, nam: 2, ho: 2, vit: 2 } },
+    { mauQuai: 3, soPhuongAn: 3, doGiong: 0.25, tocDo: 160, thoiGianPhanUng: 4.0, khoangThem: [25, 120], thoiGianDiDuKien: 49,
+      loai: { cong: 2, da: 2, gocCay: 1, nam: 2, nhim: 2, ho: 2, vit: 2, tuongDa: 1 } },
+    { mauQuai: 3, soPhuongAn: 3, doGiong: 0.4,  tocDo: 175, thoiGianPhanUng: 3.7, khoangThem: [20, 110], thoiGianDiDuKien: 50,
+      loai: { cong: 2, da: 1, gocCay: 1, nam: 2, nhim: 2, ho: 2, vit: 2, ong: 1, tuongDa: 1 } },
+    { mauQuai: 4, soPhuongAn: 3, doGiong: 0.55, tocDo: 190, thoiGianPhanUng: 3.5, khoangThem: [20, 100], thoiGianDiDuKien: 50,
+      loai: { cong: 2, da: 1, gocCay: 1, nam: 2, nhim: 2, slime: 2, ho: 2, vit: 2, ong: 2, tuongDa: 1 } },
+    { mauQuai: 4, soPhuongAn: 4, doGiong: 0.7,  tocDo: 205, thoiGianPhanUng: 3.3, khoangThem: [15, 90], thoiGianDiDuKien: 50,
+      loai: { cong: 1, da: 1, gocCay: 1, nam: 2, nhim: 2, slime: 2, ho: 3, vit: 2, ong: 2, tuongDa: 2 } },
+    { mauQuai: 5, soPhuongAn: 4, doGiong: 0.85, tocDo: 220, thoiGianPhanUng: 3.1, khoangThem: [10, 80], thoiGianDiDuKien: 50,
+      loai: { cong: 1, da: 1, gocCay: 1, nam: 2, nhim: 2, slime: 3, ho: 3, vit: 2, ong: 2, tuongDa: 2 } }
   ].map((m, i) => Object.assign({}, chung, m, { soMan: i + 1 }));
   ST.SO_MAN = ST.MAN_CHOI.length;
 
@@ -109,26 +121,30 @@
     const cap = ST.DO_KHO[maCapTu] || ST.DO_KHO.de;
     return Object.assign({}, ST.MAN_CHOI[n - 1], {
       ma: duong.ma + "-" + n + "-" + cap.ma, maDuong: duong.ma, duong, soMan: n, laManCuoi: n === ST.SO_MAN,
-      maCapTu: cap.ma, ten: "Màn " + n, capTu: cap.capTu, capNhieu: cap.capNhieu, tenCap: cap.ten
+      maCapTu: cap.ma, ten: "Màn " + n, capTu: cap.capTu, capNhieu: cap.capNhieu, tenCap: cap.ten,
+      anChu: !!cap.anChu, soKimCuong: [Math.ceil(cap.kimCuongToiDa * 0.6), cap.kimCuongToiDa]
     });
   };
 
   /* ----- Các loại chướng ngại vật -----
      nhom: can (vật cản) | quaiDat (quái mặt đất) | quaiBay (quái bay) | ho (hố sâu)
-     hanhDong: nhay (bé nhảy qua) | phep (bé bắn phép thuật)
+     caoHonNhay: cao hơn cú nhảy -> LUÔN phải bắn (vật cản cao / thạch khổng lồ).
+       Các loại khác bé nhảy qua; riêng quái được gắn THANH MÁU (lúc sinh đường, tối đa
+       1/4 số quái) thì phải bắn. Việc bé làm (nhảy / bắn) ghi ở từng chướng ngại vật.
      vaCham: khung (chỉ khựng lại, KHÔNG mất mạng) | matMang | roi (rơi hố -> mất mạng)
      rong/cao: [nhỏ nhất, lớn nhất] - mỗi lần sinh chọn ngẫu nhiên trong khoảng
      bayCao: quái bay lơ lửng cách mặt đất chừng này (đúng tầm va vào người bé)
      tocDoDi: quái tiến về phía bé (đơn vị/giây) sau khi thử thách hiện ra */
   ST.LOAI_CHUONG_NGAI = {
-    cong:   { ten: "Ống cống",      nhom: "can",     hanhDong: "nhay", vaCham: "khung",  rong: [80, 92],  cao: [56, 64] },
-    da:     { ten: "Tảng đá",       nhom: "can",     hanhDong: "nhay", vaCham: "khung",  rong: [46, 70],  cao: [34, 52] },
-    gocCay: { ten: "Gốc cây",       nhom: "can",     hanhDong: "nhay", vaCham: "khung",  rong: [48, 62],  cao: [44, 58] },
-    nam:    { ten: "Nấm tí hon",    nhom: "quaiDat", hanhDong: "nhay", vaCham: "matMang", rong: [50, 54], cao: [52, 56], tocDoDi: 30 },
-    nhim:   { ten: "Nhím gai",      nhom: "quaiDat", hanhDong: "nhay", vaCham: "matMang", rong: [56, 60], cao: [38, 42], tocDoDi: 45 },
-    slime:  { ten: "Thạch khổng lồ", nhom: "quaiDat", hanhDong: "phep", vaCham: "matMang", rong: [78, 84], cao: [140, 150], tocDoDi: 20 },
-    vit:    { ten: "Vịt bay",       nhom: "quaiBay", hanhDong: "phep", vaCham: "matMang", rong: [58, 62], cao: [42, 46], bayCao: 26, tocDoDi: 55 },
-    ong:    { ten: "Ong bay",       nhom: "quaiBay", hanhDong: "phep", vaCham: "matMang", rong: [44, 48], cao: [40, 42], bayCao: 18, tocDoDi: 40 },
-    ho:     { ten: "Hố sâu",        nhom: "ho",      hanhDong: "nhay", vaCham: "roi",    rong: [100, 150], cao: [0, 0] }
+    cong:    { ten: "Ống cống",       nhom: "can",     vaCham: "khung",   rong: [80, 92],   cao: [56, 64] },
+    da:      { ten: "Tảng đá",        nhom: "can",     vaCham: "khung",   rong: [46, 70],   cao: [34, 52] },
+    gocCay:  { ten: "Gốc cây",        nhom: "can",     vaCham: "khung",   rong: [48, 62],   cao: [44, 58] },
+    tuongDa: { ten: "Tường đá",       nhom: "can",     vaCham: "khung",   rong: [58, 66],   cao: [176, 190], caoHonNhay: true },
+    nam:     { ten: "Nấm tí hon",     nhom: "quaiDat", vaCham: "matMang", rong: [50, 54],   cao: [52, 56], tocDoDi: 30 },
+    nhim:    { ten: "Nhím gai",       nhom: "quaiDat", vaCham: "matMang", rong: [56, 60],   cao: [38, 42], tocDoDi: 45 },
+    slime:   { ten: "Thạch khổng lồ", nhom: "quaiDat", vaCham: "matMang", rong: [78, 84],   cao: [166, 176], tocDoDi: 20, caoHonNhay: true },
+    vit:     { ten: "Vịt bay",        nhom: "quaiBay", vaCham: "matMang", rong: [58, 62],   cao: [42, 46], bayCao: 26, tocDoDi: 55 },
+    ong:     { ten: "Ong bay",        nhom: "quaiBay", vaCham: "matMang", rong: [44, 48],   cao: [40, 42], bayCao: 18, tocDoDi: 40 },
+    ho:      { ten: "Hố sâu",         nhom: "ho",      vaCham: "roi",     rong: [100, 150], cao: [0, 0] }
   };
 })(typeof window !== "undefined" ? window : globalThis);

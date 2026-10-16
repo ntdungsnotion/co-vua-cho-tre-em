@@ -13,6 +13,7 @@
   BƯỚC: TC_00B (thay game thử TC_00 "Nấm Quái Vật")
   NGÀY: 15/10/2026
   CẬP NHẬT: 15/10/2026 - TC_00D: màn hình chọn đường đua + chọn màn, cổng qua màn, nút màn tiếp.
+  CẬP NHẬT: 16/10/2026 - TC_00D2: bấm hình ở khung từ để nghe lại (cấp từ 3-4 ẩn chữ).
   CODE: san_tu/st_cau_hinh.js (tham số, 10 đường đua, 7 màn), st_tien_do.js (tiến độ màn), st_tu_vung.js (kho từ), st_logic.js (lõi game),
         st_am_thanh.js (âm thanh), st_ve.js (vẽ), st_giao_dien.js (giao diện + vòng lặp).
         Kiểm thử lõi game: node kc/san_tu/st_kiem_thu_node.js
@@ -68,9 +69,12 @@
   /* ----- KHU CHỌN TỪ ----- */
   #khuChon { flex: 0 0 auto; background: linear-gradient(#fff, var(--chinh-nhat)); border-top: 4px solid var(--chinh); padding: 8px 10px max(10px, env(safe-area-inset-bottom)); }
   #theTu { display: flex; align-items: center; gap: 10px; min-height: 56px; }
-  #hinhTu { font-size: 38px; line-height: 1; width: 46px; text-align: center; }
+  #hinhTu { font-size: 38px; line-height: 1; width: 46px; text-align: center; cursor: pointer; }
   #chuTu { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 30px; line-height: 1; color: var(--chu); letter-spacing: .5px; }
   #nghiaTu { font-size: 14px; color: var(--chu-nhat); }
+  /* Cấp từ 3-4 (ẩn chữ): hình là gợi ý chính nên to hơn, dòng "Nghe và chọn" nhỏ lại */
+  #chuTu.anChu { font-size: 22px; cursor: pointer; }
+  #hinhTu.anChu { font-size: 50px; width: 60px; }
   #theTu .phai { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
   #kcTu { display: none; background: #e3f7ff; border: 2px solid #3fc8ff; color: #0b6fa4; border-radius: 99px; padding: 0 10px; font-weight: 800; font-size: 15px;
     box-shadow: 0 0 12px rgba(63,200,255,.6); animation: sang 1s infinite alternate; }
@@ -196,6 +200,8 @@
     #hinhTu { font-size: 64px; width: 72px; }
     #chuTu { font-size: 44px; }
     #nghiaTu { font-size: 17px; }
+    #chuTu.anChu { font-size: 28px; }
+    #hinhTu.anChu { font-size: 88px; width: 100px; }
     #theTu .phai { margin-left: 0; width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
     #demNguoc { margin: 8px 0 0; height: 10px; }
     #cacNut, #cacNut.n3 { grid-template-columns: repeat(var(--soCot, 4), 1fr); gap: 16px; }

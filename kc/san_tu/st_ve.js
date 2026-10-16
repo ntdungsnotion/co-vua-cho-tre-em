@@ -10,6 +10,9 @@
    NGÀY: 15/10/2026
    KHUNG NHÌN: luôn thấy ít nhất 560 đơn vị bề ngang và 330 đơn vị bề cao. Màn rộng
                (máy tính) thấy xa hơn về phía trước, màn dọc (điện thoại) thấy nhiều trời hơn.
+   CẬP NHẬT: 16/10/2026 - TC_00D2: thanh máu trên đầu quái / vật cản phải bắn, tường đá
+             (cao hơn cú nhảy), vạch "Nhảy!" trên đường ở màn 1-2 để bé tập canh lúc bấm.
+             Cấp từ 3-4 (anChu): biển chữ hiện hình + 🔊 thay cho chữ, đúng rồi mới hiện chữ.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -97,6 +100,7 @@
       if (choi) {
         if (g.dk.laManCuoi) this.veLauDai(g, camX); else this.veCongMan(g, camX);
         this.veVachXuatPhat(camX);
+        this.veVungNhay(g, camX);
         g.chuongNgai.forEach(o => this.veChuongNgai(o, g, camX));
         g.kimCuongs.forEach(k => { if (!k.daNhat) this.veKimCuong(k.x - camX, this.dat - k.y, 1, k.tHien); });
         g.dan.forEach(d => this.veDan(d, camX));
@@ -361,6 +365,7 @@
           case "cong": this.veCong(w, h); break;
           case "da": this.veDa(w, h, o.bienThe); break;
           case "gocCay": this.veGocCay(w, h); break;
+          case "tuongDa": this.veTuongDa(w, h); break;
           case "nam": this.veNam(w, h, t, o); break;
           case "nhim": this.veNhim(w, h, t, o); break;
           case "slime": this.veSlime(w, h, t, o); break;
@@ -370,7 +375,37 @@
       }
       c.restore();
       if (o.nhom === "ho") this.veMieng(x, o.rong);
+      this.veThanhMau(o, x);
       this.veBien(o, g, x);
+    }
+    // Thanh máu: mỗi ô là 1 viên phải bắn trúng; ô đã trúng thành màu xám
+    veThanhMau(o, x) {
+      if (!o.mauToiDa || !o.song || o.boChay) return;
+      const c = this.c, n = o.mauToiDa, o1 = 13, khe = 3;
+      const w = n * o1 + (n - 1) * khe + 8, tamX = x + o.rong / 2;
+      const y = Math.max(40, this.dat - o.bayCao - o.cao - 22);
+      c.fillStyle = "rgba(43,38,64,0.85)"; c.beginPath(); c.roundRect(tamX - w / 2, y, w, 18, 7); c.fill();
+      for (let i = 0; i < n; i++) {
+        c.fillStyle = i < o.mau ? (o.mau <= 1 ? "#ff5a5f" : "#ff7a3d") : "#5d5872";
+        c.beginPath(); c.roundRect(tamX - w / 2 + 4 + i * (o1 + khe), y + 4, o1, 10, 3); c.fill();
+      }
+    }
+    // Màn 1-2: dải xanh trên đường = chỗ bé nên đứng khi bấm nhảy (dạy bé canh lúc bấm)
+    veVungNhay(g, camX) {
+      const tt = g.thuThach;
+      if (!tt || tt.trangThai !== "mo" || tt.o.hanhDong !== "nhay" || g.dk.soMan > 2 || g.trangThai !== "choi") return;
+      const [gan, xa] = ST.cuaSoNhay(tt.o, g.v), tam = tt.o.x + tt.o.rong / 2;
+      const x1 = tam - xa - camX, x2 = tam - gan - camX, c = this.c, y = this.dat;
+      if (x2 < 0 || x1 > this.rong) return;
+      const trong = g.trongCuaSoNhay(), nhip = trong ? 0.75 + Math.sin(this.t * 14) * 0.2 : 0.5;
+      c.fillStyle = `rgba(43,182,115,${nhip})`; c.strokeStyle = "#fff"; c.lineWidth = 2;
+      c.beginPath(); c.roundRect(x1, y - 7, x2 - x1, 14, 7); c.fill(); c.stroke();
+      const chu = trong ? "Nhảy! ⤴" : "Nhảy ở đây", giua = (x1 + x2) / 2;
+      c.font = "800 15px " + FONT; c.textAlign = "center"; c.textBaseline = "middle";
+      const wc = c.measureText(chu).width + 16;
+      c.fillStyle = trong ? "#2BB673" : "rgba(255,255,255,0.92)";
+      c.beginPath(); c.roundRect(giua - wc / 2, y + 12, wc, 22, 11); c.fill();
+      c.fillStyle = trong ? "#fff" : "#1f8a55"; c.fillText(chu, giua, y + 24);
     }
     veMieng(x, w) { // mép hố có rìa cỏ rủ xuống
       const c = this.c, y = this.dat;
@@ -403,6 +438,19 @@
       c.strokeStyle = "#b78347"; c.lineWidth = 1.6; c.beginPath(); c.ellipse(0, -h, w / 4, 4, 0, 0, PI2); c.stroke();
       c.strokeStyle = "#6c4325"; c.lineWidth = 2; for (let i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(i * w / 4, -h + 10); c.lineTo(i * w / 4 + 2, -8); c.stroke(); }
       c.fillStyle = "#58c84e"; c.beginPath(); c.arc(w / 2 - 8, -h - 2, 5, 0, PI2); c.fill();
+    }
+    veTuongDa(w, h) { // tường đá cao hơn cú nhảy: phải bắn vỡ
+      const c = this.c, hang = 22;
+      c.fillStyle = "#8a8fa3"; c.beginPath(); c.roundRect(-w / 2, -h, w, h, 6); c.fill();
+      c.strokeStyle = "#6a6f83"; c.lineWidth = 2;
+      for (let r = 0, yy = -h; yy < 0; r++, yy += hang) {
+        c.beginPath(); c.moveTo(-w / 2, yy); c.lineTo(w / 2, yy); c.stroke();
+        const lech = r % 2 ? w / 4 : 0;
+        for (let xx = -w / 2 + lech + w / 2; xx < w / 2; xx += w / 2) { c.beginPath(); c.moveTo(xx, yy); c.lineTo(xx, Math.min(0, yy + hang)); c.stroke(); }
+      }
+      c.fillStyle = "#a9aec0"; c.fillRect(-w / 2 + 3, -h + 3, w - 6, 6);
+      c.fillStyle = "#58c84e"; c.beginPath(); c.arc(-w / 2 + 10, -h + 2, 6, Math.PI, PI2); c.arc(w / 2 - 12, -h + 2, 5, Math.PI, PI2); c.fill();
+      c.strokeStyle = "#4b4f60"; c.lineWidth = 2.5; c.beginPath(); c.moveTo(w * 0.1, -h * 0.55); c.lineTo(-w * 0.05, -h * 0.45); c.lineTo(w * 0.12, -h * 0.38); c.stroke();
     }
     mat(x, y, r, gian) { // đôi mắt to dễ thương; gian = nhíu mày (quái)
       const c = this.c;
@@ -478,11 +526,12 @@
       const c = this.c, tt = g.thuThach, dangHoi = tt && tt.o === o && tt.trangThai === "mo";
       const daDung = o.trangThai === "daTraLoi";
       const tamX = (o.nhom === "ho" ? x - 18 : x + o.rong / 2); // hố: biển cắm trên đất ngay trước miệng hố
-      let dinhY = this.dat - o.bayCao - o.cao - 14;
+      let dinhY = this.dat - o.bayCao - o.cao - 14 - (o.mauToiDa && o.song ? 22 : 0);
       if (o.nhom === "ho") dinhY = this.dat - 62;
       dinhY = Math.max(dinhY, 64);
       c.font = "800 19px " + FONT;
-      const w = Math.max(64, c.measureText(o.tu.en).width + 24), h = 30;
+      const chu = g.dk.anChu && !daDung ? o.tu.e + " 🔊" : o.tu.en; // cấp 3-4: chưa đúng thì chỉ có hình
+      const w = Math.max(64, c.measureText(chu).width + 24), h = 30;
       const nay = dangHoi ? Math.sin(this.t * 7) * 3 : 0;
       const by = dinhY - h + nay;
       if (o.nhom === "ho" || o.nhom === "can") { c.fillStyle = "#7a4b25"; c.fillRect(tamX - 2, by + h, 4, this.dat - by - h - (o.nhom === "ho" ? 0 : o.cao)); }
@@ -490,12 +539,7 @@
       c.beginPath(); c.roundRect(tamX - w / 2, by, w, h, 10); c.fill();
       c.lineWidth = dangHoi ? 4 : 2.5; c.strokeStyle = daDung ? "#2BB673" : dangHoi ? "#FFB800" : "#4B2FB0"; c.stroke();
       c.fillStyle = daDung ? "#1f8a55" : "#2B2640"; c.textAlign = "center"; c.textBaseline = "middle";
-      c.fillText(o.tu.en, tamX, by + h / 2 + 1);
-      // kim cương gắn trên từ (trước khi trả lời đúng)
-      if (o.soKimCuong > 0 && !daDung) {
-        this.veKimCuong(tamX + w / 2 - 2, by - 4, 0.75, this.t);
-        if (o.soKimCuong > 1) { c.fillStyle = "#0b6fa4"; c.font = "800 12px " + FONT; c.fillText("x" + o.soKimCuong, tamX + w / 2 + 14, by - 2); }
-      }
+      c.fillText(chu, tamX, by + h / 2 + 1);
     }
     veKimCuong(x, y, k, t) {
       const c = this.c, s = 13 * k, nay = Math.sin((t || 0) * 5) * 2;
@@ -525,11 +569,16 @@
       const x = tt.o.x + tt.o.rong / 2 - camX; if (x < this.rong - 10) return;
       const c = this.c, y = Math.max(70, this.dat - 120), nay = Math.sin(this.t * 8) * 4;
       c.font = "800 18px " + FONT;
-      const w = c.measureText(tt.tu.en).width + 44;
+      const chuTu = g.dk.anChu ? tt.tu.e + " 🔊" : tt.tu.en;
+      const w = c.measureText(chuTu).width + 44;
       c.fillStyle = "rgba(255,255,255,0.95)"; c.strokeStyle = "#FFB800"; c.lineWidth = 3;
       c.beginPath(); c.roundRect(this.rong - w - 14 + nay, y - 16, w, 32, 12); c.fill(); c.stroke();
       c.fillStyle = "#2B2640"; c.textAlign = "center"; c.textBaseline = "middle";
-      c.fillText(tt.tu.en + " ➜", this.rong - w / 2 - 14 + nay, y + 1);
+      c.fillText(chuTu + " ➜", this.rong - w / 2 - 14 + nay, y + 1);
+      if (tt.o.hanhDong === "ban" && tt.o.song) { // quái có máu còn ngoài màn hình: báo số viên còn phải bắn
+        c.fillStyle = "#c2410c"; c.font = "800 13px " + FONT;
+        c.fillText("💥 còn " + tt.o.mau + " viên", this.rong - w / 2 - 14 + nay, y + 28);
+      }
     }
 
     /* ---------------- EM BÉ ---------------- */
@@ -557,7 +606,7 @@
       const pha = (be.x || 0) * 0.075;   // nhịp bước theo quãng đường -> mượt ở mọi tốc độ khung hình
       const dangChay = che === "chay" && !thang;
       const nhay = che === "nhay" || (thang && y < this.dat - 2);
-      const phep = be.tPhep < 0.35 || be.giuPhep; // giuPhep: đã chọn đúng, đang giơ đũa chờ quái vào tầm
+      const phep = be.tPhep < 0.35; // vừa bắn: giơ đũa
       // chân
       c.fillStyle = "#ffcfa6"; c.strokeStyle = "#ffcfa6"; c.lineWidth = 8;
       const chan = (goc, dx) => { c.save(); c.translate(dx, -18); c.rotate(goc); c.beginPath(); c.moveTo(0, 0); c.lineTo(0, 14); c.stroke(); c.fillStyle = "#ff6b6b"; c.beginPath(); c.ellipse(3, 17, 7, 4.5, 0, 0, PI2); c.fill(); c.restore(); };
