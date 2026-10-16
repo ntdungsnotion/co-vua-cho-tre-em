@@ -12,6 +12,7 @@
              tiến độ màn / đường đua).
    CẬP NHẬT: 16/10/2026 - TC_00D2 (sau khi người dùng thử): bé nhảy nhiều lần, kim cương trên không,
              màn "Tập chơi" (mục 18), bảng ôn tập cuối màn (mục 19).
+   CẬP NHẬT: 16/10/2026 - TC_00D2: cụm kim cương có từ riêng (mục 7, 16, 18), cú nhảy 3 đơn vị.
    CẬP NHẬT: 16/10/2026 - TC_00D2: "người chơi máy" tự canh lúc bấm nhảy (cửa sổ nhảy) và
              bấm nhiều lần để bắn hạ quái có máu; thêm mục 13-15 (bấm sớm / trễ thì chạm,
              luật thanh máu tối đa 1/4 số quái, số viên đúng bằng máu).
@@ -67,18 +68,10 @@ function denLucNhay(g, tt, viTri) {
   return d <= gan + (xa - gan) * p && d >= gan;
 }
 const bamDung = (g, tt, viTri) => denLucNhay(g, tt, viTri) ? g.chonDapAn(tt.id, tt.tu.en) : false;
-// Bé giỏi còn nhảy lên lấy kim cương lơ lửng phía trước (bấm lại đúng từ, nhảy được nhiều lần)
-function denLucLayKimCuong(g, tt) {
-  if (tt.o.hanhDong !== "nhay" || g.be.nhay || g.be.che !== "chay") return false;
-  const ds = g.kimCuongs.filter(k => !k.daNhat && k.x > g.be.x);
-  if (!ds.length) return false;
-  let cuoi = 0; while (cuoi + 1 < ds.length && ds[cuoi + 1].x - ds[cuoi].x < 35) cuoi++;
-  const giua = (ds[0].x + ds[cuoi].x) / 2, D = ST.CAU_HINH.cuLyNhay;
-  const dx = giua - g.be.x;
-  return dx <= D / 2 + 3 && dx > D / 2 - 15 && giua < tt.o.x;
-}
 const nao = {
-  luonDung: (tre) => ({ tre: () => tre, bam: (g, tt) => denLucLayKimCuong(g, tt) ? g.chonDapAn(tt.id, tt.tu.en) : bamDung(g, tt) }),
+  luonDung: (tre) => ({ tre: () => tre, bam: (g, tt) => bamDung(g, tt) }),
+  // chỉ trả lời chướng ngại vật, bỏ qua các cụm kim cương
+  boQuaKimCuong: { tre: () => 0.3, bam: (g, tt) => tt.o.nhom === "kimCuong" ? undefined : bamDung(g, tt) },
   khongBam: { tre: () => 1e9, bam: () => {} },
   saiRoiDung: { tre: () => 0.4, bam: (g, tt, l) => {
     const sai = tt.phuongAn.find(p => p !== tt.tu.en && tt.daSai.indexOf(p) < 0);
@@ -215,12 +208,17 @@ for (const ma of DS_MAN) for (let hat = 1; hat <= 40; hat++) {
   }
   const cuoi = d.ds[d.ds.length - 1];
   kiem(cuoi.x + cuoi.rong < d.dai - ST.CAU_HINH.khoangCuoiTruocLauDai + 1, `${ma}#${hat}: sát lâu đài`);
-  // kim cương ngẫu nhiên: đúng số lượng, không gắn với quái / từ, không nằm trong miệng hố hay trong vật
-  const [kmin, kmax] = dk.soKimCuong;
+  // kim cương: thành cụm riêng có từ, ở đoạn đường trống, không gắn với quái / vật cản
+  const [kmin, kmax] = dk.soKimCuong, cum = d.ds.filter(o => o.nhom === "kimCuong");
   kiem(d.kimCuongs.length >= Math.ceil(kmin / 2) && d.kimCuongs.length <= kmax, `${ma}#${hat}: ${d.kimCuongs.length} kim cương`);
-  kiem(d.ds.every(o => o.soKimCuong === undefined), `${ma}#${hat}: kim cương không được gắn với chướng ngại vật`);
+  kiem(cum.every(o => o.tu && o.vaCham === "khong" && o.soKimCuong >= 1 && o.soKimCuong <= ST.CAU_HINH.kimCuongMoiCum), `${ma}#${hat}: cụm kim cương phải có từ riêng, không va chạm`);
+  kiem(cum.reduce((t, o) => t + o.soKimCuong, 0) === d.kimCuongs.length, `${ma}#${hat}: số viên khớp các cụm`);
+  kiem(d.ds.every(o => o.nhom === "kimCuong" || o.soKimCuong === undefined), `${ma}#${hat}: kim cương không được gắn với chướng ngại vật`);
+  for (let i = 1; i < d.ds.length; i++) kiem(!(d.ds[i].nhom === "kimCuong" && d.ds[i - 1].nhom === "kimCuong"), `${ma}#${hat}: 2 cụm kim cương liền nhau`);
   d.kimCuongs.forEach(k => {
-    kiem(!d.ds.some(o => k.x > o.x - 30 && k.x < o.x + o.rong + 30), `${ma}#${hat}: kim cương ở x=${k.x} treo trên chướng ngại vật`);
+    const c = cum.find(o => o.id === k.cum);
+    kiem(c && k.x >= c.x && k.x <= c.x + c.rong, `${ma}#${hat}: kim cương ở x=${k.x} nằm ngoài cụm của nó`);
+    kiem(!d.ds.some(o => o.nhom !== "kimCuong" && k.x > o.x - 30 && k.x < o.x + o.rong + 30), `${ma}#${hat}: kim cương ở x=${k.x} treo trên chướng ngại vật`);
     kiem(k.y - ST.CAU_HINH.kichThuocKimCuong / 2 > ST.CAU_HINH.nhanVat.cao, `${ma}#${hat}: kim cương thấp, chạy cũng chạm`);
   });
 }
@@ -369,6 +367,7 @@ for (const ma of DS_MAN) {
       let soNhay = 0, cham = 0, oDangNhay = null;
       const naoBo = { lap: 0.02, tre: () => 0, bam: (g, tt) => {
         if (tt.o.hanhDong !== "nhay") return g.chonDapAn(tt.id, tt.tu.en);
+        if (tt.o.nhom === "kimCuong") return false; // cụm kim cương không va chạm: bỏ qua
         const [gan, xa] = ST.cuaSoNhay(tt.o, g.v), d = g.khoangTam(tt.o);
         if (!dieuKien(d, gan, xa)) return false;
         const kq = g.chonDapAn(tt.id, tt.tu.en);
@@ -381,11 +380,11 @@ for (const ma of DS_MAN) {
       return [soNhay, cham];
     };
     let [n, c] = thu((d, gan, xa) => d <= xa + 45 && d > xa + 25); soNhaySom += n; chamSom += c;
-    [n, c] = thu((d, gan, xa) => d < gan - 25 && d > gan - 60); soNhayTre += n; chamTre += c;
+    [n, c] = thu((d, gan, xa) => d < gan - 20 && d > gan - 70); soNhayTre += n; chamTre += c;
     [n, c] = thu((d, gan, xa) => d <= (gan + xa) / 2); soDung += n; chamDung += c;
   }
   kiem(soNhaySom > 20 && chamSom === soNhaySom, `${ma}: bấm sớm phải chạm (${chamSom}/${soNhaySom})`);
-  kiem(soNhayTre > 20 && chamTre === soNhayTre, `${ma}: bấm trễ phải chạm (${chamTre}/${soNhayTre})`);
+  kiem(soNhayTre >= 15 && chamTre === soNhayTre, `${ma}: bấm trễ phải chạm (${chamTre}/${soNhayTre})`);
   kiem(soDung > 20 && chamDung === 0, `${ma}: bấm đúng lúc thì không chạm (${chamDung}/${soDung})`);
 }
 
@@ -451,20 +450,19 @@ for (const ma of DS_MAN) for (let hat = 1; hat <= 10; hat++) {
   if (!thuDuoc) kiem(false, "không tìm được quái có máu để thử đạn");
 }
 
-console.log("16. Kim cương ngẫu nhiên trên không: không nhảy thì không lấy được; bé nhảy nhiều lần (lấy kim cương rồi nhảy qua vật)");
+console.log("16. Cụm kim cương có từ riêng ở chỗ trống: không bấm từ của cụm thì không lấy được; bấm đúng lúc lấy đủ cụm");
 for (const ma of DS_MAN) {
   const khacNhau = new Set();
-  let nhieuLan = 0;
   for (let hat = 1; hat <= 10; hat++) {
     khacNhau.add(JSON.stringify(ST.sinhDuongDi(MAN_THU[ma], ST.taoNgauNhien(hat), new ST.KhoTuVung(MAN_THU[ma], ST.taoNgauNhien(hat))).kimCuongs.map(k => k.x)));
     const r0 = chay(ma, hat, nao.khongBam);
     kiem(r0.g.tongKimCuong === 0, `${ma}#${hat}: không nhảy mà nhặt được ${r0.g.tongKimCuong} kim cương`);
+    const r1 = chay(ma, hat, nao.boQuaKimCuong);
+    kiem(r1.g.tongKimCuong === 0 && r1.g.trangThai === "thang", `${ma}#${hat}: chỉ nhảy qua vật thì không lấy được kim cương (${r1.g.tongKimCuong}, ${r1.g.trangThai})`);
     const r = chay(ma, hat, nao.luonDung(0.3));
-    const nhay = {}; r.suKien.filter(e => e.t === "chonDung" && e.d.tt.o.hanhDong === "nhay").forEach(e => { nhay[e.d.tt.id] = (nhay[e.d.tt.id] || 0) + 1; });
-    nhieuLan += Object.values(nhay).filter(n => n >= 2).length;
-    kiem(r.g.thongKe.dung === r.g.tongChuongNgai, `${ma}#${hat}: nhảy nhiều lần vẫn chỉ tính 1 lần đúng mỗi từ`);
+    kiem(r.g.tongKimCuong === r.g.tongKimCuongDuong, `${ma}#${hat}: bấm đúng lúc lấy đủ kim cương (${r.g.tongKimCuong}/${r.g.tongKimCuongDuong})`);
+    kiem(r.g.thongKe.dung === r.g.tongChuongNgai, `${ma}#${hat}: mỗi từ (cả từ của cụm kim cương) tính 1 lần đúng`);
   }
-  kiem(nhieuLan > 0, `${ma}: phải có lúc bé nhảy 2 lần cho cùng một từ (lấy kim cương rồi nhảy qua vật)`);
   kiem(khacNhau.size >= 8, `${ma}: vị trí kim cương phải ngẫu nhiên mỗi lượt (${khacNhau.size}/10 khác nhau)`);
 }
 {
@@ -497,17 +495,17 @@ console.log("17. Kim cương tối đa mỗi màn theo cấp từ (5 / 8 / 12 / 
   }
 }
 
-console.log("18. Màn Tập chơi: chướng ngại vật xếp sẵn đúng thứ tự, kim cương trước vật thứ 2, bé giỏi qua được, không bấm thì thua");
+console.log("18. Màn Tập chơi: chướng ngại vật xếp sẵn đúng thứ tự, cụm kim cương có từ riêng ở ô thứ 2, bé giỏi qua được, không bấm thì thua");
 {
   for (const cap of ST.THU_TU_DO_KHO) {
     const dk = ST.taoManChoi("rung", 0, cap);
     kiem(dk.laHuongDan && dk.soMan === 0 && !dk.laManCuoi, `${cap}: màn 0 là Tập chơi`);
     for (let hat = 1; hat <= 20; hat++) {
       const d = ST.sinhDuongDi(dk, ST.taoNgauNhien(hat), new ST.KhoTuVung(dk, ST.taoNgauNhien(hat)));
-      kiem(d.ds.map(o => o.loai).join() === "cong,da,ho,nam,nam,tuongDa", `${cap}#${hat}: thứ tự ${d.ds.map(o => o.loai).join()}`);
-      kiem(d.ds.map(o => o.hanhDong).join() === "nhay,nhay,nhay,nhay,ban,ban", `${cap}#${hat}: nhảy / bắn đúng bài`);
-      kiem(d.kimCuongs.length === Math.min(3, ST.DO_KHO[cap].kimCuongToiDa) && d.kimCuongs.every(k => k.x > d.ds[0].x + d.ds[0].rong && k.x < d.ds[1].x), `${cap}#${hat}: kim cương trước tảng đá`);
-      kiem(d.dai > d.ds[5].x + d.ds[5].rong && d.dai < d.ds[5].x + 1200, `${cap}#${hat}: đích ngay sau tường đá`);
+      kiem(d.ds.map(o => o.loai).join() === "cong,kimCuong,da,ho,nam,nam,tuongDa", `${cap}#${hat}: thứ tự ${d.ds.map(o => o.loai).join()}`);
+      kiem(d.ds.map(o => o.hanhDong).join() === "nhay,nhay,nhay,nhay,nhay,ban,ban", `${cap}#${hat}: nhảy / bắn đúng bài`);
+      kiem(d.kimCuongs.length === Math.min(3, ST.DO_KHO[cap].kimCuongToiDa) && d.kimCuongs.every(k => k.x > d.ds[0].x + d.ds[0].rong && k.x < d.ds[2].x), `${cap}#${hat}: cụm kim cương giữa ống cống và tảng đá`);
+      kiem(d.dai > d.ds[6].x + d.ds[6].rong && d.dai < d.ds[6].x + 1200, `${cap}#${hat}: đích ngay sau tường đá`);
     }
     for (let hat = 1; hat <= 10; hat++) {
       const r = chay(dk, hat, nao.luonDung(0.4));

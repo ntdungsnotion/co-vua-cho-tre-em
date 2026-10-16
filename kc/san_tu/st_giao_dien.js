@@ -19,6 +19,7 @@
              hướng dẫn từng chướng ngại vật; BẢNG ÔN TẬP cuối màn: ghép hình - chữ, ghép hết mới
              lưu qua màn / mở màn tiếp, có lời khen và động viên. Từ hiện ra là đọc to ngay; bé bấm
              chữ thì đọc lại chữ đó (trùng từ đang đọc dở thì đọc tiếp cho xong).
+             Cụm kim cương có từ riêng (đứng ở chỗ trống): lời nhắc / thông báo riêng cho cụm.
    ================================================================ */
 (function () {
   "use strict";
@@ -336,7 +337,7 @@
     const timTu = g.dk.anChu ? "từ con vừa NGHE" : "từ GIỐNG chữ trên biển";
     $("loiNhan").textContent = g.dk.laHuongDan ? loiTapChoi(tt, timTu)
       : lanThuThach <= 2 && g.dk.soMan === 1 ? (tt.o.hanhDong === "nhay"
-      ? `👆 Bấm ${timTu} lúc bé tới gần để nhảy qua!` : `👆 Bấm ${timTu} để bắn!`)
+      ? (tt.o.nhom === "kimCuong" ? `💎 Bấm ${timTu} lúc bé tới gần để nhảy lên lấy kim cương!` : `👆 Bấm ${timTu} lúc bé tới gần để nhảy qua!`) : `👆 Bấm ${timTu} để bắn!`)
       : tt.o.hanhDong === "ban" && !daGapQuaiMau ? `💥 ${tt.o.ten} có thanh máu: bấm đúng từ ${tt.o.mau} lần để bắn hạ!` : "";
     if (tt.o.hanhDong === "ban") daGapQuaiMau = true;
   }
@@ -347,14 +348,15 @@
     if (o.hanhDong === "ban") return o.loai === "tuongDa"
       ? `🧱 Tường đá cao quá, không nhảy qua được! Bấm ${timTu} ${o.mau} lần để bắn vỡ.`
       : `💥 Quái có thanh máu trên đầu: phải bắn! Bấm ${timTu} ${o.mau} lần để bắn hạ.`;
-    if (g.kimCuongs.some(k => !k.daNhat && k.x < o.x && k.x > g.be.x)) return `💎 Kim cương trên cao! Bấm ${timTu} để nhảy lên lấy, đáp xuống rồi bấm lại để nhảy qua ${ten}.`;
+    if (o.nhom === "kimCuong") return `💎 Kim cương trên cao! Chờ bé vào dải xanh rồi bấm ${timTu} để nhảy lên lấy.`;
     if (o.nhom === "ho") return `🕳️ Hố sâu! Chờ bé vào dải xanh rồi bấm ${timTu} để nhảy qua.`;
     if (o.nhom === "quaiDat" || o.nhom === "quaiBay") return `🍄 Quái KHÔNG có thanh máu: nhảy qua là được! Chờ dải xanh rồi bấm ${timTu}.`;
     return `👆 Chờ bé chạy vào dải xanh rồi bấm ${timTu} để nhảy qua ${ten}!`;
   }
   function veHanhDong(tt) {
     const o = tt.o;
-    $("hanhDongTu").textContent = o.hanhDong === "nhay" ? "⤴ Nhảy qua " + o.ten.toLowerCase()
+    $("hanhDongTu").textContent = o.nhom === "kimCuong" ? `💎 Nhảy lấy ${o.soKimCuong} kim cương`
+      : o.hanhDong === "nhay" ? "⤴ Nhảy qua " + o.ten.toLowerCase()
       : `💥 Bắn ${o.ten.toLowerCase()} · còn ${o.mau} viên`;
   }
   // Chạm sau khi đã bấm đúng: do nhảy sớm hay trễ quá
@@ -416,6 +418,11 @@
         Array.from($("cacNut").children).forEach(b => { if (b !== n) b.classList.add("mo"); });
         if (n) n.classList.add("dung");
         $("hanhDongTu").textContent = "✓ Qua rồi!";
+        if (d.tt.o.nhom === "kimCuong") {
+          const o = d.tt.o, lay = o.daLay || 0;
+          $("hanhDongTu").textContent = `💎 ${lay}/${o.soKimCuong}`;
+          loiNhan(lay >= o.soKimCuong ? "Lấy đủ kim cương rồi! 💎🎉" : lay ? `Lấy được ${lay} viên! Lần sau canh lúc bấm để lấy đủ nhé.` : "Hụt mất kim cương rồi. Lần sau canh lúc bấm nhé!", lay ? "tot" : "xau");
+        }
         break;
       }
       case "trungDan": {
@@ -441,15 +448,15 @@
       case "hetHanThuThach":
         khoaCacNut();
         if (tuSai.indexOf(d.tt.tu.en) < 0) tuSai.push(d.tt.tu.en);
-        loiNhan("Ối, không kịp rồi! Từ sau bấm nhanh hơn nhé.", "xau");
+        loiNhan(d.tt.o.nhom === "kimCuong" ? "Lỡ mất kim cương rồi. Lần sau bấm nhanh hơn nhé! 💎" : "Ối, không kịp rồi! Từ sau bấm nhanh hơn nhé.", "xau");
         break;
       case "nhay": am.phat("nhay"); ve.phun(be.x - 10, 4, "bui", 5); break;
       case "tiepDat": {
         am.phat("tiepDat"); ve.phun(be.x, 4, "bui", 4);
-        // đáp đất mà vật vẫn ở phía trước (vừa nhảy lấy kim cương): nhắc bấm lại
+        // đáp đất mà vật / cụm kim cương vẫn ở phía trước (nhảy sớm quá): nhắc bấm lại
         const tt = g.thuThach;
         if (tt && tt.trangThai === "mo" && tt.daDung && tt.o.hanhDong === "nhay" && g.khoangTam(tt.o) > 0)
-          loiNhan(`Bấm lại "${g.dk.anChu ? "từ vừa nghe" : tt.tu.en}" để nhảy qua ${tt.o.ten.toLowerCase()}!`, "tot");
+          loiNhan(`Sớm quá! Bấm lại "${g.dk.anChu ? "từ vừa nghe" : tt.tu.en}" để nhảy ${tt.o.nhom === "kimCuong" ? "lên lấy kim cương" : "qua " + tt.o.ten.toLowerCase()}!`, "tot");
         break;
       }
       case "phep": am.phat("phep"); break;

@@ -14,6 +14,7 @@
              (cao hơn cú nhảy), vạch "Nhảy!" trên đường ở màn 1-2 để bé tập canh lúc bấm.
              Cấp từ 3-4 (anChu): biển chữ hiện hình + 🔊 thay cho chữ, đúng rồi mới hiện chữ.
              Dải "Nhảy ở đây" CHỈ có ở màn Tập chơi (người dùng yêu cầu 16/10/2026).
+             Cụm kim cương có từ riêng: biển chữ cắm trên đất dưới cụm, không vẽ thân vật.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -528,14 +529,14 @@
       const daDung = o.trangThai === "daTraLoi";
       const tamX = (o.nhom === "ho" ? x - 18 : x + o.rong / 2); // hố: biển cắm trên đất ngay trước miệng hố
       let dinhY = this.dat - o.bayCao - o.cao - 14 - (o.mauToiDa && o.song ? 22 : 0);
-      if (o.nhom === "ho") dinhY = this.dat - 62;
+      if (o.nhom === "ho" || o.nhom === "kimCuong") dinhY = this.dat - 62; // hố / cụm kim cương: biển cắm trên đất
       dinhY = Math.max(dinhY, 64);
       c.font = "800 19px " + FONT;
       const chu = g.dk.anChu && !daDung ? o.tu.e + " 🔊" : o.tu.en; // cấp 3-4: chưa đúng thì chỉ có hình
       const w = Math.max(64, c.measureText(chu).width + 24), h = 30;
       const nay = dangHoi ? Math.sin(this.t * 7) * 3 : 0;
       const by = dinhY - h + nay;
-      if (o.nhom === "ho" || o.nhom === "can") { c.fillStyle = "#7a4b25"; c.fillRect(tamX - 2, by + h, 4, this.dat - by - h - (o.nhom === "ho" ? 0 : o.cao)); }
+      if (o.nhom === "ho" || o.nhom === "can" || o.nhom === "kimCuong") { c.fillStyle = "#7a4b25"; c.fillRect(tamX - 2, by + h, 4, this.dat - by - h - (o.nhom === "can" ? o.cao : 0)); }
       c.fillStyle = daDung ? "#e6fff0" : "#fff";
       c.beginPath(); c.roundRect(tamX - w / 2, by, w, h, 10); c.fill();
       c.lineWidth = dangHoi ? 4 : 2.5; c.strokeStyle = daDung ? "#2BB673" : dangHoi ? "#FFB800" : "#4B2FB0"; c.stroke();

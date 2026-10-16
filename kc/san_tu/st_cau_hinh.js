@@ -17,6 +17,9 @@
              bé chỉ nghe đọc từ + nhìn hình để chọn (anChu).
    ĐƠN VỊ: khoảng cách tính bằng "đơn vị thế giới" (nhân vật cao 66 đơn vị),
            thời gian tính bằng giây, tốc độ = đơn vị/giây.
+   CẬP NHẬT: 16/10/2026 - TC_00D2 (người dùng chốt lại): 1 quái = 1 đơn vị (60), cú nhảy 3 đơn vị
+             (cuLyNhay 180, cao 130), vật phải nhảy thu về cỡ 1 đơn vị; kim cương thành CỤM riêng có
+             từ riêng ở chỗ trống (loại "kimCuong", kimCuongMoiCum, kimCuongLe, tiLeDocKimCuong).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -34,11 +37,14 @@
     thoiGianChamSauKhung: 1.6,  // sau khi leo qua, bé còn chạy chậm thêm chừng này giây
     tiLeTocDoCham: 0.55,        // tốc độ lúc chạy chậm (so với bình thường)
     thoiGianGapNan: 1.5,        // giây diễn hoạt cảnh gặp nạn trước khi hồi sinh
-    doCaoNhay: 150,             // độ cao cú nhảy vượt chướng ngại vật (vật cao hơn mức này phải bắn)
-    cuLyNhay: 280,              // cự ly CỐ ĐỊNH của một cú nhảy (bé tự canh lúc bấm)
+    // Người dùng chốt 16/10/2026: coi một con quái là 1 ĐƠN VỊ (dài ~60), cú nhảy vượt 3 đơn vị
+    // -> vật phải nhảy chỉ rộng chừng 1 đơn vị, bé bấm sớm / trễ một chút vẫn qua được.
+    donVi: 60,
+    doCaoNhay: 130,             // độ cao cú nhảy (hơn 2 đơn vị); vật cao hơn mức này phải bắn
+    cuLyNhay: 180,              // cự ly CỐ ĐỊNH của một cú nhảy = 3 đơn vị (bé tự canh lúc bấm)
     leNhay: 4,                  // khoảng an toàn khi tính "cửa sổ" bấm nhảy (để không sượt qua mép)
-    coVaCham: 5,                // thu nhỏ hộp va chạm của chướng ngại vật cho dễ thở
-    nhanVat: { rong: 40, cao: 66 },
+    coVaCham: 10,               // thu nhỏ hộp va chạm của chướng ngại vật cho dễ thở
+    nhanVat: { rong: 24, cao: 66 }, // hộp va chạm của bé (hẹp hơn hình vẽ cho dễ thở)
     tocDoDan: 1000,             // tốc độ viên phép thuật
     khoangPhepToiThieu: 90,     // quái có máu: thanh đếm ngược hết khi quái còn cách chừng này
     thoiGianThemMoiVien: 0.45,  // quái nhiều máu: thêm chừng này giây đọc từ cho mỗi viên từ viên thứ 2
@@ -47,9 +53,9 @@
     leQuaChuongNgai: 130,       // đã đi qua chướng ngại vật thêm chừng này mới mở thử thách mới
     leHoiSinh: 80,              // hồi sinh cách mép sau chướng ngại vật chừng này
     kichThuocKimCuong: 26,
-    kimCuongDoCao: 170,         // kim cương lơ lửng gần đỉnh cú nhảy: chạy dưới đất không chạm, phải nhảy lên
-    kimCuongChoDoc: 0.8,        // giây để bé đọc từ trước cú nhảy lấy kim cương sớm nhất
-    kimCuongChoBamLai: 0.5,     // giây để bé bấm lại sau khi đáp đất, trước cửa sổ nhảy qua vật
+    kimCuongMoiCum: 5,          // một cụm kim cương (một từ riêng) có tối đa chừng này viên, xếp theo đường cong cú nhảy
+    tiLeDocKimCuong: 0.6,       // cụm kim cương: thời gian đọc từ = 60% thời gian của chướng ngại vật (bỏ lỡ không mất gì)
+    kimCuongLe: 22,             // cụm kim cương: bấm lệch khỏi lúc lý tưởng chừng này vẫn lấy đủ cả cụm
     soCapOnTap: 6,              // bảng ôn tập cuối màn: tối đa chừng này cặp hình - chữ
     khoaLuuCaiDat: "kc_santu_cai_dat" // localStorage: bật/tắt âm thanh
   };
@@ -74,9 +80,9 @@
      thoiGianDiDuKien: quãng đường = tocDo x số giây này (phần còn lại của thoiGianChoi
      là "đệm" cho các lần khựng / gặp nạn);
      loai: chướng ngại vật nào xuất hiện + trọng số (màn đầu chưa có quái khó);
-     Kim cương rải NGẪU NHIÊN trên đường (không gắn với quái hay từ), số lượng theo CẤP TỪ
-       (ST.DO_KHO.kimCuongToiDa): luôn lơ lửng trên không ở đoạn đường TRƯỚC vật phải nhảy (không
-       treo trên quái / vật cản); bé bấm đúng từ để nhảy lên lấy rồi bấm lại để nhảy qua vật;
+     Kim cương: số lượng theo CẤP TỪ (ST.DO_KHO.kimCuongToiDa), chia thành các CỤM đứng riêng ở
+       đoạn đường trống (không có vật cản / quái), mỗi cụm có MỘT TỪ riêng như một chướng ngại vật:
+       bé bấm đúng từ để nhảy lên lấy (cụm lơ lửng theo đường cong cú nhảy, chạy dưới đất không chạm);
      tiLeNguyHiemToiThieu: tỉ lệ tối thiểu quái / hố: không bấm gì thì không thể qua màn;
      mauQuai: số viên phải bắn trúng để hạ quái có thanh máu / vật cản cao (càng về cuối càng nhiều);
      tiLeCoMau: xác suất một quái được mang thanh máu (luôn giữ KHÔNG QUÁ 1/4 tổng số quái). */
@@ -101,13 +107,13 @@
 
   /* ----- MÀN "TẬP CHƠI" (màn 0, người dùng yêu cầu 16/10/2026) -----
      Chạy chậm, nhiều giờ đọc, các chướng ngại vật xếp SẴN theo thứ tự để bé lần lượt học:
-     nhảy qua vật cản, nhảy lấy kim cương rồi nhảy tiếp, nhảy qua hố, nhảy qua quái không có
+     nhảy qua vật cản, nhảy lấy kim cương, nhảy qua hố, nhảy qua quái không có
      thanh máu, bắn quái có thanh máu, bắn vỡ tường đá. CHỈ màn này có dải xanh hướng dẫn nhảy.
      Không tính sao, không mở khóa gì; chơi lại bao nhiêu lần cũng được. */
   ST.MAN_HUONG_DAN = Object.assign({}, chung, {
     soMan: 0, laHuongDan: true, mauQuai: 2, soPhuongAn: 2, doGiong: 0, tocDo: 120, thoiGianPhanUng: 5.2,
     khoangThem: [60, 120], thoiGianChoi: 150, loai: { cong: 1 },
-    thuTu: [{ loai: "cong" }, { loai: "da" }, { loai: "ho" }, { loai: "nam" }, { loai: "nam", mau: 2 }, { loai: "tuongDa", mau: 2 }]
+    thuTu: [{ loai: "cong" }, { loai: "kimCuong", so: 3 }, { loai: "da" }, { loai: "ho" }, { loai: "nam" }, { loai: "nam", mau: 2 }, { loai: "tuongDa", mau: 2 }]
   });
 
   /* ----- 10 ĐƯỜNG ĐUA: mỗi đường một chủ đề, 7 màn cùng chủ đề -----
@@ -137,7 +143,7 @@
     if (huongDan) return Object.assign({}, ST.MAN_HUONG_DAN, {
       ma: duong.ma + "-0-" + cap.ma, maDuong: duong.ma, duong, laManCuoi: false, ten: "Tập chơi",
       maCapTu: cap.ma, capTu: cap.capTu, capNhieu: cap.capNhieu, tenCap: cap.ten, anChu: !!cap.anChu,
-      soKimCuong: [Math.min(3, cap.kimCuongToiDa), Math.min(3, cap.kimCuongToiDa)]
+      soKimCuong: [Math.min(3, cap.kimCuongToiDa), Math.min(3, cap.kimCuongToiDa)] // cụm ở thuTu
     });
     return Object.assign({}, ST.MAN_CHOI[n - 1], {
       ma: duong.ma + "-" + n + "-" + cap.ma, maDuong: duong.ma, duong, soMan: n, laManCuoi: n === ST.SO_MAN,
@@ -148,6 +154,8 @@
 
   /* ----- Các loại chướng ngại vật -----
      nhom: can (vật cản) | quaiDat (quái mặt đất) | quaiBay (quái bay) | ho (hố sâu)
+           | kimCuong (cụm kim cương có từ riêng, không va chạm; chỉ dùng khi sinh đường, không bốc thăm)
+     Vật phải nhảy rộng chừng 1 đơn vị (donVi), cú nhảy 3 đơn vị.
      caoHonNhay: cao hơn cú nhảy -> LUÔN phải bắn (vật cản cao / thạch khổng lồ).
        Các loại khác bé nhảy qua; riêng quái được gắn THANH MÁU (lúc sinh đường, tối đa
        1/4 số quái) thì phải bắn. Việc bé làm (nhảy / bắn) ghi ở từng chướng ngại vật.
@@ -156,15 +164,16 @@
      bayCao: quái bay lơ lửng cách mặt đất chừng này (đúng tầm va vào người bé)
      tocDoDi: quái tiến về phía bé (đơn vị/giây) sau khi thử thách hiện ra */
   ST.LOAI_CHUONG_NGAI = {
-    cong:    { ten: "Ống cống",       nhom: "can",     vaCham: "khung",   rong: [80, 92],   cao: [56, 64] },
-    da:      { ten: "Tảng đá",        nhom: "can",     vaCham: "khung",   rong: [46, 70],   cao: [34, 52] },
-    gocCay:  { ten: "Gốc cây",        nhom: "can",     vaCham: "khung",   rong: [48, 62],   cao: [44, 58] },
+    cong:    { ten: "Ống cống",       nhom: "can",     vaCham: "khung",   rong: [52, 58],   cao: [42, 48] },
+    da:      { ten: "Tảng đá",        nhom: "can",     vaCham: "khung",   rong: [40, 54],   cao: [30, 42] },
+    gocCay:  { ten: "Gốc cây",        nhom: "can",     vaCham: "khung",   rong: [42, 54],   cao: [36, 48] },
     tuongDa: { ten: "Tường đá",       nhom: "can",     vaCham: "khung",   rong: [58, 66],   cao: [176, 190], caoHonNhay: true },
     nam:     { ten: "Nấm tí hon",     nhom: "quaiDat", vaCham: "matMang", rong: [50, 54],   cao: [52, 56], tocDoDi: 30 },
     nhim:    { ten: "Nhím gai",       nhom: "quaiDat", vaCham: "matMang", rong: [56, 60],   cao: [38, 42], tocDoDi: 45 },
     slime:   { ten: "Thạch khổng lồ", nhom: "quaiDat", vaCham: "matMang", rong: [78, 84],   cao: [166, 176], tocDoDi: 20, caoHonNhay: true },
     vit:     { ten: "Vịt bay",        nhom: "quaiBay", vaCham: "matMang", rong: [58, 62],   cao: [42, 46], bayCao: 26, tocDoDi: 55 },
     ong:     { ten: "Ong bay",        nhom: "quaiBay", vaCham: "matMang", rong: [44, 48],   cao: [40, 42], bayCao: 18, tocDoDi: 40 },
-    ho:      { ten: "Hố sâu",         nhom: "ho",      vaCham: "roi",     rong: [100, 150], cao: [0, 0] }
+    ho:      { ten: "Hố sâu",         nhom: "ho",      vaCham: "roi",     rong: [56, 72],   cao: [0, 0] },
+    kimCuong:{ ten: "Kim cương",      nhom: "kimCuong", vaCham: "khong",  rong: [0, 0],     cao: [0, 0] }
   };
 })(typeof window !== "undefined" ? window : globalThis);
