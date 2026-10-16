@@ -196,11 +196,15 @@ console.log("6. Hết giờ thì thua dù còn mạng; tới lâu đài thì đ�
   kiem(r.g.tamDung() === false, "thắng rồi không tạm dừng được");
 }
 
-console.log("7. Đường đi hợp lệ: không chồng lấn, cái đầu là ống cống, đủ khoảng phản ứng");
+console.log("7. Đường đi hợp lệ: không chồng lấn, cái đầu là vật cản thấp, không 2 cái giống nhau liền nhau, đủ khoảng phản ứng");
 for (const ma of DS_MAN) for (let hat = 1; hat <= 40; hat++) {
   const dk = MAN_THU[ma], v = dk.tocDo;
   const d = ST.sinhDuongDi(dk, ST.taoNgauNhien(hat), new ST.KhoTuVung(dk, ST.taoNgauNhien(hat)));
-  kiem(d.ds[0].loai === "cong", `${ma}#${hat}: cái đầu phải là ống cống`);
+  kiem(d.ds.filter(o => o.vaCham === "matMang" || o.vaCham === "roi").length >= ST.CAU_HINH.mangBanDau, `${ma}#${hat}: thiếu quái / hố (không bấm vẫn qua được)`);
+  { const L0 = ST.LOAI_CHUONG_NGAI[d.ds[0].loai];
+    kiem(L0.nhom === "can" && !L0.caoHonNhay, `${ma}#${hat}: cái đầu phải là vật cản thấp (${d.ds[0].loai})`); }
+  for (let i = 1; i < d.ds.length; i++) if (d.ds[i].nhom !== "kimCuong" && d.ds[i].loai === d.ds[i - 1].loai)
+    kiem(false, `${ma}#${hat}: 2 ${d.ds[i].loai} liền nhau`);
   for (let i = 1; i < d.ds.length; i++) {
     const a = d.ds[i - 1], b = d.ds[i];
     const tamB = b.x + b.rong / 2;
@@ -541,6 +545,52 @@ console.log("19. Bảng ôn tập: ưu tiên từ sai, không trùng hình, ghé
   let cuoi = null;
   chon.forEach(t => { if (!b.daXong.has(t.en)) { b.bam("hinh", t.en); cuoi = b.bam("chu", t.en); } });
   kiem(cuoi && cuoi.kq === "dung" && cuoi.xong && b.xong && b.conLai === 0, "ghép hết là ôn xong");
+}
+
+console.log("20. Kho quái phong phú: mỗi loại trong kho đều có xuất hiện; mỗi lượt nhiều loại khác nhau; chơi lại thì thứ tự khác");
+{
+  const gapKhongLo = new Set(); // quái khổng lồ chịu giới hạn 1/4 nên hiếm: chỉ cần có ở màn 5-7
+  for (let n = 1; n <= ST.SO_MAN; n++) {
+    const dk = ST.taoManChoi("rung", n, "de"), gap = new Set(), dsChuoi = new Set();
+    let tongKhac = 0, tongVat = 0;
+    for (let hat = 1; hat <= 80; hat++) {
+      const d = ST.sinhDuongDi(dk, ST.taoNgauNhien(hat * 7 + n), new ST.KhoTuVung(dk, ST.taoNgauNhien(hat)));
+      const vat = d.ds.filter(o => o.nhom !== "kimCuong");
+      vat.forEach(o => { gap.add(o.loai); gapKhongLo.add(o.loai); });
+      tongKhac += new Set(vat.map(o => o.loai)).size; tongVat += vat.length;
+      dsChuoi.add(vat.map(o => o.loai).join());
+    }
+    Object.keys(dk.loai).filter(t => !(ST.LOAI_CHUONG_NGAI[t].nhom === "quaiDat" && ST.LOAI_CHUONG_NGAI[t].caoHonNhay))
+      .forEach(t => kiem(gap.has(t), `màn ${n}: loại ${t} không bao giờ xuất hiện`));
+    kiem(tongKhac / tongVat >= 0.75, `màn ${n}: mỗi lượt quá ít loại khác nhau (${(tongKhac / tongVat).toFixed(2)})`);
+    kiem(dsChuoi.size >= 70, `màn ${n}: chơi lại hay gặp đúng thứ tự cũ (${dsChuoi.size}/80 khác nhau)`);
+    console.log(`   màn ${n}: kho ${Object.keys(dk.loai).length} loại, mỗi lượt trung bình ${(tongKhac / 80).toFixed(1)} loại khác nhau / ${(tongVat / 80).toFixed(1)} chướng ngại vật`);
+  }
+  ["slime", "cayBietDi"].forEach(t => kiem(gapKhongLo.has(t), `quái khổng lồ ${t} không bao giờ xuất hiện`));
+  // loại nào trong kho cũng có hình vẽ (tên hàm vẽ ở st_ve.js) và tên tiếng Việt
+  const ve = require("fs").readFileSync(require("path").join(__dirname, "st_ve.js"), "utf8");
+  Object.keys(ST.LOAI_CHUONG_NGAI).filter(t => !["ho", "kimCuong"].includes(t))
+    .forEach(t => kiem(ve.includes(`case "${t}":`) && ST.LOAI_CHUONG_NGAI[t].ten, `loại ${t} chưa có hình vẽ`));
+}
+
+console.log("21. Quái nhiều máu: bé bắn chậm (mỗi viên cách nhau 1.1 giây) vẫn kịp hạ vì bé chạy chậm lại; không có quái thì chạy đủ tốc độ");
+{
+  // bắn chậm: nghĩ gần hết thời gian đọc rồi mới bắn viên đầu, các viên sau cách nhau 1.1 giây
+  const banCham = { lap: 1.1, tre: (tt) => tt.o.hanhDong === "nhay" ? 0.3 : tt.thoiHan * 0.85, bam: (g, tt) => bamDung(g, tt) };
+  for (const ma of DS_MAN) for (let hat = 1; hat <= 20; hat++) {
+    let heMin = 1, loiHe = "";
+    const { g, suKien } = chay(ma, hat, banCham, { moiBuoc: g => {
+      const tt = g.thuThach, he = g.heSoTocDo;
+      heMin = Math.min(heMin, he);
+      if (he < ST.CAU_HINH.tiLeTocDoBanToiThieu - 1e-9) loiHe = "chậm quá " + he;
+      if (he < 1 && !(tt && tt.trangThai === "mo" && tt.o.hanhDong === "ban" && tt.o.song)) loiHe = "chạy chậm khi không có quái phải bắn";
+    } });
+    kiem(!loiHe, `${ma}#${hat}: ${loiHe}`);
+    const banMo = suKien.filter(e => e.t === "thuThachMoi" && e.d.tt.o.hanhDong === "ban").length;
+    kiem(dem(suKien, "haQuai") === banMo, `${ma}#${hat}: bắn chậm phải hạ hết quái (${dem(suKien, "haQuai")}/${banMo})`);
+    kiem(g.thongKe.matMang === 0, `${ma}#${hat}: bắn chậm không được mất mạng (${g.thongKe.matMang})`);
+    if (banMo) kiem(heMin < 1, `${ma}#${hat}: có quái nhiều máu mà không chạy chậm lại`);
+  }
 }
 
 console.log(`\n${soKiem - soLoi}/${soKiem} kiểm tra đạt` + (soLoi ? ` - ${soLoi} LỖI` : " ✓"));
