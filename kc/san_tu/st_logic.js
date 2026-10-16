@@ -30,6 +30,8 @@
              liền nhau, cố tránh loại vừa gặp; cái đầu là một vật cản thấp bất kỳ (không chỉ ống cống).
              Gặp quái nhiều máu mà không đủ giờ bắn thì bé chạy chậm lại (tinhHeSoTocDo), chỉ khi quái
              đã hiện trên màn hình và chậm ít. HANG KIM CƯƠNG: rơi hố có xác suất vào hang (vaoHang).
+   CẬP NHẬT: 16/10/2026 - TC_00E: không còn dùng tên loại cố định ("cong", "nam") khi chọn quái:
+             mọi lựa chọn lấy từ kho của đường đua (mỗi đường đua một kho riêng theo chủ đề).
    TỌA ĐỘ: x = quãng đường (tăng về phía lâu đài), y = độ cao so với mặt đất.
            Nhân vật: x là TÂM người, y là CHÂN. Chướng ngại vật: x là MÉP TRÁI.
    THỨ TỰ XỬ LÝ MỖI BƯỚC (cố định để không chồng chéo):
@@ -142,7 +144,7 @@
       // cái đầu tiên luôn là một vật cản thấp (chỉ khựng, không mất mạng) để bé làm quen; loại thì ngẫu nhiên
       if (i === 0) {
         const an = tenLoai.filter(t => LCN(t).nhom === "can" && !LCN(t).caoHonNhay);
-        return an.length ? bocTham(an) : "cong";
+        return an.length ? bocTham(an) : tenLoai[0];
       }
       // Bảo đảm đủ tỉ lệ chướng ngại vật nguy hiểm: không thể về đích mà không trả lời từ nào
       const nguyHiem = t => { const vc = LCN(t).vaCham; return vc === "matMang" || vc === "roi"; };
@@ -216,7 +218,7 @@
           if (L.caoHonNhay && !choPhep) { // quái khổng lồ mà đã đủ 1/4: đổi thành quái nhỏ nhảy qua được
             const truoc = ds.filter(x => x.nhom !== "kimCuong").slice(-1).map(x => x.loai)[0];
             const nho = tenLoai.filter(t => LCN(t).nhom === "quaiDat" && !LCN(t).caoHonNhay && t !== truoc);
-            ma = nho.length ? bocTham(nho) : "nam"; L = LCN(ma);
+            if (nho.length) { ma = bocTham(nho); L = LCN(ma); }
           }
           if (L.caoHonNhay || (choPhep && rng() < dk.tiLeCoMau)) { mau = dk.mauQuai; soCoMau++; }
         } else if (L.caoHonNhay) mau = dk.mauQuai; // vật cản cao hơn cú nhảy: phải bắn

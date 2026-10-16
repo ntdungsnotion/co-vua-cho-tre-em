@@ -21,6 +21,10 @@
              chữ thì đọc lại chữ đó (trùng từ đang đọc dở thì đọc tiếp cho xong).
              Cụm kim cương có từ riêng (đứng ở chỗ trống): lời nhắc / thông báo riêng cho cụm.
              Hang kim cương (rơi hố may mắn): thông báo vào / ra hang, từ của cửa ánh sáng.
+   CẬP NHẬT: 16/10/2026 - TC_00E: đường đua 2 "Xứ sở kẹo ngọt"; menu vẽ cảnh của đường đua đang
+             chọn; lời nhắc Tập chơi dùng tên vật / hố của từng đường. Xem thử cho bố mẹ: thêm
+             #xem-<mã đường> vào địa chỉ (vd #xem-keo) để mở mọi màn của đường đó mà chưa cần qua
+             đường trước (chỉ trong lần mở trang đó, không lưu).
    ================================================================ */
 (function () {
   "use strict";
@@ -38,11 +42,20 @@
   try { tenBe = (JSON.parse(sessionStorage.getItem("coVuaTaiKhoanDangNhap") || "null") || {}).tenDangNhap || ""; } catch (e) { tenBe = ""; }
   const soTay = new ST.SoTayTu(tenBe);
   const tienDo = new ST.TienDoDuongDua(tenBe); // bé đã mở tới màn nào, mỗi màn mấy sao
+  // Xem thử cho bố mẹ (#xem-keo): mở mọi màn của một đường đua trong lần mở trang này, không lưu
+  const xemThu = (location.hash.match(/^#xem-(\w+)$/) || [])[1];
+  if (xemThu && ST.DUONG_DUA.some(d => d.ma === xemThu && d.daCo)) {
+    const duongMoGoc = tienDo.duongMo.bind(tienDo), manMoGoc = tienDo.manMo.bind(tienDo);
+    tienDo.duongMo = ma => ma === xemThu || duongMoGoc(ma);
+    tienDo.manMo = ma => ma === xemThu ? ST.SO_MAN : manMoGoc(ma);
+    try { localStorage.setItem("kc_santu_duong", xemThu); } catch (e) { /* bỏ qua */ }
+  }
   let maDuong = "rung";
   try { const d = localStorage.getItem(KHOA_DUONG); if (d && tienDo.duongMo(d)) maDuong = d; } catch (e) { /* bỏ qua */ }
   // Bé mới (chưa qua màn nào) thì chọn sẵn màn "Tập chơi" (màn 0)
   const manMacDinh = d => (d === ST.DUONG_DUA[0].ma && tienDo.manMo(d) === 1 && tienDo.tongSao(d) === 0) ? 0 : tienDo.manMo(d);
   let soManChon = manMacDinh(maDuong);
+  if (xemThu && maDuong === xemThu) soManChon = 0; // xem thử: bắt đầu từ Tập chơi của đường đó
   let ketQuaMan = null;      // { manMoi, xongDuong } của lần qua màn vừa rồi
   let tuMoiThuoc = [];       // các từ bé vừa thuộc trong lượt này
   let tuDaGap = [], tuSai = []; // các từ đã hiện trong lượt / các từ bé làm sai, không kịp (cho bảng ôn tập)
@@ -119,6 +132,7 @@
     }
   }
   function veMenuChon() {
+    ve.maDuongMenu = maDuong; // cảnh nền menu theo đường đua đang chọn
     veChonDuong(); veChonMan();
     $("ghiChuDuong").textContent = "";
     $("nutBatDau").textContent = soManChon === 0 ? "▶ Tập chơi" : `▶ Chơi màn ${soManChon}`;
@@ -351,8 +365,8 @@
       ? `🧱 ${o.ten} cao quá, không nhảy qua được! Bấm ${timTu} ${o.mau} lần để bắn vỡ.`
       : `💥 Quái có thanh máu trên đầu: phải bắn! Bấm ${timTu} ${o.mau} lần để bắn hạ.`;
     if (o.nhom === "kimCuong") return `💎 Kim cương trên cao! Chờ bé vào dải xanh rồi bấm ${timTu} để nhảy lên lấy.`;
-    if (o.nhom === "ho") return `🕳️ Hố sâu! Chờ bé vào dải xanh rồi bấm ${timTu} để nhảy qua.`;
-    if (o.nhom === "quaiDat" || o.nhom === "quaiBay") return `🍄 Quái KHÔNG có thanh máu: nhảy qua là được! Chờ dải xanh rồi bấm ${timTu}.`;
+    if (o.nhom === "ho") return `🕳️ ${o.ten}! Chờ bé vào dải xanh rồi bấm ${timTu} để nhảy qua.`;
+    if (o.nhom === "quaiDat" || o.nhom === "quaiBay") return `👾 ${o.ten} KHÔNG có thanh máu: nhảy qua là được! Chờ dải xanh rồi bấm ${timTu}.`;
     return `👆 Chờ bé chạy vào dải xanh rồi bấm ${timTu} để nhảy qua ${ten}!`;
   }
   function veHanhDong(tt) {
@@ -507,7 +521,7 @@
       case "trongHang":
         ve.hat = [];
         am.phat("doiMang");
-        bao(`💎 Hang kim cương bí mật!`);
+        bao(`💎 ${g.dk.duong.tenHang || "Hang kim cương bí mật"}!`);
         loiNhan(`Đồng hồ đứng yên. Chạy qua là nhặt được ${d.so} viên kim cương!`, "tot");
         break;
       case "vaoCuaSang": am.phat("hoiSinh"); break;

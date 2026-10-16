@@ -19,6 +19,10 @@
              Kho mở rộng: vẽ thêm khúc gỗ, hàng rào, bụi gai, thùng gỗ, cột tô-tem, ốc sên, cua,
              ếch, sâu róm, cây biết đi, dơi, chim sẻ, bọ rùa bay. Hang kim cương (veHang) khi rơi hố
              may mắn; báo cho lõi game khoảng nhìn thấy phía trước (g.tamNhin).
+   CẬP NHẬT: 16/10/2026 - TC_00E: vẽ THEO CHỦ ĐỀ đường đua. File st_ve_<mã>.js khai báo
+             ST.CHU_DE_VE[<mã>] (nen, dat, mieng, nenHang, mauGoHang, lauDai, bongLauDai, cong)
+             và ST.VE_QUAI (hình quái riêng); thiếu phần nào thì dùng hình Rừng xanh. Menu vẽ
+             cảnh của đường đua đang chọn (maDuongMenu). Tên hang lấy theo đường đua (tenHang).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -97,6 +101,8 @@
       c.lineJoin = "round"; c.lineCap = "round";
       const choi = g && g.trangThai !== "menu";
       if (choi) g.tamNhin = this.rong * (1 - this.viTriBe) - 20; // quái cách bé bao xa thì đã hiện trên màn hình (để chạy chậm lại)
+      // chủ đề vẽ: đường đua của lượt đang chơi, hoặc đường đua đang chọn ở menu
+      this.cd = (ST.CHU_DE_VE || {})[choi ? g.dk.maDuong : this.maDuongMenu] || null;
       if (choi && g.hang && g.hang.pha !== "roi") { this.veHang(g); return; }
       const be = choi ? g.be : { x: this.t * 150, y: 0, che: "chay", batTu: 0, tTiepDat: 9, tPhep: 9, tChe: 0 };
       const doDai = choi ? g.doDai : 1e9;
@@ -106,8 +112,9 @@
       if (choi) camX = Math.min(camX, doDai + 300 - this.rong);
       if (choi && g.trangThai === "thang") camX = Math.min(doDai - this.rong * this.viTriBe, doDai + 300 - this.rong);
       this.camX = camX;
-      this.veNen(camX, tienDo);
-      this.veDat(camX, choi ? g.chuongNgai : [], doDai);
+      const cd = this.cd;
+      if (cd && cd.nen) cd.nen.call(this, camX, tienDo); else this.veNen(camX, tienDo);
+      if (cd && cd.dat) cd.dat.call(this, camX, choi ? g.chuongNgai : [], doDai); else this.veDat(camX, choi ? g.chuongNgai : [], doDai);
       if (choi) {
         if (g.dk.laManCuoi) this.veLauDai(g, camX); else this.veCongMan(g, camX);
         this.veVachXuatPhat(camX);
@@ -129,6 +136,16 @@
       const H = g.hang, c = this.c, W = this.rong, Hc = this.cao, dat = this.dat, t = this.t;
       const camX = Math.max(0, Math.min(H.x - W * 0.3, H.cuaX + 220 - W));
       this.camX = camX;
+      if (this.cd && this.cd.nenHang) this.cd.nenHang.call(this, camX); else this.veNenHang(camX);
+      // gờ đá + cửa ánh sáng
+      const gx = H.cuaX - camX, dinh = dat - H.doCaoGo, mauGo = (this.cd && this.cd.mauGoHang) || ["#5b4590", "#7a60c0"];
+      c.fillStyle = mauGo[0]; c.beginPath(); c.roundRect(gx - 60, dinh, 220, H.doCaoGo + 4, 10); c.fill();
+      c.fillStyle = mauGo[1]; c.fillRect(gx - 60, dinh, 220, 8);
+      this.veCuaHang(g, gx, dinh);
+    }
+    // Nền hang Rừng xanh: hang tím có nhũ đá, pha lê phát sáng
+    veNenHang(camX) {
+      const c = this.c, W = this.rong, Hc = this.cao, dat = this.dat, t = this.t;
       const gr = c.createLinearGradient(0, 0, 0, dat);
       gr.addColorStop(0, "#160d33"); gr.addColorStop(1, "#3a2470");
       c.fillStyle = gr; c.fillRect(0, 0, W, Hc);
@@ -160,10 +177,10 @@
       c.fillStyle = "#6a4fb0"; c.fillRect(0, dat, W, 8);
       c.fillStyle = "#3b2870";
       for (let i = Math.floor(camX / 70); i < (camX + W) / 70 + 1; i++) c.fillRect(i * 70 - camX + 6, dat + 18 + (i % 2) * 14, 40, 8);
-      // gờ đá + cửa ánh sáng
-      const gx = H.cuaX - camX, dinh = dat - H.doCaoGo;
-      c.fillStyle = "#5b4590"; c.beginPath(); c.roundRect(gx - 60, dinh, 220, H.doCaoGo + 4, 10); c.fill();
-      c.fillStyle = "#7a60c0"; c.fillRect(gx - 60, dinh, 220, 8);
+    }
+    // Cửa ánh sáng trên gờ, kim cương, bé, nhãn tên hang (chung cho mọi đường đua)
+    veCuaHang(g, gx, dinh) {
+      const H = g.hang, c = this.c, W = this.rong, Hc = this.cao, dat = this.dat, t = this.t, camX = this.camX;
       const sang = 0.75 + Math.sin(t * 4) * 0.2;
       const hq = c.createRadialGradient(gx, dinh - 52, 6, gx, dinh - 52, 120);
       hq.addColorStop(0, `rgba(255,250,210,${0.9 * sang})`); hq.addColorStop(1, "rgba(255,240,180,0)");
@@ -191,7 +208,7 @@
       this.veHat(camX);
       // tên hang + số kim cương đã nhặt
       c.font = "800 20px " + FONT; c.textAlign = "center"; c.textBaseline = "middle";
-      const nhan = `💎 Hang kim cương bí mật · ${H.daLay}/${H.so}`, wn = c.measureText(nhan).width + 28;
+      const nhan = `💎 ${g.dk.duong.tenHang || "Hang kim cương bí mật"} · ${H.daLay}/${H.so}`, wn = c.measureText(nhan).width + 28;
       const yn = dat + 18; // trên nền hang, dưới chân bé: không đè thanh thông tin / thông báo
       c.fillStyle = "rgba(255,255,255,0.92)"; c.beginPath(); c.roundRect(W / 2 - wn / 2, yn, wn, 32, 16); c.fill();
       c.fillStyle = "#4B2FB0"; c.fillText(nhan, W / 2, yn + 17);
@@ -315,6 +332,7 @@
     /* ---------------- LÂU ĐÀI + MÈO ---------------- */
     veBongLauDai(x, y, k) {
       const c = this.c;
+      if (this.cd && this.cd.bongLauDai) return this.cd.bongLauDai.call(this, x, y, k);
       c.fillStyle = "#8d7fb8";
       c.fillRect(x - 60 * k, y - 80 * k, 120 * k, 80 * k);
       c.fillRect(x - 90 * k, y - 120 * k, 40 * k, 120 * k); c.fillRect(x + 50 * k, y - 120 * k, 40 * k, 120 * k);
@@ -326,7 +344,13 @@
       if (x0 < -300 || x0 > this.rong + 300) return;
       const c = this.c;
       c.save(); c.translate(x0, y0); c.scale(0.8, 0.8);
-      const x = 0, y = 0;
+      if (this.cd && this.cd.lauDai) this.cd.lauDai.call(this, g); else this.veThanLauDai(g);
+      this.veLongMeo(g, 38, -4);
+      c.restore();
+    }
+    // Lâu đài Rừng xanh (gốc tọa độ: giữa chân lâu đài)
+    veThanLauDai(g) {
+      const c = this.c, x = 0, y = 0;
       // thân
       c.fillStyle = "#e9dcff"; c.fillRect(x - 110, y - 150, 220, 150);
       c.fillStyle = "#d6c4fa";
@@ -350,8 +374,10 @@
       c.fillStyle = "#fff"; c.beginPath(); c.roundRect(x - 10, y - 140, 100, 30, 10); c.fill();
       c.fillStyle = "#4B2FB0"; c.font = "800 18px " + FONT; c.textAlign = "center"; c.textBaseline = "middle";
       c.fillText("Lâu Đài", x + 40, y - 125);
-      // lồng + mèo (trước khi được cứu); khi thắng: lồng nhấc lên, mèo được tự do
-      const lx = x + 38, ly = y - 4;
+    }
+    // Lồng + mèo (trước khi được cứu); khi thắng: lồng nhấc lên, mèo được tự do
+    veLongMeo(g, lx, ly) {
+      const c = this.c;
       const daCuu = g.trangThai === "thang" && g.tKetThuc > 1.4;
       const nang = g.trangThai === "thang" ? Math.min(1, Math.max(0, (g.tKetThuc - 0.8) / 0.6)) : 0;
       if (!daCuu) this.veMeo(lx, ly - 2, 1.1, false, 1);
@@ -363,21 +389,20 @@
       c.restore();
       if (!daCuu && Math.sin(this.t * 3) > 0.3) { // mèo kêu cứu
         c.fillStyle = "#fff"; c.beginPath(); c.roundRect(lx - 4, ly - 128, 92, 32, 12); c.fill();
-        c.fillStyle = "#e5484d"; c.font = "800 17px " + FONT; c.fillText("Meo! Cứu!", lx + 42, ly - 111);
+        c.fillStyle = "#e5484d"; c.font = "800 17px " + FONT; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("Meo! Cứu!", lx + 42, ly - 111);
       }
-      c.restore();
     }
     // Cổng về đích của màn 1-6: hai cột sọc, băng rôn "Màn n", cờ caro; biển chỉ đường tới lâu đài
     veCongMan(g, camX) {
       const x0 = g.doDai + 40 - camX, y0 = this.dat;
       if (x0 < -260 || x0 > this.rong + 260) return;
-      const c = this.c, cao = 150, rong = 150, qua = g.trangThai === "thang";
+      const c = this.c, cao = 150, rong = 150, qua = g.trangThai === "thang", mauCong = (this.cd && this.cd.cong) || { soc: "#ff7eb6", nut: "#ffd23f" };
       // hai cột sọc
       [-rong / 2, rong / 2].forEach(dx => {
         c.fillStyle = "#fff"; c.fillRect(x0 + dx - 9, y0 - cao, 18, cao);
-        c.fillStyle = "#ff7eb6";
+        c.fillStyle = mauCong.soc;
         for (let i = 0; i < 6; i++) c.fillRect(x0 + dx - 9, y0 - cao + i * 26, 18, 13);
-        c.fillStyle = "#ffd23f"; c.beginPath(); c.arc(x0 + dx, y0 - cao - 6, 10, 0, PI2); c.fill();
+        c.fillStyle = mauCong.nut; c.beginPath(); c.arc(x0 + dx, y0 - cao - 6, 10, 0, PI2); c.fill();
       });
       // băng rôn
       const lac = Math.sin(this.t * 3) * 2;
@@ -473,10 +498,11 @@
           case "doi": this.veDoi(w, h, t); break;
           case "chim": this.veChim(w, h, t, o.bienThe); break;
           case "boRua": this.veBoRua(w, h, t); break;
+          default: { const f = (ST.VE_QUAI || {})[o.loai]; if (f) f.call(this, w, h, t, o); } // quái theo chủ đề (st_ve_<mã>.js)
         }
       }
       c.restore();
-      if (o.nhom === "ho") this.veMieng(x, o.rong);
+      if (o.nhom === "ho") { if (this.cd && this.cd.mieng) this.cd.mieng.call(this, x, o.rong); else this.veMieng(x, o.rong); }
       this.veThanhMau(o, x);
       this.veBien(o, g, x);
     }
