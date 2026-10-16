@@ -691,5 +691,62 @@ console.log("24. Không bấm gì thì không qua được màn: mỗi đường
   CH.tiLeHangKimCuong = giuHang;
 }
 
+console.log("25. Ôn tập: đồng hồ thưởng kim cương (nhanh 5, trung bình 1, chậm 0, bấm sai bị trừ sớm hơn)");
+{
+  const th = ST.CAU_HINH.thuongOnTap, T = ST.tinhThuongOnTap;
+  kiem(th && th.toiDa === 5, "mặc định tối đa 5 kim cương");
+  for (const n of [2, 4, 6]) {
+    const nhanh = th.giayCucNhanh * n, nac = th.giayMoiNac * n;
+    kiem(T(0, n, th).kc === 5 && T(nhanh, n, th).kc === 5, `${n} cặp: ghép cực nhanh được 5`);
+    kiem(T(nhanh + 0.01, n, th).kc === 4, `${n} cặp: chậm hơn một chút còn 4`);
+    kiem(T(nhanh + nac * 3.5, n, th).kc === 1, `${n} cặp: tốc độ trung bình còn 1`);
+    kiem(T(nhanh + nac * 4 + 0.01, n, th).kc === 0 && T(999, n, th).kc === 0, `${n} cặp: chậm thì 0`);
+    let truoc = 9, giam = true; for (let s = 0; s < 60; s += 0.25) { const k = T(s, n, th).kc; if (k > truoc) giam = false; truoc = k; }
+    kiem(giam, `${n} cặp: kim cương chỉ giảm dần theo thời gian`);
+  }
+  // bảng thật: ghép đúng hết thì chốt kim cương; bấm sai làm mất viên sớm hơn
+  const tu = [{ en: "cat", e: "🐱" }, { en: "dog", e: "🐶" }, { en: "sun", e: "☀️" }];
+  const ghep = (b, giay) => tu.forEach(t => { b.bam("hinh", t.en, giay); b.bam("chu", t.en, giay); });
+  const b1 = new ST.BangOnTap(tu, ST.taoNgauNhien(2), th); ghep(b1, 1);
+  kiem(b1.xong && b1.kimCuongThuong === 5, "ghép xong trong 1 giây: được 5 kim cương");
+  const gioiHan = th.giayCucNhanh * 3 - 0.1; // vừa kịp 5 viên nếu không sai
+  const b2 = new ST.BangOnTap(tu, ST.taoNgauNhien(2), th); ghep(b2, gioiHan);
+  const b3 = new ST.BangOnTap(tu, ST.taoNgauNhien(2), th);
+  b3.bam("hinh", "cat", 0); b3.bam("chu", "dog", 0); // một lần bấm sai
+  ghep(b3, gioiHan);
+  kiem(b2.kimCuongThuong === 5 && b3.kimCuongThuong === 4, `bấm sai bị trừ sớm hơn (${b2.kimCuongThuong} -> ${b3.kimCuongThuong})`);
+  kiem(b3.thuongLuc(999).kc === 4, "đã chốt thì không đổi nữa");
+  const b4 = new ST.BangOnTap(tu, ST.taoNgauNhien(2), th); ghep(b4, 120);
+  kiem(b4.kimCuongThuong === 0, "ghép quá chậm: không có kim cương");
+}
+
+console.log("26. Hình bé (khung xương): mọi tư thế đều hợp lệ, chân chạm đất khi chạy, bơi / bay nằm ngang");
+{
+  require("./st_ve.js"); require("./st_ve_be.js");
+  const D = ST.dungKhungBe, so = p => Number.isFinite(p.x) && Number.isFinite(p.y);
+  const kieuDs = ["chay", "truot", "cuoi", "boi", "bay", "ngoi"];
+  let hopLe = true, chamDat = true, dauTren = true;
+  for (const kieu of kieuDs) for (const che of ["chay", "nhay", "khung", "gapNan", "roi"]) for (let i = 0; i < 24; i++) {
+    const s = { kieu, che, pha: i * 0.4, t: i * 0.13, thang: false, nhay: che === "nhay", uNhay: i / 23, trenKhong: false, dangChay: che === "chay", phep: i % 5 === 0, nang: 0 };
+    const k = D(s);
+    const diem = [k.hong, k.vai, k.co, k.dau, k.lung, ...k.chan.flatMap(c => [c.goi, c.ban]), ...k.tay.flatMap(t => [t.khuyu, t.ban])];
+    if (!diem.every(so) || !k.chan.every(c => Number.isFinite(c.gocBan))) hopLe = false;
+    if (kieu === "chay" && che === "chay" && Math.abs(Math.max(k.chan[0].ban.y, k.chan[1].ban.y) + 2.5) > 0.01) chamDat = false;
+    if ((kieu === "chay" || kieu === "truot" || kieu === "cuoi" || kieu === "ngoi") && !(k.dau.y < k.vai.y && k.vai.y < k.hong.y)) dauTren = false;
+  }
+  kiem(hopLe, "mọi khớp đều là số hợp lệ ở mọi tư thế");
+  kiem(chamDat, "chạy: bàn chân thấp nhất luôn chạm mặt đất");
+  kiem(dauTren, "chạy / trượt / cưỡi / ngồi: đầu ở trên vai, vai ở trên hông");
+  const k0 = { kieu: "boi", che: "chay", pha: 0, t: 0, nhay: false, uNhay: 0.5, dangChay: true, nang: 0 };
+  kiem(D(k0).than > 0.9 && D({ ...k0, kieu: "bay" }).than > 0.9, "bơi / bay: thân nằm ngang về phía trước");
+  kiem(D({ ...k0, nhay: true }).than < D(k0).than, "bơi lên (nhảy): thân ngóc lên");
+  kiem(D({ ...k0, kieu: "ngoi" }).anChan === true, "ngồi tàu: chân khuất trong khoang");
+  // đường đua dùng đúng tư thế
+  ["bien:boi", "troi:bay", "vuTru:ngoi", "tuyet:truot", "khungLong:cuoi"].forEach(x => {
+    const [ma, tt] = x.split(":"), f = require("fs").readFileSync(require("path").join(__dirname, "st_ve_" + ma.toLowerCase() + ".js"), "utf8");
+    kiem(f.includes(`tuThe: "${tt}"`), `đường ${ma}: bé ${tt}`);
+  });
+}
+
 console.log(`\n${soKiem - soLoi}/${soKiem} kiểm tra đạt` + (soLoi ? ` - ${soLoi} LỖI` : " ✓"));
 process.exit(soLoi ? 1 : 0);

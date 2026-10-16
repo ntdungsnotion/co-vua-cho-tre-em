@@ -25,6 +25,7 @@
              cảnh của đường đua đang chọn (maDuongMenu). Tên hang lấy theo đường đua (tenHang).
    CẬP NHẬT: 16/10/2026 - TC_00F: phương tiện của bé theo đường đua (ST.CHU_DE_VE[mã].phuongTien:
              sau / truoc / nang / dungYen): ván trượt, khủng long, vây bơi, đôi cánh, tàu vũ trụ. Hộp va chạm không đổi.
+   CẬP NHẬT: 16/10/2026 - TC_00G: hàm vẽ bé chuyển sang st_ve_be.js (vẽ lại bé 11 tuổi, tư thế bơi / bay / ngồi tàu).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -911,93 +912,7 @@
       }
     }
 
-    /* ---------------- EM BÉ ---------------- */
-    veBe(be, g, camX) {
-      const c = this.c;
-      let x = be.x - camX, y = this.dat - be.y;
-      const t = this.t, che = be.che;
-      const thang = g && g.trangThai === "thang";
-      if (thang) { x = this.viTriBeThang(g) - camX; y = this.dat - (g.tKetThuc > 1.2 ? Math.abs(Math.sin(g.tKetThuc * 5)) * 22 : 0); }
-      // bóng dưới chân (không vẽ khi đang rơi hố)
-      if (che !== "roi") {
-        c.fillStyle = "rgba(0,0,0,0.15)"; const r = 18 - Math.min(10, be.y / 12);
-        c.beginPath(); c.ellipse(x, this.dat + 2, r, 4, 0, 0, PI2); c.fill();
-      }
-      c.save();
-      // bất tử sau hồi sinh: nhấp nháy rõ ràng
-      if (be.batTu > 0 && !thang) c.globalAlpha = Math.sin(t * 28) > 0 ? 1 : 0.3;
-      c.translate(x, y);
-      let sx = 1, sy = 1, nghieng = 0;
-      if (che === "chay" && be.tTiepDat < 0.12) { sx = 1.1; sy = 0.86; }      // đáp đất: nhún
-      if (che === "gapNan") { nghieng = -0.4 * Math.min(1, be.tChe * 4); }
-      if (che === "roi") { const k = Math.max(0.3, 1 - be.tChe * 0.4); sx = k; sy = k; nghieng = be.tChe * 4; }
-      if (g && g.trangThai === "thua" && che === "roi") { const k = Math.max(0.2, 1 - (g.tKetThuc + 1) * 0.4); sx = sy = k; nghieng = (g.tKetThuc + 1) * 4; c.translate(0, g.tKetThuc * 120); }
-      c.rotate(nghieng); c.scale(sx, sy);
-      const pha = (be.x || 0) * 0.075;   // nhịp bước theo quãng đường -> mượt ở mọi tốc độ khung hình
-      const pt = this.cd && this.cd.phuongTien;
-      const dangChay = che === "chay" && !thang && !(pt && pt.dungYen); // dungYen: bé đứng trên ván / ngồi trên lưng, chân không bước
-      const nhay = che === "nhay" || (thang && y < this.dat - 2);
-      const phep = be.tPhep < 0.35; // vừa bắn: giơ đũa
-      // phương tiện theo đường đua (ván trượt, khủng long, vây bơi, đôi cánh, tàu...): phần phía sau bé,
-      // rồi nâng bé lên (nang) nếu bé ngồi / đứng trên phương tiện; phần phía trước vẽ sau cùng
-      const ttPT = { che, pha, nhay, dangChay: che === "chay" && !thang, thang, t };
-      if (pt && pt.sau) { c.save(); pt.sau.call(this, ttPT); c.restore(); }
-      if (pt && pt.nang) c.translate(0, -pt.nang);
-      // chân
-      c.fillStyle = "#ffcfa6"; c.strokeStyle = "#ffcfa6"; c.lineWidth = 8;
-      const chan = (goc, dx) => { c.save(); c.translate(dx, -18); c.rotate(goc); c.beginPath(); c.moveTo(0, 0); c.lineTo(0, 14); c.stroke(); c.fillStyle = "#ff6b6b"; c.beginPath(); c.ellipse(3, 17, 7, 4.5, 0, 0, PI2); c.fill(); c.restore(); };
-      if (nhay) { chan(-0.9, -5); chan(-0.5, 6); }
-      else if (dangChay) { chan(Math.sin(pha) * 0.8, -4); chan(-Math.sin(pha) * 0.8, 5); }
-      else { chan(0, -5); chan(0, 6); }
-      // thân: bộ áo liền màu vàng
-      const nhun = dangChay ? Math.abs(Math.sin(pha)) * 2 : 0;
-      c.translate(0, -nhun);
-      c.fillStyle = "#ffcc33"; c.beginPath(); c.roundRect(-13, -42, 26, 26, 10); c.fill();
-      c.fillStyle = "#ff9f1c"; c.beginPath(); c.arc(0, -30, 3, 0, PI2); c.fill();
-      // tay
-      c.strokeStyle = "#ffcfa6"; c.lineWidth = 7;
-      const tay = (goc, dx) => { c.save(); c.translate(dx, -38); c.rotate(goc); c.beginPath(); c.moveTo(0, 0); c.lineTo(0, 13); c.stroke(); c.restore(); };
-      if (nhay || thang) { tay(2.6, -10); tay(-2.6, 10); }
-      else if (che === "khung" || che === "gapNan") { tay(2.2, -10); tay(-2.2, 10); }
-      else if (dangChay) { tay(-Math.sin(pha) * 0.9, -11); tay(Math.sin(pha) * 0.9 - (phep ? 0 : 0), 11); }
-      else { tay(0.2, -11); tay(-0.2, 11); }
-      // đũa phép (giơ ra trước khi bắn phép)
-      c.save(); c.translate(12, -38); c.rotate(phep ? -1.4 : -0.3);
-      c.strokeStyle = "#7a4b25"; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 0); c.lineTo(0, -16); c.stroke();
-      this.veSao(0, -19, phep ? 8 : 5, phep ? "#fff27a" : "#ffd23f", t * 3);
-      c.restore();
-      // đầu to tròn
-      const dx = 2;
-      c.fillStyle = "#ffd9b8"; c.beginPath(); c.arc(dx, -58, 19, 0, PI2); c.fill();
-      // tóc + lọn tóc xoăn
-      c.fillStyle = "#6b3f1f"; c.beginPath(); c.arc(dx, -62, 19, Math.PI * 1.05, Math.PI * 1.95); c.fill();
-      c.strokeStyle = "#6b3f1f"; c.lineWidth = 3.5; c.beginPath(); c.arc(dx + 2, -80, 5, Math.PI * 0.5, Math.PI * 2.1); c.stroke();
-      // nơ hồng
-      c.fillStyle = "#ff7eb6"; c.beginPath(); c.moveTo(dx + 12, -74); c.lineTo(dx + 22, -80); c.lineTo(dx + 22, -68); c.closePath(); c.fill();
-      c.beginPath(); c.moveTo(dx + 12, -74); c.lineTo(dx + 4, -82); c.lineTo(dx + 3, -70); c.closePath(); c.fill();
-      // mặt
-      const matY = -56;
-      c.fillStyle = "#2B2640";
-      if (che === "khung" || che === "gapNan" || che === "roi") {
-        c.strokeStyle = "#2B2640"; c.lineWidth = 2;
-        [dx - 6, dx + 8].forEach(mx => { c.beginPath(); c.arc(mx, matY, 3.5, t * 10, t * 10 + Math.PI * 1.6); c.stroke(); }); // mắt xoáy chóng mặt
-        c.beginPath(); c.ellipse(dx + 1, -47, 3, 4, 0, 0, PI2); c.stroke();
-      } else {
-        c.beginPath(); c.ellipse(dx - 6, matY, 3.3, 4.2, 0, 0, PI2); c.ellipse(dx + 8, matY, 3.3, 4.2, 0, 0, PI2); c.fill();
-        c.fillStyle = "#fff"; c.beginPath(); c.arc(dx - 5, matY - 2, 1.4, 0, PI2); c.arc(dx + 9, matY - 2, 1.4, 0, PI2); c.fill();
-        c.strokeStyle = "#2B2640"; c.lineWidth = 2;
-        if (nhay || thang || phep) { c.fillStyle = "#c2185b"; c.beginPath(); c.arc(dx + 1, -47, 4, 0, Math.PI); c.fill(); }
-        else { c.beginPath(); c.arc(dx + 1, -49, 4, 0.2, Math.PI - 0.2); c.stroke(); }
-      }
-      c.fillStyle = "rgba(255,120,150,0.45)"; c.beginPath(); c.arc(dx - 12, -50, 3.6, 0, PI2); c.arc(dx + 14, -50, 3.6, 0, PI2); c.fill();
-      if (pt && pt.truoc) { c.save(); pt.truoc.call(this, ttPT); c.restore(); }
-      c.restore();
-      y -= (pt && pt.nang) || 0;
-      // chóng mặt: sao xoay quanh đầu
-      if (che === "khung") for (let i = 0; i < 3; i++) { const a = t * 5 + i * 2.1; this.veSao(x + Math.cos(a) * 18, y - 86 + Math.sin(a) * 5, 5, "#ffd23f", a); }
-      // vừa hồi sinh: lấp lánh
-      if (be.batTu > (ST.CAU_HINH.thoiGianBatTu - 0.5) && !thang) for (let i = 0; i < 4; i++) { const a = t * 6 + i * 1.6; this.veSao(x + Math.cos(a) * 26, y - 40 + Math.sin(a) * 30, 5, "#fff", a); }
-    }
+    /* EM BÉ: veBe nằm ở file st_ve_be.js (TC_00G: bé 11 tuổi, khung xương, tư thế theo đường đua) */
 
     veHat(camX) {
       const c = this.c;

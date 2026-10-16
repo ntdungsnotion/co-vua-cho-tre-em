@@ -7,6 +7,7 @@
               Vật màu trắng luôn có viền xanh để nổi trên nền tuyết.
               Quy ước giống st_ve_keo.js: gốc tọa độ giữa đáy vật, mặt quay sang TRÁI, "this" là BoVe.
    BƯỚC: TC_00F
+   CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js), tư thế trượt ván.
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -20,7 +21,7 @@
     cong: { soc: "#4fa3e0", nut: "#ff6b8a" },
     mauGoHang: ["#5f95c8", "#d8eeff"],
     phuongTien: {
-      nang: 7, dungYen: true,
+      tuThe: "truot",
       sau(tt) { // ván trượt tuyết dưới chân + bụi tuyết tung phía sau
         const c = this.c, t = tt.t, lac = tt.dangChay ? Math.sin(t * 9) * 0.04 : 0;
         if (tt.dangChay) {
@@ -32,18 +33,21 @@
         c.beginPath(); c.ellipse(26, -6, 6, 4, -0.5, 0, PI2); c.ellipse(-26, -6, 6, 4, 0.5, 0, PI2); c.fill(); // hai mũi ván cong
         c.fillStyle = "#ffd23f"; c.fillRect(-20, -5, 40, 2.5);
         c.fillStyle = "#ff6b8a"; c.beginPath(); c.arc(0, -4, 3, 0, PI2); c.fill();
-        c.fillStyle = "#2B2640"; c.fillRect(-11, -9, 7, 3); c.fillRect(5, -9, 7, 3); // khóa giày
       },
-      truoc() { // mũ len có quả bông + khăn quàng bay
-        const c = this.c, t = this.t;
-        c.fillStyle = "#e8344e"; c.beginPath(); c.arc(2, -62, 20, Math.PI * 1.02, Math.PI * 1.98); c.fill();
-        c.fillStyle = "#fff"; c.beginPath(); c.roundRect(-18, -66, 40, 7, 3.5); c.fill();
-        c.beginPath(); c.arc(2, -83, 6, 0, PI2); c.fill();
-        c.fillStyle = "#ffd23f"; for (let i = 0; i < 3; i++) c.fillRect(-10 + i * 10, -78, 5, 6);
-        const bay = Math.sin(t * 8) * 3;
-        c.fillStyle = "#e8344e"; c.beginPath(); c.roundRect(-13, -44, 27, 7, 3.5); c.fill();
-        c.beginPath(); c.moveTo(-10, -42); c.lineTo(-30, -44 + bay); c.lineTo(-30, -36 + bay); c.lineTo(-8, -37); c.fill();
-        c.fillStyle = "#fff"; c.fillRect(-22, -42 + bay * 0.6, 3, 6); c.fillRect(-1, -44, 3, 7);
+      truoc(tt) { // mũ len có quả bông + khăn quàng bay
+        const c = this.c, t = this.t, k = tt.k;
+        ST.VE_CHUNG.theoDau(c, k, r => {
+          c.fillStyle = "#e8344e"; c.beginPath(); c.arc(-1, -1, r + 1.6, Math.PI * 1.0, Math.PI * 2.0); c.fill();
+          c.fillStyle = "#fff"; c.beginPath(); c.roundRect(-r - 2.5, -4, 2 * r + 4, 5, 2.5); c.fill();
+          c.beginPath(); c.arc(-1, -r - 6, 4.5, 0, PI2); c.fill();
+          c.fillStyle = "#ffd23f"; for (let i = 0; i < 3; i++) c.fillRect(-8 + i * 6, -r + 1, 3, 4);
+        });
+        ST.VE_CHUNG.theoThan(c, k, () => {
+          const bay = Math.sin(t * 8) * 3;
+          c.fillStyle = "#e8344e"; c.beginPath(); c.roundRect(-7, -2, 14, 6, 3); c.fill();
+          c.beginPath(); c.moveTo(-5, 0); c.lineTo(-22, -1 + bay); c.lineTo(-22, 6 + bay); c.lineTo(-4, 4); c.fill();
+          c.fillStyle = "#fff"; c.fillRect(-16, 0 + bay * 0.6, 2.5, 5);
+        });
       }
     },
 

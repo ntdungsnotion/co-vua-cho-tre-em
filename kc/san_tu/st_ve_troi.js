@@ -6,6 +6,7 @@
               bé ĐEO ĐÔI CÁNH trắng vỗ bay. 19 quái / vật cản trên trời (vật trắng có viền tím).
               Quy ước giống st_ve_keo.js: gốc tọa độ giữa đáy vật, mặt quay sang TRÁI, "this" là BoVe.
    BƯỚC: TC_00F
+   CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js), bé BAY.
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -20,21 +21,24 @@
     cong: { soc: "#b8a0ff", nut: "#ffd23f" },
     mauGoHang: ["#b8a8e8", "#fff4ff"],
     phuongTien: {
-      nang: 5, dungYen: true,
+      tuThe: "bay", nang: 6,
       sau(tt) { // đôi cánh lông trắng sau lưng, vỗ chậm khi lướt, vỗ mạnh khi bay vọt
-        const c = this.c, toc = tt.nhay ? 16 : 6, vo = Math.sin(tt.t * toc) * (tt.nhay ? 0.5 : 0.25);
-        [[-0.25, 0.85], [0.1, 1]].forEach(([lech, k]) => {
-          c.save(); c.translate(-6, -42); c.rotate(-0.5 + lech + vo);
-          c.fillStyle = k < 1 ? "#e6e0ff" : "#fff"; c.strokeStyle = VIEN; c.lineWidth = 1.6;
-          c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-18 * k, -26 * k, -42 * k, -22 * k);
-          for (let j = 0; j < 4; j++) c.quadraticCurveTo(-38 * k + j * 9 * k, (-8 + j * 7) * k, -32 * k + j * 10 * k, (-6 + j * 7) * k);
-          c.quadraticCurveTo(-8 * k, 6 * k, 0, 0); c.fill(); c.stroke();
+        const c = this.c, k = tt.k, toc = tt.nhay ? 16 : 6, vo = Math.sin(tt.t * toc) * (tt.nhay ? 0.45 : 0.22);
+        c.translate(k.lung.x, k.lung.y); c.rotate(k.than);
+        [[-0.35, 0.82], [0, 1]].forEach(([lech, kk]) => {
+          c.save(); c.translate(0, -4); c.rotate(-0.7 + lech - vo);
+          c.fillStyle = kk < 1 ? "#e6e0ff" : "#fff"; c.strokeStyle = VIEN; c.lineWidth = 1.6;
+          c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-16 * kk, -30 * kk, -40 * kk, -26 * kk);
+          for (let j = 0; j < 4; j++) c.quadraticCurveTo(-38 * kk + j * 9 * kk, (-12 + j * 7) * kk, -32 * kk + j * 9 * kk, (-8 + j * 7) * kk);
+          c.quadraticCurveTo(-8 * kk, 6 * kk, 0, 0); c.fill(); c.stroke();
           c.restore();
         });
       },
-      truoc() { // vòng hào quang vàng trên đầu
+      truoc(tt) { // vòng hào quang vàng trên đầu
         const c = this.c, t = this.t;
-        c.strokeStyle = "#ffd23f"; c.lineWidth = 3; c.beginPath(); c.ellipse(2, -86 + Math.sin(t * 3) * 1.5, 13, 4, 0, 0, PI2); c.stroke();
+        ST.VE_CHUNG.theoDau(c, tt.k, r => {
+          c.strokeStyle = "#ffd23f"; c.lineWidth = 2.6; c.beginPath(); c.ellipse(-1, -r - 6 + Math.sin(t * 3) * 1.2, 10, 3.2, 0, 0, PI2); c.stroke();
+        });
       }
     },
 

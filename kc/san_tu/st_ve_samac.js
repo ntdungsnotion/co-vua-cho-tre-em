@@ -6,6 +6,7 @@
               kim tự tháp lớn ở màn 7; bé đội mũ thám hiểm. 19 quái / vật cản sa mạc (ST.VE_QUAI).
               Quy ước giống st_ve_keo.js: gốc tọa độ giữa đáy vật, mặt quay sang TRÁI, "this" là BoVe.
    BƯỚC: TC_00F
+   CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js).
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -17,12 +18,14 @@
   ST.CHU_DE_VE.saMac = {
     cong: { soc: "#e0a83a", nut: "#3fb6a8" },
     mauGoHang: ["#b8873e", "#e8c07a"],
-    phuongTien: { truoc() { // mũ thám hiểm
+    phuongTien: { truoc(tt) { // mũ thám hiểm trên đầu bé
       const c = this.c;
-      c.fillStyle = "#e8c27a"; c.beginPath(); c.ellipse(2, -74, 27, 5.5, -0.05, 0, PI2); c.fill();
-      c.beginPath(); c.roundRect(-12, -93, 28, 20, [12, 12, 2, 2]); c.fill();
-      c.fillStyle = "#c0392b"; c.fillRect(-12, -80, 28, 5);
-      c.fillStyle = "rgba(255,255,255,0.35)"; c.fillRect(-8, -90, 6, 8);
+      ST.VE_CHUNG.theoDau(c, tt.k, r => {
+        c.fillStyle = "#e8c27a"; c.beginPath(); c.ellipse(1, -r + 2, r + 9, 3.4, 0, 0, PI2); c.fill();
+        c.beginPath(); c.roundRect(-r + 2, -r - 9, 2 * r - 2, 11, [8, 8, 1, 1]); c.fill();
+        c.fillStyle = "#c0392b"; c.fillRect(-r + 2, -r - 1.5, 2 * r - 2, 3.5);
+        c.fillStyle = "rgba(255,255,255,0.35)"; c.fillRect(-r + 5, -r - 7, 4, 5);
+      });
     } },
 
     nen(camX, p) {

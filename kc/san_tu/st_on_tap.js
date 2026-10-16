@@ -6,6 +6,8 @@
               lúc đó mới mở màn tiếp (người dùng yêu cầu 16/10/2026).
    BƯỚC: TC_00D2
    NGÀY: 16/10/2026
+   CẬP NHẬT: 16/10/2026 - TC_00G: đồng hồ thưởng kim cương (CAU_HINH.thuongOnTap): ghép càng nhanh
+             càng nhiều kim cương (tối đa 5, trung bình 1, chậm 0), bấm sai thì bị trừ sớm hơn.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -30,9 +32,23 @@
     return kq;
   }
 
+  /* Số kim cương thưởng khi ghép xong ở giây thứ `giay` (đã cộng giây phạt vì bấm sai).
+     Trả về { kc, nac }: nac = phần còn lại (1 -> 0) trước khi mất viên kế tiếp, để vẽ thanh đồng hồ. */
+  function tinhThuongOnTap(giay, soCap, th) {
+    const nhanh = th.giayCucNhanh * soCap, buoc = th.giayMoiNac * soCap;
+    if (giay <= nhanh) return { kc: th.toiDa, nac: 1 - giay / nhanh };
+    const mat = Math.ceil((giay - nhanh) / buoc - 1e-9);
+    const kc = Math.max(0, th.toiDa - mat);
+    return { kc, nac: kc > 0 ? mat - (giay - nhanh) / buoc : 0 };
+  }
+
   class BangOnTap {
-    constructor(dsTu, rng) {
+    constructor(dsTu, rng, thuong) {
       rng = rng || Math.random;
+      this.thuong = thuong || (ST.CAU_HINH && ST.CAU_HINH.thuongOnTap) || null;
+      this.giayPhat = 0;                               // giây cộng thêm vì bấm sai
+      this.kimCuongThuong = null;                      // chốt khi ghép xong
+
       this.tu = dsTu.slice();
       this.hinh = xaoTron(dsTu.map(t => t.en), rng);   // thứ tự thẻ hình
       this.chu = xaoTron(dsTu.map(t => t.en), rng);    // thứ tự thẻ chữ
@@ -41,6 +57,12 @@
       this.soLanSai = 0;
     }
     get conLai() { return this.tu.length - this.daXong.size; }
+    /* Thưởng hiện tại sau `giay` giây kể từ lúc hiện bảng (đã xong thì trả số đã chốt) */
+    thuongLuc(giay) {
+      if (!this.thuong) return { kc: 0, nac: 0 };
+      if (this.kimCuongThuong !== null) return { kc: this.kimCuongThuong, nac: 0 };
+      return tinhThuongOnTap(giay + this.giayPhat, this.tu.length, this.thuong);
+    }
     get xong() { return this.conLai === 0; }
     layTu(en) { return this.tu.find(t => t.en === en); }
     /* Bé bấm một thẻ. Trả về:
@@ -48,8 +70,9 @@
        { kq: "boChon" }          - bấm lại thẻ đang chọn
        { kq: "dung", en, xong }  - khớp: cặp biến mất
        { kq: "sai", truoc, en }  - không khớp: bỏ chọn, bé thử lại
-       { kq: "boQua" }           - thẻ đã biến mất */
-    bam(ben, en) {
+       { kq: "boQua" }           - thẻ đã biến mất
+       giay: số giây kể từ lúc hiện bảng (để chốt kim cương thưởng khi ghép xong) */
+    bam(ben, en, giay) {
       if (this.daXong.has(en) || !this.layTu(en)) return { kq: "boQua" };
       const c = this.dangChon;
       if (!c || c.ben === ben) {
@@ -58,12 +81,18 @@
         return { kq: "chon" };
       }
       this.dangChon = null;
-      if (c.en === en) { this.daXong.add(en); return { kq: "dung", en, xong: this.xong }; }
+      if (c.en === en) {
+        this.daXong.add(en);
+        if (this.xong && this.thuong) this.kimCuongThuong = this.thuongLuc(giay || 0).kc;
+        return { kq: "dung", en, xong: this.xong };
+      }
       this.soLanSai++;
+      if (this.thuong) this.giayPhat += this.thuong.giayMoiNac * this.tu.length * this.thuong.phatSai;
       return { kq: "sai", truoc: c, en };
     }
   }
 
   ST.chonTuOnTap = chonTuOnTap;
   ST.BangOnTap = BangOnTap;
+  ST.tinhThuongOnTap = tinhThuongOnTap;
 })(typeof window !== "undefined" ? window : globalThis);

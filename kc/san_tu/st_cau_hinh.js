@@ -78,6 +78,12 @@
     tiLeDocKimCuong: 0.6,       // cụm kim cương: thời gian đọc từ = 60% thời gian của chướng ngại vật (bỏ lỡ không mất gì)
     kimCuongLe: 22,             // cụm kim cương: bấm lệch khỏi lúc lý tưởng chừng này vẫn lấy đủ cả cụm
     soCapOnTap: 6,              // bảng ôn tập cuối màn: tối đa chừng này cặp hình - chữ
+    // Bảng ôn tập có đồng hồ thưởng kim cương (người dùng yêu cầu 16/10/2026; mặc định, quản trị sửa được).
+    // Tính theo SỐ GIÂY CHO MỖI CẶP nên bảng 2 cặp hay 6 cặp đều công bằng:
+    //   ghép xong trong giayCucNhanh x số cặp -> được toiDa kim cương; sau đó cứ mỗi giayMoiNac x số cặp mất 1 viên
+    //   (tốc độ trung bình còn 1 viên, chậm hơn nữa thì 0). Bấm sai: đồng hồ thưởng nhảy tới phatSai nấc
+    //   -> viên kế tiếp bị trừ sớm hơn.
+    thuongOnTap: { toiDa: 5, giayCucNhanh: 2, giayMoiNac: 0.6, phatSai: 0.5 },
     khoaLuuCaiDat: "kc_santu_cai_dat" // localStorage: bật/tắt âm thanh
   };
 

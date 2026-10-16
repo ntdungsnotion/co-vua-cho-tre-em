@@ -6,6 +6,7 @@
               tím. 19 quái / vật cản dễ thương (ma trắng, bí ngô cười...), màu sáng nổi trên nền tối.
               Quy ước giống st_ve_keo.js: gốc tọa độ giữa đáy vật, mặt quay sang TRÁI, "this" là BoVe.
    BƯỚC: TC_00F
+   CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js).
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -18,16 +19,20 @@
     cong: { soc: "#9b5de5", nut: "#ffd23f" },
     mauGoHang: ["#4a3a6a", "#a898d8"],
     phuongTien: {
-      sau(tt) { // áo choàng tím bay phía sau
-        const c = this.c, bay = Math.sin(tt.t * (tt.dangChay ? 12 : 4)) * 4, xa = tt.dangChay || tt.nhay ? 1 : 0.5;
-        c.fillStyle = "#7a3ad0";
-        c.beginPath(); c.moveTo(-10, -42); c.quadraticCurveTo(-24 - 8 * xa, -30 + bay, -30 - 10 * xa, -10 + bay); c.lineTo(-22 - 6 * xa, -8 - bay); c.lineTo(-14 - 4 * xa, -14 + bay); c.lineTo(-4, -18); c.closePath(); c.fill();
-        c.fillStyle = "#ffd23f"; c.beginPath(); c.arc(-24 - 6 * xa, -22 + bay, 2.5, 0, PI2); c.arc(-16, -28, 2, 0, PI2); c.fill();
+      sau(tt) { // áo choàng tím bay phía sau lưng
+        const c = this.c, bay = Math.sin(tt.t * (tt.dangChay ? 12 : 4)) * 3, xa = tt.dangChay || tt.nhay ? 1 : 0.4;
+        ST.VE_CHUNG.theoThan(c, tt.k, () => {
+          c.fillStyle = "#7a3ad0";
+          c.beginPath(); c.moveTo(3, 2); c.quadraticCurveTo(-6 - 6 * xa, 14, -12 - 12 * xa, 32 + bay); c.lineTo(-20 - 12 * xa, 27 - bay); c.quadraticCurveTo(-14 - 4 * xa, 12, -6, 1); c.closePath(); c.fill();
+          c.fillStyle = "#ffd23f"; c.beginPath(); c.arc(-12 - 9 * xa, 22 + bay * 0.5, 2.2, 0, PI2); c.arc(-7 - 4 * xa, 12, 1.8, 0, PI2); c.fill();
+        });
       },
-      truoc() { // cổ áo choàng có khuy sao
+      truoc(tt) { // cổ áo choàng có khuy sao
         const c = this.c;
-        c.fillStyle = "#7a3ad0"; c.beginPath(); c.roundRect(-13, -44, 26, 6, 3); c.fill();
-        this.veSao(0, -41, 4, "#ffd23f", 0);
+        ST.VE_CHUNG.theoThan(c, tt.k, () => {
+          c.fillStyle = "#7a3ad0"; c.beginPath(); c.roundRect(-7, 0, 14, 5, 2.5); c.fill();
+          this.veSao(1, 2.5, 3.6, "#ffd23f", 0);
+        });
       }
     },
 

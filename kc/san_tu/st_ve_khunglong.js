@@ -6,6 +6,7 @@
               hang núi đá ở màn 7; bé CƯỠI khủng long con. 19 quái / vật cản thời tiền sử.
               Quy ước giống st_ve_keo.js: gốc tọa độ giữa đáy vật, mặt quay sang TRÁI, "this" là BoVe.
    BƯỚC: TC_00F
+   CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js), tư thế cưỡi.
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -18,7 +19,7 @@
     cong: { soc: "#3fae5a", nut: "#ff9f1c" },
     mauGoHang: ["#8a5a30", "#d8a868"],
     phuongTien: {
-      nang: 16, dungYen: true,
+      tuThe: "cuoi",
       sau(tt) { // khủng long con xanh lá, gai cam, bé ngồi trên lưng
         const c = this.c, buoc = tt.dangChay ? Math.sin(tt.pha * 1.2) : 0, gat = Math.sin(tt.t * 6) * 0.08;
         c.fillStyle = "#3f9e4a";

@@ -21,6 +21,8 @@
              chữ thì đọc lại chữ đó (trùng từ đang đọc dở thì đọc tiếp cho xong).
              Cụm kim cương có từ riêng (đứng ở chỗ trống): lời nhắc / thông báo riêng cho cụm.
              Hang kim cương (rơi hố may mắn): thông báo vào / ra hang, từ của cửa ánh sáng.
+   CẬP NHẬT: 16/10/2026 - TC_00G: bảng ôn tập có đồng hồ thưởng kim cương (ghép nhanh được tới 5 viên,
+             trung bình 1, chậm 0, bấm sai bị trừ sớm hơn); kim cương thưởng cộng vào kết quả màn.
    CẬP NHẬT: 16/10/2026 - TC_00E: đường đua 2 "Xứ sở kẹo ngọt"; menu vẽ cảnh của đường đua đang
              chọn; lời nhắc Tập chơi dùng tên vật / hố của từng đường. Xem thử cho bố mẹ: thêm
              #xem-<mã đường> vào địa chỉ (vd #xem-keo) để mở mọi màn của đường đó mà chưa cần qua
@@ -203,7 +205,7 @@
     daHienKetQua = true;
     const thang = g.trangThai === "thang", tk = g.thongKe, dk = g.dk, d = dk.duong;
     const cuoi = thang && dk.laManCuoi, conLai = ST.SO_MAN - dk.soMan, tap = !!dk.laHuongDan;
-    $("ketQuaHinh").textContent = cuoi ? "🐱💖👶" : thang ? (tap ? "🎓👶🎉" : "🚩👶🎉") : g.lyDoThua === "hetGio" ? "⏰" : "💔";
+    $("ketQuaHinh").textContent = cuoi ? "🐱💖👧" : thang ? (tap ? "🎓👧🎉" : "🚩👧🎉") : g.lyDoThua === "hetGio" ? "⏰" : "💔";
     $("ketQuaTieuDe").textContent = cuoi ? "Giải cứu bé mèo thành công!" : thang ? (tap ? "Con tập chơi xong rồi!" : `Qua màn ${dk.soMan} rồi!`)
       : g.lyDoThua === "hetGio" ? "Hết giờ mất rồi!" : "Hết mạng mất rồi!";
     $("ketQuaSao").textContent = thang && !tap ? saoChu(g.soSao()) : "";
@@ -223,6 +225,7 @@
     $("nutChoiLai").textContent = tap ? "↻ Tập lại" : thang ? "↻ Chơi lại màn này" : "↻ Chơi lại";
     $("kqDung").textContent = tk.dung;
     $("kqKC").textContent = g.tongKimCuong;
+    $("kqKCOnTap").textContent = g.kimCuongOnTap ? `(ôn tập +${g.kimCuongOnTap})` : "";
     $("kqGio").textContent = Math.ceil(g.thoiGian);
     const kqThuoc = $("kqThuocMoi");
     kqThuoc.style.display = tuMoiThuoc.length ? "" : "none";
@@ -250,11 +253,30 @@
     if (g && g.trangThai === "thang" && !g.dk.laHuongDan) ketQuaMan = tienDo.ghiThang(g.dk.maDuong, g.dk.soMan, g.soSao());
     hienKetQua();
   }
+  /* Đồng hồ thưởng kim cương của bảng ôn tập: đếm giây, hiện số kim cương còn giữ được
+     và thanh nấc (hết thanh là mất 1 viên). Đứng yên khi ôn xong. */
+  let tOnTap0 = 0, henOnTap = null, kcOnTapCu = -1;
+  const giayOnTap = () => (performance.now() - tOnTap0) / 1000;
+  function capNhatDongHoOnTap() {
+    if (!bang) return;
+    const xong = bang.kimCuongThuong !== null, giay = xong ? bang.giayXong : giayOnTap(), th = bang.thuongLuc(giay);
+    $("onTapGio").textContent = giay.toFixed(1).replace(".", ",") + " giây";
+    $("onTapKC").textContent = "💎 " + th.kc;
+    $("onTapNac").style.width = Math.round(th.nac * 100) + "%";
+    $("onTapThuong").classList.toggle("het", th.kc === 0);
+    if (kcOnTapCu >= 0 && th.kc < kcOnTapCu) { const e = $("onTapKC"); e.classList.remove("mat"); void e.offsetWidth; e.classList.add("mat"); }
+    kcOnTapCu = th.kc;
+    if (xong && henOnTap) { clearInterval(henOnTap); henOnTap = null; }
+  }
   function hienOnTap() {
     daHienKetQua = true;
     const ds = ST.chonTuOnTap(tuDaGap, tuSai, CH.soCapOnTap);
     if (ds.length < 2) { hoanTatMan(); return; } // quá ít từ thì khỏi ôn
-    bang = new ST.BangOnTap(ds);
+    bang = new ST.BangOnTap(ds, null, CH.thuongOnTap);
+    tOnTap0 = performance.now(); kcOnTapCu = -1;
+    if (henOnTap) clearInterval(henOnTap);
+    henOnTap = setInterval(capNhatDongHoOnTap, 100);
+    capNhatDongHoOnTap();
     $("onTapXong").style.display = "none";
     coVu(g.dk.laHuongDan ? "Con tập giỏi lắm! Giờ ôn lại các từ vừa gặp nhé 😊" : `Qua màn ${g.dk.soMan} rồi! Ôn lại từ vừa gặp để mở màn tiếp nhé 🔓`, "tot");
     veOnTap();
@@ -285,7 +307,7 @@
     am.mo();
     const ben = b.dataset.ben, en = b.dataset.en;
     if (ben === "chu") am.docTu(en); // bấm chữ thì nghe đọc từ đó
-    const kq = bang.bam(ben, en);
+    const giay = giayOnTap(), kq = bang.bam(ben, en, giay);
     document.querySelectorAll("#manOnTap .theOnTap.chon").forEach(e => e.classList.remove("chon"));
     if (kq.kq === "chon") { b.classList.add("chon"); am.phat("nut"); return; }
     if (kq.kq === "sai") {
@@ -293,6 +315,7 @@
       const a = theOnTap(kq.truoc.ben, kq.truoc.en);
       [a, b].forEach(e => { if (e) { e.classList.remove("sai"); void e.offsetWidth; e.classList.add("sai"); } });
       coVu(ngauNhien(DONG_VIEN), "xau");
+      capNhatDongHoOnTap(); // bấm sai: đồng hồ thưởng nhảy tới, viên kế tiếp bị trừ sớm hơn
       return;
     }
     if (kq.kq !== "dung") return;
@@ -301,7 +324,13 @@
     [a, c].forEach(e => { if (e) { e.classList.add("dung"); setTimeout(() => e.classList.add("biMat"), 350); } });
     capNhatDemOnTap();
     if (!kq.xong) { coVu(bang.conLai === 1 ? "Còn 1 cặp nữa thôi, cố lên! 💪" : ngauNhien(KHEN_ON), "tot"); return; }
-    // ôn xong: khen to rồi sang màn kết quả
+    // ôn xong: chốt kim cương thưởng (cộng vào số kim cương của màn), khen to rồi sang màn kết quả
+    bang.giayXong = giay;
+    const thuong = bang.kimCuongThuong || 0;
+    g.kimCuongOnTap = thuong; g.tongKimCuong += thuong;
+    capNhatDongHoOnTap();
+    if (thuong > 0) { am.phat("kimCuong"); $("onTapXong").textContent = `🎉 Ôn xong rồi! Thưởng ${thuong} 💎`; }
+    else $("onTapXong").textContent = "🎉 Con ôn xong rồi! Lần sau ghép nhanh hơn để được kim cương nhé!";
     coVu(bang.soLanSai === 0 ? "Không sai cặp nào, con siêu quá! 🏆" : "Con ghép đúng hết rồi! 🎉", "tot");
     $("onTapXong").style.display = "block";
     setTimeout(() => am.phat("thang"), 300);
@@ -646,6 +675,7 @@
   if (ST.DO_KHO[bam]) { maDoKho = bam; veChonDoKho(); }
   // để kiểm thử tự động
   window.__sanTu = { layTroChoi: () => g, batDau, tamDung, tiepTuc, am, tienDo, layBangOnTap: () => bang,
-    chonMan: (duong, so) => { maDuong = duong; soManChon = so; veMenuChon(); } };
+    chonMan: (duong, so) => { maDuong = duong; soManChon = so; veMenuChon(); },
+    moOnTap: ds => { tuDaGap = ds.slice(); tuSai = []; hienOnTap(); } }; // moOnTap: chỉ để kiểm thử bảng ôn tập
   requestAnimationFrame(khung);
 })();

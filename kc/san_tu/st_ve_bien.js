@@ -6,6 +6,7 @@
               ống thở, chân vịt. 19 sinh vật / vật cản dưới biển.
               Quy ước giống st_ve_keo.js: gốc tọa độ giữa đáy vật, mặt quay sang TRÁI, "this" là BoVe.
    BƯỚC: TC_00F
+   CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js), bé BƠI.
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -18,21 +19,24 @@
     cong: { soc: "#ff8a5c", nut: "#ffd23f" },
     mauGoHang: ["#5a4a8a", "#b8a8e8"],
     phuongTien: {
-      truoc(tt) { // chân vịt (theo đúng góc chân của bé), kính lặn, ống thở và bong bóng
-        const c = this.c, t = tt.t;
-        const nhun = tt.dangChay ? Math.abs(Math.sin(tt.pha)) * 2 : 0;
-        const chan = tt.nhay ? [[-0.9, -5], [-0.5, 6]] : tt.dangChay ? [[Math.sin(tt.pha) * 0.8, -4], [-Math.sin(tt.pha) * 0.8, 5]] : [[0, -5], [0, 6]];
-        c.save(); c.translate(0, nhun);
-        chan.forEach(([g, dx]) => { c.save(); c.translate(dx, -18); c.rotate(g); c.fillStyle = "#2fb6a8"; c.beginPath(); c.moveTo(-3, 14); c.lineTo(16, 16); c.lineTo(18, 23); c.lineTo(-3, 21); c.closePath(); c.fill(); c.restore(); });
-        c.restore();
-        c.fillStyle = "rgba(170,230,255,0.55)"; c.strokeStyle = "#ff8a3a"; c.lineWidth = 3;
-        c.beginPath(); c.roundRect(-12, -63, 28, 14, 6); c.fill(); c.stroke();
-        c.strokeStyle = "#2B2640"; c.lineWidth = 2; c.beginPath(); c.moveTo(-17, -58); c.lineTo(-12, -57); c.stroke();
-        c.fillStyle = "#fff"; c.beginPath(); c.arc(-6, -60, 2, 0, PI2); c.fill();
-        c.strokeStyle = "#ffd23f"; c.lineWidth = 4; c.lineCap = "round"; c.beginPath(); c.moveTo(14, -48); c.lineTo(19, -50); c.lineTo(19, -86); c.stroke();
-        c.fillStyle = "#ff8a3a"; c.beginPath(); c.roundRect(15, -92, 8, 8, 3); c.fill();
+      tuThe: "boi", nang: 6,
+      truoc(tt) { // chân vịt (theo bàn chân), kính lặn, ống thở và bong bóng
+        const c = this.c, t = tt.t, k = tt.k, VC = ST.VE_CHUNG;
+        k.chan.forEach(ch => VC.theoBanChan(c, ch, () => {
+          c.fillStyle = "#2fb6a8"; c.beginPath(); c.moveTo(-1, -3.5); c.lineTo(18, -6); c.lineTo(20, 5); c.lineTo(-1, 3.5); c.closePath(); c.fill();
+          c.strokeStyle = "#1d8f84"; c.lineWidth = 1.2; c.beginPath(); c.moveTo(4, 0); c.lineTo(18, -1); c.stroke();
+        }));
+        VC.theoDau(c, k, r => {
+          c.strokeStyle = "#2B2640"; c.lineWidth = 1.8; c.beginPath(); c.moveTo(2, -2); c.lineTo(-r + 1, -4); c.stroke(); // dây kính
+          c.fillStyle = "rgba(170,230,255,0.55)"; c.strokeStyle = "#ff8a3a"; c.lineWidth = 2.4;
+          c.beginPath(); c.roundRect(2, -4.5, 12.5, 9, 3.5); c.fill(); c.stroke();
+          c.fillStyle = "#fff"; c.beginPath(); c.arc(5, -2, 1.5, 0, PI2); c.fill();
+          c.strokeStyle = "#ffd23f"; c.lineWidth = 3.2; c.beginPath(); c.moveTo(8, 8); c.quadraticCurveTo(-1, 11, -4, 3); c.lineTo(-4, -r - 9); c.stroke(); // ống thở
+          c.fillStyle = "#ff8a3a"; c.beginPath(); c.roundRect(-6.5, -r - 14, 5, 5, 2); c.fill();
+        });
+        const dinh = VC.diemDau(k, { x: -4, y: -k.dau.r - 14 });
         c.strokeStyle = "rgba(255,255,255,0.85)"; c.lineWidth = 1.5;
-        for (let k = 0; k < 3; k++) { const u = (t * 0.9 + k / 3) % 1; c.beginPath(); c.arc(19 + Math.sin(u * 9 + k) * 4, -96 - u * 40, 2 + u * 3, 0, PI2); c.stroke(); }
+        for (let i = 0; i < 3; i++) { const u = (t * 0.9 + i / 3) % 1; c.beginPath(); c.arc(dinh.x + Math.sin(u * 9 + i) * 4, dinh.y - u * 40, 2 + u * 3, 0, PI2); c.stroke(); }
       }
     },
 
