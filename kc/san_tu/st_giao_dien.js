@@ -30,6 +30,10 @@
    CẬP NHẬT: 16/10/2026 - TC_00G3: LƯỢT ĐUA, 3 mạng dùng chung cho cả màn 1-7 của một đường (không
              hồi lại mỗi màn). Mạng còn lại mang sang màn sau, lưu ngay khi mất / đổi mạng; hết sạch
              mạng ở đường chưa xong thì chơi lại từ màn 1. Menu và màn kết quả báo số mạng còn lại.
+   CẬP NHẬT: 16/10/2026 - TC_01: xong mỗi màn (qua màn sau bảng ôn tập, hoặc thua) thì cất kim cương
+             CÒN LẠI của màn (nhặt được trừ số đã đổi mạng) vào kho kim cương của bé (st_kho_kc.js);
+             màn kết quả báo đã cất bao nhiêu / đủ trần ngày / mạng chập chờn giữ lại gửi sau.
+             Tập chơi và Xem thử không cất.
    ================================================================ */
 (function () {
   "use strict";
@@ -61,6 +65,12 @@
   const manMacDinh = d => (d === ST.DUONG_DUA[0].ma && tienDo.manMo(d) === 1 && tienDo.tongSao(d) === 0) ? 0 : tienDo.manMo(d);
   let soManChon = manMacDinh(maDuong);
   if (xemThu && maDuong === xemThu) soManChon = 0; // xem thử: bắt đầu từ Tập chơi của đường đó
+  // Cất kim cương vào kho của bé (TC_01). Xem thử thì không cất (tên rỗng).
+  const dangXemThu = !!(xemThu && ST.DUONG_DUA.some(d => d.ma === xemThu && d.daCo));
+  const layPhien = () => { try { return JSON.parse(sessionStorage.getItem("coVuaTaiKhoanDangNhap") || "null"); } catch (e) { return null; } };
+  const coMayChu = typeof kcGoiRpc === "function" && typeof kcSupabaseClient !== "undefined";
+  const kho = new ST.KhoKimCuong(dangXemThu ? "" : tenBe, coMayChu ? kcGoiRpc : null, layPhien);
+  let catMan = null;         // kim cương của màn vừa xong: { g, so, tt, kq }
   let ketQuaMan = null;      // { manMoi, xongDuong } của lần qua màn vừa rồi
   let veMan1 = false;        // vừa hết sạch mạng của lượt: phải chơi lại từ màn 1
   // Lưu mạng còn lại của lượt đua (gọi ngay khi mất / đổi mạng để thoát giữa chừng không hồi mạng)
@@ -240,6 +250,7 @@
     $("kqDung").textContent = tk.dung;
     $("kqKC").textContent = g.tongKimCuong;
     $("kqKCOnTap").textContent = g.kimCuongOnTap ? `(ôn tập +${g.kimCuongOnTap})` : "";
+    veKho();
     $("kqGio").textContent = Math.ceil(g.thoiGian);
     const kqThuoc = $("kqThuocMoi");
     kqThuoc.style.display = tuMoiThuoc.length ? "" : "none";
@@ -256,6 +267,61 @@
     hienLop("manKetQua");
   }
 
+  /* ---------------- CẤT KIM CƯƠNG VÀO KHO (TC_01) ----------------
+     Mỗi màn chỉ cất một lần. Ghi vào hàng chờ trước rồi mới gửi: mất mạng thì gửi bù sau. */
+  function capNhatDiemSo(diemSo) {
+    if (typeof diemSo !== "number") return;
+    try {
+      const p = layPhien();
+      if (p && p.tenDangNhap === tenBe) { p.diemSo = diemSo; sessionStorage.setItem("coVuaTaiKhoanDangNhap", JSON.stringify(p)); }
+    } catch (e) { /* bỏ qua */ }
+  }
+  function catKimCuong() {
+    if (!g || g.daCatKC) return;
+    g.daCatKC = true;
+    const dk = g.dk;
+    if (dk.laHuongDan || !dk.soMan) { catMan = null; return; }
+    const cm = catMan = { g, so: ST.kimCuongCatDuoc(g), tt: "", kq: null };
+    if (dangXemThu) { cm.tt = "xemThu"; return; }
+    if (!tenBe) { cm.tt = "chuaDangNhap"; return; }
+    if (cm.so <= 0) { cm.tt = "khong"; return; }
+    if (!coMayChu) { kho.them(cm.so, { duong: dk.maDuong, man: dk.soMan, cap: dk.maCapTu, thang: g.trangThai === "thang" }); cm.tt = "cho"; return; }
+    const muc = kho.them(cm.so, { duong: dk.maDuong, man: dk.soMan, cap: dk.maCapTu, thang: g.trangThai === "thang" });
+    cm.tt = "dangCat";
+    kho.gui().then(t => {
+      capNhatDiemSo(t.diemSoMoi);
+      const kq = muc && kho.daGui[muc.maLuot];
+      cm.kq = kq || null;
+      cm.tt = kq ? (kq.thanhCong ? "xong" : "tuChoi") : t.loiMang ? "cho" : "phien";
+      if (catMan === cm) veKho();
+    });
+  }
+  function veKho() {
+    const e = $("kqKho"), cm = catMan;
+    if (!cm || !g || cm.g !== g) { e.style.display = "none"; return; }
+    const so = cm.so, kq = cm.kq;
+    let chu = "", kieu = "";
+    switch (cm.tt) {
+      case "dangCat": chu = `💎 Đang cất ${so} kim cương vào kho của con...`; break;
+      case "xong":
+        if (kq.soCong > 0) {
+          chu = `💎 +${kq.soCong} kim cương đã vào kho của con!` + (typeof kq.diemSoMoi === "number" ? ` Trong kho có ${kq.diemSoMoi} 💎` : "");
+          if (kq.daDuTran) chu += ` Hôm nay con đã nhận đủ ${kq.tranNgay} kim cương rồi, mai chơi tiếp nhé! 🌙`;
+          kieu = "tot";
+        } else chu = `🌙 Hôm nay con đã nhận đủ ${kq.tranNgay} kim cương rồi. Mai chơi tiếp để cất thêm nhé!`;
+        break;
+      case "cho": chu = `📶 Mạng chập chờn: ${so} kim cương được giữ lại, lần sau sẽ tự cất vào kho nhé!`; break;
+      case "phien": chu = `🔑 Con đăng nhập lại để cất ${so} kim cương vào kho nhé!`; break;
+      case "tuChoi": chu = "Chỉ tài khoản của bé mới cất được kim cương vào kho."; break;
+      case "chuaDangNhap": chu = so > 0 ? "🔑 Đăng nhập để cất kim cương vào kho của con nhé!" : ""; break;
+      case "xemThu": chu = "👀 Đang xem thử: kim cương không cất vào kho."; break;
+      case "khong": chu = (g.tongKimCuong | 0) > 0 ? "💛 Kim cương màn này đã đổi thành mạng rồi." : ""; break;
+    }
+    e.textContent = chu;
+    e.className = kieu;
+    e.style.display = chu ? "" : "none";
+  }
+
   /* ---------------- BẢNG ÔN TẬP CUỐI MÀN ----------------
      Qua màn xong: các từ vừa gặp hiện thành thẻ hình + thẻ chữ, bé ghép từng cặp cho hết.
      Ôn xong mới lưu qua màn / mở màn tiếp, rồi tới màn kết quả. */
@@ -265,6 +331,7 @@
   function hoanTatMan() {
     // màn Tập chơi không tính sao, không mở khóa gì
     if (g && g.trangThai === "thang" && !g.dk.laHuongDan) ketQuaMan = tienDo.ghiThang(g.dk.maDuong, g.dk.soMan, g.soSao());
+    catKimCuong();
     hienKetQua();
   }
   /* Đồng hồ thưởng kim cương của bảng ôn tập: đếm giây, hiện số kim cương còn giữ được
@@ -602,6 +669,7 @@
           if (d.lyDo === "hetMang") { veMan1 = tienDo.hetLuot(g.dk.maDuong); if (veMan1) soManChon = 1; }
           else luuLuot(); // hết giờ: chơi lại màn này với số mạng đang còn
         }
+        catKimCuong(); // thua vẫn được cất kim cương đã nhặt
         break;
     }
   }
@@ -698,8 +766,12 @@
   const bam = location.hash.replace("#", "");
   if (ST.DO_KHO[bam]) { maDoKho = bam; veChonDoKho(); }
   // để kiểm thử tự động
-  window.__sanTu = { layTroChoi: () => g, batDau, tamDung, tiepTuc, am, tienDo, layBangOnTap: () => bang,
+  window.__sanTu = { layTroChoi: () => g, batDau, tamDung, tiepTuc, am, tienDo, kho, layCatMan: () => catMan, layBangOnTap: () => bang,
     chonMan: (duong, so) => { maDuong = duong; soManChon = so; veMenuChon(); },
     moOnTap: ds => { tuDaGap = ds.slice(); tuSai = []; hienOnTap(); } }; // moOnTap: chỉ để kiểm thử bảng ôn tập
+  // Màn chưa cất được (mất mạng lần trước): gửi bù khi mở game và khi có mạng lại
+  const guiBu = () => { if (coMayChu) kho.gui().then(t => capNhatDiemSo(t.diemSoMoi)); };
+  guiBu();
+  window.addEventListener("online", guiBu);
   requestAnimationFrame(khung);
 })();

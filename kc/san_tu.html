@@ -22,6 +22,8 @@
             cuối màn (ghép hình - chữ, ghép hết mới mở màn tiếp, có lời cổ vũ).
   CẬP NHẬT: 16/10/2026 - TC_00E: đường đua 2 "Xứ sở kẹo ngọt" (hình vẽ ở san_tu/st_ve_keo.js).
   CẬP NHẬT: 16/10/2026 - TC_00F: đường 3..10: mỗi đường 2 file st_duong_<mã>.js (dữ liệu) + st_ve_<mã>.js (hình).
+  CẬP NHẬT: 16/10/2026 - TC_01: nạp supabase-js + kc_config.js + kc_api.js và san_tu/st_kho_kc.js để cất kim cương
+            mỗi màn vào kho của bé; màn kết quả có dòng #kqKho báo đã cất / đủ trần ngày / giữ lại khi mất mạng.
   CODE: san_tu/st_cau_hinh.js (tham số, 10 đường đua, 7 màn), st_tien_do.js (tiến độ màn), st_tu_vung.js (kho từ), st_logic.js (lõi game), st_on_tap.js (bảng ôn tập),
         st_am_thanh.js (âm thanh), st_ve.js (vẽ), st_ve_keo.js (cảnh + quái đường Kẹo ngọt), st_giao_dien.js (giao diện + vòng lặp).
         Kiểm thử lõi game: node kc/san_tu/st_kiem_thu_node.js
@@ -140,6 +142,8 @@
   .soLieu div { background: var(--chinh-nhat); border-radius: 12px; padding: 6px 2px; font-size: 12.5px; color: var(--chu-nhat); }
   .soLieu b { display: block; font-family: "Baloo 2", sans-serif; font-size: 22px; color: var(--chinh-dam); }
   #tuDaHoc { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-height: 140px; overflow-y: auto; }
+  #kqKho { margin: 4px 0 8px; padding: 6px 10px; border-radius: 12px; background: #eef3ff; color: #2f4a8a; font-weight: 700; font-size: 15px; }
+  #kqKho.tot { background: #e6f8ee; color: #1d6b43; }
   #kqThuocMoi { margin: 4px 0 8px; padding: 6px 10px; border-radius: 12px; background: #fff6d6; color: #7a5600; font-weight: 700; font-size: 15px; }
   .chipTu.moiThuoc { border-color: var(--vang-dam); background: #fff6d6; }
   .chipTu { border: 2px solid #e3dcfa; background: #fff; border-radius: 99px; padding: 2px 10px; font-weight: 700; font-size: 15px; }
@@ -428,6 +432,7 @@
         <div><b id="kqKC">0</b>kim cương <small id="kqKCOnTap"></small></div>
         <div><b id="kqGio">0</b>giây còn lại</div>
       </div>
+      <div id="kqKho" style="display:none" aria-live="polite"></div>
       <div id="kqThuocMoi" style="display:none"></div>
       <div class="nhan" style="text-align:center" id="nhanTuDaHoc">Từ con đã chọn đúng (bấm để nghe lại)</div>
       <div id="tuDaHoc"></div>
@@ -435,11 +440,15 @@
       <button class="nutLon" id="nutChoiLai" type="button">↻ Chơi lại</button>
       <button class="nutVua nhat" id="nutDoiDoKho" type="button">🗺️ Chọn màn</button>
       <a class="nutVua nhat" href="trochoi_NC.html" style="text-decoration:none;display:inline-block">← Về Trò Chơi</a>
-      <p class="ghiChu">Kim cương trong game dùng để đổi mạng, chưa cộng vào kim cương của tài khoản.</p>
+      <p class="ghiChu">Đủ 10 kim cương thì tự đổi được 1 mạng. Hết mỗi màn, kim cương còn lại được cất vào kho kim cương của con.</p>
     </div>
   </section>
 </div>
 
+<!-- TC_01: kết nối máy chủ để cất kim cương vào kho (tải không được thì game vẫn chơi bình thường) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="kc_config.js"></script>
+<script src="kc_api.js"></script>
 <script src="san_tu/st_cau_hinh.js"></script>
 <script src="san_tu/st_duong_samac.js"></script>
 <script src="san_tu/st_duong_tuyet.js"></script>
@@ -450,6 +459,7 @@
 <script src="san_tu/st_duong_dem.js"></script>
 <script src="san_tu/st_duong_vutru.js"></script>
 <script src="san_tu/st_tien_do.js"></script>
+<script src="san_tu/st_kho_kc.js"></script>
 <script src="san_tu/st_kho_tu.js"></script>
 <script src="san_tu/st_tu_vung.js"></script>
 <script src="san_tu/st_logic.js"></script>
