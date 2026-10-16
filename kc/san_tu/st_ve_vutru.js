@@ -10,12 +10,34 @@
    CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js), bé NGỒI trong tàu.
    CẬP NHẬT: 16/10/2026 - TC_00G2: không còn mặt trăng / mặt đường: tàu bay giữa tinh không (sao, tinh vân,
              thiên hà trôi bên dưới); hố là LỖ ĐEN (người dùng yêu cầu).
+   CẬP NHẬT: 16/10/2026 - TC_00G3: bỏ vệt mờ như mặt đường; sao là các điểm sáng nhấp nháy, xen ngôi sao
+             5 cánh nhấp nháy; hành tinh tròn lớn thay bằng MẶT TRỜI có tia sáng tỏa ra, vành lửa bao quanh (người dùng yêu cầu).
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
   "use strict";
   const ST = goc.ST;
   const { PI2, tronMau, bam, chiaDuong, moiBuoc } = ST.VE_CHUNG;
+
+  /* Sao nhấp nháy: phần lớn là điểm sáng (sáng lên thì có tia chữ thập), thỉnh thoảng một
+     ngôi sao 5 cánh nhỏ phồng lên xẹp xuống. i: số thứ tự để mỗi sao một nhịp riêng. */
+  function veSaoNhay(bv, x, y, i, co) {
+    const c = bv.c, t = bv.t, nhip = 0.5 + 0.5 * Math.sin(t * (1.6 + bam(i + 11) * 2.4) + i * 1.7);
+    if (bam(i + 13) < 0.12) { // ngôi sao 5 cánh
+      const r = (3 + co * 2) * (0.75 + nhip * 0.45);
+      c.globalAlpha = 0.55 + nhip * 0.45;
+      bv.veSao(x, y, r, ["#fff6b0", "#ffd6f4", "#c8ecff"][i % 3], Math.sin(t * 0.8 + i) * 0.3);
+      c.globalAlpha = 1;
+      return;
+    }
+    const r = 0.7 + co * 1.1;
+    c.fillStyle = `rgba(255,255,255,${0.25 + nhip * 0.75})`; c.beginPath(); c.arc(x, y, r, 0, PI2); c.fill();
+    if (nhip > 0.7 && co > 0.5) { // lóe sáng: tia chữ thập
+      const d = r * (2 + (nhip - 0.7) * 14);
+      c.strokeStyle = `rgba(255,255,255,${(nhip - 0.7) * 2.4})`; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(x - d, y); c.lineTo(x + d, y); c.moveTo(x, y - d); c.lineTo(x, y + d); c.stroke();
+    }
+  }
 
   ST.CHU_DE_VE = ST.CHU_DE_VE || {};
   ST.CHU_DE_VE.vuTru = {
@@ -71,15 +93,12 @@
         const x = ((a * W * 1.5 - camX * 0.02) % (W * 1.5) + W * 1.5) % (W * 1.5) - W * 0.25;
         c.fillStyle = m; c.beginPath(); c.ellipse(x, b * dat, r, r * 0.5, 0.4, 0, PI2); c.fill();
       });
-      for (let i = 0; i < 80; i++) { // sao
-        const x = ((bam(i) * W * 1.5 - camX * (0.02 + bam(i + 5) * 0.04)) % W + W) % W, y = bam(i + 90) * dat, sang = 0.5 + Math.sin(t * 2 + i) * 0.4;
-        c.fillStyle = `rgba(255,255,255,${sang})`; c.beginPath(); c.arc(x, y, 0.8 + bam(i + 4) * 1.6, 0, PI2); c.fill();
+      for (let i = 0; i < 90; i++) { // sao nhấp nháy
+        const x = ((bam(i) * W * 1.5 - camX * (0.02 + bam(i + 5) * 0.04)) % W + W) % W, y = bam(i + 90) * dat;
+        veSaoNhay(this, x, y, i, bam(i + 4));
       }
-      // hành tinh có vành
-      const hx = W * 0.78 - p * W * 0.12, hy = 100;
-      c.fillStyle = "#ffb35c"; c.beginPath(); c.arc(hx, hy, 40, 0, PI2); c.fill();
-      c.fillStyle = "#e8843a"; c.fillRect(hx - 38, hy - 8, 76, 6); c.fillRect(hx - 34, hy + 10, 68, 5);
-      c.strokeStyle = "#ffe0a0"; c.lineWidth = 5; c.beginPath(); c.ellipse(hx, hy, 70, 14, -0.3, 0.1, Math.PI - 0.1); c.stroke();
+      // mặt trời xa: lõi nhỏ chói, vành lửa, tia sáng tỏa ra (không vẽ khối tròn lớn)
+      ST.VE_CHUNG.veMatTroi(c, W * 0.8 - p * W * 0.12, 92, 13, t, 58);
       // Trái Đất nhỏ
       const ex = W * 0.2 - p * W * 0.06, ey = 70;
       c.fillStyle = "#3f8fe0"; c.beginPath(); c.arc(ex, ey, 22, 0, PI2); c.fill();
@@ -100,9 +119,6 @@
       const gr = c.createLinearGradient(0, y - 40, 0, H);
       gr.addColorStop(0, "rgba(42,26,90,0)"); gr.addColorStop(0.35, "#1c1248"); gr.addColorStop(1, "#0a0820");
       c.fillStyle = gr; c.fillRect(0, y - 40, W, H - y + 40);
-      // vệt sáng mờ chỉ hướng bay (không phải mặt đường)
-      c.fillStyle = "rgba(140,200,255,0.10)"; c.fillRect(0, y + 2, W, 5);
-      moiBuoc(camX, -40, W + 40, 46, (i, x) => { c.fillStyle = `rgba(170,220,255,${0.25 + bam(i) * 0.25})`; c.fillRect(x, y + 3, 14, 2); });
       // tinh vân và thiên hà trôi theo tốc độ bay (cùng nhịp với quái nên bé thấy mình đang lao đi)
       moiBuoc(camX, -260, W + 260, 260, (i, x) => {
         const xx = x + bam(i) * 120, yy = y + 26 + bam(i + 1) * Math.max(10, H - y - 50), loai = bam(i + 2);
@@ -120,9 +136,8 @@
           c.fillStyle = ["#7ad0ff", "#ffb36b", "#c79bff"][i % 3]; c.beginPath(); c.arc(xx, yy, 7 + bam(i + 3) * 6, 0, PI2); c.fill();
         }
       });
-      moiBuoc(camX, -10, W + 10, 23, (i, x) => { // sao lấp lánh dưới tàu
-        const yy = y + 12 + bam(i + 7) * Math.max(10, H - y - 16), sang = 0.45 + Math.sin(t * 3 + i) * 0.35;
-        c.fillStyle = `rgba(255,255,255,${sang})`; c.beginPath(); c.arc(x + bam(i) * 20, yy, 0.8 + bam(i + 3) * 1.4, 0, PI2); c.fill();
+      moiBuoc(camX, -10, W + 10, 23, (i, x) => { // sao nhấp nháy dưới tàu
+        veSaoNhay(this, x + bam(i) * 20, y + 12 + bam(i + 7) * Math.max(10, H - y - 16), i + 300, bam(i + 3));
       });
     },
     mieng(x, w) { // HỐ = LỖ ĐEN: tâm đen, đĩa sáng xoay quanh, sao bị hút vào

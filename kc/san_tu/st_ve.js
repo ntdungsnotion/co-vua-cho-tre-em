@@ -25,6 +25,7 @@
              cảnh của đường đua đang chọn (maDuongMenu). Tên hang lấy theo đường đua (tenHang).
    CẬP NHẬT: 16/10/2026 - TC_00F: phương tiện của bé theo đường đua (ST.CHU_DE_VE[mã].phuongTien:
              sau / truoc / nang / dungYen): ván trượt, khủng long, vây bơi, đôi cánh, tàu vũ trụ. Hộp va chạm không đổi.
+   CẬP NHẬT: 16/10/2026 - TC_00G3: ST.VE_CHUNG.veMatTroi (mặt trời có tia sáng + vành lửa).
    CẬP NHẬT: 16/10/2026 - TC_00G: hàm vẽ bé chuyển sang st_ve_be.js (vẽ lại bé 11 tuổi, tư thế bơi / bay / ngồi tàu).
    ================================================================ */
 (function (goc) {
@@ -54,6 +55,40 @@
   /* Công cụ dùng chung cho các file vẽ theo chủ đề (st_ve_<mã>.js) */
   ST.VE_CHUNG = {
     PI2, lerp, tronMau, bam,
+    /* MẶT TRỜI (TC_00G3, người dùng yêu cầu): quầng sáng, tia sáng tỏa ra, VÀNH LỬA bập bùng bao quanh
+       lõi chói nhỏ; không vẽ khối tròn lớn. r: bán kính lõi; tiaDai: độ dài tia dài nhất. */
+    veMatTroi(c, x, y, r, t, tiaDai) {
+      tiaDai = tiaDai || r * 3.6;
+      const q = c.createRadialGradient(x, y, r * 0.2, x, y, tiaDai * 1.25);
+      q.addColorStop(0, "rgba(255,250,215,0.95)"); q.addColorStop(0.3, "rgba(255,210,110,0.45)"); q.addColorStop(1, "rgba(255,160,70,0)");
+      c.fillStyle = q; c.beginPath(); c.arc(x, y, tiaDai * 1.25, 0, PI2); c.fill();
+      c.save(); c.translate(x, y);
+      c.save(); c.rotate(t * 0.1); // tia sáng
+      for (let i = 0; i < 16; i++) {
+        const dai = (i % 2 ? 0.58 : 1) * tiaDai * (0.85 + 0.15 * Math.sin(t * 2.2 + i * 1.3));
+        const tia = c.createLinearGradient(0, 0, 0, -dai); tia.addColorStop(0, "rgba(255,240,180,0.9)"); tia.addColorStop(1, "rgba(255,200,110,0)");
+        c.fillStyle = tia; c.beginPath(); c.moveTo(-r * 0.22, -r); c.lineTo(0, -dai); c.lineTo(r * 0.22, -r); c.fill();
+        c.rotate(PI2 / 16);
+      }
+      c.restore();
+      // vành lửa: hai lớp lưỡi lửa uốn lượn, bập bùng theo thời gian
+      [[1.75, "rgba(255,110,40,0.85)", 1.3], [1.42, "rgba(255,190,60,0.95)", -1.7]].forEach(([ra, mau, toc]) => {
+        c.fillStyle = mau; c.beginPath();
+        const n = 14;
+        for (let i = 0; i <= n * 2; i++) {
+          const a = i / (n * 2) * PI2 + t * toc * 0.15;
+          const ngon = i % 2 === 0, lay = Math.sin(t * 6 + i * 2.3) * 0.12 + Math.sin(t * 3.7 + i) * 0.08;
+          const rr = r * (ngon ? ra + lay : 1.05);
+          const ac = a + (ngon ? Math.sin(t * 4 + i) * 0.06 : 0);
+          i ? c.lineTo(Math.cos(ac) * rr, Math.sin(ac) * rr) : c.moveTo(Math.cos(ac) * rr, Math.sin(ac) * rr);
+        }
+        c.closePath(); c.fill();
+      });
+      const loi = c.createRadialGradient(-r * 0.25, -r * 0.25, r * 0.1, 0, 0, r * 1.05);
+      loi.addColorStop(0, "#fffef2"); loi.addColorStop(0.6, "#fff1a8"); loi.addColorStop(1, "#ffc94a");
+      c.fillStyle = loi; c.beginPath(); c.arc(0, 0, r, 0, PI2); c.fill();
+      c.restore();
+    },
     // Chia mặt đường trong khung nhìn thành các đoạn đất liền và các miệng hố (tọa độ màn hình)
     chiaDuong(bv, camX, ds) {
       const W = bv.rong;

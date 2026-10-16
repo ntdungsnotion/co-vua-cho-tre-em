@@ -8,6 +8,7 @@
    BƯỚC: TC_00F
    CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js), bé BAY.
    CẬP NHẬT: 16/10/2026 - TC_00G2: đôi cánh bướm vỗ xòe hai bên (người dùng yêu cầu).
+   CẬP NHẬT: 16/10/2026 - TC_00G3: nhìn chéo thấy CẢ HAI cánh (xòe chữ V); mặt trời có tia sáng + vành lửa.
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -27,11 +28,13 @@
         const c = this.c, k = tt.k, toc = tt.nhay ? 15 : 8;
         const nhip = Math.sin(tt.t * toc);                  // -1 khép .. 1 xòe
         c.translate(k.lung.x, k.lung.y); c.rotate(k.than);   // hệ thân: -x là phía lưng, -y là phía đầu
-        // cánh xa (sau thân) nhạt hơn, lệch nhịp một chút; cánh gần vẽ sau cùng
-        [[0.55, 0.78, "#d9c8ff", "#b9a3f5", 0.35], [1, 1, "#ffb3e6", "#c89bff", 0]].forEach(([mo, kk, m1, m2, lech]) => {
-          const xoe = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(tt.t * toc + lech)); // độ dài cánh nhìn từ bên (khép thì ngắn lại)
-          c.save(); c.translate(0, -3); c.rotate(-0.25 + nhip * 0.12); c.scale(xoe * kk, kk);
-          c.globalAlpha = 0.6 + 0.4 * mo;
+        // Nhìn chéo từ phía sau - trên nên thấy CẢ HAI cánh (TC_00G3, người dùng thấy "chỉ 1 cánh"):
+        // cánh xa ngả về phía đầu, cánh gần ngả về phía chân; vỗ thì hai cánh cùng xòe ra rồi khép lại như chữ V.
+        const mo = 0.5 + 0.5 * nhip;
+        [[0.55, 0.88, "#e2d4ff", "#b9a3f5", -0.62 - mo * 0.32, -4], [1, 1, "#ffb3e6", "#c89bff", 0.2 + mo * 0.3, 1]].forEach(([dam, kk, m1, m2, goc, dy]) => {
+          const xoe = 0.55 + 0.45 * mo; // khép thì cánh ngắn lại (cánh quay về phía người xem)
+          c.save(); c.translate(0, dy); c.rotate(goc); c.scale(xoe * kk, kk); const mo2 = dam;
+          c.globalAlpha = 0.72 + 0.28 * mo2;
           const gr = c.createLinearGradient(0, 0, -44, 0); gr.addColorStop(0, m2); gr.addColorStop(1, m1);
           c.fillStyle = gr; c.strokeStyle = VIEN; c.lineWidth = 1.6;
           // cánh trên (to, hướng về phía đầu) + cánh dưới (nhỏ, hướng về phía chân)
@@ -59,7 +62,8 @@
       gr.addColorStop(0, tronMau("#7cc8ff", "#9a7ae8", s * 0.8));
       gr.addColorStop(1, tronMau("#ffe8f4", "#ffc8d8", s));
       c.fillStyle = gr; c.fillRect(0, 0, W, H);
-      c.fillStyle = "rgba(255,250,210,0.9)"; c.beginPath(); c.arc(W * 0.82 - p * W * 0.1, 70 + s * 40, 30, 0, PI2); c.fill();
+      // mặt trời: lõi nhỏ, vành lửa, tia sáng tỏa ra (không vẽ khối tròn lớn)
+      ST.VE_CHUNG.veMatTroi(c, W * 0.82 - p * W * 0.1, 70 + s * 40, 15, t, 54);
       // cầu vồng lớn xa
       const cvX = W * 0.35 - camX * 0.03 % (W * 2), cvY = dat + 40;
       c.lineWidth = 12;
