@@ -28,7 +28,8 @@
              (thongSoNhay); mọi quái bay luôn phải bắn (không tính vào giới hạn 1/4).
              Kho quái phong phú: trọng số các loại xáo ngẫu nhiên mỗi lượt, không 2 cái giống nhau
              liền nhau, cố tránh loại vừa gặp; cái đầu là một vật cản thấp bất kỳ (không chỉ ống cống).
-             Gặp quái nhiều máu mà không đủ giờ bắn thì bé chạy chậm lại (tinhHeSoTocDo).
+             Gặp quái nhiều máu mà không đủ giờ bắn thì bé chạy chậm lại (tinhHeSoTocDo), chỉ khi quái
+             đã hiện trên màn hình và chậm ít. HANG KIM CƯƠNG: rơi hố có xác suất vào hang (vaoHang).
    TỌA ĐỘ: x = quãng đường (tăng về phía lâu đài), y = độ cao so với mặt đất.
            Nhân vật: x là TÂM người, y là CHÂN. Chướng ngại vật: x là MÉP TRÁI.
    THỨ TỰ XỬ LÝ MỖI BƯỚC (cố định để không chồng chéo):
@@ -282,6 +283,7 @@
       this.soThuThach = 0;
       this.dan = [];            // viên phép thuật đang bay
       this.heSoTocDo = 1;       // < 1: đang chạy chậm lại cho bé kịp bắn quái nhiều máu
+      this.hang = null;         // đang ở hang kim cương (rơi hố may mắn)
       this.kimCuongs = duong.kimCuongs; // kim cương rải ngẫu nhiên trên đường
       this.tongKimCuongDuong = duong.kimCuongs.length;
       this.thongKe = { dung: 0, sai: 0, truot: 0, matMang: 0, tuDung: [], mangDoi: 0 };
@@ -329,6 +331,8 @@
     buoc(h) {
       if (this.trangThai === "thang" || this.trangThai === "thua") { this.tKetThuc += h; return; }
       if (!this.dangChoi) return;
+      // 0. Đang ở HANG KIM CƯƠNG: đồng hồ đứng yên, thế giới bên ngoài đứng yên
+      if (this.hang) { this.buocHang(h); return; }
       // 1. Đồng hồ: chạy cả khi khựng / gặp nạn; dừng khi tạm dừng (không vào đây)
       this.tChoi += h;
       this.thoiGian -= h;
@@ -493,18 +497,104 @@
         o.trangThai = "qua";
         if (o.nhom !== "ho") { o.boChay = true; o.tChet = 0; }
       }
-      // Vị trí hồi sinh an toàn: qua hẳn chướng ngại vật, không rơi vào hố, không sát cái kế tiếp
-      let viTri = o ? o.x + o.rong + this.CH.leHoiSinh + this.CH.nhanVat.rong / 2 : be.x;
-      const keTiep = this.chuongNgai.find(c => c !== o && c.trangThai === "cho" && c.x > be.x);
-      // (phòng xa) không hồi sinh vào sát cái kế tiếp: chừa ít nhất 60% thời gian phản ứng
-      if (keTiep) viTri = Math.min(viTri, keTiep.x + keTiep.rong / 2 - khoangKichHoat(keTiep, this.v, this.dk.thoiGianPhanUng * 0.6));
-      this.viTriHoiSinh = Math.max(viTri, o ? o.x + o.rong + this.CH.nhanVat.rong / 2 + 4 : be.x);
+      this.viTriHoiSinh = this.viTriSauVat(o);
       this.phat("matMang", { lyDo, o, mang: this.mang, mangDuTru: this.mangDuTru });
       this.doiMang(); // vừa xuống dưới giới hạn: nếu đang để dành đủ kim cương thì đổi ngay
       if (this.tongMang <= 0) { this.ketThuc("hetMang"); return true; }
       this.trangThai = "hoiSinh";
       return true;
     }
+    // Vị trí hồi sinh an toàn: qua hẳn chướng ngại vật, không rơi vào hố, không sát cái kế tiếp
+    viTriSauVat(o) {
+      const be = this.be;
+      let viTri = o ? o.x + o.rong + this.CH.leHoiSinh + this.CH.nhanVat.rong / 2 : be.x;
+      const keTiep = this.chuongNgai.find(c => c !== o && c.trangThai === "cho" && c.x > be.x);
+      // (phòng xa) không hồi sinh vào sát cái kế tiếp: chừa ít nhất 60% thời gian phản ứng
+      if (keTiep) viTri = Math.min(viTri, keTiep.x + keTiep.rong / 2 - khoangKichHoat(keTiep, this.v, this.dk.thoiGianPhanUng * 0.6));
+      return Math.max(viTri, o ? o.x + o.rong + this.CH.nhanVat.rong / 2 + 4 : be.x);
+    }
+
+    /* ---------------- HANG KIM CƯƠNG (người dùng yêu cầu 16/10/2026) ----------------
+       Rơi hố may mắn: không mất mạng, rơi vào hang bí mật. Đồng hồ ĐỨNG YÊN trong hang.
+       Bé tự chạy qua hàng kim cương (5-10 viên, nhặt khi chạy qua); cuối hang là CỬA ÁNH SÁNG
+       trên gờ đá: phải bấm đúng từ để bé NHẢY vào cửa (không giới hạn thời gian, sai thì bấm lại).
+       Ra khỏi cửa: bé về đường chính, ngay sau cái hố. Tọa độ trong hang tính riêng (x từ 0).
+       Các pha: roi (rơi xuống hố ở đường chính) -> vao (rơi từ trần hang xuống) -> chay -> nhay -> sang. */
+    vaoHang(o) {
+      const CH = this.CH, be = this.be, [a, b] = CH.kimCuongHang;
+      this.dongThuThach();
+      this.dan = [];
+      o.trangThai = "qua";
+      be.nhay = null; be.che = "roi"; be.tChe = 0;
+      const so = a + Math.floor(this.rng() * (b - a + 1)), kimCuongs = [];
+      for (let i = 0; i < so; i++) kimCuongs.push({ x: 220 + i * 74, y: Math.round(30 + 18 * Math.sin(i * 1.3)), daNhat: false, tHien: 0 });
+      const cuaX = 220 + so * 74 + 300;
+      this.hang = { o, pha: "roi", t: 0, x: 0, y: 0, che: "roi", so, daLay: 0, kimCuongs, cuaX, doCaoGo: 86,
+        diemDung: cuaX - 150, daDung: false, tt: null, viTriRa: this.viTriSauVat(o) };
+      this.phat("vaoHang", { o, so });
+      return true;
+    }
+    buocHang(h) {
+      const H = this.hang, CH = this.CH, be = this.be;
+      H.t += h;
+      if (H.pha === "roi") { // rơi xuống hố ở đường chính (giống lúc gặp nạn)
+        be.y -= 260 * h; be.tChe += h;
+        if (H.t >= 0.8) { H.pha = "vao"; H.t = 0; H.y = 220; H.che = "nhay"; this.phat("trongHang", { so: H.so }); }
+        return;
+      }
+      if (H.pha === "vao") { // rơi từ trần hang xuống đất
+        H.y = Math.max(0, 220 - 520 * H.t * H.t);
+        if (H.y <= 0) { H.pha = "chay"; H.t = 0; H.che = "chay"; this.phat("tiepDat"); }
+        return;
+      }
+      if (H.pha === "chay") {
+        H.x = Math.min(H.diemDung, H.x + this.v * 0.85 * h);
+        H.che = H.x >= H.diemDung ? "dung" : "chay";
+        const r = CH.kichThuocKimCuong / 2 + CH.nhanVat.rong / 2;
+        for (const k of H.kimCuongs) {
+          k.tHien += h;
+          if (!k.daNhat && Math.abs(k.x - H.x) < r && k.y - r < CH.nhanVat.cao) {
+            k.daNhat = true; H.daLay++;
+            this.kimCuong++; this.tongKimCuong++;
+            this.phat("nhatKimCuong", { k, kimCuong: this.kimCuong, trongHang: true });
+            this.doiMang();
+          }
+        }
+        // gần tới gờ đá thì hiện từ của cửa ánh sáng (đọc to như mọi từ)
+        if (!H.tt && H.x >= H.diemDung - this.v * 2) this.moCuaHang();
+        if (H.x >= H.diemDung && H.daDung) { H.pha = "nhay"; H.t = 0; H.che = "nhay"; this.phat("nhay", { lyDo: "cuaHang" }); }
+        return;
+      }
+      if (H.pha === "nhay") { // nhảy lên gờ đá vào cửa ánh sáng
+        const T = 0.75, u = Math.min(1, H.t / T);
+        H.x = H.diemDung + (H.cuaX - H.diemDung) * u;
+        H.y = H.doCaoGo * u + 130 * 4 * u * (1 - u);
+        if (u >= 1) { H.pha = "sang"; H.t = 0; H.che = "dung"; this.phat("vaoCuaSang"); }
+        return;
+      }
+      if (H.pha === "sang" && H.t >= 0.7) this.raHang();
+    }
+    moCuaHang() {
+      const H = this.hang;
+      const o = { id: 0, loai: "cuaSang", ten: "Cửa ánh sáng", nhom: "cuaSang", hanhDong: "nhay", vaCham: "khong",
+        mau: 0, mauToiDa: 0, rong: 60, cao: 90, bayCao: 0, x: 0, song: true, trangThai: "hoi", tu: this.khoTu.layTu() };
+      this.soThuThach++;
+      H.tt = this.thuThach = {
+        id: this.soThuThach, o, tu: o.tu, phuongAn: this.khoTu.taoPhuongAn(o.tu), daSai: [], trangThai: "mo",
+        tMo: this.tChoi, thoiHan: 0, soVien: 0, daDung: false, laCuaHang: true
+      };
+      this.phat("thuThachMoi", { tt: this.thuThach });
+    }
+    raHang() {
+      const H = this.hang, be = this.be;
+      if (H.tt && H.tt.trangThai === "mo") H.tt.trangThai = "dung";
+      this.thuThach = null;
+      be.x = H.viTriRa; be.y = 0; be.nhay = null; be.tCham = 0; be.che = "chay"; be.tChe = 0;
+      be.batTu = this.CH.thoiGianBatTu * 0.5;
+      this.hang = null;
+      this.phat("raHang", { daLay: H.daLay, so: H.so });
+    }
+
     hoiSinh() {
       const be = this.be;
       be.x = this.viTriHoiSinh; be.y = 0; be.nhay = null; be.tCham = 0;
@@ -550,12 +640,14 @@
       };
       this.phat("thuThachMoi", { tt: this.thuThach });
     }
-    /* GẶP QUÁI NHIỀU MÁU THÌ CHẠY CHẬM LẠI (người dùng yêu cầu 16/10/2026): mỗi viên còn phải bắn
-       cần giayMoiVien giây; nếu chạy đủ tốc độ không còn đủ giờ thì bé (và quái) chậm lại vừa đủ,
-       chậm nhất còn tiLeTocDoBanToiThieu. Bắn trúng bớt máu thì tăng tốc lại dần; hạ xong chạy bình thường. */
+    /* GẶP QUÁI NHIỀU MÁU THÌ CHẠY CHẬM LẠI (người dùng yêu cầu 16/10/2026): khi quái đã hiện trên màn
+       hình (tamNhin do giao diện báo), mỗi viên còn phải bắn cần giayMoiVien giây; nếu chạy đủ tốc độ
+       không còn đủ giờ thì bé (và quái) chậm lại, chậm nhất còn tiLeTocDoBanToiThieu (chậm ít thôi). Bắn trúng bớt máu thì tăng tốc lại dần; hạ xong chạy bình thường. */
     tinhHeSoTocDo() {
       const tt = this.thuThach, CH = this.CH;
       if (!tt || tt.trangThai !== "mo" || tt.o.hanhDong !== "ban" || !tt.o.song || tt.o.boChay || tt.o.mau <= 0) return 1;
+      // chỉ chậm lại khi quái đã HIỆN trên màn hình (người dùng chỉnh 16/10/2026)
+      if (this.khoangTam(tt.o) - tt.o.rong / 2 > (this.tamNhin || CH.tamNhinMacDinh)) return 1;
       const conMau = tt.o.mau - this.dan.filter(d => d.o === tt.o).length; // viên đang bay coi như đã trúng
       if (conMau <= 0) return 1;
       const co = (this.khoangTam(tt.o) - khoangHetHan(tt.o, this.v)) / tocDoKhep(tt.o, this.v);
@@ -566,6 +658,7 @@
     phanThoiGianConLai() {
       const tt = this.thuThach;
       if (!tt || tt.trangThai !== "mo") return 0;
+      if (tt.laCuaHang) return 1; // trong hang: không giới hạn thời gian
       const con = (this.khoangTam(tt.o) - khoangHetHan(tt.o, this.v)) / (tocDoKhep(tt.o, this.v) * (this.heSoTocDo || 1));
       return Math.max(0, Math.min(1, con / tt.thoiHan));
     }
@@ -609,6 +702,11 @@
         return { kq: "sai" };
       }
       const o = tt.o, be = this.be;
+      if (tt.laCuaHang) { // cửa ánh sáng trong hang: bấm đúng là bé nhảy vào cửa (tới gờ đá thì nhảy)
+        if (!tt.daDung) this.ghiLanDungDau(tt, tu);
+        if (this.hang) this.hang.daDung = true;
+        return { kq: "dung" };
+      }
       if (o.hanhDong === "nhay") {
         // Đang lơ lửng (vd cú nhảy nhặt kim cương) thì chưa nhảy được: bé bấm lại sau
         if (be.nhay || be.che !== "chay") return { kq: "boQua", lyDo: "dangNhay" };
@@ -655,6 +753,8 @@
           // Rơi: tâm bé nằm trong miệng hố khi đang chạm đất
           if (!be.nhay && be.y <= 0 && be.x > o.x + 6 && be.x < o.x + o.rong - 6) {
             this.phat("roiHo", { o });
+            // may mắn (tiLeHangKimCuong): không mất mạng mà rơi vào HANG KIM CƯƠNG (màn Tập chơi thì không)
+            if (!this.dk.laHuongDan && this.rng() < this.CH.tiLeHangKimCuong) return this.vaoHang(o);
             return this.matMang("roi", o);
           }
           continue;

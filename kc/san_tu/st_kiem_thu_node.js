@@ -46,17 +46,19 @@ function chay(maDoKho, hat, naoBo, tuyChon) {
   const g = new ST.TroChoi(MAN_THU[maDoKho] || maDoKho, { ngauNhien: rng, soTay: tuyChon.soTay, suKien: (t, d) => suKien.push({ t, d, luc: g ? g.tChoi : 0 }) });
   g.batDau();
   const dt = tuyChon.dt || 1 / 60;
-  let lich = null, buoc = 0;
+  let lich = null, buoc = 0, dongHo = 0; // dongHo: giờ thật của bé (đồng hồ màn đứng yên trong hang kim cương)
   while ((g.trangThai === "choi" || g.trangThai === "hoiSinh" || g.trangThai === "tamDung") && buoc < 60 * 400) {
     buoc++;
     const tt = g.thuThach;
-    if (tt && tt.trangThai === "mo" && (!lich || lich.id !== tt.id)) lich = { id: tt.id, luc: g.tChoi + naoBo.tre(tt, g), lan: 0 };
-    if (lich && tt && tt.id === lich.id && tt.trangThai === "mo" && g.tChoi >= lich.luc) {
+    if (tt && tt.trangThai === "mo" && (!lich || lich.id !== tt.id)) lich = { id: tt.id, luc: dongHo + naoBo.tre(tt, g), lan: 0 };
+    if (lich && tt && tt.id === lich.id && tt.trangThai === "mo" && dongHo >= lich.luc) {
       // bam() trả về false = chưa tới lúc bấm (đang canh cửa sổ nhảy): xét lại ở khung sau
-      if (naoBo.bam(g, tt, lich) !== false) lich.luc = g.tChoi + (naoBo.lap || 0.15);
+      if (naoBo.bam(g, tt, lich) !== false) lich.luc = dongHo + (naoBo.lap || 0.15);
     }
     if (tuyChon.moiBuoc) tuyChon.moiBuoc(g, buoc);
-    g.capNhat(tuyChon.dtNgauNhien ? dt * (0.3 + rng() * 3) : dt);
+    const d = tuyChon.dtNgauNhien ? dt * (0.3 + rng() * 3) : dt;
+    if (g.trangThai !== "tamDung") dongHo += Math.min(d, 0.25);
+    g.capNhat(d);
   }
   return { g, suKien };
 }
@@ -89,6 +91,8 @@ const nao = {
   } }
 };
 const dem = (sk, t) => sk.filter(e => e.t === t).length;
+// đang đứng chờ trước cửa ánh sáng trong hang kim cương (chưa bấm đúng từ của cửa)
+const choCuaHang = g => !!(g.hang && g.hang.tt && !g.hang.daDung && g.hang.x >= g.hang.diemDung && g.trangThai === "choi");
 
 console.log("1. Luôn trả lời đúng -> thắng, không mất mạng, nhặt đủ kim cương");
 for (const ma of DS_MAN) {
@@ -114,7 +118,8 @@ for (const ma of DS_MAN) {
 console.log("2. Không bấm gì -> va ống cống chỉ khựng; quái / hố làm mất mạng; hết mạng thì thua ngay");
 for (const ma of DS_MAN) for (let hat = 1; hat <= 15; hat++) {
   const { g, suKien } = chay(ma, hat, nao.khongBam);
-  kiem(g.trangThai === "thua", `${ma}#${hat}: phải thua`);
+  // (rơi vào hang kim cương mà không bấm từ của cửa ánh sáng thì đứng chờ ở cửa, không qua màn được)
+  kiem(g.trangThai === "thua" || choCuaHang(g), `${ma}#${hat}: phải thua`);
   const matDoVatCan = suKien.filter(e => e.t === "matMang" && e.d.o && e.d.o.vaCham === "khung").length;
   kiem(matDoVatCan === 0, `${ma}#${hat}: vật cản không được làm mất mạng`);
   kiem(dem(suKien, "matMang") === g.thongKe.matMang, `${ma}#${hat}: đếm mất mạng`);
@@ -254,11 +259,11 @@ for (const ma of DS_MAN) for (let hat = 100; hat < 160; hat++) {
     else if (g.mangDuTru > CH.mangDuTruToiDa || g.mangDuTru < 0 || g.mang < 0) loi = "mạng sai";
     else if (g.kimCuong >= CH.kimCuongDoiMang && g.mangDuTru < CH.mangDuTruToiDa) loi = "đủ kim cương mà chưa đổi";
     else if (g.tChoi > g.thoiGianToiDa + 0.01) loi = "quá thời gian màn";
-    else if (g.trangThai === "choi" && g.be.y === 0 && !g.be.nhay && g.chuongNgai.some(o => o.nhom === "ho" && g.be.x > o.x + 6 && g.be.x < o.x + o.rong - 6)) loi = "đứng giữa hố";
+    else if (g.trangThai === "choi" && !g.hang && g.be.y === 0 && !g.be.nhay && g.chuongNgai.some(o => o.nhom === "ho" && g.be.x > o.x + 6 && g.be.x < o.x + o.rong - 6)) loi = "đứng giữa hố";
     if (b % 97 === 0 && g.dangChoi) { g.tamDung(); g.capNhat(0.5); g.tiepTuc(); }
   } });
   kiem(!loi, `${ma}#${hat}: ${loi}`);
-  kiem(r.g.trangThai === "thang" || r.g.trangThai === "thua", `${ma}#${hat}: lượt chơi phải kết thúc (${r.g.trangThai})`);
+  kiem(r.g.trangThai === "thang" || r.g.trangThai === "thua" || choCuaHang(r.g), `${ma}#${hat}: lượt chơi phải kết thúc (${r.g.trangThai})`);
 }
 
 console.log("10. Kho từ: đủ nhiều, không trùng, đủ hình + nghĩa, khó dần theo cấp");
@@ -462,7 +467,8 @@ for (const ma of DS_MAN) {
   for (let hat = 1; hat <= 10; hat++) {
     khacNhau.add(JSON.stringify(ST.sinhDuongDi(MAN_THU[ma], ST.taoNgauNhien(hat), new ST.KhoTuVung(MAN_THU[ma], ST.taoNgauNhien(hat))).kimCuongs.map(k => k.x)));
     const r0 = chay(ma, hat, nao.khongBam);
-    kiem(r0.g.tongKimCuong === 0, `${ma}#${hat}: không nhảy mà nhặt được ${r0.g.tongKimCuong} kim cương`);
+    const trongHang = r0.suKien.filter(e => e.t === "nhatKimCuong" && e.d.trongHang).length; // hang kim cương: chạy qua là nhặt
+    kiem(r0.g.tongKimCuong - trongHang === 0, `${ma}#${hat}: không nhảy mà nhặt được ${r0.g.tongKimCuong - trongHang} kim cương trên đường`);
     const r1 = chay(ma, hat, nao.boQuaKimCuong);
     kiem(r1.g.tongKimCuong === 0 && r1.g.trangThai === "thang", `${ma}#${hat}: chỉ nhảy qua vật thì không lấy được kim cương (${r1.g.tongKimCuong}, ${r1.g.trangThai})`);
     const r = chay(ma, hat, nao.luonDung(0.3));
@@ -573,24 +579,63 @@ console.log("20. Kho quái phong phú: mỗi loại trong kho đều có xuất 
     .forEach(t => kiem(ve.includes(`case "${t}":`) && ST.LOAI_CHUONG_NGAI[t].ten, `loại ${t} chưa có hình vẽ`));
 }
 
-console.log("21. Quái nhiều máu: bé bắn chậm (mỗi viên cách nhau 1.1 giây) vẫn kịp hạ vì bé chạy chậm lại; không có quái thì chạy đủ tốc độ");
+console.log("21. Quái nhiều máu: chỉ chậm lại khi quái đã hiện trên màn hình, chậm ít (>= 65%); bé bắt đầu bắn khi thấy quái, mỗi 0,5 giây một viên vẫn kịp hạ");
 {
-  // bắn chậm: nghĩ gần hết thời gian đọc rồi mới bắn viên đầu, các viên sau cách nhau 1.1 giây
-  const banCham = { lap: 1.1, tre: (tt) => tt.o.hanhDong === "nhay" ? 0.3 : tt.thoiHan * 0.85, bam: (g, tt) => bamDung(g, tt) };
+  const CH = ST.CAU_HINH, giuHang = CH.tiLeHangKimCuong;
+  CH.tiLeHangKimCuong = 0;
+  // bé chỉ bắt đầu bắn khi đã nhìn thấy quái, rồi cứ 0,5 giây bấm một lần
+  const thayQuai = (g, tt) => g.khoangTam(tt.o) - tt.o.rong / 2 <= CH.tamNhinMacDinh;
+  const banKhiThay = { lap: 0.5, tre: () => 0.3, bam: (g, tt) => tt.o.hanhDong === "nhay" ? bamDung(g, tt) : thayQuai(g, tt) ? g.chonDapAn(tt.id, tt.tu.en) : false };
+  let soCham = 0;
   for (const ma of DS_MAN) for (let hat = 1; hat <= 20; hat++) {
-    let heMin = 1, loiHe = "";
-    const { g, suKien } = chay(ma, hat, banCham, { moiBuoc: g => {
-      const tt = g.thuThach, he = g.heSoTocDo;
-      heMin = Math.min(heMin, he);
-      if (he < ST.CAU_HINH.tiLeTocDoBanToiThieu - 1e-9) loiHe = "chậm quá " + he;
-      if (he < 1 && !(tt && tt.trangThai === "mo" && tt.o.hanhDong === "ban" && tt.o.song)) loiHe = "chạy chậm khi không có quái phải bắn";
+    let loiHe = "";
+    const { g, suKien } = chay(ma, hat, banKhiThay, { moiBuoc: g => {
+      const tt = g.thuThach, he = g.tinhHeSoTocDo();
+      if (he < CH.tiLeTocDoBanToiThieu - 1e-9) loiHe = "chậm quá " + he;
+      if (he < 1) { soCham++; if (!(tt && tt.trangThai === "mo" && tt.o.hanhDong === "ban" && thayQuai(g, tt))) loiHe = "chạy chậm khi quái chưa hiện / không có quái phải bắn"; }
     } });
     kiem(!loiHe, `${ma}#${hat}: ${loiHe}`);
     const banMo = suKien.filter(e => e.t === "thuThachMoi" && e.d.tt.o.hanhDong === "ban").length;
-    kiem(dem(suKien, "haQuai") === banMo, `${ma}#${hat}: bắn chậm phải hạ hết quái (${dem(suKien, "haQuai")}/${banMo})`);
-    kiem(g.thongKe.matMang === 0, `${ma}#${hat}: bắn chậm không được mất mạng (${g.thongKe.matMang})`);
-    if (banMo) kiem(heMin < 1, `${ma}#${hat}: có quái nhiều máu mà không chạy chậm lại`);
+    kiem(dem(suKien, "haQuai") === banMo, `${ma}#${hat}: phải hạ hết quái (${dem(suKien, "haQuai")}/${banMo})`);
+    kiem(g.thongKe.matMang === 0, `${ma}#${hat}: không được mất mạng (${g.thongKe.matMang})`);
   }
+  kiem(soCham > 0, "phải có lúc chạy chậm lại");
+  CH.tiLeHangKimCuong = giuHang;
+}
+
+console.log("22. Hang kim cương: rơi hố may mắn không mất mạng, đồng hồ đứng yên, nhặt 5-10 viên, bấm đúng từ để nhảy vào cửa ánh sáng rồi về sau hố");
+{
+  const CH = ST.CAU_HINH, giuHang = CH.tiLeHangKimCuong;
+  CH.tiLeHangKimCuong = 1;
+  // bé không trả lời hố (để rơi), trả lời mọi thứ khác; ở cửa ánh sáng: bấm sai 1 lần rồi đúng
+  const naoHang = { tre: () => 0.4, bam: (g, tt, l) => {
+    if (tt.o.nhom === "ho") return;
+    if (tt.laCuaHang) { const sai = tt.phuongAn.find(p => p !== tt.tu.en && tt.daSai.indexOf(p) < 0); if (l.lan++ === 0 && sai) return g.chonDapAn(tt.id, sai); return g.chonDapAn(tt.id, tt.tu.en); }
+    return bamDung(g, tt);
+  } };
+  let soHang = 0;
+  for (const ma of DS_MAN) for (let hat = 1; hat <= 15; hat++) {
+    let gioVao = null, loi = "";
+    const { g, suKien } = chay(ma, hat, naoHang, { moiBuoc: g => {
+      if (g.hang && gioVao === null) gioVao = g.thoiGian;
+      if (g.hang && Math.abs(g.thoiGian - gioVao) > 1e-9) loi = "đồng hồ chạy trong hang";
+      if (!g.hang) gioVao = null;
+    } });
+    kiem(!loi, `${ma}#${hat}: ${loi}`);
+    const vao = suKien.filter(e => e.t === "vaoHang"), ra = suKien.filter(e => e.t === "raHang");
+    soHang += vao.length;
+    kiem(vao.length === ra.length, `${ma}#${hat}: vào hang ${vao.length} lần, ra ${ra.length} lần`);
+    vao.forEach(e => kiem(e.d.so >= CH.kimCuongHang[0] && e.d.so <= CH.kimCuongHang[1], `${ma}#${hat}: hang có ${e.d.so} kim cương`));
+    ra.forEach(e => kiem(e.d.daLay === e.d.so, `${ma}#${hat}: chạy qua phải nhặt đủ ${e.d.daLay}/${e.d.so}`));
+    kiem(g.thongKe.matMang === 0 && g.trangThai === "thang", `${ma}#${hat}: rơi vào hang không mất mạng, vẫn qua màn (${g.trangThai}, mất ${g.thongKe.matMang})`);
+  }
+  kiem(soHang > 20, `phải có nhiều lượt vào hang (${soHang})`);
+  // màn Tập chơi không có hang; không bấm từ của cửa thì đứng chờ ở cửa, không về đường chính
+  const t = chay(ST.taoManChoi("rung", 0, "de"), 1, nao.khongBam);
+  kiem(dem(t.suKien, "vaoHang") === 0, "Tập chơi không có hang");
+  const k = chay(DS_MAN[0], 3, nao.khongBam);
+  kiem(choCuaHang(k.g) && dem(k.suKien, "raHang") === 0, "không bấm từ của cửa thì ở lại trong hang");
+  CH.tiLeHangKimCuong = giuHang;
 }
 
 console.log(`\n${soKiem - soLoi}/${soKiem} kiểm tra đạt` + (soLoi ? ` - ${soLoi} LỖI` : " ✓"));

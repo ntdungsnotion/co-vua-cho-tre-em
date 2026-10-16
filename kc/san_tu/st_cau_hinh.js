@@ -25,6 +25,8 @@
    CẬP NHẬT: 16/10/2026 - TC_00D2: kho quái / vật cản phong phú (13 loại mới), mở dần theo màn
              (KHO1..KHO6); loại và thứ tự xuất hiện ngẫu nhiên mỗi lượt chơi. Gặp quái nhiều máu
              thì bé chạy chậm lại cho đủ giờ bắn (giayMoiVien, tiLeTocDoBanToiThieu).
+             (người dùng chỉnh) chỉ chậm khi quái đã HIỆN trên màn hình, chậm ít (tối thiểu 65%).
+             Hang kim cương: rơi hố 10% vào hang nhặt 5-10 kim cương (tiLeHangKimCuong, kimCuongHang).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -54,8 +56,13 @@
     nhanVat: { rong: 24, cao: 66 }, // hộp va chạm của bé (hẹp hơn hình vẽ cho dễ thở)
     tocDoDan: 1000,             // tốc độ viên phép thuật
     khoangPhepToiThieu: 90,     // quái có máu: thanh đếm ngược hết khi quái còn cách chừng này
-    giayMoiVien: 1.3,           // gặp quái phải bắn: mỗi viên còn lại cần chừng này giây; thiếu giờ thì bé chạy chậm lại
-    tiLeTocDoBanToiThieu: 0.3,  // ... nhưng không chậm hơn 30% tốc độ thường
+    giayMoiVien: 1.0,           // gặp quái phải bắn (đã hiện trên màn hình): mỗi viên còn lại cần chừng này giây;
+    tiLeTocDoBanToiThieu: 0.65, // thiếu giờ thì bé chậm lại CHÚT ÍT, không chậm hơn 65% (giữ tính thử thách)
+    tamNhinMacDinh: 420,        // quái cách bé bao xa thì đã hiện trên màn hình (giao diện cập nhật theo khổ màn thật)
+    // HANG KIM CƯƠNG (người dùng yêu cầu 16/10/2026): rơi hố có xác suất KHÔNG mất mạng mà vào hang bí mật,
+    // nhặt kim cương, đồng hồ đứng yên; lối ra là cửa ánh sáng trên gờ đá, bấm đúng từ để nhảy vào.
+    tiLeHangKimCuong: 0.1,      // xác suất rơi hố thì vào hang (mặc định, quản trị sẽ sửa được - Hướng Dẫn 3.8B)
+    kimCuongHang: [5, 10],      // số kim cương ngẫu nhiên trong hang (mặc định, quản trị sửa được)
     thoiGianThemMoiVien: 0.45,  // quái nhiều máu: thêm chừng này giây đọc từ cho mỗi viên từ viên thứ 2
     choTruocKhiVaoDuong: 2.4,   // giây chạy khởi động trước chướng ngại vật đầu tiên
     khoangCuoiTruocLauDai: 420, // khoảng trống cuối đường trước cổng lâu đài

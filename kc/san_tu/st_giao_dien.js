@@ -20,6 +20,7 @@
              lưu qua màn / mở màn tiếp, có lời khen và động viên. Từ hiện ra là đọc to ngay; bé bấm
              chữ thì đọc lại chữ đó (trùng từ đang đọc dở thì đọc tiếp cho xong).
              Cụm kim cương có từ riêng (đứng ở chỗ trống): lời nhắc / thông báo riêng cho cụm.
+             Hang kim cương (rơi hố may mắn): thông báo vào / ra hang, từ của cửa ánh sáng.
    ================================================================ */
 (function () {
   "use strict";
@@ -335,7 +336,8 @@
     });
     $("loiNhan").className = "";
     const timTu = g.dk.anChu ? "từ con vừa NGHE" : "từ GIỐNG chữ trên biển";
-    $("loiNhan").textContent = g.dk.laHuongDan ? loiTapChoi(tt, timTu)
+    $("loiNhan").textContent = tt.laCuaHang ? `✨ Cửa ánh sáng là lối ra! Bấm ${timTu} để bé nhảy vào cửa.`
+      : g.dk.laHuongDan ? loiTapChoi(tt, timTu)
       : lanThuThach <= 2 && g.dk.soMan === 1 ? (tt.o.hanhDong === "nhay"
       ? (tt.o.nhom === "kimCuong" ? `💎 Bấm ${timTu} lúc bé tới gần để nhảy lên lấy kim cương!` : `👆 Bấm ${timTu} lúc bé tới gần để nhảy qua!`) : `👆 Bấm ${timTu} để bắn!`)
       : tt.o.hanhDong === "ban" && !daGapQuaiMau ? `💥 ${tt.o.ten} có thanh máu: bấm đúng từ ${tt.o.mau} lần để bắn hạ!` : "";
@@ -355,7 +357,8 @@
   }
   function veHanhDong(tt) {
     const o = tt.o;
-    $("hanhDongTu").textContent = o.nhom === "kimCuong" ? `💎 Nhảy lấy ${o.soKimCuong} kim cương`
+    $("hanhDongTu").textContent = o.nhom === "cuaSang" ? "✨ Nhảy vào cửa ánh sáng"
+      : o.nhom === "kimCuong" ? `💎 Nhảy lấy ${o.soKimCuong} kim cương`
       : o.hanhDong === "nhay" ? "⤴ Nhảy qua " + o.ten.toLowerCase()
       : `💥 Bắn ${o.ten.toLowerCase()} · còn ${o.mau} viên`;
   }
@@ -406,6 +409,14 @@
           if (d.lan === 1) loiNhan(ngauNhien(KHEN) + " Bấm tiếp để bắn!", "tot");
           break;
         }
+        if (d.tt.laCuaHang) { // cửa ánh sáng: khóa khung chọn, bé tự chạy tới gờ đá rồi nhảy vào
+          const n2 = nutCuaTu(d.tu); khoaCacNut();
+          Array.from($("cacNut").children).forEach(b => { if (b !== n2) b.classList.add("mo"); });
+          if (n2) n2.classList.add("dung");
+          $("hanhDongTu").textContent = "✨ Vào cửa thôi!";
+          loiNhan(ngauNhien(KHEN) + " Bé nhảy vào cửa ánh sáng nào!", "tot");
+          break;
+        }
         // Nhảy: nút không khóa, bé còn bấm lại được để nhảy tiếp (vd vừa nhảy lấy kim cương)
         if (n) { n.classList.remove("dung"); void n.offsetWidth; n.classList.add("dung"); setTimeout(() => { if (n.isConnected && !n.disabled) n.classList.remove("dung"); }, 300); }
         loiNhan(d.lan > 1 ? "Nhảy tiếp nào! ⤴" : ngauNhien(KHEN), "tot");
@@ -450,9 +461,11 @@
         if (tuSai.indexOf(d.tt.tu.en) < 0) tuSai.push(d.tt.tu.en);
         loiNhan(d.tt.o.nhom === "kimCuong" ? "Lỡ mất kim cương rồi. Lần sau bấm nhanh hơn nhé! 💎" : "Ối, không kịp rồi! Từ sau bấm nhanh hơn nhé.", "xau");
         break;
-      case "nhay": am.phat("nhay"); ve.phun(be.x - 10, 4, "bui", 5); break;
+      case "nhay": am.phat("nhay"); if (!g.hang) ve.phun(be.x - 10, 4, "bui", 5); break;
       case "tiepDat": {
-        am.phat("tiepDat"); ve.phun(be.x, 4, "bui", 4);
+        am.phat("tiepDat");
+        if (g.hang) { ve.phun(g.hang.x, 4, "bui", 6); break; }
+        ve.phun(be.x, 4, "bui", 4);
         // đáp đất mà vật / cụm kim cương vẫn ở phía trước (nhảy sớm quá): nhắc bấm lại
         const tt = g.thuThach;
         if (tt && tt.trangThai === "mo" && tt.daDung && tt.o.hanhDong === "nhay" && g.khoangTam(tt.o) > 0)
@@ -486,6 +499,24 @@
         break;
       case "vaQuai": am.phat("vaQuai"); break;
       case "roiHo": am.phat("roi"); break;
+      // HANG KIM CƯƠNG: rơi hố may mắn, không mất mạng, đồng hồ đứng yên
+      case "vaoHang":
+        idDangHien = -1; veKhungChon(); khoaCacNut();
+        loiNhan("Ối, bé rơi xuống hố... nhưng là hang bí mật! ✨", "tot");
+        break;
+      case "trongHang":
+        ve.hat = [];
+        am.phat("doiMang");
+        bao(`💎 Hang kim cương bí mật!`);
+        loiNhan(`Đồng hồ đứng yên. Chạy qua là nhặt được ${d.so} viên kim cương!`, "tot");
+        break;
+      case "vaoCuaSang": am.phat("hoiSinh"); break;
+      case "raHang":
+        ve.hat = [];
+        bao(`+${d.daLay} 💎 Ra khỏi hang!`);
+        idDangHien = -1; veKhungChon();
+        loiNhan(`Giỏi quá! Nhặt được ${d.daLay} kim cương trong hang. Chạy tiếp nào! 💪`, "tot");
+        break;
       case "matMang":
         bao("-1 mạng", true); rung("hudMang", "rung");
         khoaCacNut();
