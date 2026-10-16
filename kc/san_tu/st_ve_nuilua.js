@@ -6,6 +6,7 @@
               hộ có đèn. 19 quái / vật cản vùng núi lửa (màu sáng để nổi trên nền tối).
               Quy ước giống st_ve_keo.js: gốc tọa độ giữa đáy vật, mặt quay sang TRÁI, "this" là BoVe.
    BƯỚC: TC_00F
+   CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js).
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -17,13 +18,15 @@
   ST.CHU_DE_VE.nuiLua = {
     cong: { soc: "#ff6a1a", nut: "#ffd23f" },
     mauGoHang: ["#5a3a3a", "#ff9a4a"],
-    phuongTien: { truoc() { // mũ bảo hộ vàng có đèn
+    phuongTien: { truoc(tt) { // mũ bảo hộ vàng có đèn, tia sáng chiếu về phía trước
       const c = this.c, t = this.t;
-      c.fillStyle = "#ffcc1a"; c.beginPath(); c.arc(2, -64, 21, Math.PI, PI2); c.fill();
-      c.fillRect(-22, -66, 46, 6);
-      c.fillStyle = "#e8a800"; c.fillRect(-1, -85, 6, 20);
-      c.fillStyle = "#fff8c0"; c.beginPath(); c.arc(16, -74, 5, 0, PI2); c.fill();
-      c.fillStyle = `rgba(255,236,120,${0.4 + Math.sin(t * 4) * 0.05})`; c.beginPath(); c.moveTo(19, -77); c.lineTo(60, -90); c.lineTo(60, -58); c.lineTo(19, -71); c.fill();
+      ST.VE_CHUNG.theoDau(c, tt.k, r => {
+        c.fillStyle = `rgba(255,236,120,${0.4 + Math.sin(t * 4) * 0.05})`; c.beginPath(); c.moveTo(r + 2, -r + 1); c.lineTo(r + 44, -r - 12); c.lineTo(r + 44, -r + 18); c.lineTo(r + 2, -r + 5); c.fill();
+        c.fillStyle = "#ffcc1a"; c.beginPath(); c.arc(-1, -1.5, r + 2.6, Math.PI, PI2); c.fill();
+        c.fillRect(-r - 4, -3, 2 * r + 7, 3.6);
+        c.fillStyle = "#e8a800"; c.fillRect(-3, -r - 4, 4, r + 1);
+        c.fillStyle = "#fff8c0"; c.beginPath(); c.arc(r - 1, -r + 3, 3.6, 0, PI2); c.fill();
+      });
     } },
 
     nen(camX, p) {

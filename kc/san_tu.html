@@ -199,6 +199,16 @@
   .theOnTap.dung { border-color: var(--xanh); background: #eafff3; animation: nayLen .35s; }
   .theOnTap.biMat { opacity: 0; transform: scale(.4); pointer-events: none; }
   #onTapDem { margin-top: 10px; font-weight: 700; color: var(--chu-nhat); }
+  /* đồng hồ thưởng kim cương của bảng ôn tập */
+  #onTapThuong { display: flex; align-items: center; gap: 10px; margin: 4px auto 6px; max-width: 420px; padding: 6px 12px;
+    border-radius: 999px; background: #f2eeff; font-weight: 800; color: var(--chinh-dam); }
+  #onTapGio { min-width: 74px; font-variant-numeric: tabular-nums; text-align: left; }
+  #onTapVach { flex: 1; height: 12px; border-radius: 999px; background: #e1d9fb; overflow: hidden; }
+  #onTapNac { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #3fc8ff, #7c5cff); transition: width .1s linear; }
+  #onTapKC { min-width: 52px; font-size: 20px; text-align: right; }
+  #onTapKC.mat { animation: rung .45s; color: var(--do); }
+  #onTapThuong.het #onTapKC { opacity: .45; }
+  #kqKCOnTap { font-size: 12px; color: var(--chu-nhat); }
   #onTapXong { display: none; font-size: 22px; font-weight: 800; color: #1f8a55; margin-top: 8px; }
 
   /* ----- ĐIỆN THOẠI DỌC: khu chơi gần vuông, phần còn lại cho nút chữ TO, dễ bấm ----- */
@@ -292,6 +302,9 @@
     /* ôn tập trên máy tính: thẻ hình một hàng, thẻ chữ một hàng, thẻ to */
     #manOnTap .the { max-width: 1080px; }
     #onTapCoVu { font-size: 26px; min-height: 36px; }
+    #onTapThuong { max-width: 620px; font-size: 20px; padding: 8px 18px; }
+    #onTapVach { height: 16px; }
+    #onTapKC { font-size: 28px; min-width: 70px; }
     #onTapBang { grid-template-columns: 1fr; gap: 18px; }
     .cotOnTap { grid-template-columns: repeat(var(--soThe, 6), 1fr); gap: 14px; }
     .cotOnTap .tieuDe { grid-column: 1 / -1; font-size: 17px; text-align: left; }
@@ -314,7 +327,7 @@
     <canvas id="manHinh" aria-label="Màn chơi: em bé chạy về lâu đài"></canvas>
     <div id="hud">
       <div class="hudO" id="hudGio" title="Thời gian còn lại">⏱ <span id="soGio">60</span></div>
-      <div class="hudO" id="hudTienDo" title="Tiến độ của màn"><span id="soMan">1/7</span><div id="thanhTienDo"><div id="tienDoDay"></div><span id="tienDoBe">👶</span></div><span id="dichHud">🚩</span></div>
+      <div class="hudO" id="hudTienDo" title="Tiến độ của màn"><span id="soMan">1/7</span><div id="thanhTienDo"><div id="tienDoDay"></div><span id="tienDoBe">👧</span></div><span id="dichHud">🚩</span></div>
       <div class="hudO" id="hudMang" title="Mạng (vàng là mạng dự trữ đổi từ kim cương)"></div>
       <div class="hudO" id="hudKC" title="Kim cương: đủ 10 viên đổi 1 mạng">💎 <span id="soKC">0</span><small>/10</small></div>
       <button id="nutTamDung" type="button" aria-label="Tạm dừng">⏸</button>
@@ -350,7 +363,7 @@
         <details id="cachChoi">
           <summary>❓ Cách chơi</summary>
           <ul class="cachChoi">
-            <li><b>👶</b><span>Bé tự chạy tới cờ đích. Mỗi màn có <b style="font-size:inherit">1 phút</b>, màn sau nhanh hơn màn trước.</span></li>
+            <li><b>👧</b><span>Bé tự chạy tới cờ đích. Mỗi màn có <b style="font-size:inherit">1 phút</b>, màn sau nhanh hơn màn trước.</span></li>
             <li><b>🔤</b><span>Mỗi chướng ngại vật có một từ. Bấm <b style="font-size:inherit">đúng từ đó</b> ở khung dưới để bé nhảy qua hoặc phóng phép thuật.</span></li>
             <li><b>💎</b><span>Cụm kim cương lơ lửng trên cao cũng có chữ riêng: bấm đúng chữ lúc bé tới gần để nhảy lên lấy. Đủ 10 viên đổi 1 mạng.</span></li>
             <li><b>📚</b><span>Qua màn thì ghép hình với chữ để ôn lại. Ghép hết là mở màn tiếp!</span></li>
@@ -375,7 +388,12 @@
   <section class="lop" id="manOnTap" aria-label="Ôn tập">
     <div class="the">
       <h2>📚 Ôn tập nào!</h2>
-      <p class="phuDe" id="onTapHuongDan">Bấm một hình rồi bấm chữ đúng của hình đó. Đúng thì cả hai biến mất!</p>
+      <p class="phuDe" id="onTapHuongDan">Bấm một hình rồi bấm chữ đúng của hình đó. Đúng thì cả hai biến mất! Ghép càng nhanh càng được nhiều 💎, bấm sai là mất kim cương sớm hơn.</p>
+      <div id="onTapThuong" aria-live="off" title="Ghép càng nhanh càng được nhiều kim cương">
+        <span id="onTapGio">0,0 giây</span>
+        <div id="onTapVach"><div id="onTapNac"></div></div>
+        <b id="onTapKC">💎 5</b>
+      </div>
       <div id="onTapCoVu" aria-live="polite"></div>
       <div id="onTapBang">
         <div class="cotOnTap" id="onTapHinh"></div>
@@ -407,7 +425,7 @@
       <p class="phuDe" id="ketQuaLoi"></p>
       <div class="soLieu">
         <div><b id="kqDung">0</b>từ đúng</div>
-        <div><b id="kqKC">0</b>kim cương</div>
+        <div><b id="kqKC">0</b>kim cương <small id="kqKCOnTap"></small></div>
         <div><b id="kqGio">0</b>giây còn lại</div>
       </div>
       <div id="kqThuocMoi" style="display:none"></div>
@@ -438,6 +456,7 @@
 <script src="san_tu/st_on_tap.js"></script>
 <script src="san_tu/st_am_thanh.js"></script>
 <script src="san_tu/st_ve.js"></script>
+<script src="san_tu/st_ve_be.js"></script>
 <script src="san_tu/st_ve_keo.js"></script>
 <script src="san_tu/st_ve_samac.js"></script>
 <script src="san_tu/st_ve_tuyet.js"></script>

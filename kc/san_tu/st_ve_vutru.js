@@ -7,6 +7,7 @@
               19 quái / vật cản vũ trụ, màu sáng nổi trên nền tối.
               Quy ước giống st_ve_keo.js: gốc tọa độ giữa đáy vật, mặt quay sang TRÁI, "this" là BoVe.
    BƯỚC: TC_00F
+   CẬP NHẬT: 16/10/2026 - TC_00G: đồ của bé gắn theo khung xương mới (st_ve_be.js), bé NGỒI trong tàu.
    NGÀY: 16/10/2026
    ================================================================ */
 (function (goc) {
@@ -19,32 +20,41 @@
     cong: { soc: "#3fd6c8", nut: "#ff6ab8" },
     mauGoHang: ["#3a3a6a", "#8ae8ff"],
     phuongTien: {
-      nang: 14, dungYen: true,
-      sau(tt) { // tàu tên lửa nhỏ nằm ngang dưới bé, lửa phụt phía sau
-        const c = this.c, t = tt.t, lua = tt.nhay ? 1.6 : 1, rung = tt.dangChay ? Math.sin(t * 30) * 0.6 : 0;
-        c.translate(0, rung);
+      tuThe: "ngoi", nang: 22,
+      sau(tt) { // tàu vũ trụ nhỏ: lửa phụt, đuôi tàu phía sau bé (bé ngồi trong khoang lái)
+        const c = this.c, t = tt.t, lua = tt.nhay ? 1.7 : 1, y0 = tt.k.hong.y + 8; // y0: đáy khoang lái
+        c.translate(0, y0);
         for (let k = 0; k < 3; k++) { // lửa
-          const dai = (14 + k * 6) * lua * (1 + Math.sin(t * 25 + k) * 0.15);
+          const dai = (16 + k * 7) * lua * (1 + Math.sin(t * 25 + k) * 0.15);
           c.fillStyle = ["#fff2a0", "#ffb03b", "#ff5a3a"][k]; c.globalAlpha = 1 - k * 0.2;
-          c.beginPath(); c.moveTo(-30, -16 + k * 0); c.quadraticCurveTo(-30 - dai, -10, -30, -4); c.fill();
+          c.beginPath(); c.moveTo(-38, -14); c.quadraticCurveTo(-38 - dai, -7, -38, 0); c.fill();
         }
         c.globalAlpha = 1;
-        c.fillStyle = "#e8344e"; // cánh đuôi
-        c.beginPath(); c.moveTo(-26, -16); c.lineTo(-34, -26); c.lineTo(-18, -16); c.fill();
-        c.beginPath(); c.moveTo(-26, -4); c.lineTo(-34, 4); c.lineTo(-18, -4); c.fill();
-        c.fillStyle = "#f0f0f8"; c.beginPath(); c.roundRect(-30, -18, 52, 16, 8); c.fill(); // thân
-        c.fillStyle = "#e8344e"; c.beginPath(); c.moveTo(20, -18); c.quadraticCurveTo(40, -14, 42, -10); c.quadraticCurveTo(40, -6, 20, -2); c.fill(); // mũi
-        c.fillStyle = "#3f7fd0"; c.fillRect(-22, -18, 5, 16);
-        c.fillStyle = "#8ae8ff"; c.strokeStyle = "#3f7fd0"; c.lineWidth = 2; c.beginPath(); c.arc(12, -10, 4.5, 0, PI2); c.fill(); c.stroke(); // ô cửa
+        c.fillStyle = "#e8344e"; // cánh đuôi dựng phía sau
+        c.beginPath(); c.moveTo(-36, -16); c.lineTo(-40, -36); c.lineTo(-28, -36); c.lineTo(-18, -16); c.fill();
+        c.fillStyle = "#c8cde0"; c.beginPath(); c.roundRect(-30, -24, 30, 12, 6); c.fill(); // lưng ghế
       },
-      truoc() { // mũ phi hành gia: bong bóng kính trong suốt + ăng-ten
-        const c = this.c, t = this.t;
-        c.fillStyle = "rgba(200,240,255,0.22)"; c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 2.5;
-        c.beginPath(); c.arc(2, -60, 26, 0, PI2); c.fill(); c.stroke();
-        c.fillStyle = "rgba(255,255,255,0.6)"; c.beginPath(); c.ellipse(-9, -72, 5, 9, 0.6, 0, PI2); c.fill();
-        c.fillStyle = "#c8c8d8"; c.beginPath(); c.roundRect(-14, -38, 32, 6, 3); c.fill();
-        c.strokeStyle = "#c8c8d8"; c.lineWidth = 2; c.beginPath(); c.moveTo(16, -80); c.lineTo(22, -94); c.stroke();
-        c.fillStyle = Math.sin(t * 5) > 0 ? "#ff5a5f" : "#ffd23f"; c.beginPath(); c.arc(22, -95, 3.5, 0, PI2); c.fill();
+      truoc(tt) { // thân tàu che nửa dưới người bé, kính chắn gió, mũ phi hành gia
+        const c = this.c, t = this.t, k = tt.k, y0 = k.hong.y + 8;
+        c.save(); c.translate(0, y0);
+        c.fillStyle = "#e8344e"; c.beginPath(); c.moveTo(-20, 0); c.lineTo(-34, 12); c.lineTo(-8, 4); c.fill(); // cánh dưới
+        c.fillStyle = "#f0f0f8"; c.strokeStyle = "#9aa3c0"; c.lineWidth = 1.5;
+        c.beginPath(); c.moveTo(-40, -16); c.lineTo(14, -16); c.quadraticCurveTo(44, -14, 50, -6); c.quadraticCurveTo(44, 3, 14, 4); c.lineTo(-40, 4); c.quadraticCurveTo(-44, -6, -40, -16); c.fill(); c.stroke();
+        c.fillStyle = "#e8344e"; c.beginPath(); c.moveTo(30, -15); c.quadraticCurveTo(46, -13, 50, -6); c.quadraticCurveTo(46, 1, 30, 3); c.fill(); // mũi tàu
+        c.fillStyle = "#3f7fd0"; c.fillRect(-34, -16, 5, 20);
+        c.fillStyle = "#8ae8ff"; c.strokeStyle = "#3f7fd0"; c.lineWidth = 2; c.beginPath(); c.arc(22, -6, 4, 0, PI2); c.fill(); c.stroke(); // ô cửa
+        c.fillStyle = Math.sin(t * 5) > 0 ? "#ff5a5f" : "#ffd23f"; c.beginPath(); c.arc(-14, -6, 2.4, 0, PI2); c.fill(); // đèn nháy
+        c.fillStyle = "rgba(170,230,255,0.45)"; c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 1.5; // kính chắn gió
+        c.beginPath(); c.moveTo(12, -16); c.quadraticCurveTo(20, -30, 14, -40); c.lineTo(10, -40); c.quadraticCurveTo(14, -28, 6, -16); c.closePath(); c.fill(); c.stroke();
+        c.restore();
+        ST.VE_CHUNG.theoDau(c, k, r => { // mũ phi hành gia: bong bóng kính trong suốt + ăng-ten
+          c.fillStyle = "rgba(200,240,255,0.22)"; c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = 2.2;
+          c.beginPath(); c.arc(1, 0, r + 6, 0, PI2); c.fill(); c.stroke();
+          c.fillStyle = "rgba(255,255,255,0.6)"; c.beginPath(); c.ellipse(-6, -9, 3.5, 6.5, 0.6, 0, PI2); c.fill();
+          c.strokeStyle = "#c8c8d8"; c.lineWidth = 2; c.beginPath(); c.moveTo(10, -r - 2); c.lineTo(15, -r - 12); c.stroke();
+          c.fillStyle = Math.sin(t * 5) > 0 ? "#ff5a5f" : "#ffd23f"; c.beginPath(); c.arc(15, -r - 13, 3, 0, PI2); c.fill();
+        });
+        ST.VE_CHUNG.theoThan(c, k, () => { c.fillStyle = "#c8c8d8"; c.beginPath(); c.roundRect(-8, 0, 16, 4.5, 2); c.fill(); }); // vòng cổ áo
       }
     },
 
