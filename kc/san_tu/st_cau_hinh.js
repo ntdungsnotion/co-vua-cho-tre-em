@@ -20,6 +20,8 @@
    CẬP NHẬT: 16/10/2026 - TC_00D2 (người dùng chốt lại): 1 quái = 1 đơn vị (60), cú nhảy 3 đơn vị
              (cuLyNhay 180, cao 130), vật phải nhảy thu về cỡ 1 đơn vị; kim cương thành CỤM riêng có
              từ riêng ở chỗ trống (loại "kimCuong", kimCuongMoiCum, kimCuongLe, tiLeDocKimCuong).
+   CẬP NHẬT: 16/10/2026 - TC_00D2: đơn vị nhảy = kích thước CHÍNH vật sắp gặp (soDonViNhay,
+             tiLeCaoNhay); vật cản / hố về kích thước đa dạng; quái bay luôn phải bắn.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -37,11 +39,13 @@
     thoiGianChamSauKhung: 1.6,  // sau khi leo qua, bé còn chạy chậm thêm chừng này giây
     tiLeTocDoCham: 0.55,        // tốc độ lúc chạy chậm (so với bình thường)
     thoiGianGapNan: 1.5,        // giây diễn hoạt cảnh gặp nạn trước khi hồi sinh
-    // Người dùng chốt 16/10/2026: coi một con quái là 1 ĐƠN VỊ (dài ~60), cú nhảy vượt 3 đơn vị
-    // -> vật phải nhảy chỉ rộng chừng 1 đơn vị, bé bấm sớm / trễ một chút vẫn qua được.
-    donVi: 60,
-    doCaoNhay: 130,             // độ cao cú nhảy (hơn 2 đơn vị); vật cao hơn mức này phải bắn
-    cuLyNhay: 180,              // cự ly CỐ ĐỊNH của một cú nhảy = 3 đơn vị (bé tự canh lúc bấm)
+    // Người dùng chốt 16/10/2026: 1 ĐƠN VỊ = kích thước của CHÍNH quái / vật cản / hố sắp gặp
+    // (quái to thì đơn vị to); cú nhảy vượt 3 đơn vị -> bấm sớm / trễ một chút vẫn qua được.
+    soDonViNhay: 3,             // cự ly cú nhảy = 3 x bề ngang của vật sắp gặp
+    tiLeCaoNhay: 2,             // độ cao cú nhảy = 2 x chiều cao của vật (ít nhất 1/3 cự ly)
+    doCaoNhay: 150,             // cú nhảy cao tối đa chừng này; vật cao hơn phải bắn
+    cuLyNhay: 180,              // cú nhảy lấy cụm kim cương (cụm không có "quái" để đo)
+    doCaoNhayKimCuong: 130,
     leNhay: 4,                  // khoảng an toàn khi tính "cửa sổ" bấm nhảy (để không sượt qua mép)
     coVaCham: 10,               // thu nhỏ hộp va chạm của chướng ngại vật cho dễ thở
     nhanVat: { rong: 24, cao: 66 }, // hộp va chạm của bé (hẹp hơn hình vẽ cho dễ thở)
@@ -155,7 +159,8 @@
   /* ----- Các loại chướng ngại vật -----
      nhom: can (vật cản) | quaiDat (quái mặt đất) | quaiBay (quái bay) | ho (hố sâu)
            | kimCuong (cụm kim cương có từ riêng, không va chạm; chỉ dùng khi sinh đường, không bốc thăm)
-     Vật phải nhảy rộng chừng 1 đơn vị (donVi), cú nhảy 3 đơn vị.
+     Cú nhảy tính theo chính vật đó: dài 3 x bề ngang (xem thongSoNhay trong st_logic.js).
+     quaiBay: LUÔN phải bắn (có thanh máu), không tính vào giới hạn 1/4.
      caoHonNhay: cao hơn cú nhảy -> LUÔN phải bắn (vật cản cao / thạch khổng lồ).
        Các loại khác bé nhảy qua; riêng quái được gắn THANH MÁU (lúc sinh đường, tối đa
        1/4 số quái) thì phải bắn. Việc bé làm (nhảy / bắn) ghi ở từng chướng ngại vật.
@@ -164,16 +169,16 @@
      bayCao: quái bay lơ lửng cách mặt đất chừng này (đúng tầm va vào người bé)
      tocDoDi: quái tiến về phía bé (đơn vị/giây) sau khi thử thách hiện ra */
   ST.LOAI_CHUONG_NGAI = {
-    cong:    { ten: "Ống cống",       nhom: "can",     vaCham: "khung",   rong: [52, 58],   cao: [42, 48] },
-    da:      { ten: "Tảng đá",        nhom: "can",     vaCham: "khung",   rong: [40, 54],   cao: [30, 42] },
-    gocCay:  { ten: "Gốc cây",        nhom: "can",     vaCham: "khung",   rong: [42, 54],   cao: [36, 48] },
+    cong:    { ten: "Ống cống",       nhom: "can",     vaCham: "khung",   rong: [80, 92],   cao: [56, 64] },
+    da:      { ten: "Tảng đá",        nhom: "can",     vaCham: "khung",   rong: [46, 70],   cao: [34, 52] },
+    gocCay:  { ten: "Gốc cây",        nhom: "can",     vaCham: "khung",   rong: [48, 62],   cao: [44, 58] },
     tuongDa: { ten: "Tường đá",       nhom: "can",     vaCham: "khung",   rong: [58, 66],   cao: [176, 190], caoHonNhay: true },
     nam:     { ten: "Nấm tí hon",     nhom: "quaiDat", vaCham: "matMang", rong: [50, 54],   cao: [52, 56], tocDoDi: 30 },
     nhim:    { ten: "Nhím gai",       nhom: "quaiDat", vaCham: "matMang", rong: [56, 60],   cao: [38, 42], tocDoDi: 45 },
     slime:   { ten: "Thạch khổng lồ", nhom: "quaiDat", vaCham: "matMang", rong: [78, 84],   cao: [166, 176], tocDoDi: 20, caoHonNhay: true },
     vit:     { ten: "Vịt bay",        nhom: "quaiBay", vaCham: "matMang", rong: [58, 62],   cao: [42, 46], bayCao: 26, tocDoDi: 55 },
     ong:     { ten: "Ong bay",        nhom: "quaiBay", vaCham: "matMang", rong: [44, 48],   cao: [40, 42], bayCao: 18, tocDoDi: 40 },
-    ho:      { ten: "Hố sâu",         nhom: "ho",      vaCham: "roi",     rong: [56, 72],   cao: [0, 0] },
+    ho:      { ten: "Hố sâu",         nhom: "ho",      vaCham: "roi",     rong: [70, 100],  cao: [0, 0] },
     kimCuong:{ ten: "Kim cương",      nhom: "kimCuong", vaCham: "khong",  rong: [0, 0],     cao: [0, 0] }
   };
 })(typeof window !== "undefined" ? window : globalThis);

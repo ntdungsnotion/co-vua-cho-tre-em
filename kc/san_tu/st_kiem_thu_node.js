@@ -12,7 +12,8 @@
              tiến độ màn / đường đua).
    CẬP NHẬT: 16/10/2026 - TC_00D2 (sau khi người dùng thử): bé nhảy nhiều lần, kim cương trên không,
              màn "Tập chơi" (mục 18), bảng ôn tập cuối màn (mục 19).
-   CẬP NHẬT: 16/10/2026 - TC_00D2: cụm kim cương có từ riêng (mục 7, 16, 18), cú nhảy 3 đơn vị.
+   CẬP NHẬT: 16/10/2026 - TC_00D2: cụm kim cương có từ riêng (mục 7, 16, 18), cú nhảy 3 đơn vị
+             theo kích thước chính vật sắp gặp; quái bay luôn bắn (mục 14).
    CẬP NHẬT: 16/10/2026 - TC_00D2: "người chơi máy" tự canh lúc bấm nhảy (cửa sổ nhảy) và
              bấm nhiều lần để bắn hạ quái có máu; thêm mục 13-15 (bấm sớm / trễ thì chạm,
              luật thanh máu tối đa 1/4 số quái, số viên đúng bằng máu).
@@ -388,13 +389,14 @@ for (const ma of DS_MAN) {
   kiem(soDung > 20 && chamDung === 0, `${ma}: bấm đúng lúc thì không chạm (${chamDung}/${soDung})`);
 }
 
-console.log("14. Thanh máu: chỉ quái có máu + vật cản cao phải bắn; quái có máu <= 1/4 số quái; máu tăng theo màn");
+console.log("14. Thanh máu: quái bay luôn bắn; quái đất có máu <= 1/4 số quái đất; vật cản cao phải bắn; máu tăng theo màn");
 {
   let tongCoMau = 0, tongQuai = 0;
   for (const ma of DS_MAN) for (let hat = 1; hat <= 60; hat++) {
     const dk = MAN_THU[ma];
     const d = ST.sinhDuongDi(dk, ST.taoNgauNhien(hat), new ST.KhoTuVung(dk, ST.taoNgauNhien(hat)));
-    const quai = d.ds.filter(o => o.nhom === "quaiDat" || o.nhom === "quaiBay"), coMau = quai.filter(o => o.mau > 0);
+    const quai = d.ds.filter(o => o.nhom === "quaiDat"), coMau = quai.filter(o => o.mau > 0);
+    d.ds.filter(o => o.nhom === "quaiBay").forEach(o => kiem(o.mau > 0 && o.hanhDong === "ban", `${ma}#${hat}: ${o.loai} (quái bay) phải bắn`));
     tongCoMau += coMau.length; tongQuai += quai.length;
     kiem(coMau.length * 4 <= quai.length, `${ma}#${hat}: ${coMau.length} quái có máu / ${quai.length} quái (quá 1/4)`);
     d.ds.forEach(o => {
