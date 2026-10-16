@@ -27,6 +27,9 @@
              thì bé chạy chậm lại cho đủ giờ bắn (giayMoiVien, tiLeTocDoBanToiThieu).
              (người dùng chỉnh) chỉ chậm khi quái đã HIỆN trên màn hình, chậm ít (tối thiểu 65%).
              Hang kim cương: rơi hố 10% vào hang nhặt 5-10 kim cương (tiLeHangKimCuong, kimCuongHang).
+   CẬP NHẬT: 16/10/2026 - TC_00E: mỗi đường đua có KHO QUÁI riêng theo chủ đề (DUONG_DUA[i].kho, 7 phần
+             tử ứng với 7 màn) và màn Tập chơi riêng (tapChoi). Đường 2 "Xứ sở kẹo ngọt": 23 loại quái /
+             vật cản kẹo (KEO1..KEO6, cùng cấu trúc nhóm và cùng cách mở dần như Rừng xanh), hố sô-cô-la.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -113,6 +116,20 @@
   const KHO4 = Object.assign({}, KHO3, { ong: 1, boRua: 1 });
   const KHO5 = Object.assign({}, KHO4, { slime: 1, cayBietDi: 1 });
   const KHO6 = Object.assign({}, KHO5, { slime: 2, cayBietDi: 2, ho: 4, tuongDa: 2 });
+  /* Đường 2 "Xứ sở kẹo ngọt" (TC_00E): cùng cấu trúc với Rừng xanh, mỗi nhóm thay bằng đồ kẹo:
+     vật cản thấp (bánh quy, kẹo dẻo, thanh sô-cô-la, cốc kem, bánh kem, hộp kẹo, gậy kẹo),
+     vật cao phải bắn (tháp bánh kem, kẹo mút khổng lồ), quái đất (gấu dẻo, ốc kem, giun dẻo,
+     thạch rau câu, bánh rán, bánh gừng), quái khổng lồ (kem ốc quế, gấu dẻo khổng lồ),
+     quái bay (kẹo bọc giấy, bướm kẹo, bong bóng kẹo cao su, kẹo bông, bánh macaron), hố sô-cô-la. */
+  const KEO1 = { banhQuy: 2, keoDeo: 2, thanhSoCoLa: 2, cocKem: 2, banhKem: 1, hopKeo: 1, gauDeo: 2, ocKem: 2, giunDeo: 2, hoSoCoLa: 3 };
+  const KEO2 = Object.assign({}, KEO1, { gayKeo: 2, thachRauCau: 2, banhRan: 2, keoBay: 1, buomKeo: 1 });
+  const KEO3 = Object.assign({}, KEO2, { banhGung: 2, bongBong: 1, thapBanh: 1, keoMutKhongLo: 1 });
+  const KEO4 = Object.assign({}, KEO3, { keoBong: 1, macaron: 1 });
+  const KEO5 = Object.assign({}, KEO4, { kemKhongLo: 1, gauDeoKhongLo: 1 });
+  const KEO6 = Object.assign({}, KEO5, { kemKhongLo: 2, gauDeoKhongLo: 2, hoSoCoLa: 4, thapBanh: 2 });
+  // Mỗi đường đua: 7 kho ứng với 7 màn (đường chưa khai báo kho thì dùng kho Rừng xanh)
+  const KHO_RUNG = [KHO1, KHO2, KHO3, KHO4, KHO5, KHO6, KHO6];
+  const KHO_KEO = [KEO1, KEO2, KEO3, KEO4, KEO5, KEO6, KEO6];
   ST.MAN_CHOI = [
     { mauQuai: 2, soPhuongAn: 2, doGiong: 0,    tocDo: 140, thoiGianPhanUng: 4.6, khoangThem: [30, 140], thoiGianDiDuKien: 49, loai: KHO1 },
     { mauQuai: 2, soPhuongAn: 2, doGiong: 0.15, tocDo: 150, thoiGianPhanUng: 4.3, khoangThem: [30, 130], thoiGianDiDuKien: 49, loai: KHO2 },
@@ -138,10 +155,15 @@
   /* ----- 10 ĐƯỜNG ĐUA: mỗi đường một chủ đề, 7 màn cùng chủ đề -----
      cachDi: chay | truot | cuoi | boi | bay | tau (cách bé di chuyển);
      daCo: false = chưa làm hình / cách chơi, hiện "Sắp có";
+     kho: 7 kho quái / vật cản (màn 1..7) theo chủ đề; tapChoi: thứ tự chướng ngại vật của màn Tập chơi;
+     tenHang: tên hang bí mật khi rơi hố may mắn;
      dich / bieuTuongDich: nơi mèo con bị nhốt ở màn cuối. */
   ST.DUONG_DUA = [
-    { ma: "rung",    ten: "Rừng xanh",            bieuTuong: "🌳", cachDi: "chay",  daCo: true,  dich: "Lâu đài",        bieuTuongDich: "🏰" },
-    { ma: "keo",     ten: "Xứ sở kẹo ngọt",       bieuTuong: "🍭", cachDi: "chay",  daCo: false, dich: "Lâu đài kẹo",    bieuTuongDich: "🧁" },
+    { ma: "rung",    ten: "Rừng xanh",            bieuTuong: "🌳", cachDi: "chay",  daCo: true,  dich: "Lâu đài",        bieuTuongDich: "🏰",
+      kho: KHO_RUNG, tenHang: "Hang kim cương bí mật" },
+    { ma: "keo",     ten: "Xứ sở kẹo ngọt",       bieuTuong: "🍭", cachDi: "chay",  daCo: true,  dich: "Lâu đài kẹo",    bieuTuongDich: "🧁",
+      kho: KHO_KEO, tenHang: "Hang kẹo bí mật",
+      tapChoi: [{ loai: "banhQuy" }, { loai: "kimCuong", so: 3 }, { loai: "keoDeo" }, { loai: "hoSoCoLa" }, { loai: "gauDeo" }, { loai: "gauDeo", mau: 2 }, { loai: "thapBanh", mau: 2 }] },
     { ma: "saMac",   ten: "Sa mạc kim tự tháp",   bieuTuong: "🏜️", cachDi: "chay",  daCo: false, dich: "Kim tự tháp",    bieuTuongDich: "🔺" },
     { ma: "tuyet",   ten: "Núi tuyết",            bieuTuong: "❄️", cachDi: "truot", daCo: false, dich: "Lâu đài băng",   bieuTuongDich: "🏔️" },
     { ma: "khungLong", ten: "Thung lũng khủng long", bieuTuong: "🦖", cachDi: "cuoi", daCo: false, dich: "Hang núi",     bieuTuongDich: "🌋" },
@@ -160,11 +182,13 @@
     const n = huongDan ? 0 : Math.max(1, Math.min(ST.SO_MAN, soMan | 0 || 1));
     const cap = ST.DO_KHO[maCapTu] || ST.DO_KHO.de;
     if (huongDan) return Object.assign({}, ST.MAN_HUONG_DAN, {
+      thuTu: duong.tapChoi || ST.MAN_HUONG_DAN.thuTu, loai: (duong.kho || KHO_RUNG)[0],
       ma: duong.ma + "-0-" + cap.ma, maDuong: duong.ma, duong, laManCuoi: false, ten: "Tập chơi",
       maCapTu: cap.ma, capTu: cap.capTu, capNhieu: cap.capNhieu, tenCap: cap.ten, anChu: !!cap.anChu,
       soKimCuong: [Math.min(3, cap.kimCuongToiDa), Math.min(3, cap.kimCuongToiDa)] // cụm ở thuTu
     });
     return Object.assign({}, ST.MAN_CHOI[n - 1], {
+      loai: (duong.kho || KHO_RUNG)[n - 1],
       ma: duong.ma + "-" + n + "-" + cap.ma, maDuong: duong.ma, duong, soMan: n, laManCuoi: n === ST.SO_MAN,
       maCapTu: cap.ma, ten: "Màn " + n, capTu: cap.capTu, capNhieu: cap.capNhieu, tenCap: cap.ten,
       anChu: !!cap.anChu, soKimCuong: [Math.ceil(cap.kimCuongToiDa * 0.6), cap.kimCuongToiDa]
@@ -208,6 +232,30 @@
     chim:    { ten: "Chim sẻ",        nhom: "quaiBay", vaCham: "matMang", rong: [50, 56],   cao: [36, 40], bayCao: 22, tocDoDi: 50 },
     boRua:   { ten: "Bọ rùa bay",     nhom: "quaiBay", vaCham: "matMang", rong: [44, 48],   cao: [36, 40], bayCao: 20, tocDoDi: 35 },
     ho:      { ten: "Hố sâu",         nhom: "ho",      vaCham: "roi",     rong: [70, 100],  cao: [0, 0] },
+    // Đường 2 "Xứ sở kẹo ngọt" (TC_00E): kích thước theo đúng loại tương ứng của Rừng xanh
+    banhQuy:     { ten: "Chồng bánh quy",   nhom: "can",     vaCham: "khung",   rong: [52, 66],   cao: [36, 48] },
+    keoDeo:      { ten: "Kẹo dẻo",          nhom: "can",     vaCham: "khung",   rong: [48, 60],   cao: [40, 52] },
+    thanhSoCoLa: { ten: "Thanh sô-cô-la",   nhom: "can",     vaCham: "khung",   rong: [78, 92],   cao: [32, 40] },
+    cocKem:      { ten: "Cốc kem",          nhom: "can",     vaCham: "khung",   rong: [48, 58],   cao: [50, 58] },
+    banhKem:     { ten: "Miếng bánh kem",   nhom: "can",     vaCham: "khung",   rong: [60, 72],   cao: [44, 54] },
+    hopKeo:      { ten: "Hộp kẹo",          nhom: "can",     vaCham: "khung",   rong: [52, 60],   cao: [50, 58] },
+    gayKeo:      { ten: "Gậy kẹo",          nhom: "can",     vaCham: "khung",   rong: [66, 84],   cao: [48, 58] },
+    thapBanh:    { ten: "Tháp bánh kem",    nhom: "can",     vaCham: "khung",   rong: [60, 68],   cao: [176, 190], caoHonNhay: true },
+    keoMutKhongLo:{ ten: "Kẹo mút khổng lồ", nhom: "can",    vaCham: "khung",   rong: [56, 62],   cao: [180, 194], caoHonNhay: true },
+    gauDeo:      { ten: "Gấu dẻo",          nhom: "quaiDat", vaCham: "matMang", rong: [48, 54],   cao: [50, 56], tocDoDi: 30 },
+    ocKem:       { ten: "Ốc kem",           nhom: "quaiDat", vaCham: "matMang", rong: [56, 64],   cao: [44, 50], tocDoDi: 15 },
+    giunDeo:     { ten: "Giun dẻo",         nhom: "quaiDat", vaCham: "matMang", rong: [70, 80],   cao: [28, 34], tocDoDi: 25 },
+    thachRauCau: { ten: "Thạch rau câu",    nhom: "quaiDat", vaCham: "matMang", rong: [52, 58],   cao: [40, 46], tocDoDi: 35 },
+    banhRan:     { ten: "Bánh rán lăn",     nhom: "quaiDat", vaCham: "matMang", rong: [50, 56],   cao: [50, 56], tocDoDi: 50 },
+    banhGung:    { ten: "Bánh gừng",        nhom: "quaiDat", vaCham: "matMang", rong: [48, 54],   cao: [52, 58], tocDoDi: 45 },
+    kemKhongLo:  { ten: "Kem ốc quế khổng lồ", nhom: "quaiDat", vaCham: "matMang", rong: [78, 84], cao: [166, 176], tocDoDi: 20, caoHonNhay: true },
+    gauDeoKhongLo:{ ten: "Gấu dẻo khổng lồ", nhom: "quaiDat", vaCham: "matMang", rong: [80, 88],   cao: [170, 182], tocDoDi: 18, caoHonNhay: true },
+    keoBay:      { ten: "Kẹo bọc giấy bay", nhom: "quaiBay", vaCham: "matMang", rong: [58, 62],   cao: [34, 40], bayCao: 26, tocDoDi: 55 },
+    buomKeo:     { ten: "Bướm kẹo",         nhom: "quaiBay", vaCham: "matMang", rong: [52, 58],   cao: [36, 40], bayCao: 22, tocDoDi: 50 },
+    bongBong:    { ten: "Bong bóng kẹo cao su", nhom: "quaiBay", vaCham: "matMang", rong: [46, 50], cao: [44, 48], bayCao: 20, tocDoDi: 35 },
+    keoBong:     { ten: "Kẹo bông",         nhom: "quaiBay", vaCham: "matMang", rong: [58, 64],   cao: [36, 42], bayCao: 30, tocDoDi: 45 },
+    macaron:     { ten: "Bánh macaron bay", nhom: "quaiBay", vaCham: "matMang", rong: [44, 48],   cao: [36, 40], bayCao: 20, tocDoDi: 40 },
+    hoSoCoLa:    { ten: "Hố sô-cô-la",      nhom: "ho",      vaCham: "roi",     rong: [70, 100],  cao: [0, 0] },
     kimCuong:{ ten: "Kim cương",      nhom: "kimCuong", vaCham: "khong",  rong: [0, 0],     cao: [0, 0] }
   };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -17,6 +17,9 @@
    CẬP NHẬT: 16/10/2026 - TC_00D2: "người chơi máy" tự canh lúc bấm nhảy (cửa sổ nhảy) và
              bấm nhiều lần để bắn hạ quái có máu; thêm mục 13-15 (bấm sớm / trễ thì chạm,
              luật thanh máu tối đa 1/4 số quái, số viên đúng bằng máu).
+   CẬP NHẬT: 16/10/2026 - TC_00E: mọi mục chạy trên MỌI đường đua đã có (Rừng xanh + Kẹo ngọt);
+             mục 18, 20, 22 theo kho / Tập chơi riêng của từng đường; thêm mục 23 (kho theo chủ đề
+             đúng cấu trúc nhóm) và mục 24 (không bấm thì không qua: 7 màn x 4 cấp x 40 hạt mỗi đường).
    ================================================================ */
 "use strict";
 require("./st_cau_hinh.js");
@@ -30,10 +33,11 @@ const ST = globalThis.ST;
 let soLoi = 0, soKiem = 0;
 function kiem(dk, moTa) { soKiem++; if (!dk) { soLoi++; console.log("  ✗ " + moTa); } }
 
-// 7 màn của đường Rừng xanh, mỗi màn ghép một cấp từ khác nhau (cấp từ chỉ đổi từ vựng)
+// 7 màn của MỌI đường đua đã có hình (daCo), mỗi màn ghép một cấp từ khác nhau (cấp từ chỉ đổi từ vựng)
+const DUONG_THU = ST.DUONG_DUA.filter(d => d.daCo).map(d => d.ma);
 const MAN_THU = {};
-for (let m = 1; m <= ST.SO_MAN; m++) {
-  const man = ST.taoManChoi("rung", m, ST.THU_TU_DO_KHO[(m - 1) % 4]);
+for (const duong of DUONG_THU) for (let m = 1; m <= ST.SO_MAN; m++) {
+  const man = ST.taoManChoi(duong, m, ST.THU_TU_DO_KHO[(m - 1 + DUONG_THU.indexOf(duong)) % 4]);
   MAN_THU[man.ma] = man;
 }
 const DS_MAN = Object.keys(MAN_THU);
@@ -507,23 +511,25 @@ console.log("17. Kim cương tối đa mỗi màn theo cấp từ (5 / 8 / 12 / 
   }
 }
 
-console.log("18. Màn Tập chơi: chướng ngại vật xếp sẵn đúng thứ tự, cụm kim cương có từ riêng ở ô thứ 2, bé giỏi qua được, không bấm thì thua");
-{
+console.log("18. Màn Tập chơi (mỗi đường đua một bài riêng): chướng ngại vật xếp sẵn đúng thứ tự, cụm kim cương có từ riêng ở ô thứ 2, bé giỏi qua được, không bấm thì thua");
+for (const duong of DUONG_THU) {
   for (const cap of ST.THU_TU_DO_KHO) {
-    const dk = ST.taoManChoi("rung", 0, cap);
-    kiem(dk.laHuongDan && dk.soMan === 0 && !dk.laManCuoi, `${cap}: màn 0 là Tập chơi`);
+    const dk = ST.taoManChoi(duong, 0, cap), thuTu = dk.thuTu.map(x => x.loai).join();
+    kiem(dk.laHuongDan && dk.soMan === 0 && !dk.laManCuoi, `${duong} ${cap}: màn 0 là Tập chơi`);
+    kiem(dk.thuTu.every(x => x.loai === "kimCuong" || ST.taoManChoi(duong, 7, cap).loai[x.loai]), `${duong}: Tập chơi dùng quái của chính đường đua (${thuTu})`);
     for (let hat = 1; hat <= 20; hat++) {
       const d = ST.sinhDuongDi(dk, ST.taoNgauNhien(hat), new ST.KhoTuVung(dk, ST.taoNgauNhien(hat)));
-      kiem(d.ds.map(o => o.loai).join() === "cong,kimCuong,da,ho,nam,nam,tuongDa", `${cap}#${hat}: thứ tự ${d.ds.map(o => o.loai).join()}`);
-      kiem(d.ds.map(o => o.hanhDong).join() === "nhay,nhay,nhay,nhay,nhay,ban,ban", `${cap}#${hat}: nhảy / bắn đúng bài`);
-      kiem(d.kimCuongs.length === Math.min(3, ST.DO_KHO[cap].kimCuongToiDa) && d.kimCuongs.every(k => k.x > d.ds[0].x + d.ds[0].rong && k.x < d.ds[2].x), `${cap}#${hat}: cụm kim cương giữa ống cống và tảng đá`);
-      kiem(d.dai > d.ds[6].x + d.ds[6].rong && d.dai < d.ds[6].x + 1200, `${cap}#${hat}: đích ngay sau tường đá`);
+      kiem(d.ds.map(o => o.loai).join() === thuTu, `${duong} ${cap}#${hat}: thứ tự ${d.ds.map(o => o.loai).join()}`);
+      kiem(d.ds.map(o => o.hanhDong).join() === "nhay,nhay,nhay,nhay,nhay,ban,ban", `${duong} ${cap}#${hat}: nhảy / bắn đúng bài`);
+      kiem(["can", "kimCuong", "can", "ho", "quaiDat", "quaiDat", "can"].join() === d.ds.map(o => o.nhom).join(), `${duong} ${cap}#${hat}: bài tập đủ vật cản, kim cương, hố, quái, vật cao`);
+      kiem(d.kimCuongs.length === Math.min(3, ST.DO_KHO[cap].kimCuongToiDa) && d.kimCuongs.every(k => k.x > d.ds[0].x + d.ds[0].rong && k.x < d.ds[2].x), `${duong} ${cap}#${hat}: cụm kim cương giữa vật cản 1 và 2`);
+      kiem(d.dai > d.ds[6].x + d.ds[6].rong && d.dai < d.ds[6].x + 1200, `${duong} ${cap}#${hat}: đích ngay sau vật cao cuối`);
     }
     for (let hat = 1; hat <= 10; hat++) {
       const r = chay(dk, hat, nao.luonDung(0.4));
-      kiem(r.g.trangThai === "thang" && r.g.mang === ST.CAU_HINH.mangBanDau, `${cap}#${hat}: bé giỏi qua màn Tập chơi (${r.g.trangThai}, ${r.g.lyDoThua})`);
-      kiem(r.g.tongKimCuong === r.g.tongKimCuongDuong, `${cap}#${hat}: lấy đủ kim cương tập chơi`);
-      kiem(chay(dk, hat, nao.khongBam).g.trangThai === "thua", `${cap}#${hat}: không bấm thì không qua`);
+      kiem(r.g.trangThai === "thang" && r.g.mang === ST.CAU_HINH.mangBanDau, `${duong} ${cap}#${hat}: bé giỏi qua màn Tập chơi (${r.g.trangThai}, ${r.g.lyDoThua})`);
+      kiem(r.g.tongKimCuong === r.g.tongKimCuongDuong, `${duong} ${cap}#${hat}: lấy đủ kim cương tập chơi`);
+      kiem(chay(dk, hat, nao.khongBam).g.trangThai === "thua", `${duong} ${cap}#${hat}: không bấm thì không qua`);
     }
   }
 }
@@ -553,30 +559,36 @@ console.log("19. Bảng ôn tập: ưu tiên từ sai, không trùng hình, ghé
   kiem(cuoi && cuoi.kq === "dung" && cuoi.xong && b.xong && b.conLai === 0, "ghép hết là ôn xong");
 }
 
-console.log("20. Kho quái phong phú: mỗi loại trong kho đều có xuất hiện; mỗi lượt nhiều loại khác nhau; chơi lại thì thứ tự khác");
-{
+console.log("20. Kho quái phong phú (mỗi đường đua): mỗi loại trong kho đều có xuất hiện; mỗi lượt nhiều loại khác nhau; chơi lại thì thứ tự khác");
+for (const duong of DUONG_THU) {
   const gapKhongLo = new Set(); // quái khổng lồ chịu giới hạn 1/4 nên hiếm: chỉ cần có ở màn 5-7
+  const laKhongLo = t => ST.LOAI_CHUONG_NGAI[t].nhom === "quaiDat" && ST.LOAI_CHUONG_NGAI[t].caoHonNhay;
   for (let n = 1; n <= ST.SO_MAN; n++) {
-    const dk = ST.taoManChoi("rung", n, "de"), gap = new Set(), dsChuoi = new Set();
+    const dk = ST.taoManChoi(duong, n, "de"), gap = new Set(), dsChuoi = new Set();
     let tongKhac = 0, tongVat = 0;
     for (let hat = 1; hat <= 80; hat++) {
       const d = ST.sinhDuongDi(dk, ST.taoNgauNhien(hat * 7 + n), new ST.KhoTuVung(dk, ST.taoNgauNhien(hat)));
       const vat = d.ds.filter(o => o.nhom !== "kimCuong");
       vat.forEach(o => { gap.add(o.loai); gapKhongLo.add(o.loai); });
+      vat.forEach(o => kiem(dk.loai[o.loai], `${duong} màn ${n}: ${o.loai} không thuộc kho của đường đua`));
       tongKhac += new Set(vat.map(o => o.loai)).size; tongVat += vat.length;
       dsChuoi.add(vat.map(o => o.loai).join());
     }
-    Object.keys(dk.loai).filter(t => !(ST.LOAI_CHUONG_NGAI[t].nhom === "quaiDat" && ST.LOAI_CHUONG_NGAI[t].caoHonNhay))
-      .forEach(t => kiem(gap.has(t), `màn ${n}: loại ${t} không bao giờ xuất hiện`));
-    kiem(tongKhac / tongVat >= 0.75, `màn ${n}: mỗi lượt quá ít loại khác nhau (${(tongKhac / tongVat).toFixed(2)})`);
-    kiem(dsChuoi.size >= 70, `màn ${n}: chơi lại hay gặp đúng thứ tự cũ (${dsChuoi.size}/80 khác nhau)`);
-    console.log(`   màn ${n}: kho ${Object.keys(dk.loai).length} loại, mỗi lượt trung bình ${(tongKhac / 80).toFixed(1)} loại khác nhau / ${(tongVat / 80).toFixed(1)} chướng ngại vật`);
+    Object.keys(dk.loai).filter(t => !laKhongLo(t))
+      .forEach(t => kiem(gap.has(t), `${duong} màn ${n}: loại ${t} không bao giờ xuất hiện`));
+    kiem(tongKhac / tongVat >= 0.75, `${duong} màn ${n}: mỗi lượt quá ít loại khác nhau (${(tongKhac / tongVat).toFixed(2)})`);
+    kiem(dsChuoi.size >= 70, `${duong} màn ${n}: chơi lại hay gặp đúng thứ tự cũ (${dsChuoi.size}/80 khác nhau)`);
+    console.log(`   ${duong} màn ${n}: kho ${Object.keys(dk.loai).length} loại, mỗi lượt trung bình ${(tongKhac / 80).toFixed(1)} loại khác nhau / ${(tongVat / 80).toFixed(1)} chướng ngại vật`);
   }
-  ["slime", "cayBietDi"].forEach(t => kiem(gapKhongLo.has(t), `quái khổng lồ ${t} không bao giờ xuất hiện`));
-  // loại nào trong kho cũng có hình vẽ (tên hàm vẽ ở st_ve.js) và tên tiếng Việt
-  const ve = require("fs").readFileSync(require("path").join(__dirname, "st_ve.js"), "utf8");
-  Object.keys(ST.LOAI_CHUONG_NGAI).filter(t => !["ho", "kimCuong"].includes(t))
-    .forEach(t => kiem(ve.includes(`case "${t}":`) && ST.LOAI_CHUONG_NGAI[t].ten, `loại ${t} chưa có hình vẽ`));
+  Object.keys(ST.taoManChoi(duong, 7, "de").loai).filter(laKhongLo)
+    .forEach(t => kiem(gapKhongLo.has(t), `${duong}: quái khổng lồ ${t} không bao giờ xuất hiện`));
+}
+{
+  // loại nào trong kho cũng có hình vẽ (case trong st_ve.js hoặc hàm trong ST.VE_QUAI của file vẽ theo chủ đề) và tên tiếng Việt
+  const fs = require("fs"), path = require("path");
+  const ve = fs.readdirSync(__dirname).filter(f => /^st_ve.*\.js$/.test(f)).map(f => fs.readFileSync(path.join(__dirname, f), "utf8")).join("\n");
+  Object.keys(ST.LOAI_CHUONG_NGAI).filter(t => !["ho", "kimCuong"].includes(t) && ST.LOAI_CHUONG_NGAI[t].nhom !== "ho")
+    .forEach(t => kiem((ve.includes(`case "${t}":`) || new RegExp(`\\b${t}\\(w, h`).test(ve)) && ST.LOAI_CHUONG_NGAI[t].ten, `loại ${t} chưa có hình vẽ`));
 }
 
 console.log("21. Quái nhiều máu: chỉ chậm lại khi quái đã hiện trên màn hình, chậm ít (>= 65%); bé bắt đầu bắn khi thấy quái, mỗi 0,5 giây một viên vẫn kịp hạ");
@@ -631,10 +643,50 @@ console.log("22. Hang kim cương: rơi hố may mắn không mất mạng, đ�
   }
   kiem(soHang > 20, `phải có nhiều lượt vào hang (${soHang})`);
   // màn Tập chơi không có hang; không bấm từ của cửa thì đứng chờ ở cửa, không về đường chính
-  const t = chay(ST.taoManChoi("rung", 0, "de"), 1, nao.khongBam);
-  kiem(dem(t.suKien, "vaoHang") === 0, "Tập chơi không có hang");
+  for (const duong of DUONG_THU) {
+    const t = chay(ST.taoManChoi(duong, 0, "de"), 1, nao.khongBam);
+    kiem(dem(t.suKien, "vaoHang") === 0, `${duong}: Tập chơi không có hang`);
+  }
   const k = chay(DS_MAN[0], 3, nao.khongBam);
   kiem(choCuaHang(k.g) && dem(k.suKien, "raHang") === 0, "không bấm từ của cửa thì ở lại trong hang");
+  CH.tiLeHangKimCuong = giuHang;
+}
+
+console.log("23. Kho theo chủ đề: mỗi đường đua có 7 kho, đúng cấu trúc nhóm, mở dần theo màn; vật nhảy qua được không quá cao, không quá hẹp");
+for (const duong of DUONG_THU) {
+  const L = t => ST.LOAI_CHUONG_NGAI[t], kho = n => Object.keys(ST.taoManChoi(duong, n, "de").loai);
+  const co = (n, dk) => kho(n).some(t => dk(L(t)));
+  const thap = x => x.nhom === "can" && !x.caoHonNhay, caoCan = x => x.nhom === "can" && x.caoHonNhay;
+  const quaiNho = x => x.nhom === "quaiDat" && !x.caoHonNhay, khongLo = x => x.nhom === "quaiDat" && x.caoHonNhay;
+  const bay = x => x.nhom === "quaiBay", ho = x => x.nhom === "ho";
+  kiem(co(1, thap) && co(1, ho) && co(1, quaiNho), `${duong} màn 1: có vật cản thấp, hố, quái chậm`);
+  kiem(!co(1, bay) && !co(1, caoCan) && !co(1, khongLo), `${duong} màn 1: chưa có quái bay / vật cao / khổng lồ`);
+  kiem(co(2, bay) && !co(2, caoCan), `${duong} màn 2: thêm quái bay`);
+  kiem(co(3, caoCan) && !co(3, khongLo), `${duong} màn 3: thêm vật cao phải bắn`);
+  kiem(co(5, khongLo) && co(7, khongLo), `${duong} màn 5-7: có quái khổng lồ`);
+  for (let n = 2; n <= ST.SO_MAN; n++) kiem(kho(n - 1).every(t => kho(n).includes(t)), `${duong} màn ${n}: kho chỉ thêm, không bớt`);
+  kho(7).forEach(t => {
+    const x = L(t);
+    kiem(x.rong[0] >= 44, `${duong}: ${t} quá hẹp (${x.rong[0]})`);
+    if (!x.caoHonNhay && x.nhom !== "ho" && x.nhom !== "quaiBay") kiem((x.bayCao || 0) + x.cao[1] < ST.CAU_HINH.doCaoNhay, `${duong}: ${t} quá cao để nhảy qua`);
+    if (x.caoHonNhay) kiem(x.cao[0] > ST.CAU_HINH.doCaoNhay, `${duong}: ${t} phải cao hơn cú nhảy`);
+  });
+  // đường sau dùng kho riêng (không lẫn quái của đường đầu)
+  if (duong !== DUONG_THU[0]) kiem(kho(7).every(t => !kho(7).includes(t) || !Object.keys(ST.taoManChoi(DUONG_THU[0], 7, "de").loai).includes(t)), `${duong}: lẫn quái của ${DUONG_THU[0]}`);
+}
+
+console.log("24. Không bấm gì thì không qua được màn: mỗi đường 7 màn x 4 cấp x 40 hạt giống");
+{
+  const CH = ST.CAU_HINH, giuHang = CH.tiLeHangKimCuong;
+  for (const duong of DUONG_THU) {
+    let qua = 0, tong = 0;
+    for (let m = 1; m <= ST.SO_MAN; m++) for (const cap of ST.THU_TU_DO_KHO) for (let hat = 1; hat <= 40; hat++) {
+      const { g } = chay(ST.taoManChoi(duong, m, cap), hat * 13 + m, nao.khongBam);
+      tong++; if (g.trangThai === "thang") qua++;
+    }
+    kiem(qua === 0, `${duong}: ${qua}/${tong} lượt không bấm mà vẫn qua màn`);
+    console.log(`   ${duong}: ${tong} lượt không bấm, ${qua} lượt qua màn`);
+  }
   CH.tiLeHangKimCuong = giuHang;
 }
 
