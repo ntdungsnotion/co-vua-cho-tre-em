@@ -24,7 +24,8 @@
              đúng từ là nhảy tiếp, miễn là đang đứng trên đất. Kim cương luôn ở trên không.
              (người dùng chốt lại 16/10) Kim cương thành CỤM riêng ở đoạn đường trống, mỗi cụm có
              một từ như chướng ngại vật (bấm đúng là nhảy lên lấy); cú nhảy ngắn lại còn 3 đơn vị
-             (1 đơn vị = cỡ một con quái).
+             (1 đơn vị = cỡ một con quái). Chốt lần cuối: đơn vị = bề ngang của CHÍNH vật sắp gặp
+             (thongSoNhay); mọi quái bay luôn phải bắn (không tính vào giới hạn 1/4).
    TỌA ĐỘ: x = quãng đường (tăng về phía lâu đài), y = độ cao so với mặt đất.
            Nhân vật: x là TÂM người, y là CHÂN. Chướng ngại vật: x là MÉP TRÁI.
    THỨ TỰ XỬ LÝ MỖI BƯỚC (cố định để không chồng chéo):
@@ -54,18 +55,27 @@
      THÔNG SỐ HÌNH HỌC CỦA TỪNG CHƯỚNG NGẠI VẬT (dùng chung cho sinh đường và chơi)
      ================================================================ */
   function tocDoKhep(o, v) { return v + (o.tocDoDi || 0); }        // bé và quái tiến lại gần nhau
-  // Cú nhảy luôn đi được đúng cự ly cuLyNhay trên mặt đất
-  function thoiGianNhay(v) { return ST.CAU_HINH.cuLyNhay / v; }
+  /* CÚ NHẢY theo KÍCH THƯỚC của vật sắp gặp (người dùng chốt 16/10/2026): 1 đơn vị = bề ngang
+     của chính quái / vật cản / hố đó, cú nhảy dài soDonViNhay (3) đơn vị; cao tiLeCaoNhay (2) lần
+     chiều cao của vật (ít nhất 1/3 cự ly, tối đa doCaoNhay). Cụm kim cương: cú nhảy mặc định. */
+  function thongSoNhay(o) {
+    const CH = ST.CAU_HINH;
+    if (!o || o.nhom === "kimCuong") return { D: CH.cuLyNhay, H: CH.doCaoNhayKimCuong };
+    const D = CH.soDonViNhay * o.rong;
+    return { D, H: Math.min(CH.doCaoNhay, Math.max(CH.tiLeCaoNhay * (o.bayCao + o.cao), D / 3)) };
+  }
+  // Thời gian bay của cú nhảy vượt vật o (đi đúng cự ly D trên mặt đất)
+  function thoiGianNhay(v, o) { return thongSoNhay(o).D / v; }
   /* CỬA SỔ NHẢY: khoảng cách TÂM (vật - bé) lúc bấm mà cú nhảy cố định qua được an toàn.
      Bấm khi còn xa hơn [1] (quá sớm): đáp xuống trước vật / rơi vào hố. Bấm khi đã gần hơn
      [0] (quá trễ): chưa lên đủ cao đã chạm. Trả về [gầnNhất, xaNhất]. */
   function cuaSoNhay(o, v) {
-    const CH = ST.CAU_HINH, w = tocDoKhep(o, v), D = w * thoiGianNhay(v), le = CH.leNhay;
+    const CH = ST.CAU_HINH, w = tocDoKhep(o, v), nh = thongSoNhay(o), D = w * nh.D / v, le = CH.leNhay;
     if (o.nhom === "kimCuong") return [D / 2 - CH.kimCuongLe, D / 2 + CH.kimCuongLe]; // đỉnh cú nhảy ngay giữa cụm
     if (o.nhom === "ho") { const s = o.rong / 2 - 6 + le; return [s, D - s]; } // bay qua trọn miệng hố
     const s = (o.rong - 2 * CH.coVaCham + CH.nhanVat.rong) / 2 + le;          // nửa quãng chồng nhau theo chiều ngang
-    const dinh = Math.min(CH.doCaoNhay * 0.99, o.bayCao + o.cao - CH.coVaCham + le); // phải cao hơn đỉnh vật
-    const a = (1 - Math.sqrt(1 - dinh / CH.doCaoNhay)) / 2;                  // phần cú nhảy còn thấp hơn đỉnh vật
+    const dinh = Math.min(nh.H * 0.99, o.bayCao + o.cao - CH.coVaCham + le); // phải cao hơn đỉnh vật
+    const a = (1 - Math.sqrt(1 - dinh / nh.H)) / 2;                    // phần cú nhảy còn thấp hơn đỉnh vật
     return [s + D * a, D * (1 - a) - s];
   }
   // Khoảng cách TÂM mà tại đó thanh đếm ngược hết: nhảy = hết cửa sổ an toàn; bắn = quái đã sát
@@ -84,6 +94,7 @@
   function khoangKichHoat(o, v, phanUng) { return khoangHetHan(o, v) + tocDoKhep(o, v) * thoiGianPhanUng(o, phanUng); }
 
   ST.thoiGianNhay = thoiGianNhay;
+  ST.thongSoNhay = thongSoNhay;
   ST.khoangHetHan = khoangHetHan;
   ST.khoangKichHoat = khoangKichHoat;
   ST.cuaSoNhay = cuaSoNhay;
@@ -152,7 +163,7 @@
     }
     // Các viên của một cụm xếp theo đường cong cú nhảy: bấm đúng lúc (tâm cụm cách bé nửa cú nhảy) là lấy đủ
     function xepKimCuong(tam, so, idCum) {
-      const D = CH.cuLyNhay, H = CH.doCaoNhay;
+      const { D, H } = thongSoNhay(null);
       for (let j = 0; j < so; j++) {
         const u = so === 1 ? 0.5 : 0.22 + 0.56 * j / (so - 1);
         kimCuongs.push({ x: Math.round(tam - D / 2 + D * u), y: Math.round(4 * H * u * (1 - u) + CH.nhanVat.cao / 2), loai: "cao", daNhat: false, tHien: 0, cum: idCum });
@@ -168,7 +179,8 @@
         let ma = dk.thuTu ? dk.thuTu[k].loai : chonLoai(iVat), L = ST.LOAI_CHUONG_NGAI[ma];
         let mau = 0;
         if (dk.thuTu) mau = dk.thuTu[k].mau || (L.caoHonNhay ? dk.mauQuai : 0);
-        else if (L.nhom === "quaiDat" || L.nhom === "quaiBay") {
+        else if (L.nhom === "quaiBay") mau = dk.mauQuai; // quái bay: LUÔN phải bắn (người dùng chốt)
+        else if (L.nhom === "quaiDat") {
           soQuai++;
           const choPhep = (soCoMau + 1) * 4 <= soQuai;
           if (L.caoHonNhay && !choPhep) { // quái khổng lồ mà đã đủ 1/4: đổi thành quái nhỏ nhảy qua được
@@ -561,7 +573,7 @@
         else this.phat("chonDung", { tt, tu, lan: (tt.soLanNhay || 0) + 1 });
         tt.soLanNhay = (tt.soLanNhay || 0) + 1;
         // NHẢY NGAY, cự ly cố định: canh giờ là việc của bé
-        const T = thoiGianNhay(this.v), H = this.CH.doCaoNhay;
+        const T = thoiGianNhay(this.v, o), H = thongSoNhay(o).H;
         this.batDauNhay(T, H, "vuot");
         tt.cuaSo = cuaSoNhay(o, this.v); tt.khoangKhiBam = this.khoangTam(o);
         return { kq: "dung" };
