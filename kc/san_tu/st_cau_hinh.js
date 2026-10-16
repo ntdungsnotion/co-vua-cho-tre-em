@@ -22,6 +22,9 @@
              từ riêng ở chỗ trống (loại "kimCuong", kimCuongMoiCum, kimCuongLe, tiLeDocKimCuong).
    CẬP NHẬT: 16/10/2026 - TC_00D2: đơn vị nhảy = kích thước CHÍNH vật sắp gặp (soDonViNhay,
              tiLeCaoNhay); vật cản / hố về kích thước đa dạng; quái bay luôn phải bắn.
+   CẬP NHẬT: 16/10/2026 - TC_00D2: kho quái / vật cản phong phú (13 loại mới), mở dần theo màn
+             (KHO1..KHO6); loại và thứ tự xuất hiện ngẫu nhiên mỗi lượt chơi. Gặp quái nhiều máu
+             thì bé chạy chậm lại cho đủ giờ bắn (giayMoiVien, tiLeTocDoBanToiThieu).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -51,6 +54,8 @@
     nhanVat: { rong: 24, cao: 66 }, // hộp va chạm của bé (hẹp hơn hình vẽ cho dễ thở)
     tocDoDan: 1000,             // tốc độ viên phép thuật
     khoangPhepToiThieu: 90,     // quái có máu: thanh đếm ngược hết khi quái còn cách chừng này
+    giayMoiVien: 1.3,           // gặp quái phải bắn: mỗi viên còn lại cần chừng này giây; thiếu giờ thì bé chạy chậm lại
+    tiLeTocDoBanToiThieu: 0.3,  // ... nhưng không chậm hơn 30% tốc độ thường
     thoiGianThemMoiVien: 0.45,  // quái nhiều máu: thêm chừng này giây đọc từ cho mỗi viên từ viên thứ 2
     choTruocKhiVaoDuong: 2.4,   // giây chạy khởi động trước chướng ngại vật đầu tiên
     khoangCuoiTruocLauDai: 420, // khoảng trống cuối đường trước cổng lâu đài
@@ -91,21 +96,24 @@
      mauQuai: số viên phải bắn trúng để hạ quái có thanh máu / vật cản cao (càng về cuối càng nhiều);
      tiLeCoMau: xác suất một quái được mang thanh máu (luôn giữ KHÔNG QUÁ 1/4 tổng số quái). */
   const chung = { thoiGianChoi: 60, tiLeNguyHiemToiThieu: 0.6, tiLeCoMau: 0.6 };
+  /* KHO QUÁI / VẬT CẢN mở dần theo màn (người dùng yêu cầu 16/10/2026: phong phú, ngẫu nhiên):
+     màn 1 chỉ có vật cản thấp, hố và quái chậm nhảy qua được; màn 2 thêm quái bay; màn 3 thêm
+     vật cản cao phải bắn; màn 5 thêm quái khổng lồ. Mỗi lượt chơi trọng số bị xáo ngẫu nhiên
+     (sinhDuongDi), nên chơi lại cùng một màn cũng gặp quái khác, thứ tự khác. */
+  const KHO1 = { cong: 2, da: 2, gocCay: 2, khucGo: 2, buiGai: 1, thungGo: 1, nam: 2, ocSen: 2, sau: 2, ho: 3 };
+  const KHO2 = Object.assign({}, KHO1, { hangRao: 2, ech: 2, cua: 2, vit: 1, chim: 1 });
+  const KHO3 = Object.assign({}, KHO2, { nhim: 2, doi: 1, tuongDa: 1, cotTotem: 1 });
+  const KHO4 = Object.assign({}, KHO3, { ong: 1, boRua: 1 });
+  const KHO5 = Object.assign({}, KHO4, { slime: 1, cayBietDi: 1 });
+  const KHO6 = Object.assign({}, KHO5, { slime: 2, cayBietDi: 2, ho: 4, tuongDa: 2 });
   ST.MAN_CHOI = [
-    { mauQuai: 2, soPhuongAn: 2, doGiong: 0,    tocDo: 140, thoiGianPhanUng: 4.6, khoangThem: [30, 140], thoiGianDiDuKien: 49,
-      loai: { cong: 3, da: 2, gocCay: 2, nam: 3, ho: 2 } },
-    { mauQuai: 2, soPhuongAn: 2, doGiong: 0.15, tocDo: 150, thoiGianPhanUng: 4.3, khoangThem: [30, 130], thoiGianDiDuKien: 49,
-      loai: { cong: 2, da: 2, gocCay: 2, nam: 2, ho: 2, vit: 2 } },
-    { mauQuai: 3, soPhuongAn: 3, doGiong: 0.25, tocDo: 160, thoiGianPhanUng: 4.0, khoangThem: [25, 120], thoiGianDiDuKien: 49,
-      loai: { cong: 2, da: 2, gocCay: 1, nam: 2, nhim: 2, ho: 2, vit: 2, tuongDa: 1 } },
-    { mauQuai: 3, soPhuongAn: 3, doGiong: 0.4,  tocDo: 175, thoiGianPhanUng: 3.7, khoangThem: [20, 110], thoiGianDiDuKien: 50,
-      loai: { cong: 2, da: 1, gocCay: 1, nam: 2, nhim: 2, ho: 2, vit: 2, ong: 1, tuongDa: 1 } },
-    { mauQuai: 4, soPhuongAn: 3, doGiong: 0.55, tocDo: 190, thoiGianPhanUng: 3.5, khoangThem: [20, 100], thoiGianDiDuKien: 50,
-      loai: { cong: 2, da: 1, gocCay: 1, nam: 2, nhim: 2, slime: 2, ho: 2, vit: 2, ong: 2, tuongDa: 1 } },
-    { mauQuai: 4, soPhuongAn: 4, doGiong: 0.7,  tocDo: 205, thoiGianPhanUng: 3.3, khoangThem: [15, 90], thoiGianDiDuKien: 50,
-      loai: { cong: 1, da: 1, gocCay: 1, nam: 2, nhim: 2, slime: 2, ho: 3, vit: 2, ong: 2, tuongDa: 2 } },
-    { mauQuai: 5, soPhuongAn: 4, doGiong: 0.85, tocDo: 220, thoiGianPhanUng: 3.1, khoangThem: [10, 80], thoiGianDiDuKien: 50,
-      loai: { cong: 1, da: 1, gocCay: 1, nam: 2, nhim: 2, slime: 3, ho: 3, vit: 2, ong: 2, tuongDa: 2 } }
+    { mauQuai: 2, soPhuongAn: 2, doGiong: 0,    tocDo: 140, thoiGianPhanUng: 4.6, khoangThem: [30, 140], thoiGianDiDuKien: 49, loai: KHO1 },
+    { mauQuai: 2, soPhuongAn: 2, doGiong: 0.15, tocDo: 150, thoiGianPhanUng: 4.3, khoangThem: [30, 130], thoiGianDiDuKien: 49, loai: KHO2 },
+    { mauQuai: 3, soPhuongAn: 3, doGiong: 0.25, tocDo: 160, thoiGianPhanUng: 4.0, khoangThem: [25, 120], thoiGianDiDuKien: 49, loai: KHO3 },
+    { mauQuai: 3, soPhuongAn: 3, doGiong: 0.4,  tocDo: 175, thoiGianPhanUng: 3.7, khoangThem: [20, 110], thoiGianDiDuKien: 50, loai: KHO4 },
+    { mauQuai: 4, soPhuongAn: 3, doGiong: 0.55, tocDo: 190, thoiGianPhanUng: 3.5, khoangThem: [20, 100], thoiGianDiDuKien: 50, loai: KHO5 },
+    { mauQuai: 4, soPhuongAn: 4, doGiong: 0.7,  tocDo: 205, thoiGianPhanUng: 3.3, khoangThem: [15, 90],  thoiGianDiDuKien: 50, loai: KHO6 },
+    { mauQuai: 5, soPhuongAn: 4, doGiong: 0.85, tocDo: 220, thoiGianPhanUng: 3.1, khoangThem: [10, 80],  thoiGianDiDuKien: 50, loai: KHO6 }
   ].map((m, i) => Object.assign({}, chung, m, { soMan: i + 1 }));
   ST.SO_MAN = ST.MAN_CHOI.length;
 
@@ -178,6 +186,20 @@
     slime:   { ten: "Thạch khổng lồ", nhom: "quaiDat", vaCham: "matMang", rong: [78, 84],   cao: [166, 176], tocDoDi: 20, caoHonNhay: true },
     vit:     { ten: "Vịt bay",        nhom: "quaiBay", vaCham: "matMang", rong: [58, 62],   cao: [42, 46], bayCao: 26, tocDoDi: 55 },
     ong:     { ten: "Ong bay",        nhom: "quaiBay", vaCham: "matMang", rong: [44, 48],   cao: [40, 42], bayCao: 18, tocDoDi: 40 },
+    // Kho mở rộng (16/10/2026): thêm vật cản, quái đất, quái bay cho đường đua phong phú hơn
+    khucGo:  { ten: "Khúc gỗ",        nhom: "can",     vaCham: "khung",   rong: [78, 92],   cao: [34, 42] },
+    hangRao: { ten: "Hàng rào",       nhom: "can",     vaCham: "khung",   rong: [66, 84],   cao: [50, 58] },
+    buiGai:  { ten: "Bụi gai",        nhom: "can",     vaCham: "khung",   rong: [56, 70],   cao: [40, 50] },
+    thungGo: { ten: "Thùng gỗ",       nhom: "can",     vaCham: "khung",   rong: [52, 60],   cao: [50, 58] },
+    cotTotem:{ ten: "Cột tô-tem",     nhom: "can",     vaCham: "khung",   rong: [56, 62],   cao: [180, 194], caoHonNhay: true },
+    ocSen:   { ten: "Ốc sên",         nhom: "quaiDat", vaCham: "matMang", rong: [58, 64],   cao: [44, 50], tocDoDi: 15 },
+    cua:     { ten: "Cua đỏ",         nhom: "quaiDat", vaCham: "matMang", rong: [60, 66],   cao: [36, 40], tocDoDi: 50 },
+    ech:     { ten: "Ếch xanh",       nhom: "quaiDat", vaCham: "matMang", rong: [52, 56],   cao: [42, 48], tocDoDi: 35 },
+    sau:     { ten: "Sâu róm",        nhom: "quaiDat", vaCham: "matMang", rong: [70, 80],   cao: [30, 36], tocDoDi: 25 },
+    cayBietDi:{ ten: "Cây biết đi",   nhom: "quaiDat", vaCham: "matMang", rong: [80, 88],   cao: [170, 182], tocDoDi: 18, caoHonNhay: true },
+    doi:     { ten: "Dơi nhỏ",        nhom: "quaiBay", vaCham: "matMang", rong: [56, 62],   cao: [34, 40], bayCao: 30, tocDoDi: 60 },
+    chim:    { ten: "Chim sẻ",        nhom: "quaiBay", vaCham: "matMang", rong: [50, 56],   cao: [36, 40], bayCao: 22, tocDoDi: 50 },
+    boRua:   { ten: "Bọ rùa bay",     nhom: "quaiBay", vaCham: "matMang", rong: [44, 48],   cao: [36, 40], bayCao: 20, tocDoDi: 35 },
     ho:      { ten: "Hố sâu",         nhom: "ho",      vaCham: "roi",     rong: [70, 100],  cao: [0, 0] },
     kimCuong:{ ten: "Kim cương",      nhom: "kimCuong", vaCham: "khong",  rong: [0, 0],     cao: [0, 0] }
   };

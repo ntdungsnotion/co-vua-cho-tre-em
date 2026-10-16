@@ -345,8 +345,8 @@
   // Màn Tập chơi: lời nhắc riêng cho từng chướng ngại vật
   function loiTapChoi(tt, timTu) {
     const o = tt.o, ten = o.ten.toLowerCase();
-    if (o.hanhDong === "ban") return o.loai === "tuongDa"
-      ? `🧱 Tường đá cao quá, không nhảy qua được! Bấm ${timTu} ${o.mau} lần để bắn vỡ.`
+    if (o.hanhDong === "ban") return o.nhom === "can"
+      ? `🧱 ${o.ten} cao quá, không nhảy qua được! Bấm ${timTu} ${o.mau} lần để bắn vỡ.`
       : `💥 Quái có thanh máu trên đầu: phải bắn! Bấm ${timTu} ${o.mau} lần để bắn hạ.`;
     if (o.nhom === "kimCuong") return `💎 Kim cương trên cao! Chờ bé vào dải xanh rồi bấm ${timTu} để nhảy lên lấy.`;
     if (o.nhom === "ho") return `🕳️ Hố sâu! Chờ bé vào dải xanh rồi bấm ${timTu} để nhảy qua.`;

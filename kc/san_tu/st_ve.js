@@ -15,6 +15,8 @@
              Cấp từ 3-4 (anChu): biển chữ hiện hình + 🔊 thay cho chữ, đúng rồi mới hiện chữ.
              Dải "Nhảy ở đây" CHỈ có ở màn Tập chơi (người dùng yêu cầu 16/10/2026).
              Cụm kim cương có từ riêng: biển chữ cắm trên đất dưới cụm, không vẽ thân vật.
+             Kho mở rộng: vẽ thêm khúc gỗ, hàng rào, bụi gai, thùng gỗ, cột tô-tem, ốc sên, cua,
+             ếch, sâu róm, cây biết đi, dơi, chim sẻ, bọ rùa bay.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -373,6 +375,19 @@
           case "slime": this.veSlime(w, h, t, o); break;
           case "vit": this.veVit(w, h, t); break;
           case "ong": this.veOng(w, h, t); break;
+          case "khucGo": this.veKhucGo(w, h); break;
+          case "hangRao": this.veHangRao(w, h, o.bienThe); break;
+          case "buiGai": this.veBuiGai(w, h, o.bienThe); break;
+          case "thungGo": this.veThungGo(w, h); break;
+          case "cotTotem": this.veCotTotem(w, h, t); break;
+          case "ocSen": this.veOcSen(w, h, t, o); break;
+          case "cua": this.veCua(w, h, t, o); break;
+          case "ech": this.veEch(w, h, t, o); break;
+          case "sau": this.veSau(w, h, t, o); break;
+          case "cayBietDi": this.veCayBietDi(w, h, t, o); break;
+          case "doi": this.veDoi(w, h, t); break;
+          case "chim": this.veChim(w, h, t, o.bienThe); break;
+          case "boRua": this.veBoRua(w, h, t); break;
         }
       }
       c.restore();
@@ -520,6 +535,190 @@
       c.fillStyle = "#ffd23f"; c.beginPath(); c.arc(-w * 0.38, -h / 2, 10, 0, PI2); c.fill();
       c.fillStyle = "#2B2640"; c.beginPath(); c.arc(-w * 0.45, -h / 2 - 2, 2.6, 0, PI2); c.fill();
       c.strokeStyle = "#2B2640"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-w * 0.4, -h / 2 - 9); c.lineTo(-w * 0.5, -h / 2 - 18); c.stroke();
+    }
+
+    /* ----- Kho mở rộng (TC_00D2, 16/10/2026): vật cản, quái đất, quái bay mới -----
+       Gốc tọa độ: giữa đáy vật (đáy quái bay = độ cao bay), vẽ trong [-w/2, w/2] x [-h, 0],
+       mặt quái quay sang TRÁI (phía bé chạy tới). */
+    veKhucGo(w, h) { // khúc gỗ nằm ngang, đầu cắt có vân tròn
+      const c = this.c;
+      c.fillStyle = "#9b6a3e"; c.beginPath(); c.roundRect(-w / 2 + h * 0.3, -h, w - h * 0.3, h, h / 2); c.fill();
+      c.strokeStyle = "#7a4f2a"; c.lineWidth = 2;
+      for (let i = 1; i <= 2; i++) { c.beginPath(); c.moveTo(-w / 2 + h * 0.6, -h * i / 3); c.lineTo(w / 2 - 8, -h * i / 3 + (i - 1.5) * 3); c.stroke(); }
+      c.fillStyle = "#e7bf87"; c.beginPath(); c.ellipse(-w / 2 + h * 0.3, -h / 2, h * 0.32, h / 2, 0, 0, PI2); c.fill();
+      c.strokeStyle = "#b9874d"; c.lineWidth = 1.6;
+      [0.62, 0.36].forEach(k => { c.beginPath(); c.ellipse(-w / 2 + h * 0.3, -h / 2, h * 0.32 * k, h / 2 * k, 0, 0, PI2); c.stroke(); });
+      c.fillStyle = "#e35d6a"; c.beginPath(); c.ellipse(w * 0.18, -h - 4, 8, 5, 0, Math.PI, PI2); c.fill(); // nấm nhỏ mọc trên gỗ
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(w * 0.16, -h - 6, 1.6, 0, PI2); c.fill();
+      c.fillStyle = "#fff2d6"; c.fillRect(w * 0.18 - 2, -h - 4, 4, 4);
+    }
+    veHangRao(w, h, bt) { // hàng rào cọc gỗ đầu nhọn, sơn trắng / vàng / xanh
+      const c = this.c, mau = ["#fff7ea", "#ffe08a", "#bfe9ff"][bt % 3], vien = "#b8946a";
+      const n = Math.max(3, Math.round(w / 18)), cw = w / n;
+      c.fillStyle = mau; c.strokeStyle = vien; c.lineWidth = 2;
+      c.beginPath(); c.roundRect(-w / 2, -h * 0.72, w, 8, 3); c.fill(); c.stroke();
+      c.beginPath(); c.roundRect(-w / 2, -h * 0.32, w, 8, 3); c.fill(); c.stroke();
+      for (let i = 0; i < n; i++) {
+        const x0 = -w / 2 + i * cw + 2, x1 = x0 + cw - 4;
+        c.beginPath(); c.moveTo(x0, 0); c.lineTo(x0, -h + 8); c.lineTo((x0 + x1) / 2, -h); c.lineTo(x1, -h + 8); c.lineTo(x1, 0); c.closePath(); c.fill(); c.stroke();
+      }
+      c.fillStyle = "#58c84e"; c.beginPath(); c.arc(-w / 2 + 6, -4, 7, Math.PI, PI2); c.arc(w / 2 - 8, -4, 6, Math.PI, PI2); c.fill();
+    }
+    veBuiGai(w, h, bt) { // bụi cây gai có quả mọng
+      const c = this.c;
+      c.fillStyle = "#2f7d3a";
+      for (let i = 0; i < 8; i++) { // gai nhọn chĩa ra ngoài
+        const a = Math.PI + (i + 0.5) / 8 * Math.PI;
+        c.beginPath(); c.moveTo(Math.cos(a - 0.15) * w * 0.4, -h * 0.45 + Math.sin(a - 0.15) * h * 0.45);
+        c.lineTo(Math.cos(a) * w * 0.58, -h * 0.45 + Math.sin(a) * h * 0.62); c.lineTo(Math.cos(a + 0.15) * w * 0.4, -h * 0.45 + Math.sin(a + 0.15) * h * 0.45); c.fill();
+      }
+      c.fillStyle = "#3a9a45";
+      [[-w * 0.25, -h * 0.4, h * 0.42], [w * 0.22, -h * 0.42, h * 0.44], [0, -h * 0.62, h * 0.4]].forEach(([a, b, r]) => { c.beginPath(); c.arc(a, b, r, 0, PI2); c.fill(); });
+      c.fillStyle = "#4fb85a"; c.beginPath(); c.arc(-w * 0.1, -h * 0.7, h * 0.18, 0, PI2); c.fill();
+      c.fillStyle = ["#e8344e", "#7b4fd6", "#ff8a1f"][bt % 3];
+      [[-w * 0.28, -h * 0.5], [w * 0.05, -h * 0.35], [w * 0.28, -h * 0.6], [-w * 0.05, -h * 0.78]].forEach(([a, b]) => { c.beginPath(); c.arc(a, b, 3.6, 0, PI2); c.fill(); });
+    }
+    veThungGo(w, h) { // thùng gỗ đóng nẹp chéo
+      const c = this.c;
+      c.fillStyle = "#c98c4a"; c.beginPath(); c.roundRect(-w / 2, -h, w, h, 4); c.fill();
+      c.strokeStyle = "#8a5a2b"; c.lineWidth = 3; c.strokeRect(-w / 2 + 3, -h + 3, w - 6, h - 6);
+      c.lineWidth = 5; c.beginPath(); c.moveTo(-w / 2 + 6, -6); c.lineTo(w / 2 - 6, -h + 6); c.stroke();
+      c.strokeStyle = "#a8713a"; c.lineWidth = 1.5;
+      for (let i = 1; i < 3; i++) { c.beginPath(); c.moveTo(-w / 2 + 4, -h * i / 3); c.lineTo(w / 2 - 4, -h * i / 3); c.stroke(); }
+      c.fillStyle = "#5a3a1a"; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => { c.beginPath(); c.arc(a * (w / 2 - 6), -h / 2 + b * (h / 2 - 6), 2, 0, PI2); c.fill(); });
+    }
+    veCotTotem(w, h, t) { // cột tô-tem nhiều tầng mặt cười, cao hơn cú nhảy: phải bắn đổ
+      const c = this.c, tang = 4, th = (h - 16) / tang, mau = ["#e86f4d", "#3fb6a8", "#f2b134", "#8a6bd8"];
+      for (let i = 0; i < tang; i++) {
+        const y0 = -(i + 1) * th;
+        c.fillStyle = mau[i % 4]; c.beginPath(); c.roundRect(-w / 2, y0, w, th - 2, 6); c.fill();
+        c.fillStyle = "rgba(255,255,255,0.25)"; c.fillRect(-w / 2 + 4, y0 + 3, w - 8, 4);
+        // mắt + miệng mỗi tầng
+        c.fillStyle = "#fff"; c.beginPath(); c.arc(-w * 0.2, y0 + th * 0.38, 6, 0, PI2); c.arc(w * 0.2, y0 + th * 0.38, 6, 0, PI2); c.fill();
+        c.fillStyle = "#2B2640"; c.beginPath(); c.arc(-w * 0.24, y0 + th * 0.4, 3, 0, PI2); c.arc(w * 0.16, y0 + th * 0.4, 3, 0, PI2); c.fill();
+        c.strokeStyle = "#2B2640"; c.lineWidth = 2.5; c.beginPath();
+        if (i % 2) { c.moveTo(-w * 0.18, y0 + th * 0.7); c.lineTo(w * 0.18, y0 + th * 0.7); } else c.arc(0, y0 + th * 0.58, w * 0.16, 0.2, Math.PI - 0.2);
+        c.stroke();
+      }
+      // đôi cánh trên đỉnh
+      const vo = Math.sin(t * 3) * 3;
+      c.fillStyle = "#ffd23f";
+      c.beginPath(); c.moveTo(-w / 2, -h + 18); c.lineTo(-w / 2 - 22, -h + 4 - vo); c.lineTo(-w / 2 - 8, -h + 24); c.fill();
+      c.beginPath(); c.moveTo(w / 2, -h + 18); c.lineTo(w / 2 + 22, -h + 4 - vo); c.lineTo(w / 2 + 8, -h + 24); c.fill();
+      c.beginPath(); c.moveTo(-w * 0.3, -h + 16); c.lineTo(0, -h); c.lineTo(w * 0.3, -h + 16); c.fill();
+    }
+    veOcSen(w, h, t, o) { // ốc sên vỏ xoắn, mắt trên râu
+      const c = this.c, co = o.dangDi ? Math.sin(t * 6) * 3 : 0;
+      c.fillStyle = "#9fd86b"; c.beginPath(); c.roundRect(-w / 2 - co, -h * 0.32, w + co, h * 0.32, h * 0.16); c.fill();
+      c.strokeStyle = "#9fd86b"; c.lineWidth = 3.5;
+      c.beginPath(); c.moveTo(-w * 0.38, -h * 0.3); c.lineTo(-w * 0.5 - co, -h * 0.8); c.moveTo(-w * 0.3, -h * 0.3); c.lineTo(-w * 0.3, -h * 0.85); c.stroke();
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(-w * 0.5 - co, -h * 0.82, 5, 0, PI2); c.arc(-w * 0.3, -h * 0.87, 5, 0, PI2); c.fill();
+      c.fillStyle = "#2B2640"; c.beginPath(); c.arc(-w * 0.52 - co, -h * 0.82, 2.4, 0, PI2); c.arc(-w * 0.32, -h * 0.87, 2.4, 0, PI2); c.fill();
+      c.fillStyle = "#ff7aa8"; c.beginPath(); c.arc(w * 0.1, -h * 0.55, h * 0.45, 0, PI2); c.fill();
+      c.strokeStyle = "#c2407a"; c.lineWidth = 3; c.beginPath();
+      for (let a = 0; a < Math.PI * 5; a += 0.2) { const r = h * 0.42 * (1 - a / (Math.PI * 5.4)); c.lineTo(w * 0.1 + Math.cos(a) * r, -h * 0.55 + Math.sin(a) * r); }
+      c.stroke();
+      c.strokeStyle = "#2B2640"; c.lineWidth = 2; c.beginPath(); c.arc(-w * 0.38, -h * 0.18, 3, 0, Math.PI); c.stroke();
+    }
+    veCua(w, h, t, o) { // cua đỏ giơ càng, đi ngang
+      const c = this.c, kep = (o.dangDi ? Math.sin(t * 10) : Math.sin(t * 3)) * 0.25, nhun = o.dangDi ? Math.abs(Math.sin(t * 16)) * 2 : 0;
+      c.save(); c.translate(0, -nhun);
+      c.strokeStyle = "#c2302f"; c.lineWidth = 3;
+      for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(-w * 0.25 + i * 6, -h * 0.35); c.lineTo(-w * 0.45 + i * 5, nhun); c.moveTo(w * 0.2 - i * 6, -h * 0.35); c.lineTo(w * 0.42 - i * 5, nhun); c.stroke(); }
+      c.fillStyle = "#e8483f"; c.beginPath(); c.ellipse(0, -h * 0.45, w * 0.38, h * 0.38, 0, 0, PI2); c.fill();
+      c.fillStyle = "#ff8577"; c.beginPath(); c.ellipse(-w * 0.08, -h * 0.58, w * 0.18, h * 0.12, 0, 0, PI2); c.fill();
+      // hai càng
+      [[-1, -w * 0.42], [1, w * 0.42]].forEach(([s, x]) => {
+        c.save(); c.translate(x, -h * 0.75); c.rotate(s * kep);
+        c.fillStyle = "#e8483f"; c.beginPath(); c.arc(0, 0, 9, 0, PI2); c.fill();
+        c.fillStyle = "#87ceeb"; c.beginPath(); c.moveTo(0, -1); c.lineTo(s * 9, -7); c.lineTo(s * 9, 3); c.fill(); // khe càng (màu trời)
+        c.restore();
+      });
+      c.strokeStyle = "#c2302f"; c.lineWidth = 2.5; c.beginPath(); c.moveTo(-8, -h * 0.75); c.lineTo(-10, -h - 2); c.moveTo(6, -h * 0.75); c.lineTo(6, -h - 2); c.stroke();
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(-10, -h - 3, 4.5, 0, PI2); c.arc(6, -h - 3, 4.5, 0, PI2); c.fill();
+      c.fillStyle = "#2B2640"; c.beginPath(); c.arc(-11, -h - 3, 2.2, 0, PI2); c.arc(5, -h - 3, 2.2, 0, PI2); c.fill();
+      c.strokeStyle = "#7a1b1b"; c.lineWidth = 2; c.beginPath(); c.arc(-4, -h * 0.42, 5, 0.2, Math.PI - 0.2); c.stroke();
+      c.restore();
+    }
+    veEch(w, h, t, o) { // ếch xanh nhảy cóc
+      const c = this.c, nhay = o.dangDi ? Math.abs(Math.sin(t * 6)) * 14 : Math.abs(Math.sin(t * 2)) * 2;
+      c.save(); c.translate(0, -nhay);
+      c.fillStyle = "#3aa64a"; c.beginPath(); c.ellipse(w * 0.22, -h * 0.25, w * 0.24, h * 0.24, 0, 0, PI2); c.fill(); // chân sau
+      c.fillStyle = "#5cc96a"; c.beginPath(); c.ellipse(0, -h * 0.42, w * 0.46, h * 0.4, 0, 0, PI2); c.fill();
+      c.fillStyle = "#d8f5b0"; c.beginPath(); c.ellipse(-w * 0.12, -h * 0.3, w * 0.24, h * 0.2, 0, 0, PI2); c.fill();
+      c.fillStyle = "#5cc96a"; c.beginPath(); c.arc(-w * 0.28, -h * 0.82, 8, 0, PI2); c.arc(-w * 0.02, -h * 0.84, 8, 0, PI2); c.fill();
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(-w * 0.28, -h * 0.84, 5.5, 0, PI2); c.arc(-w * 0.02, -h * 0.86, 5.5, 0, PI2); c.fill();
+      c.fillStyle = "#2B2640"; c.beginPath(); c.arc(-w * 0.31, -h * 0.84, 2.8, 0, PI2); c.arc(-w * 0.05, -h * 0.86, 2.8, 0, PI2); c.fill();
+      c.strokeStyle = "#1f6b2a"; c.lineWidth = 2; c.beginPath(); c.arc(-w * 0.2, -h * 0.58, 8, 0.25, Math.PI - 0.25); c.stroke();
+      c.fillStyle = "#ff9fb0"; c.beginPath(); c.arc(-w * 0.38, -h * 0.6, 3, 0, PI2); c.fill();
+      c.fillStyle = "#3aa64a"; c.beginPath(); c.ellipse(-w * 0.3, -3, 7, 3.5, 0, 0, PI2); c.fill();
+      c.restore();
+    }
+    veSau(w, h, t, o) { // sâu róm nhiều đốt uốn lượn
+      const c = this.c, n = 5, r = h * 0.42, toc = o.dangDi ? 10 : 3;
+      for (let i = n - 1; i >= 0; i--) {
+        const x = -w / 2 + r + i * (w - 2 * r) / (n - 1), y = -r - Math.max(0, Math.sin(t * toc - i * 0.9)) * 5;
+        c.fillStyle = i === 0 ? "#ffb02e" : i % 2 ? "#8fd14f" : "#6cbf3a";
+        c.beginPath(); c.arc(x, y, i === 0 ? r * 1.1 : r, 0, PI2); c.fill();
+        if (i > 0) { c.strokeStyle = "#3d7a1e"; c.lineWidth = 1.5; for (let k = -1; k <= 1; k++) { c.beginPath(); c.moveTo(x + k * 4, y - r); c.lineTo(x + k * 6, y - r - 5); c.stroke(); } }
+      }
+      const hx = -w / 2 + r, hy = -r - Math.max(0, Math.sin(t * toc)) * 5;
+      c.strokeStyle = "#2B2640"; c.lineWidth = 2; c.beginPath(); c.moveTo(hx - 3, hy - r); c.lineTo(hx - 8, hy - r - 9); c.moveTo(hx + 3, hy - r); c.lineTo(hx + 4, hy - r - 10); c.stroke();
+      c.fillStyle = "#2B2640"; c.beginPath(); c.arc(hx - 8, hy - r - 9, 2.5, 0, PI2); c.arc(hx + 4, hy - r - 10, 2.5, 0, PI2); c.fill();
+      this.mat(hx - 2, hy - 2, 3.6, true);
+    }
+    veCayBietDi(w, h, t, o) { // cây cổ thụ biết đi: QUÁ CAO để nhảy qua -> phải bắn
+      const c = this.c, buoc = o.dangDi ? Math.sin(t * 5) : 0, lac = Math.sin(t * 2) * 0.03;
+      c.fillStyle = "#6b4226"; // rễ làm chân
+      c.beginPath(); c.ellipse(-w * 0.22 + buoc * 6, -5, 14, 6, 0, 0, PI2); c.ellipse(w * 0.22 - buoc * 6, -5, 14, 6, 0, 0, PI2); c.fill();
+      c.save(); c.rotate(lac);
+      c.fillStyle = "#8a5a35"; c.beginPath(); c.moveTo(-w * 0.3, -6); c.lineTo(-w * 0.2, -h * 0.62); c.lineTo(w * 0.2, -h * 0.62); c.lineTo(w * 0.3, -6); c.fill();
+      c.strokeStyle = "#6b4226"; c.lineWidth = 2; for (let i = -1; i <= 1; i += 2) { c.beginPath(); c.moveTo(i * w * 0.1, -h * 0.58); c.lineTo(i * w * 0.14, -12); c.stroke(); }
+      // tán lá tròn nhiều lớp
+      [["#2f8f3e", 0, -h * 0.78, w * 0.55], ["#3fae4c", -w * 0.28, -h * 0.72, w * 0.32], ["#3fae4c", w * 0.3, -h * 0.74, w * 0.3], ["#5bc865", -w * 0.08, -h * 0.9, w * 0.26]]
+        .forEach(([m, a, b, r]) => { c.fillStyle = m; c.beginPath(); c.arc(a, b, r, 0, PI2); c.fill(); });
+      c.fillStyle = "#e8344e"; [[-w * 0.3, -h * 0.8], [w * 0.2, -h * 0.92], [w * 0.36, -h * 0.68]].forEach(([a, b]) => { c.beginPath(); c.arc(a, b, 4, 0, PI2); c.fill(); });
+      // mặt trên thân cây
+      this.mat(-w * 0.04, -h * 0.42, 7, true);
+      c.fillStyle = "#4a2d18"; c.beginPath(); c.ellipse(-w * 0.04, -h * 0.28, 10, 6, 0, 0, Math.PI); c.fill();
+      c.restore();
+    }
+    veDoi(w, h, t) { // dơi tím vỗ cánh
+      const c = this.c, vo = Math.sin(t * 18), cy = -h / 2;
+      c.fillStyle = "#5b3f8f";
+      [-1, 1].forEach(s => {
+        c.beginPath(); c.moveTo(s * 6, cy);
+        c.lineTo(s * w * 0.5, cy - 12 - vo * 10); c.lineTo(s * w * 0.42, cy + 2 - vo * 4); c.lineTo(s * w * 0.3, cy - 2 - vo * 6); c.lineTo(s * w * 0.2, cy + 8); c.closePath(); c.fill();
+      });
+      c.fillStyle = "#7a58b8"; c.beginPath(); c.ellipse(0, cy, 12, h * 0.42, 0, 0, PI2); c.fill();
+      c.beginPath(); c.moveTo(-9, cy - h * 0.3); c.lineTo(-7, cy - h * 0.62); c.lineTo(-2, cy - h * 0.36); c.moveTo(9, cy - h * 0.3); c.lineTo(7, cy - h * 0.62); c.lineTo(2, cy - h * 0.36); c.fill();
+      c.fillStyle = "#ffd23f"; c.beginPath(); c.arc(-5, cy - 4, 3.5, 0, PI2); c.arc(5, cy - 4, 3.5, 0, PI2); c.fill();
+      c.fillStyle = "#2B2640"; c.beginPath(); c.arc(-6, cy - 4, 1.8, 0, PI2); c.arc(4, cy - 4, 1.8, 0, PI2); c.fill();
+      c.fillStyle = "#fff"; c.beginPath(); c.moveTo(-4, cy + 4); c.lineTo(-2, cy + 8); c.lineTo(0, cy + 4); c.moveTo(1, cy + 4); c.lineTo(3, cy + 8); c.lineTo(5, cy + 4); c.fill();
+    }
+    veChim(w, h, t, bt) { // chim sẻ tròn, vỗ cánh, mỏ quay về phía bé
+      const c = this.c, vo = Math.sin(t * 20), than = ["#5aa9e6", "#ff8c5a", "#b98be0"][bt % 3];
+      c.fillStyle = than; c.beginPath(); c.moveTo(w * 0.3, -h * 0.55); c.lineTo(w * 0.55, -h * 0.75); c.lineTo(w * 0.55, -h * 0.35); c.fill(); // đuôi
+      c.beginPath(); c.ellipse(0, -h / 2, w * 0.36, h * 0.44, 0, 0, PI2); c.fill();
+      c.fillStyle = "#fff4dc"; c.beginPath(); c.ellipse(-w * 0.08, -h * 0.36, w * 0.2, h * 0.24, 0, 0, PI2); c.fill();
+      c.fillStyle = "#ffb000"; c.beginPath(); c.moveTo(-w * 0.34, -h * 0.62); c.lineTo(-w * 0.52, -h * 0.55); c.lineTo(-w * 0.34, -h * 0.48); c.fill();
+      c.fillStyle = "#2B2640"; c.beginPath(); c.arc(-w * 0.2, -h * 0.66, 3, 0, PI2); c.fill();
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(-w * 0.19, -h * 0.68, 1, 0, PI2); c.fill();
+      c.fillStyle = "#ff9fb0"; c.beginPath(); c.arc(-w * 0.24, -h * 0.5, 2.5, 0, PI2); c.fill();
+      c.fillStyle = tronMau(than.length === 7 ? than : "#5aa9e6", "#2B2640", 0.25);
+      c.beginPath(); c.ellipse(w * 0.06, -h * 0.55 - vo * 9, w * 0.24, 7, -0.4 - vo * 0.5, 0, PI2); c.fill();
+    }
+    veBoRua(w, h, t) { // bọ rùa đỏ chấm đen, cánh mỏng vỗ nhanh
+      const c = this.c, vo = Math.sin(t * 28);
+      c.fillStyle = "rgba(220,240,255,0.8)";
+      c.beginPath(); c.ellipse(4, -h + 4 - vo * 3, 9, 14, 0.5, 0, PI2); c.ellipse(12, -h + 6 + vo * 3, 8, 12, 0.9, 0, PI2); c.fill();
+      c.fillStyle = "#2B2640"; c.beginPath(); c.arc(-w * 0.34, -h * 0.45, h * 0.24, 0, PI2); c.fill();
+      c.fillStyle = "#e8344e"; c.beginPath(); c.arc(w * 0.04, -h * 0.45, h * 0.42, Math.PI * 0.5, Math.PI * 2.5); c.fill();
+      c.strokeStyle = "#2B2640"; c.lineWidth = 2; c.beginPath(); c.moveTo(w * 0.04 - h * 0.42, -h * 0.45); c.lineTo(w * 0.04 + h * 0.42, -h * 0.45); c.stroke();
+      c.fillStyle = "#2B2640"; [[-4, -h * 0.62], [10, -h * 0.66], [-2, -h * 0.28], [12, -h * 0.3]].forEach(([a, b]) => { c.beginPath(); c.arc(a, b, 3.4, 0, PI2); c.fill(); });
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(-w * 0.4, -h * 0.5, 2.6, 0, PI2); c.arc(-w * 0.28, -h * 0.52, 2.6, 0, PI2); c.fill();
+      c.fillStyle = "#2B2640"; c.beginPath(); c.arc(-w * 0.41, -h * 0.5, 1.3, 0, PI2); c.arc(-w * 0.29, -h * 0.52, 1.3, 0, PI2); c.fill();
+      c.strokeStyle = "#2B2640"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-w * 0.4, -h * 0.66); c.lineTo(-w * 0.5, -h * 0.82); c.moveTo(-w * 0.3, -h * 0.66); c.lineTo(-w * 0.3, -h * 0.84); c.stroke();
     }
 
     /* ---------------- BIỂN CHỮ trên chướng ngại vật ---------------- */

@@ -26,6 +26,9 @@
              một từ như chướng ngại vật (bấm đúng là nhảy lên lấy); cú nhảy ngắn lại còn 3 đơn vị
              (1 đơn vị = cỡ một con quái). Chốt lần cuối: đơn vị = bề ngang của CHÍNH vật sắp gặp
              (thongSoNhay); mọi quái bay luôn phải bắn (không tính vào giới hạn 1/4).
+             Kho quái phong phú: trọng số các loại xáo ngẫu nhiên mỗi lượt, không 2 cái giống nhau
+             liền nhau, cố tránh loại vừa gặp; cái đầu là một vật cản thấp bất kỳ (không chỉ ống cống).
+             Gặp quái nhiều máu mà không đủ giờ bắn thì bé chạy chậm lại (tinhHeSoTocDo).
    TỌA ĐỘ: x = quãng đường (tăng về phía lâu đài), y = độ cao so với mặt đất.
            Nhân vật: x là TÂM người, y là CHÂN. Chướng ngại vật: x là MÉP TRÁI.
    THỨ TỰ XỬ LÝ MỖI BƯỚC (cố định để không chồng chéo):
@@ -102,31 +105,57 @@
   /* ================================================================
      SINH ĐƯỜNG ĐI (LevelGenerator): xếp chướng ngại vật có kiểm soát
      ================================================================ */
+  /* Xếp đường; màn ngắn mà cụm kim cương chiếm nhiều chỗ thì có thể thiếu quái / hố:
+     xếp lại (tối đa 30 lần) tới khi đủ số chướng ngại vật nguy hiểm >= số mạng ban đầu,
+     để không bấm gì thì không thể qua màn. Từ chỉ gắn SAU khi chốt cách xếp. */
   function sinhDuongDi(dk, rng, khoTu) {
+    const nguyHiem = o => o.vaCham === "matMang" || o.vaCham === "roi";
+    let d = null;
+    for (let lan = 0; lan < 30; lan++) {
+      d = xepDuong(dk, rng);
+      if (dk.thuTu || d.ds.filter(nguyHiem).length >= ST.CAU_HINH.mangBanDau) break;
+    }
+    d.ds.forEach(o => { o.tu = khoTu.layTu(); });
+    return d;
+  }
+  function xepDuong(dk, rng) {
     const CH = ST.CAU_HINH, v = dk.tocDo;
     // màn Tập chơi: chướng ngại vật xếp sẵn (dk.thuTu), cổng đích đặt ngay sau cái cuối
     let dai = dk.thuTu ? 1e9 : Math.round(v * dk.thoiGianDiDuKien);   // vị trí cổng lâu đài
     const ds = [];
-    const tenLoai = Object.keys(dk.loai);
+    const tenLoai = Object.keys(dk.loai).filter(t => ST.LOAI_CHUONG_NGAI[t]);
+    // Mỗi lượt chơi XÁO trọng số (x0.3 .. x1.7): chơi lại cùng màn vẫn gặp quái khác, thứ tự khác
+    const trongSo = {};
+    tenLoai.forEach(t => { trongSo[t] = dk.loai[t] * (0.3 + 1.4 * rng()); });
+    const LCN = t => ST.LOAI_CHUONG_NGAI[t];
     let mepSau = v * CH.choTruocKhiVaoDuong - CH.leQuaChuongNgai; // mép sau của "chướng ngại vật trước"
     let soQuai = 0, soCoMau = 0; // quái có thanh máu: luôn KHÔNG QUÁ 1/4 số quái (ở mọi đoạn đường)
+    const bocTham = nhom => {
+      let tong = 0; nhom.forEach(t => { tong += trongSo[t]; });
+      let r = rng() * tong;
+      for (const t of nhom) { r -= trongSo[t]; if (r <= 0) return t; }
+      return nhom[nhom.length - 1];
+    };
 
     function chonLoai(i) {
-      if (i === 0) return "cong"; // cái đầu tiên luôn là ống cống: an toàn, để bé làm quen
+      // cái đầu tiên luôn là một vật cản thấp (chỉ khựng, không mất mạng) để bé làm quen; loại thì ngẫu nhiên
+      if (i === 0) {
+        const an = tenLoai.filter(t => LCN(t).nhom === "can" && !LCN(t).caoHonNhay);
+        return an.length ? bocTham(an) : "cong";
+      }
       // Bảo đảm đủ tỉ lệ chướng ngại vật nguy hiểm: không thể về đích mà không trả lời từ nào
-      const nguyHiem = t => { const vc = ST.LOAI_CHUONG_NGAI[t].vaCham; return vc === "matMang" || vc === "roi"; };
+      const nguyHiem = t => { const vc = LCN(t).vaCham; return vc === "matMang" || vc === "roi"; };
       const vat = ds.filter(o => o.nhom !== "kimCuong");
       const soNguyHiem = vat.filter(o => nguyHiem(o.loai)).length;
       // ít nhất bằng số mạng ban đầu: cụm kim cương chiếm chỗ nên màn ngắn vẫn phải đủ quái / hố
       const epNguyHiem = soNguyHiem < Math.max((dk.tiLeNguyHiemToiThieu || 0) * i, Math.min(i, CH.mangBanDau));
       const nhom = epNguyHiem ? tenLoai.filter(nguyHiem) : tenLoai;
-      for (let thu = 0; thu < 20; thu++) {
-        let tong = 0; nhom.forEach(t => { tong += dk.loai[t]; });
-        let r = rng() * tong, ma = nhom[0];
-        for (const t of nhom) { r -= dk.loai[t]; if (r <= 0) { ma = t; break; } }
-        const n = vat.length;
-        // không 3 cái giống nhau liên tiếp
-        if (n >= 2 && vat[n - 1].loai === ma && vat[n - 2].loai === ma) continue;
+      const n = vat.length, ganDay = vat.slice(-3).map(o => o.loai);
+      for (let thu = 0; thu < 30; thu++) {
+        const ma = bocTham(nhom);
+        // không 2 cái giống nhau liền nhau; cố tránh cả loại vừa gặp trong 3 cái gần nhất
+        if (n >= 1 && vat[n - 1].loai === ma && nhom.length > 1) continue;
+        if (thu < 15 && ganDay.includes(ma) && nhom.length > 4) continue;
         // màn dễ: không để 3 cái nguy hiểm (mất mạng) đứng liền nhau
         // (cụm kim cương xen giữa cũng là một quãng nghỉ)
         const m = ds.length;
@@ -134,7 +163,7 @@
         if (dk.soPhuongAn <= 2 && soNguyHiem >= CH.mangBanDau && m >= 2 && nguyHiem(ds[m - 1].loai) && nguyHiem(ds[m - 2].loai) && nguyHiem(ma)) continue;
         return ma;
       }
-      return "cong";
+      return nhom.find(t => !(n >= 1 && vat[n - 1].loai === t)) || nhom[0];
     }
 
     /* KIM CƯƠNG: chia tổng số viên thành các CỤM (tối đa kimCuongMoiCum viên), mỗi cụm chiếm
@@ -184,7 +213,9 @@
           soQuai++;
           const choPhep = (soCoMau + 1) * 4 <= soQuai;
           if (L.caoHonNhay && !choPhep) { // quái khổng lồ mà đã đủ 1/4: đổi thành quái nhỏ nhảy qua được
-            ma = dk.loai.nhim ? "nhim" : "nam"; L = ST.LOAI_CHUONG_NGAI[ma];
+            const truoc = ds.filter(x => x.nhom !== "kimCuong").slice(-1).map(x => x.loai)[0];
+            const nho = tenLoai.filter(t => LCN(t).nhom === "quaiDat" && !LCN(t).caoHonNhay && t !== truoc);
+            ma = nho.length ? bocTham(nho) : "nam"; L = LCN(ma);
           }
           if (L.caoHonNhay || (choPhep && rng() < dk.tiLeCoMau)) { mau = dk.mauQuai; soCoMau++; }
         } else if (L.caoHonNhay) mau = dk.mauQuai; // vật cản cao hơn cú nhảy: phải bắn
@@ -200,7 +231,6 @@
       const tam = mepSau + CH.leQuaChuongNgai + khoangKichHoat(o, v, dk.thoiGianPhanUng) + doanTrong(rng, dk.khoangThem);
       o.x = Math.round(tam - o.rong / 2);
       if (o.x + o.rong + CH.khoangCuoiTruocLauDai > dai) break;
-      o.tu = khoTu.layTu();
       ds.push(o);
       if (cum) { o.soKimCuong = cum.so; xepKimCuong(o.x + o.rong / 2, cum.so, o.id); } else iVat++;
       mepSau = o.x + o.rong;
@@ -251,6 +281,7 @@
       this.thuThach = null;
       this.soThuThach = 0;
       this.dan = [];            // viên phép thuật đang bay
+      this.heSoTocDo = 1;       // < 1: đang chạy chậm lại cho bé kịp bắn quái nhiều máu
       this.kimCuongs = duong.kimCuongs; // kim cương rải ngẫu nhiên trên đường
       this.tongKimCuongDuong = duong.kimCuongs.length;
       this.thongKe = { dung: 0, sai: 0, truot: 0, matMang: 0, tuDung: [], mangDoi: 0 };
@@ -314,7 +345,8 @@
         return;
       }
 
-      // 2. Di chuyển nhân vật
+      // 2. Di chuyển nhân vật (gặp quái phải bắn mà không đủ giờ thì chạy chậm lại)
+      this.heSoTocDo = this.tinhHeSoTocDo();
       this.diChuyenBe(h);
       // 3. Quái tiến lại gần + viên phép thuật
       this.diChuyenQuai(h);
@@ -340,7 +372,7 @@
         return;
       }
       // Vừa leo qua vật cản: chạy chậm một lúc rồi tăng tốc lại
-      let v = this.v;
+      let v = this.v * (this.heSoTocDo || 1);
       if (be.tCham > 0) { be.tCham = Math.max(0, be.tCham - h); v *= this.CH.tiLeTocDoCham; }
       be.x += v * h;
       if (be.nhay) {
@@ -373,7 +405,7 @@
 
     diChuyenQuai(h) {
       for (const o of this.chuongNgai) {
-        if (o.dangDi && o.song && !o.boChay) o.x -= o.tocDoDi * h;
+        if (o.dangDi && o.song && !o.boChay) o.x -= o.tocDoDi * (this.heSoTocDo || 1) * h;
         if (!o.song || o.boChay) o.tChet = (o.tChet || 0) + h;
       }
     }
@@ -518,11 +550,23 @@
       };
       this.phat("thuThachMoi", { tt: this.thuThach });
     }
+    /* GẶP QUÁI NHIỀU MÁU THÌ CHẠY CHẬM LẠI (người dùng yêu cầu 16/10/2026): mỗi viên còn phải bắn
+       cần giayMoiVien giây; nếu chạy đủ tốc độ không còn đủ giờ thì bé (và quái) chậm lại vừa đủ,
+       chậm nhất còn tiLeTocDoBanToiThieu. Bắn trúng bớt máu thì tăng tốc lại dần; hạ xong chạy bình thường. */
+    tinhHeSoTocDo() {
+      const tt = this.thuThach, CH = this.CH;
+      if (!tt || tt.trangThai !== "mo" || tt.o.hanhDong !== "ban" || !tt.o.song || tt.o.boChay || tt.o.mau <= 0) return 1;
+      const conMau = tt.o.mau - this.dan.filter(d => d.o === tt.o).length; // viên đang bay coi như đã trúng
+      if (conMau <= 0) return 1;
+      const co = (this.khoangTam(tt.o) - khoangHetHan(tt.o, this.v)) / tocDoKhep(tt.o, this.v);
+      const can = conMau * CH.giayMoiVien;
+      return co >= can ? 1 : Math.max(CH.tiLeTocDoBanToiThieu, co / can);
+    }
     // Phần trăm thời gian còn lại để chọn (cho thanh đếm ngược)
     phanThoiGianConLai() {
       const tt = this.thuThach;
       if (!tt || tt.trangThai !== "mo") return 0;
-      const con = (this.khoangTam(tt.o) - khoangHetHan(tt.o, this.v)) / tocDoKhep(tt.o, this.v);
+      const con = (this.khoangTam(tt.o) - khoangHetHan(tt.o, this.v)) / (tocDoKhep(tt.o, this.v) * (this.heSoTocDo || 1));
       return Math.max(0, Math.min(1, con / tt.thoiHan));
     }
     // ghiSo = false khi lượt chơi kết thúc giữa chừng: bé chưa kịp đọc nên không tính là chưa thuộc
