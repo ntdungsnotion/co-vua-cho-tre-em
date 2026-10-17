@@ -1,0 +1,135 @@
+/* ================================================================
+   FILE: kc/tu_vung/tu_cap3.js
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 122 từ.
+              Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
+   THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
+            ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
+   GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
+              Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
+              giữ giấy phép CC BY-SA.
+   CẬP NHẬT: 17/10/2026 15:36 - BƯỚC: TC_T01 (lô thử lo_001)
+   ================================================================ */
+(typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(3, `
+garden|🌷|khu vườn
+morning|🌅|buổi sáng
+window|🪟|cửa sổ
+rocket|🚀|tên lửa
+castle|🏰|lâu đài
+dragon|🐉|con rồng
+bridge|🌉|cây cầu
+planet|🪐|hành tinh
+kitchen|🍳|nhà bếp
+rainbow|🌈|cầu vồng
+teacher|🧑‍🏫|giáo viên
+doctor|🩺|bác sĩ
+guitar|🎸|đàn ghi-ta
+jacket|🧥|áo khoác
+button|🔘|cái nút
+carrot|🥕|củ cà rốt
+butter|🧈|bơ
+bottle|🍼|cái chai
+island|🏝️|hòn đảo
+winter|⛄|mùa đông
+summer|🏖️|mùa hè
+mitten|🧤|găng tay
+kitten|🐈|mèo con
+lizard|🦎|thằn lằn
+beaver|🦫|hải ly
+badger|🦡|con lửng
+rooster|🐓|gà trống
+peacock|🦚|con công
+hamster|🐹|chuột hamster
+leopard|🐆|con báo
+gorilla|🦍|khỉ đột
+mammoth|🦣|voi ma mút
+unicorn|🦄|kỳ lân
+ladybug|🐞|bọ rùa
+lobster|🦞|tôm hùm
+shrimp|🦐|con tôm
+avocado|🥑|quả bơ
+garlic|🧄|củ tỏi
+popcorn|🍿|bỏng ngô
+pretzel|🥨|bánh quy xoắn
+burger|🍔|bánh kẹp thịt
+hotdog|🌭|bánh mì xúc xích
+cupcake|🧁|bánh nướng nhỏ
+waffle|🧇|bánh tổ ong
+coconut|🥥|quả dừa
+pepper|🌶️|quả ớt
+mirror|🪞|cái gương
+ladder|🪜|cái thang
+basket|🧺|cái giỏ
+candle|🕯️|cây nến
+magnet|🧲|nam châm
+hammer|🔨|cái búa
+crayon|🖍️|bút sáp màu
+ribbon|🎀|cái nơ
+balloon|🎈|bóng bay
+trophy|🏆|cái cúp
+medal|🏅|huy chương
+ticket|🎫|tấm vé
+bicycle|🚲|xe đạp hai bánh
+tractor|🚜|máy kéo
+scooter|🛴|xe trượt scooter
+subway|🚇|tàu điện ngầm
+anchor|⚓|mỏ neo
+forest|🌲|khu rừng
+desert|🏜️|sa mạc
+galaxy|🌌|dải ngân hà
+sunset|🌇|hoàng hôn
+tornado|🌪️|lốc xoáy
+autumn|🍂|mùa thu
+farmer|🧑‍🌾|nông dân
+singer|🧑‍🎤|ca sĩ
+artist|🧑‍🎨|họa sĩ
+police|👮|cảnh sát
+student|🧑‍🎓|học sinh
+wizard|🧙|phù thủy
+pirate|🏴‍☠️|cướp biển
+mermaid|🧜|nàng tiên cá
+excited|🤩|háo hức
+nervous|😬|lo lắng
+baseball|⚾|bóng chày
+bowling|🎳|ném bowling
+skating|⛸️|trượt băng
+surfing|🏄|lướt sóng
+camping|🏕️|cắm trại
+fishing|🎣|câu cá
+picture|🖼️|bức tranh
+trumpet|🎺|kèn trumpet
+violin|🎻|đàn vi-ô-lông
+museum|🏛️|bảo tàng
+present|🎁|quà tặng
+pumpkin|🎃|quả bí ngô
+penguin|🐧|chim cánh cụt
+dolphin|🐬|cá heo
+octopus|🐙|bạch tuộc
+giraffe|🦒|hươu cao cổ
+thunder|⛈️|sấm sét
+blanket|🛌|cái chăn
+pancake|🥞|bánh kếp
+captain|🧑‍✈️|thuyền trưởng
+compass|🧭|la bàn
+volcano|🌋|núi lửa
+backpack|🎒|ba lô
+diamond|💎|kim cương
+sandals|🩴|dép xỏ ngón
+teapot|🫖|ấm trà
+toilet|🚽|nhà vệ sinh
+shower|🚿|vòi sen
+pillow|💤|cái gối
+sponge|🧽|miếng bọt biển
+battery|🔋|cục pin
+rainy|☔|trời mưa
+sunny|🌞|trời nắng
+snowy|🌨️|có tuyết
+cactus|🌵|cây xương rồng
+mushroom|🍄|cây nấm
+sunflower|🌻|hoa hướng dương
+tulip|🌷|hoa tulip
+seashell|🐚|vỏ sò
+berry|🫐|quả mọng|cay_hoa
+brick|🧱|viên gạch|nha_cua
+bucket|🪣|cái xô|do_vat
+bulb|💡|bóng đèn|do_vat
+`);

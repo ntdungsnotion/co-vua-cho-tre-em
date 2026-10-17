@@ -23,6 +23,7 @@
   CẬP NHẬT: 16/10/2026 - TC_00E: đường đua 2 "Xứ sở kẹo ngọt" (hình vẽ ở san_tu/st_ve_keo.js).
   CẬP NHẬT: 16/10/2026 - TC_00F: đường 3..10: mỗi đường 2 file st_duong_<mã>.js (dữ liệu) + st_ve_<mã>.js (hình).
   CẬP NHẬT: 16/10/2026 - TC_01: nạp supabase-js + kc_config.js + kc_api.js và san_tu/st_kho_kc.js để cất kim cương
+  CẬP NHẬT: 17/10/2026 - TC_T01: kho từ lấy từ kho dùng chung kc/tu_vung/ (4 file cấp); dòng ghi nguồn Wiktionary.
             mỗi màn vào kho của bé; màn kết quả có dòng #kqKho báo đã cất / đủ trần ngày / giữ lại khi mất mạng.
   CODE: san_tu/st_cau_hinh.js (tham số, 10 đường đua, 7 màn), st_tien_do.js (tiến độ màn), st_tu_vung.js (kho từ), st_logic.js (lõi game), st_on_tap.js (bảng ôn tập),
         st_am_thanh.js (âm thanh), st_ve.js (vẽ), st_ve_keo.js (cảnh + quái đường Kẹo ngọt), st_giao_dien.js (giao diện + vòng lặp).
@@ -386,6 +387,8 @@
         <a class="veTroChoi" href="trochoi_NC.html">← Về Trò Chơi</a>
         <!-- KC_00F: chỗ hiện "Số lượt truy cập" (trang game toàn màn hình, không có chân trang) -->
         <div data-luot-truy-cap style="text-align:center;font-size:12px;color:#8a84a3;margin-top:6px;"></div>
+        <!-- TC_T01: ghi nguồn từ điển (giấy phép CC BY-SA bắt buộc ghi công) -->
+        <div style="text-align:center;font-size:11px;color:#8a84a3;margin-top:2px;">📖 Nghĩa từ có tham khảo <a href="https://vi.wiktionary.org" target="_blank" rel="noopener" style="color:inherit;">Wiktionary</a> (CC BY-SA)</div>
       </div>
     </div>
   </section>
@@ -462,6 +465,11 @@
 <script src="san_tu/st_duong_vutru.js"></script>
 <script src="san_tu/st_tien_do.js"></script>
 <script src="san_tu/st_kho_kc.js"></script>
+<script src="tu_vung/tu_vung.js"></script>
+<script src="tu_vung/tu_cap1.js"></script>
+<script src="tu_vung/tu_cap2.js"></script>
+<script src="tu_vung/tu_cap3.js"></script>
+<script src="tu_vung/tu_cap4.js"></script>
 <script src="san_tu/st_kho_tu.js"></script>
 <script src="san_tu/st_tu_vung.js"></script>
 <script src="san_tu/st_logic.js"></script>
