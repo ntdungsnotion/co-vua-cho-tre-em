@@ -4,6 +4,15 @@
 //   9 man hinh: Vat Pham | Doi Thuong | Y Tuong | Cau Hinh Chung |
 //               Cap Do May | Loi Dong Vien | Giong Doc | Ho So Tre | Don Kho Anh
 // BUOC: NC_06A-2 (nang cap tu NC_09B) - NGAY: 12/07/2026 21:00
+// CAP NHAT: 17/10/2026 - BUOC: KC_00D-1 (trang quan tri CHUNG toan app)
+//   File nay nay chay trong kc/quantri_NC.html (admin_NC.html chi con chuyen huong).
+//   (1) Man hinh dau tien = nut .adminNutManHinh co class dangChon (trang moi mo
+//       "Tong quan", khong con co dinh "Vat Pham").
+//   (2) Moi lan chuyen man hinh ban su kien "adminDaChuyenManHinh" (detail.ten)
+//       de kc/quantri_NC.js dong menu dien thoai, ghi #ten len dia chi, tai Tong quan.
+//   (3) CAU HINH CHUNG TACH THEO LINH VUC (HUONG DAN 3.13): van 1 bang cau_hinh_chung,
+//       moi bang <tbody data-nhom-cau-hinh="chung|covua|santu|thuthach|tatca"> chi ve
+//       khoa cua nhom do (adminNhomCuaKhoa). Tai 1 lan, ve vao moi bang.
 //   NC_06A-2 (3 tinh nang quan tri con thieu - KE HOACH muc NC_06A-2):
 //     (a) XEM NGUOI SO HUU: nut 👥 o cot "Da doi" cua bang vat pham -> khoi
 //         danh sach tre da doi/mua vat pham do (RPC admin_lay_nguoi_so_huu_vat_pham).
@@ -291,8 +300,10 @@ function adminKhoiTao() {
   adminDungManHinhHoSoTre();   // NC_06A-2
   adminDungManHinhDonKho();    // NC_06A-2
 
-  // --- Tai du lieu cho man hinh dau tien; cac man hinh khac tai khi bam vao ---
-  adminTaiVatPham();
+  // --- Mo man hinh dau tien (nut dang chon san trong HTML); cac man hinh khac
+  //     tai khi bam vao (KC_00D-1: truoc day co dinh adminTaiVatPham) ---
+  var nutDau = document.querySelector(".adminNutManHinh.dangChon");
+  if (nutDau) adminChuyenManHinh(nutDau.getAttribute("data-manhinh"), nutDau);
 }
 
 /** Hien khoi chan quyen, an toan bo noi dung quan tri */
@@ -313,12 +324,19 @@ function adminChuyenManHinh(ten, nutBam) {
   for (var j = 0; j < cacManHinh.length; j++) cacManHinh[j].classList.remove("dangHien");
   adminEl("manhinh-" + ten).classList.add("dangHien");
 
+  // KC_00D-1: bao cho kc/quantri_NC.js (dong menu, ghi dia chi, tai Tong quan)
+  document.dispatchEvent(new CustomEvent("adminDaChuyenManHinh", { detail: { ten: ten } }));
+
+  // KC_00D-1: cac man hinh cau hinh dung chung 1 lan tai (ve vao moi bang)
+  if (ten.indexOf("cauhinh") === 0) ten = "cauhinh";
+
   if (adminDaTai[ten]) return;
   adminDaTai[ten] = true;
 
+  if (ten === "vatpham")      adminTaiVatPham();
   if (ten === "doithuong")    adminTaiDoiThuong();
   if (ten === "ytuong")       adminTaiYTuong();
-  if (ten === "cauhinhchung") adminTaiCauHinhChung();
+  if (ten === "cauhinh")      adminTaiCauHinhChung();
   if (ten === "capdo")        adminTaiCapDo();
   if (ten === "loidongvien")  adminTaiLoiDongVien();
   if (ten === "giongdoc")     adminTaiGiongDoc();
@@ -1003,40 +1021,90 @@ function adminXuLyYTuong(id, trangThai, nut) {
 // ================================================================
 
 function adminDungManHinhCauHinhChung() {
-  adminEl("btnLamMoiCauHinhChung").addEventListener("click", adminTaiCauHinhChung);
+  // KC_00D-1: moi man hinh cau hinh co 1 nut Lam Moi rieng (tai lai tat ca bang)
+  var cacNutLamMoi = document.querySelectorAll("[data-lam-moi-cau-hinh]");
+  for (var i = 0; i < cacNutLamMoi.length; i++) {
+    cacNutLamMoi[i].addEventListener("click", adminTaiCauHinhChung);
+  }
   adminEl("btnThemKhoaMoi").addEventListener("click", adminThemKhoaMoi);
 }
 
+// KC_00D-1: khoa thuoc nhom nao (HUONG DAN 3.13 - quy uoc tien to).
+//   Khoa MOI dat theo tien to: kc_<game>_ (vd kc_santu_), kc_tt_, kc_ht_, kc_kp_,
+//   kc_ khac = chung. Khoa cu khong tien to = Co Vua, tru 2 danh sach duoi day.
+var ADMIN_KHOA_CHUNG = ["giong_doc_ten", "giong_doc_ngon_ngu", "y_tuong_do_dai_toi_da"];
+var ADMIN_KHOA_THU_THACH = ["kc_thuong_toi_da", "kc_gioi_han_dang_lam"];
+var ADMIN_TEN_NHOM = {
+  chung: "Chung", covua: "Cờ Vua", santu: "Giải Cứu Mèo Con",
+  thuthach: "Thử Thách", hoctap: "Học Tập", khampha: "Khám Phá"
+};
+
+function adminNhomCuaKhoa(khoa) {
+  if (ADMIN_KHOA_CHUNG.indexOf(khoa) >= 0) return "chung";
+  if (ADMIN_KHOA_THU_THACH.indexOf(khoa) >= 0) return "thuthach";
+  if (khoa.indexOf("kc_santu_") === 0) return "santu";
+  if (khoa.indexOf("kc_tt_") === 0) return "thuthach";
+  if (khoa.indexOf("kc_ht_") === 0) return "hoctap";
+  if (khoa.indexOf("kc_kp_") === 0) return "khampha";
+  if (khoa.indexOf("kc_") === 0) return "chung";
+  return "covua";
+}
+
 function adminTaiCauHinhChung() {
-  adminEl("bangCauHinhChung").innerHTML = '<tr><td colspan="4" class="adminDangTai">Đang tải...</td></tr>';
+  var cacBang = document.querySelectorAll("[data-nhom-cau-hinh]");
+  for (var b = 0; b < cacBang.length; b++) {
+    var soCot = cacBang[b].getAttribute("data-nhom-cau-hinh") === "tatca" ? 5 : 4;
+    cacBang[b].innerHTML = '<tr><td colspan="' + soCot + '" class="adminDangTai">Đang tải...</td></tr>';
+  }
   adminGoiRpc("admin_lay_cau_hinh_chung", {}).then(function (ph) {
     if (!ph.thanhCong) {
       adminXuLyLoi(ph);
-      adminEl("bangCauHinhChung").innerHTML = '<tr><td colspan="4" class="adminRong">Không tải được cấu hình.</td></tr>';
+      for (var b = 0; b < cacBang.length; b++) {
+        cacBang[b].innerHTML = '<tr><td colspan="5" class="adminRong">Không tải được cấu hình.</td></tr>';
+      }
       return;
     }
 
     var ds = ph.cauHinhChung || [];
-    var html = "";
-    ds.forEach(function (ch) {
-      html +=
-        "<tr>" +
-          "<td><code>" + adminThoat(ch.khoa) + "</code></td>" +
-          '<td><input type="text" id="ch_' + adminThoat(ch.khoa) + '" value="' + adminThoat(ch.giaTri) + '"></td>' +
-          "<td>" + adminThoat(ch.moTa) + "</td>" +
-          '<td><button class="adminNut" data-luuch="' + adminThoat(ch.khoa) + '" type="button">💾 Lưu</button></td>' +
-        "</tr>";
-    });
-    adminEl("bangCauHinhChung").innerHTML = html;
-
-    var nut = adminEl("bangCauHinhChung").querySelectorAll("[data-luuch]");
-    for (var i = 0; i < nut.length; i++) {
-      nut[i].addEventListener("click", function () {
-        var khoa = this.getAttribute("data-luuch");
-        adminLuuKhoaCauHinh(khoa, adminEl("ch_" + khoa).value, null, this);
-      });
-    }
+    for (var b = 0; b < cacBang.length; b++) adminVeBangCauHinh(cacBang[b], ds);
   });
+}
+
+/** Ve 1 bang cau hinh: chi cac khoa thuoc nhom cua bang (nhom "tatca" = moi khoa) */
+function adminVeBangCauHinh(bang, ds) {
+  var nhom = bang.getAttribute("data-nhom-cau-hinh");
+  var laTatCa = (nhom === "tatca");
+  var html = "";
+  ds.forEach(function (ch) {
+    var nhomKhoa = adminNhomCuaKhoa(ch.khoa);
+    if (!laTatCa && nhomKhoa !== nhom) return;
+    html +=
+      "<tr>" +
+        "<td><code>" + adminThoat(ch.khoa) + "</code></td>" +
+        '<td><input type="text" data-khoa="' + adminThoat(ch.khoa) + '" value="' + adminThoat(ch.giaTri) + '"></td>' +
+        "<td>" + adminThoat(ch.moTa) + "</td>" +
+        (laTatCa ? "<td>" + adminThoat(ADMIN_TEN_NHOM[nhomKhoa] || nhomKhoa) + "</td>" : "") +
+        '<td><button class="adminNut" data-luuch="' + adminThoat(ch.khoa) + '" type="button">💾 Lưu</button></td>' +
+      "</tr>";
+  });
+  if (!html) {
+    html = '<tr><td colspan="' + (laTatCa ? 5 : 4) + '" class="adminRong">Mục này chưa có khóa cấu hình nào.</td></tr>';
+  }
+  bang.innerHTML = html;
+
+  var nut = bang.querySelectorAll("[data-luuch]");
+  for (var i = 0; i < nut.length; i++) {
+    nut[i].addEventListener("click", function () {
+      var khoa = this.getAttribute("data-luuch");
+      var giaTri = this.closest("tr").querySelector("input[data-khoa]").value;
+      adminLuuKhoaCauHinh(khoa, giaTri, null, this).then(function (ok) {
+        if (!ok) return;
+        // Cung khoa co the hien o 2 bang (bang rieng + "tat ca"): dong bo gia tri
+        var cacO = document.querySelectorAll('input[data-khoa="' + khoa + '"]');
+        for (var j = 0; j < cacO.length; j++) cacO[j].value = giaTri;
+      });
+    });
+  }
 }
 
 function adminLuuKhoaCauHinh(khoa, giaTri, moTa, nut) {

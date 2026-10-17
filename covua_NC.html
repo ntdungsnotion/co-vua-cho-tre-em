@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cờ Vua Cho Trẻ Em</title>
+  <!-- 17/10/2026 - BƯỚC: KC_00D-1: tab "Quản Trị" trỏ trang quản trị chung kc/quantri_NC.html -->
 
   <!-- KC_00C-1 (15/10/2026): CHƯA đăng nhập thì mở app là về TRANG CHỦ chung
        (index.html - có khung đăng nhập/đăng ký). Chạy NGAY trong <head>
@@ -117,7 +118,8 @@
   <!-- THANH ĐIỀU HƯỚNG: MENU THEO VAI TRÒ (NC_05) -->
   <!-- Các nút .nutTab được gán sự kiện click trong app.js -->
   <!-- "2 Người" là thẻ <a> mở trang choi2nguoi_NC.html (NC_04) -->
-  <!-- NC_06A: "Quản Trị" nay là thẻ <a> mở trang admin_NC.html (hết "sắp có").
+  <!-- KC_00D-1 (17/10/2026): "Quản Trị" mở trang quản trị CHUNG kc/quantri_NC.html.
+       NC_06A: "Quản Trị" nay là thẻ <a> mở trang admin_NC.html (hết "sắp có").
        Vẫn giữ nguyên id="tabQuanTri" nên app.js (appCapNhatMenuTheoVaiTro) tiếp
        tục điều khiển ẩn/hiện theo vai trò mà KHÔNG phải sửa app.js. Cố tình
        KHÔNG dùng class "nutTab" để app.js không gán sự kiện chuyển tab. -->
@@ -139,7 +141,7 @@
     <a class="nutTabLienKet" id="tabHaiNguoi" href="choi2nguoi_NC.html">👫 2 Người</a>
     <button class="nutTab" id="tabRank" data-tab="rank">🏆 Xếp Hạng</button>
     <a class="nutTabLienKet" id="tabCuaHang" href="cuahang_NC.html">🛍️ Cửa Hàng</a>
-    <a class="nutTabLienKet" id="tabQuanTri" href="admin_NC.html" title="Trang Quản Trị (chỉ dành cho quản trị viên)" style="display:none;">🛠️ Quản Trị</a>
+    <a class="nutTabLienKet" id="tabQuanTri" href="kc/quantri_NC.html" title="Trang Quản Trị (chỉ dành cho quản trị viên)" style="display:none;">🛠️ Quản Trị</a>
   </nav>
 
   <!-- ================================================= -->

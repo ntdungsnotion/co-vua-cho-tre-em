@@ -9,6 +9,7 @@
 //            app.js của Cờ Vua ngay từ đầu, KHÔNG lặp "nợ T3" (Sổ Tay D10).
 // BƯỚC: KC_00B (hợp nhất đăng nhập với Cờ Vua) - NGÀY: 14/10/2026 21:57
 // CẬP NHẬT: KC_00C-2 (15/10/2026) - giữ kcThongTinCaNhan cho Trang chủ.
+// CẬP NHẬT: KC_00D-1 (17/10/2026) - thuộc tính data-chi-admin (nút "Quản trị").
 // LỊCH SỬ: KC_00 (17/07/2026) - bản đầu, dùng khóa phiên RIÊNG.
 // PHỤ THUỘC: kc_config.js, kc_api.js phải nạp TRƯỚC file này.
 //
@@ -51,6 +52,9 @@
 //
 // PHẦN TỬ TÙY CHỌN: phần tử có thuộc tính data-an-voi-phu-huynh (vd: tab
 //   "Cờ Vua" trên thanh tab chung) sẽ bị ẩn khi người đăng nhập là phụ huynh.
+//   Phần tử có data-chi-admin (vd: nút "🛠️ Quản trị" trên đầu trang - KC_00D-1)
+//   CHỈ hiện khi người đăng nhập là admin (đặt sẵn style="display:none" trong HTML).
+//   Đây chỉ là ẩn/hiện giao diện; trang quản trị và RPC tự kiểm tra quyền.
 // ================================================================
 
 var KC_KHOA_PHIEN = "coVuaTaiKhoanDangNhap";
@@ -248,11 +252,15 @@ function kcHienDaDangNhap(taiKhoan) {
   kcApDungHienThiTheoVaiTro(taiKhoan.vaiTro);
 }
 
-/** Ẩn các phần tử data-an-voi-phu-huynh khi người đăng nhập là phụ huynh */
+/** Ẩn data-an-voi-phu-huynh với phụ huynh; chỉ hiện data-chi-admin với admin (KC_00D-1) */
 function kcApDungHienThiTheoVaiTro(vaiTro) {
   var ds = document.querySelectorAll("[data-an-voi-phu-huynh]");
   for (var i = 0; i < ds.length; i++) {
     ds[i].style.display = (vaiTro === "phu_huynh") ? "none" : "";
+  }
+  var dsAdmin = document.querySelectorAll("[data-chi-admin]");
+  for (var j = 0; j < dsAdmin.length; j++) {
+    dsAdmin[j].style.display = (vaiTro === "admin") ? "inline-block" : "none";
   }
 }
 
