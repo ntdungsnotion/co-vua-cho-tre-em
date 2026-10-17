@@ -18,6 +18,10 @@
                   Máy tính (>= 1024px): thanh bên cố định bên trái. Điện thoại: nút ☰
                   mở menu trượt.
        BƯỚC: KC_00D-1 - NGÀY: 17/10/2026
+       CẬP NHẬT: 17/10/2026 - KC_00D-1B (người dùng thử KC_00D-1): Hồ sơ các bé chia tiểu mục
+                 Thông tin chung / Cờ Vua / Giải Cứu Mèo Con / sắp có; danh sách chỉ thông tin chung.
+                 Cấu hình: mỗi khóa về đúng lĩnh vực, khối "Khóa chưa xếp lĩnh vực", giọng đọc
+                 không hiện trong bảng cấu hình.
        NGUỒN: các màn hình chép NGUYÊN từ admin_NC.html (NC_06A-2, NC_09B, NC_09);
               logic DÙNG LẠI admin_NC.js ở gốc repo (không viết lại).
        PHỤ THUỘC: kc_style.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js
@@ -248,6 +252,12 @@
       margin-top: 2px;
       word-break: break-word;
     }
+    /* KC_00D-1B: thanh tiểu mục của hồ sơ chi tiết (cuộn ngang trên điện thoại) */
+    .htThanhTieuMuc { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; border-bottom: 2px solid #e6e1f5; }
+    .htNutTieuMuc { flex: 0 0 auto; border: 1px solid #d9d2f0; background: #f7f5fd; color: #4b3a8f; border-radius: 999px; padding: 7px 12px; font: inherit; font-size: 0.92rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .htNutTieuMuc.dangChon { background: #6c4fd8; border-color: #6c4fd8; color: #fff; }
+    .htCanSql { background: #fff6d6; color: #7a5600; border-radius: 10px; padding: 8px 12px; margin: 8px 0; }
+    .htAvatarNho { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 6px; }
     .adminAvatarHoSo {
       width: 56px;
       height: 56px;
@@ -740,8 +750,9 @@
       <div class="adminKhoi">
         <h3>⚙️ Cấu Hình Chung (áp dụng cho cả app)</h3>
         <p class="adminGhiChu">
-          Các con số dùng chung cho mọi lĩnh vực, ví dụ <strong>trần kim cương mỗi ngày</strong>.
-          Khóa riêng của từng lĩnh vực nằm ở mục ⚙️ Cấu hình của lĩnh vực đó (thanh bên, phía dưới).
+          Chỉ các con số <strong>dùng chung cho cả app</strong>, ví dụ <strong>trần kim cương mỗi ngày</strong>.
+          Mỗi khóa riêng của một lĩnh vực chỉ nằm ở mục ⚙️ Cấu hình của lĩnh vực đó (thanh bên, phía dưới).
+          Giọng đọc sửa ở mục 🔊 Giọng đọc, không hiện ở đây.
           Sửa xong bấm <strong>Lưu</strong> ở đúng dòng đó; trẻ đang mở trang phải <strong>tải lại trang</strong> mới thấy giá trị mới.
         </p>
         <button class="adminNut adminNutPhu" data-lam-moi-cau-hinh type="button">🔄 Làm Mới</button>
@@ -753,6 +764,20 @@
             <tbody data-nhom-cau-hinh="chung">
               <tr><td colspan="4" class="adminDangTai">Đang tải...</td></tr>
             </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- KC_00D-1B: khóa không thuộc danh sách đã xếp (vd admin tự thêm) - chỉ hiện khi có -->
+      <div class="adminKhoi" id="khoiKhoaChuaXep" style="display:none;">
+        <h3>❓ Khóa chưa xếp lĩnh vực</h3>
+        <p class="adminGhiChu">Các khóa này chưa được xếp vào lĩnh vực nào (thường là khóa thêm tay). Báo Claude để xếp đúng chỗ.</p>
+        <div class="adminCuonNgang" style="margin-top:10px;">
+          <table class="adminBang">
+            <thead>
+              <tr><th style="width:22%;">Khóa</th><th style="width:16%;">Giá trị</th><th>Ý nghĩa</th><th style="width:90px;"></th></tr>
+            </thead>
+            <tbody data-nhom-cau-hinh="chuaxep"></tbody>
           </table>
         </div>
       </div>
@@ -1006,72 +1031,148 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- MÀN HÌNH 8: HỒ SƠ TRẺ (NC_06A-2) -->
-    <!-- Dùng lại 2 RPC công khai lay_xep_hang + lay_ho_so (đã trả đủ trường) -->
+    <!-- MÀN HÌNH 8: HỒ SƠ CÁC BÉ (NC_06A-2; chia tiểu mục chung / riêng ở KC_00D-1B) -->
+    <!-- Danh sách + Thông tin chung: RPC kc_admin_lay_danh_sach_tre, kc_admin_lay_ho_so_chung -->
+    <!-- (SQL repo riêng supabase_kc00d1b_ho_so_chung.sql). Tiểu mục Cờ Vua: RPC lay_ho_so cũ. -->
     <!-- ============================================================ -->
     <section class="adminManHinh" id="manhinh-hosotre">
       <div class="adminKhoi">
-        <h3>👦 Danh Sách Trẻ</h3>
+        <h3>👦 Hồ Sơ Các Bé</h3>
         <p class="adminGhiChu">
-          Bấm <strong>Xem hồ sơ</strong> để mở chi tiết: số liệu, vật phẩm sở hữu, lịch sử đổi quà
-          và 50 trận gần nhất của trẻ đó.
+          Danh sách chỉ có <strong>thông tin chung</strong> của mỗi bé. Bấm <strong>Xem hồ sơ</strong> để mở chi tiết:
+          phần <strong>Thông tin chung</strong> (tài khoản, kim cương, quà) và từng tiểu mục riêng (Cờ Vua, Giải Cứu Mèo Con...).
         </p>
         <button class="adminNut adminNutPhu" id="btnLamMoiHoSoTre" type="button">🔄 Làm Mới</button>
+        <div id="htCanSql" class="adminGhiChu htCanSql" style="display:none;"></div>
         <div class="adminCuonNgang" style="margin-top:10px;">
           <table class="adminBang">
             <thead>
               <tr>
-                <th>Hạng</th><th>Tên</th><th>Level</th><th>Danh hiệu</th>
-                <th>💎</th><th>EXP</th><th>Tổng trận</th><th>Tổng thắng</th>
-                <th>Tỷ lệ thắng</th><th style="width:130px;"></th>
+                <th>Bé</th><th>💎 Kim cương</th><th>💎 Tự kiếm hôm nay</th><th>🎁 Quà chưa nhận</th>
+                <th>Phụ huynh</th><th>Lần chơi cuối</th><th style="width:130px;"></th>
               </tr>
             </thead>
             <tbody id="bangDanhSachTre">
-              <tr><td colspan="10" class="adminDangTai">Đang tải...</td></tr>
+              <tr><td colspan="7" class="adminDangTai">Đang tải...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Chi tiết 1 trẻ: hiện sau khi bấm "Xem hồ sơ" -->
+      <!-- Chi tiết 1 bé: hiện sau khi bấm "Xem hồ sơ" -->
       <div class="adminKhoi" id="khoiChiTietTre" style="display:none;">
         <h3 id="tieuDeChiTietTre">📄 Hồ Sơ Chi Tiết</h3>
+        <div id="htAvatarVaTen" style="margin-bottom:10px;"></div>
 
-        <div id="htAvatarVaTen" style="margin-bottom:6px;"></div>
-        <div class="adminLuoiThe" id="htLuoiThe"><!-- admin_NC.js điền thẻ số liệu --></div>
-
-        <h4 style="margin-bottom:4px;">🎁 Vật Phẩm Sở Hữu (đã đổi/mua)</h4>
-        <p class="adminGhiChu">
-          Vật phẩm mở khóa theo <strong>mốc level</strong> là "có sẵn" khi trẻ đủ level,
-          KHÔNG nằm trong danh sách này (danh sách chỉ gồm các món đã đổi/mua thật sự).
-        </p>
-        <div class="adminCuonNgang">
-          <table class="adminBang">
-            <thead>
-              <tr><th>Loại</th><th>Tên</th><th>Mã định danh</th></tr>
-            </thead>
-            <tbody id="htBangVatPham"></tbody>
-          </table>
+        <!-- Thanh tiểu mục: mỗi nút mở .htTieuMuc cùng data-tieumuc -->
+        <div class="htThanhTieuMuc" role="tablist">
+          <button class="htNutTieuMuc dangChon" data-tieumuc="chung" type="button">🌟 Thông tin chung</button>
+          <button class="htNutTieuMuc" data-tieumuc="covua" type="button">♟️ Cờ Vua</button>
+          <button class="htNutTieuMuc" data-tieumuc="santu" type="button">🐱 Giải Cứu Mèo Con</button>
+          <button class="htNutTieuMuc" data-tieumuc="khac" type="button">🎯 Thử Thách · 📚 Học Tập · 🧭 Khám Phá</button>
         </div>
 
-        <h4 style="margin:14px 0 4px;">📦 Lịch Sử Đổi Quà</h4>
-        <div class="adminCuonNgang">
-          <table class="adminBang">
-            <thead>
-              <tr><th>Vật phẩm</th><th>Loại</th><th>Giá lúc đổi</th><th>Trạng thái</th><th>Thời gian đổi</th></tr>
-            </thead>
-            <tbody id="htBangDoiQua"></tbody>
-          </table>
+        <!-- TIỂU MỤC: THÔNG TIN CHUNG (cả app) -->
+        <div class="htTieuMuc" data-tieumuc="chung">
+          <div class="adminLuoiThe" id="htLuoiTheChung"></div>
+          <div id="htChungCanSql" class="adminGhiChu htCanSql" style="display:none;"></div>
+
+          <h4 style="margin:14px 0 4px;">🎁 Quà được tặng (bé bấm nhận ở Trang chủ)</h4>
+          <div class="adminCuonNgang" style="max-height:320px; overflow-y:auto;">
+            <table class="adminBang">
+              <thead>
+                <tr><th>Quà</th><th>Từ</th><th>💎</th><th>Người tặng</th><th>Ngày tặng</th><th>Trạng thái</th></tr>
+              </thead>
+              <tbody id="htBangQuaTang"></tbody>
+            </table>
+          </div>
+
+          <h4 style="margin:14px 0 4px;">📦 Quà đã đổi (Đổi thưởng)</h4>
+          <div class="adminCuonNgang">
+            <table class="adminBang">
+              <thead>
+                <tr><th>Quà</th><th>Giá lúc đổi</th><th>Trạng thái</th><th>Thời gian đổi</th></tr>
+              </thead>
+              <tbody id="htBangDoiQua"></tbody>
+            </table>
+          </div>
+
+          <h4 style="margin:14px 0 4px;">💎 Kim cương bé tự kiếm (30 ngày gần nhất)</h4>
+          <p class="adminGhiChu">Kim cương bé nhặt trong trò chơi / câu đố, đã cộng vào kho. Trần chung mỗi ngày ở ⚙️ Cấu hình chung.</p>
+          <div class="adminCuonNgang" style="max-height:320px; overflow-y:auto;">
+            <table class="adminBang">
+              <thead>
+                <tr><th>Ngày</th><th>Từ</th><th>Số lượt</th><th>Game gửi</th><th>Đã cộng</th></tr>
+              </thead>
+              <tbody id="htBangKimCuongNgay"></tbody>
+            </table>
+          </div>
         </div>
 
-        <h4 style="margin:14px 0 4px;">♟️ 50 Trận Gần Nhất</h4>
-        <div class="adminCuonNgang" style="max-height:320px; overflow-y:auto;">
-          <table class="adminBang">
-            <thead>
-              <tr><th>Thời gian</th><th>Chế độ</th><th>Đối thủ</th><th>Kết quả</th></tr>
-            </thead>
-            <tbody id="htBangTran"></tbody>
-          </table>
+        <!-- TIỂU MỤC: CỜ VUA -->
+        <div class="htTieuMuc" data-tieumuc="covua" style="display:none;">
+          <div class="adminLuoiThe" id="htLuoiTheCoVua"></div>
+
+          <h4 style="margin:14px 0 4px;">🎁 Vật phẩm Cờ Vua đã có (đổi/mua ở Cửa hàng)</h4>
+          <p class="adminGhiChu">
+            Vật phẩm mở khóa theo <strong>mốc level</strong> là "có sẵn" khi bé đủ level,
+            KHÔNG nằm trong danh sách này (chỉ gồm các món đã đổi/mua thật sự).
+          </p>
+          <div class="adminCuonNgang">
+            <table class="adminBang">
+              <thead>
+                <tr><th>Loại</th><th>Tên</th><th>Mã định danh</th></tr>
+              </thead>
+              <tbody id="htBangVatPham"></tbody>
+            </table>
+          </div>
+
+          <h4 style="margin:14px 0 4px;">🛒 Lịch sử mua ở Cửa hàng Cờ Vua</h4>
+          <div class="adminCuonNgang">
+            <table class="adminBang">
+              <thead>
+                <tr><th>Vật phẩm</th><th>Loại</th><th>Giá</th><th>Thời gian</th></tr>
+              </thead>
+              <tbody id="htBangMuaCoVua"></tbody>
+            </table>
+          </div>
+
+          <h4 style="margin:14px 0 4px;">♟️ 50 Trận Gần Nhất</h4>
+          <div class="adminCuonNgang" style="max-height:320px; overflow-y:auto;">
+            <table class="adminBang">
+              <thead>
+                <tr><th>Thời gian</th><th>Chế độ</th><th>Đối thủ</th><th>Kết quả</th></tr>
+              </thead>
+              <tbody id="htBangTran"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TIỂU MỤC: GIẢI CỨU MÈO CON -->
+        <div class="htTieuMuc" data-tieumuc="santu" style="display:none;">
+          <div class="adminLuoiThe" id="htLuoiTheSanTu"></div>
+          <div id="htSanTuCanSql" class="adminGhiChu htCanSql" style="display:none;"></div>
+          <h4 style="margin:14px 0 4px;">🐱 Các màn gần đây (kim cương cất vào kho)</h4>
+          <div class="adminCuonNgang" style="max-height:360px; overflow-y:auto;">
+            <table class="adminBang">
+              <thead>
+                <tr><th>Thời gian</th><th>Đường đua</th><th>Màn</th><th>Cấp từ</th><th>Kết quả</th><th>Game gửi</th><th>Đã cộng</th></tr>
+              </thead>
+              <tbody id="htBangSanTu"></tbody>
+            </table>
+          </div>
+          <p class="adminGhiChu">
+            Tiến độ đường đua (màn đã mở, số sao) và các từ bé đã thuộc hiện chỉ lưu trên máy của bé;
+            sẽ đưa lên tài khoản ở bước TC_01B để hiện tại đây.
+          </p>
+        </div>
+
+        <!-- TIỂU MỤC: CÁC LĨNH VỰC SẮP CÓ -->
+        <div class="htTieuMuc" data-tieumuc="khac" style="display:none;">
+          <p class="adminGhiChu">
+            🎯 <strong>Thử Thách</strong>, 📚 <strong>Học Tập</strong>, 🧭 <strong>Khám Phá</strong>: sắp có.
+            Mỗi lĩnh vực khi làm xong sẽ có tiểu mục riêng ở đây (thử thách đã làm, bài đã học...).
+          </p>
         </div>
       </div>
     </section>
