@@ -10,6 +10,7 @@
 //       kc_admin_lay_ho_so_chung; SQL chua chay thi bao ro, trang khong vo).
 //   (2) CAU HINH: moi khoa xep tay ve DUNG 1 linh vuc (ADMIN_KHOA_LINH_VUC); khoa la ->
 //       "Khoa chua xep linh vuc"; giong_doc_* khong hien o bang cau hinh (da co man Giong doc).
+//   (3) Sua loi 17/10/2026: cot "Qua chua nhan" dem ca qua doi thuong dang "cho trao".
 // CAP NHAT: 17/10/2026 - BUOC: KC_00D-1 (trang quan tri CHUNG toan app)
 //   File nay nay chay trong kc/quantri_NC.html (admin_NC.html chi con chuyen huong).
 //   (1) Man hinh dau tien = nut .adminNutManHinh co class dangChon (trang moi mo
@@ -1670,6 +1671,25 @@ function adminAvatarNho(av) {
     : '<span style="margin-right:6px;">' + (av ? adminThoat(av) : "🙂") + "</span>";
 }
 
+var adminChoTraoTheoBe = {};   // tên bé -> số quà đổi thưởng đang "chờ trao"
+
+/** Đếm quà đổi thưởng đang chờ trao theo từng bé (từ admin_lay_lich_su) */
+function adminDemChoTrao(ph) {
+  var dem = {};
+  ((ph && ph.thanhCong && ph.lichSu) || []).forEach(function (ls) {
+    if (ls.trangThai === "cho_trao") dem[ls.tenDangNhap] = (dem[ls.tenDangNhap] || 0) + 1;
+  });
+  return dem;
+}
+
+/** Ô "Quà chưa nhận": tách 2 loại; soTang = null khi chưa có SQL (không biết) */
+function adminOQuaChuaNhan(soTang, soChoTrao) {
+  var phan = [];
+  if (soTang) phan.push('<span class="adminHuyHieu adminHuyHieuCho">' + soTang + " quà được tặng</span>");
+  if (soChoTrao) phan.push('<span class="adminHuyHieu adminHuyHieuCho">' + soChoTrao + " quà đổi chờ trao</span>");
+  return phan.length ? phan.join(" ") : (soTang === null ? "—" : "0");
+}
+
 function adminDungManHinhHoSoTre() {
   adminEl("btnLamMoiHoSoTre").addEventListener("click", adminTaiDanhSachTre);
   // Thanh tieu muc cua ho so chi tiet
@@ -1701,7 +1721,14 @@ function adminTaiDanhSachTre() {
   var bang = adminEl("bangDanhSachTre");
   bang.innerHTML = '<tr><td colspan="7" class="adminDangTai">Đang tải...</td></tr>';
   adminEl("htCanSql").style.display = "none";
-  adminGoiRpc("kc_admin_lay_danh_sach_tre", {}).then(function (ph) {
+  // Quà chưa nhận = quà được tặng chưa bấm nhận (kc_qua_tang) + quà đổi thưởng còn
+  // "chờ trao" (admin_lay_lich_su) - sửa lỗi người dùng báo 17/10/2026 (Aibiet67).
+  Promise.all([
+    adminGoiRpc("kc_admin_lay_danh_sach_tre", {}),
+    adminGoiRpc("admin_lay_lich_su", {})
+  ]).then(function (kq) {
+    var ph = kq[0];
+    adminChoTraoTheoBe = adminDemChoTrao(kq[1]);
     if (adminLaThieuHamSql(ph)) return adminTaiDanhSachTreTam();
     if (!ph.thanhCong) {
       adminXuLyLoi(ph);
@@ -1721,7 +1748,7 @@ function adminTaiDanhSachTre() {
           "<td>" + adminAvatarNho(t.avatarDaChon) + "<strong>" + adminThoat(t.tenDangNhap) + "</strong></td>" +
           "<td>" + (t.diemSo || 0) + " 💎</td>" +
           "<td>" + (t.kimCuongHomNay || 0) + "</td>" +
-          "<td>" + (t.soQuaChuaNhan ? '<span class="adminHuyHieu adminHuyHieuCho">' + t.soQuaChuaNhan + " quà</span>" : "0") + "</td>" +
+          "<td>" + adminOQuaChuaNhan(t.soQuaChuaNhan || 0, adminChoTraoTheoBe[t.tenDangNhap] || 0) + "</td>" +
           "<td>" + (ph2 || '<span class="adminGhiChu">chưa liên kết</span>') + "</td>" +
           "<td>" + (t.lanChoiCuoi ? adminDinhDangGio(t.lanChoiCuoi) : "—") + "</td>" +
           "<td>" + adminNutXemHoSo(t.tenDangNhap) + "</td>" +
@@ -1755,7 +1782,9 @@ function adminTaiDanhSachTreTam() {
         "<tr>" +
           "<td><strong>" + adminThoat(t.tenDangNhap) + "</strong></td>" +
           "<td>" + t.diemSo + " 💎</td>" +
-          '<td colspan="4" class="adminGhiChu">cần chạy SQL</td>' +
+          "<td>—</td>" +
+          "<td>" + adminOQuaChuaNhan(null, adminChoTraoTheoBe[t.tenDangNhap] || 0) + "</td>" +
+          '<td colspan="2" class="adminGhiChu">cần chạy SQL</td>' +
           "<td>" + adminNutXemHoSo(t.tenDangNhap) + "</td>" +
         "</tr>";
     });
@@ -1840,7 +1869,9 @@ function adminVeChiTietTre(ten, hsChung, hsCoVua, thieuSql) {
     (hsChung ? (
       adminTheThongTin("Tự kiếm hôm nay", (kcTuKiem.homNay || 0) + " / " + (kcTuKiem.tranNgay || 0) + " 💎") +
       adminTheThongTin("Tổng tự kiếm", (kcTuKiem.tongCong || 0) + " 💎") +
-      adminTheThongTin("Quà chưa nhận", (c.quaTang || []).filter(function (q) { return !q.daNhan; }).length) +
+      adminTheThongTin("Quà chưa nhận",
+        adminOQuaChuaNhan((c.quaTang || []).filter(function (q) { return !q.daNhan; }).length,
+          ((hsCoVua && hsCoVua.lichSuDoiQua) || []).filter(function (ls) { return ls.loai === "qua" && ls.trangThai === "cho_trao"; }).length)) +
       adminTheThongTin("Tài khoản", adminThoat(tenVaiTro[c.vaiTro] || c.vaiTro || "")) +
       adminTheThongTin("Ngày tạo", c.ngayTao ? adminDinhDangGio(c.ngayTao) : "—") +
       adminTheThongTin("Lần chơi cuối", c.lanChoiCuoi ? adminDinhDangGio(c.lanChoiCuoi) : "—") +
