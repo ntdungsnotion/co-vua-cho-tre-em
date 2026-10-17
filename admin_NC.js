@@ -4,6 +4,12 @@
 //   9 man hinh: Vat Pham | Doi Thuong | Y Tuong | Cau Hinh Chung |
 //               Cap Do May | Loi Dong Vien | Giong Doc | Ho So Tre | Don Kho Anh
 // BUOC: NC_06A-2 (nang cap tu NC_09B) - NGAY: 12/07/2026 21:00
+// CAP NHAT: 17/10/2026 - BUOC: KC_00D-1B (nguoi dung thu KC_00D-1 - chung / rieng ro rang):
+//   (1) HO SO CAC BE chia tieu muc Thong tin chung / Co Vua / Giai Cuu Meo Con / sap co;
+//       danh sach chi thong tin chung (RPC admin moi kc_admin_lay_danh_sach_tre,
+//       kc_admin_lay_ho_so_chung; SQL chua chay thi bao ro, trang khong vo).
+//   (2) CAU HINH: moi khoa xep tay ve DUNG 1 linh vuc (ADMIN_KHOA_LINH_VUC); khoa la ->
+//       "Khoa chua xep linh vuc"; giong_doc_* khong hien o bang cau hinh (da co man Giong doc).
 // CAP NHAT: 17/10/2026 - BUOC: KC_00D-1 (trang quan tri CHUNG toan app)
 //   File nay nay chay trong kc/quantri_NC.html (admin_NC.html chi con chuyen huong).
 //   (1) Man hinh dau tien = nut .adminNutManHinh co class dangChon (trang moi mo
@@ -1029,25 +1035,53 @@ function adminDungManHinhCauHinhChung() {
   adminEl("btnThemKhoaMoi").addEventListener("click", adminThemKhoaMoi);
 }
 
-// KC_00D-1: khoa thuoc nhom nao (HUONG DAN 3.13 - quy uoc tien to).
-//   Khoa MOI dat theo tien to: kc_<game>_ (vd kc_santu_), kc_tt_, kc_ht_, kc_kp_,
-//   kc_ khac = chung. Khoa cu khong tien to = Co Vua, tru 2 danh sach duoi day.
-var ADMIN_KHOA_CHUNG = ["giong_doc_ten", "giong_doc_ngon_ngu", "y_tuong_do_dai_toi_da"];
-var ADMIN_KHOA_THU_THACH = ["kc_thuong_toi_da", "kc_gioi_han_dang_lam"];
+// KC_00D-1B: MOI KHOA THUOC DUNG MOT LINH VUC (HUONG DAN 3.13 "CHUNG / RIENG RO RANG",
+//   nguoi dung chot 17/10/2026). Khoa da co: XEP TAY tung khoa (danh sach duoi, lay tu
+//   lay_cau_hinh that ngay 17/10/2026 + cac file SQL). Khoa MOI chua co trong danh sach:
+//   theo tien to (kc_santu_ / kc_tt_ / kc_ht_ / kc_kp_); con lai -> "chuaxep" (hien o
+//   Cau hinh chung de admin thay, KHONG doan la Co Vua nua).
+//   Nhom "giongdoc": khoa da co man hinh rieng (Giong doc) -> KHONG hien o bang cau hinh nao.
+var ADMIN_KHOA_LINH_VUC = {
+  // Chung ca app
+  kc_thuong_ngay_toi_da: "chung",      // tran kim cuong tu kiem moi ngay (game + cau do)
+  y_tuong_do_dai_toi_da: "chung",      // y tuong cac be gui (moi linh vuc)
+  // Giong doc: sua o man hinh Giong doc
+  giong_doc_ten: "giongdoc",
+  giong_doc_ngon_ngu: "giongdoc",
+  // Co Vua
+  level_toi_da: "covua",
+  he_so_diem_thang: "covua",
+  diem_khich_le_hoa: "covua",
+  diem_khich_le_thua: "covua",
+  he_so_chia_thuong_2n: "covua",
+  chu_ky_polling_giay: "covua",
+  giay_cho_hoi_goi_y: "covua",
+  hoi_goi_y_toi_level: "covua",
+  khen_moi_nuoc_toi_level: "covua",
+  khen_nuoc_tot_toi_level: "covua",
+  may_nghi_moi_cap_ms: "covua",
+  may_nghi_ngau_nhien_ms: "covua",
+  may_nghi_toi_da_ms: "covua",
+  may_nghi_toi_thieu_ms: "covua",
+  // Giai Cuu Meo Con
+  kc_santu_kc_toi_da_moi_man: "santu",
+  // Thu Thach (2 khoa co truoc quy uoc tien to)
+  kc_thuong_toi_da: "thuthach",
+  kc_gioi_han_dang_lam: "thuthach"
+};
 var ADMIN_TEN_NHOM = {
   chung: "Chung", covua: "Cờ Vua", santu: "Giải Cứu Mèo Con",
-  thuthach: "Thử Thách", hoctap: "Học Tập", khampha: "Khám Phá"
+  thuthach: "Thử Thách", hoctap: "Học Tập", khampha: "Khám Phá",
+  giongdoc: "Giọng đọc", chuaxep: "Chưa xếp"
 };
 
 function adminNhomCuaKhoa(khoa) {
-  if (ADMIN_KHOA_CHUNG.indexOf(khoa) >= 0) return "chung";
-  if (ADMIN_KHOA_THU_THACH.indexOf(khoa) >= 0) return "thuthach";
+  if (Object.prototype.hasOwnProperty.call(ADMIN_KHOA_LINH_VUC, khoa)) return ADMIN_KHOA_LINH_VUC[khoa];
   if (khoa.indexOf("kc_santu_") === 0) return "santu";
   if (khoa.indexOf("kc_tt_") === 0) return "thuthach";
   if (khoa.indexOf("kc_ht_") === 0) return "hoctap";
   if (khoa.indexOf("kc_kp_") === 0) return "khampha";
-  if (khoa.indexOf("kc_") === 0) return "chung";
-  return "covua";
+  return "chuaxep";
 }
 
 function adminTaiCauHinhChung() {
@@ -1075,9 +1109,12 @@ function adminVeBangCauHinh(bang, ds) {
   var nhom = bang.getAttribute("data-nhom-cau-hinh");
   var laTatCa = (nhom === "tatca");
   var html = "";
+  var soKhoa = 0;
   ds.forEach(function (ch) {
     var nhomKhoa = adminNhomCuaKhoa(ch.khoa);
+    if (nhomKhoa === "giongdoc") return;            // KC_00D-1B: sua o man hinh Giong doc
     if (!laTatCa && nhomKhoa !== nhom) return;
+    soKhoa++;
     html +=
       "<tr>" +
         "<td><code>" + adminThoat(ch.khoa) + "</code></td>" +
@@ -1091,6 +1128,11 @@ function adminVeBangCauHinh(bang, ds) {
     html = '<tr><td colspan="' + (laTatCa ? 5 : 4) + '" class="adminRong">Mục này chưa có khóa cấu hình nào.</td></tr>';
   }
   bang.innerHTML = html;
+  // KC_00D-1B: khoi "Khoa chua xep linh vuc" chi hien khi co khoa
+  if (nhom === "chuaxep") {
+    var khoi = document.getElementById("khoiKhoaChuaXep");
+    if (khoi) khoi.style.display = soKhoa ? "" : "none";
+  }
 
   var nut = bang.querySelectorAll("[data-luuch]");
   for (var i = 0; i < nut.length; i++) {
@@ -1587,176 +1629,339 @@ function adminLuuGiongDoc(tenGiong) {
 
 
 // ================================================================
-// PHAN 10: MAN HINH "HO SO TRE" (NC_06A-2)
-// KHONG can RPC quan tri moi: lay_xep_hang() va lay_ho_so() cong khai da tra
-// DU truong can xem (LUAT DOC/GHI chot o NC_06A - HUONG DAN muc 5).
+// PHAN 10: MAN HINH "HO SO CAC BE" (NC_06A-2; KC_00D-1B chia tieu muc chung / rieng)
+// HUONG DAN 3.13 "CHUNG / RIENG RO RANG": thong tin nao thuoc linh vuc nao thi chi
+// nam o tieu muc do.
+//   - Danh sach + tieu muc THONG TIN CHUNG: RPC admin MOI (chi doc)
+//     kc_admin_lay_danh_sach_tre, kc_admin_lay_ho_so_chung (SQL repo rieng
+//     supabase_kc00d1b_ho_so_chung.sql). SQL chua chay -> danh sach tam lay tu
+//     lay_xep_hang (chi ten + kim cuong) va bao ro can chay SQL; trang khong vo.
+//   - Tieu muc CO VUA: RPC cong khai lay_ho_so nhu cu (hang, level, EXP, tran,
+//     vat pham). Lich su doi qua cua lay_ho_so: loai 'qua' (qua that) = Doi thuong
+//     CHUNG -> tieu muc chung; loai khac (avatar, bo quan...) = Cua hang Co Vua.
+//   - Tieu muc GIAI CUU MEO CON: cac luot nguon 'san_tu' cua kim cuong tu kiem.
 // ================================================================
+
+var ADMIN_TEN_NGUON = {
+  san_tu: "🐱 Giải Cứu Mèo Con", thu_thach: "🎯 Thử Thách", tro_choi: "🎮 Trò Chơi",
+  hoc_tap: "📚 Học Tập", kham_pha: "🧭 Khám Phá", bo_me: "💖 Bố mẹ", he_thong: "🌟 Hệ thống"
+};
+var ADMIN_TEN_DUONG_SANTU = {
+  rung: "🌳 Rừng xanh", keo: "🍭 Kẹo ngọt", saMac: "🏜️ Sa mạc", tuyet: "❄️ Núi tuyết",
+  khungLong: "🦖 Khủng long", bien: "🐠 Biển san hô", nuiLua: "🌋 Núi lửa", troi: "☁️ Bầu trời",
+  dem: "🌙 Lâu đài đêm trăng", vuTru: "🚀 Vũ trụ"
+};
+var ADMIN_TEN_CAP_SANTU = { de: "Cấp 1", vua: "Cấp 2", kho: "Cấp 3", thuThach: "Cấp 4" };
+
+function adminTenNguon(nguon) { return ADMIN_TEN_NGUON[nguon] || adminThoat(nguon); }
+
+/** RPC chua co tren Supabase (chua chay SQL KC_00D-1B)? */
+function adminLaThieuHamSql(ph) {
+  return !!(ph && !ph.thanhCong && /could not find the function|does not exist|schema cache/i.test(ph.thongBao || ""));
+}
+var ADMIN_TIN_CAN_SQL_KC00D1B =
+  "⚠️ Cần chạy SQL <strong>supabase_kc00d1b_ho_so_chung.sql</strong> (repo riêng, thư mục SQL) trên Supabase " +
+  "để xem đủ thông tin chung (quà được tặng, kim cương tự kiếm, phụ huynh, lần chơi cuối).";
+
+/** Avatar nho trong bang: emoji hoac anh (QUY TAC NHAN DIEN URL - HUONG DAN 4.6) */
+function adminAvatarNho(av) {
+  return adminLaDuongDanAnh(av || "")
+    ? '<img class="htAvatarNho" src="' + adminThoat(av) + '" alt="">'
+    : '<span style="margin-right:6px;">' + (av ? adminThoat(av) : "🙂") + "</span>";
+}
 
 function adminDungManHinhHoSoTre() {
   adminEl("btnLamMoiHoSoTre").addEventListener("click", adminTaiDanhSachTre);
+  // Thanh tieu muc cua ho so chi tiet
+  var nut = document.querySelectorAll(".htNutTieuMuc");
+  for (var i = 0; i < nut.length; i++) {
+    nut[i].addEventListener("click", function () { adminChonTieuMucHoSo(this.getAttribute("data-tieumuc")); });
+  }
+}
+
+function adminChonTieuMucHoSo(ten) {
+  var nut = document.querySelectorAll(".htNutTieuMuc");
+  for (var i = 0; i < nut.length; i++) nut[i].classList.toggle("dangChon", nut[i].getAttribute("data-tieumuc") === ten);
+  var muc = document.querySelectorAll(".htTieuMuc");
+  for (var j = 0; j < muc.length; j++) muc[j].style.display = muc[j].getAttribute("data-tieumuc") === ten ? "" : "none";
+}
+
+function adminNutXemHoSo(ten) {
+  return '<button class="adminNut adminNutPhu" data-hoso="' + adminThoat(ten) + '" type="button">👦 Xem hồ sơ</button>';
+}
+
+function adminGanNutXemHoSo() {
+  var nut = adminEl("bangDanhSachTre").querySelectorAll("[data-hoso]");
+  for (var i = 0; i < nut.length; i++) {
+    nut[i].addEventListener("click", function () { adminMoHoSoTre(this.getAttribute("data-hoso")); });
+  }
 }
 
 function adminTaiDanhSachTre() {
-  adminEl("bangDanhSachTre").innerHTML = '<tr><td colspan="10" class="adminDangTai">Đang tải...</td></tr>';
+  var bang = adminEl("bangDanhSachTre");
+  bang.innerHTML = '<tr><td colspan="7" class="adminDangTai">Đang tải...</td></tr>';
+  adminEl("htCanSql").style.display = "none";
+  adminGoiRpc("kc_admin_lay_danh_sach_tre", {}).then(function (ph) {
+    if (adminLaThieuHamSql(ph)) return adminTaiDanhSachTreTam();
+    if (!ph.thanhCong) {
+      adminXuLyLoi(ph);
+      bang.innerHTML = '<tr><td colspan="7" class="adminRong">Không tải được danh sách.</td></tr>';
+      return;
+    }
+    var ds = ph.danhSachTre || [];
+    if (ds.length === 0) {
+      bang.innerHTML = '<tr><td colspan="7" class="adminRong">Chưa có tài khoản bé nào.</td></tr>';
+      return;
+    }
+    var html = "";
+    ds.forEach(function (t) {
+      var ph2 = (t.phuHuynh || []).map(adminThoat).join(", ");
+      html +=
+        "<tr>" +
+          "<td>" + adminAvatarNho(t.avatarDaChon) + "<strong>" + adminThoat(t.tenDangNhap) + "</strong></td>" +
+          "<td>" + (t.diemSo || 0) + " 💎</td>" +
+          "<td>" + (t.kimCuongHomNay || 0) + "</td>" +
+          "<td>" + (t.soQuaChuaNhan ? '<span class="adminHuyHieu adminHuyHieuCho">' + t.soQuaChuaNhan + " quà</span>" : "0") + "</td>" +
+          "<td>" + (ph2 || '<span class="adminGhiChu">chưa liên kết</span>') + "</td>" +
+          "<td>" + (t.lanChoiCuoi ? adminDinhDangGio(t.lanChoiCuoi) : "—") + "</td>" +
+          "<td>" + adminNutXemHoSo(t.tenDangNhap) + "</td>" +
+        "</tr>";
+    });
+    bang.innerHTML = html;
+    adminGanNutXemHoSo();
+  });
+}
+
+/** SQL KC_00D-1B chua chay: danh sach tam tu lay_xep_hang (chi ten + kim cuong) */
+function adminTaiDanhSachTreTam() {
+  var bang = adminEl("bangDanhSachTre");
+  var bao = adminEl("htCanSql");
+  bao.innerHTML = ADMIN_TIN_CAN_SQL_KC00D1B;
+  bao.style.display = "";
   apiGoiRpc("lay_xep_hang", {}).then(function (ph) {
     if (!ph.thanhCong) {
       adminXuLyLoi(ph);
-      adminEl("bangDanhSachTre").innerHTML = '<tr><td colspan="10" class="adminRong">Không tải được danh sách.</td></tr>';
+      bang.innerHTML = '<tr><td colspan="7" class="adminRong">Không tải được danh sách.</td></tr>';
       return;
     }
-
     var ds = ph.danhSachXepHang || [];
     if (ds.length === 0) {
-      adminEl("bangDanhSachTre").innerHTML = '<tr><td colspan="10" class="adminRong">Chưa có tài khoản nào.</td></tr>';
+      bang.innerHTML = '<tr><td colspan="7" class="adminRong">Chưa có tài khoản nào.</td></tr>';
       return;
     }
-
     var html = "";
     ds.forEach(function (t) {
       html +=
         "<tr>" +
-          "<td>" + t.hangThu + "</td>" +
           "<td><strong>" + adminThoat(t.tenDangNhap) + "</strong></td>" +
-          "<td>Lv " + t.level + "</td>" +
-          "<td>" + adminThoat(t.danhHieu) + "</td>" +
           "<td>" + t.diemSo + " 💎</td>" +
-          "<td>" + t.kinhNghiem + "</td>" +
-          "<td>" + t.tongTran + "</td>" +
-          "<td>" + t.tongThang + "</td>" +
-          "<td>" + t.tyLeThang + "%</td>" +
-          '<td><button class="adminNut adminNutPhu" data-hoso="' + adminThoat(t.tenDangNhap) + '" type="button">👦 Xem hồ sơ</button></td>' +
+          '<td colspan="4" class="adminGhiChu">cần chạy SQL</td>' +
+          "<td>" + adminNutXemHoSo(t.tenDangNhap) + "</td>" +
         "</tr>";
     });
-    adminEl("bangDanhSachTre").innerHTML = html;
-
-    var nut = adminEl("bangDanhSachTre").querySelectorAll("[data-hoso]");
-    for (var i = 0; i < nut.length; i++) {
-      nut[i].addEventListener("click", function () {
-        adminMoHoSoTre(this.getAttribute("data-hoso"));
-      });
-    }
+    bang.innerHTML = html;
+    adminGanNutXemHoSo();
   });
 }
 
 /**
- * Mo ho so chi tiet cua 1 tre. Goi duoc tu 2 noi:
- *   - Nut "Xem ho so" trong man hinh Ho So Tre.
- *   - Nut "Xem ho so" trong khoi Nguoi So Huu (man hinh Vat Pham) -> ham nay
- *     tu CHUYEN sang man hinh Ho So Tre truoc khi tai.
+ * Mo ho so chi tiet cua 1 be. Goi duoc tu 2 noi:
+ *   - Nut "Xem ho so" trong man hinh Ho so cac be.
+ *   - Nut "Xem ho so" trong khoi Nguoi So Huu (man hinh Cua hang) -> ham nay
+ *     tu CHUYEN sang man hinh Ho so cac be truoc khi tai.
+ * Tai SONG SONG 2 nguon: ho so chung (RPC admin moi) + ho so Co Vua (lay_ho_so).
  */
 function adminMoHoSoTre(ten) {
-  // Chuyen sang man hinh Ho So Tre (dung dung duong di cua adminChuyenManHinh
-  // de nut dieu huong sang mau "dang chon" va lazy-load danh sach lan dau)
   var nutManHinh = document.querySelector('.adminNutManHinh[data-manhinh="hosotre"]');
   if (nutManHinh) adminChuyenManHinh("hosotre", nutManHinh);
 
   var khoi = adminEl("khoiChiTietTre");
   khoi.style.display = "block";
+  adminChonTieuMucHoSo("chung");
   adminEl("tieuDeChiTietTre").textContent = "📄 Hồ Sơ Chi Tiết: " + ten + " — đang tải...";
   adminEl("htAvatarVaTen").innerHTML = "";
-  adminEl("htLuoiThe").innerHTML = "";
-  adminEl("htBangVatPham").innerHTML = '<tr><td colspan="3" class="adminDangTai">Đang tải...</td></tr>';
-  adminEl("htBangDoiQua").innerHTML = '<tr><td colspan="5" class="adminDangTai">Đang tải...</td></tr>';
-  adminEl("htBangTran").innerHTML = '<tr><td colspan="4" class="adminDangTai">Đang tải...</td></tr>';
+  ["htLuoiTheChung", "htLuoiTheCoVua", "htLuoiTheSanTu"].forEach(function (id) { adminEl(id).innerHTML = ""; });
+  ["htChungCanSql", "htSanTuCanSql"].forEach(function (id) { adminEl(id).style.display = "none"; });
+  var dangTai = function (id, cot) { adminEl(id).innerHTML = '<tr><td colspan="' + cot + '" class="adminDangTai">Đang tải...</td></tr>'; };
+  dangTai("htBangQuaTang", 6); dangTai("htBangDoiQua", 4); dangTai("htBangKimCuongNgay", 5);
+  dangTai("htBangVatPham", 3); dangTai("htBangMuaCoVua", 4); dangTai("htBangTran", 4); dangTai("htBangSanTu", 7);
 
-  apiGoiRpc("lay_ho_so", { p_ten: ten }).then(function (ph) {
-    if (!ph.thanhCong) {
-      adminXuLyLoi(ph);
+  Promise.all([
+    adminGoiRpc("kc_admin_lay_ho_so_chung", { p_tre: ten }),
+    apiGoiRpc("lay_ho_so", { p_ten: ten })
+  ]).then(function (kq) {
+    var chung = kq[0], coVua = kq[1];
+    var hsCoVua = coVua && coVua.thanhCong ? (coVua.hoSo || {}) : null;
+    var hsChung = chung && chung.thanhCong ? (chung.hoSo || {}) : null;
+    var thieuSql = adminLaThieuHamSql(chung);
+    if (!hsCoVua && !hsChung) {
+      adminXuLyLoi(chung && !thieuSql ? chung : coVua);
       adminEl("tieuDeChiTietTre").textContent = "📄 Hồ Sơ Chi Tiết: " + ten + " — không tải được.";
       return;
     }
-    adminVeChiTietTre(ph.hoSo || {});
+    if (!hsChung && !thieuSql) adminXuLyLoi(chung);
+    adminVeChiTietTre(ten, hsChung, hsCoVua, thieuSql);
     khoi.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
-function adminVeChiTietTre(hoSo) {
-  var tt = hoSo.thongTin || {};
+function adminTheThongTin(nhan, soLieu) {
+  return '<div class="adminTheThongTin"><div class="nhan">' + nhan + '</div><div class="soLieu">' + soLieu + "</div></div>";
+}
+function adminDongRong(id, cot, chu) {
+  adminEl(id).innerHTML = '<tr><td colspan="' + cot + '" class="adminRong">' + chu + "</td></tr>";
+}
 
-  adminEl("tieuDeChiTietTre").textContent = "📄 Hồ Sơ Chi Tiết: " + (tt.tenDangNhap || "");
+/**
+ * Ve ho so chi tiet theo tieu muc.
+ *   hsChung: ket qua kc_admin_lay_ho_so_chung (null neu chua chay SQL / loi)
+ *   hsCoVua: ket qua lay_ho_so cua Co Vua (null neu loi)
+ */
+function adminVeChiTietTre(ten, hsChung, hsCoVua, thieuSql) {
+  var tt = (hsCoVua && hsCoVua.thongTin) || {};
+  var c = hsChung || {};
+  var tenBe = c.tenDangNhap || tt.tenDangNhap || ten;
+  adminEl("tieuDeChiTietTre").textContent = "📄 Hồ Sơ Chi Tiết: " + tenBe;
 
-  // Avatar: ap dung QUY TAC NHAN DIEN URL (HUONG DAN 4.6 - moi cho ve avatar
-  // deu phai co): bat dau "http" hoac chua "/" -> ve <img> tron; nguoc lai ve chu/emoji
-  var av = tt.avatarDaChon || "";
+  // Dau trang: avatar + ten (chung) - QUY TAC NHAN DIEN URL (HUONG DAN 4.6)
+  var av = c.avatarDaChon || tt.avatarDaChon || "";
   var htmlAvatar = adminLaDuongDanAnh(av)
     ? '<img class="adminAvatarHoSo" src="' + adminThoat(av) + '" alt="">'
     : '<span class="adminAvatarHoSoChu">' + (av ? adminThoat(av) : "🙂") + "</span>";
-  adminEl("htAvatarVaTen").innerHTML =
-    htmlAvatar + ' <strong style="font-size:1.1rem; margin-left:8px;">' + adminThoat(tt.tenDangNhap) + "</strong>" +
-    ' <span class="adminGhiChu">(' + adminThoat(tt.danhHieu) + ")</span>";
+  adminEl("htAvatarVaTen").innerHTML = htmlAvatar + ' <strong style="font-size:1.1rem; margin-left:8px;">' + adminThoat(tenBe) + "</strong>";
 
-  // Luoi the so lieu
-  function the(nhan, soLieu) {
-    return '<div class="adminTheThongTin"><div class="nhan">' + nhan +
-           '</div><div class="soLieu">' + soLieu + "</div></div>";
-  }
-  adminEl("htLuoiThe").innerHTML =
-    the("Hạng", "#" + tt.hangThu) +
-    the("Level", tt.level) +
-    the("Kim cương", tt.diemSo + " 💎") +
-    the("EXP", tt.kinhNghiem) +
-    the("Đấu máy (thắng / khác)", tt.tranMayThang + " / " + tt.tranMayKhac) +
-    the("2 người (T / B / H)", tt.tran2nThang + " / " + tt.tran2nThua + " / " + tt.tran2nHoa) +
-    the("Tổng thắng / tổng trận", tt.tongThang + " / " + tt.tongTran) +
-    the("Tỷ lệ thắng", tt.tyLeThang + "%");
-
-  // Vat pham so huu (da doi/mua that su - vat pham theo moc level KHONG o day)
-  var vps = hoSo.vatPhamSoHuu || [];
-  if (vps.length === 0) {
-    adminEl("htBangVatPham").innerHTML = '<tr><td colspan="3" class="adminRong">Chưa đổi/mua vật phẩm nào.</td></tr>';
-  } else {
-    var htmlVp = "";
-    vps.forEach(function (vp) {
-      htmlVp +=
-        "<tr>" +
-          "<td>" + adminThoat(vp.loai) + "</td>" +
-          "<td>" + adminThoat(vp.ten) + "</td>" +
-          "<td><code>" + adminThoat(vp.maDinhDanh) + "</code></td>" +
-        "</tr>";
-    });
-    adminEl("htBangVatPham").innerHTML = htmlVp;
+  // ---------- TIEU MUC: THONG TIN CHUNG ----------
+  var kcTuKiem = c.kimCuongTuKiem || {};
+  var phuHuynh = (c.phuHuynh || []).map(function (p) { return adminThoat(p.tenDangNhap); }).join(", ");
+  var tenVaiTro = { tre: "Bé", phu_huynh: "Phụ huynh", admin: "Quản trị" };
+  var diemSo = (c.diemSo !== undefined) ? c.diemSo : tt.diemSo;
+  adminEl("htLuoiTheChung").innerHTML =
+    adminTheThongTin("Kim cương trong kho", (diemSo || 0) + " 💎") +
+    (hsChung ? (
+      adminTheThongTin("Tự kiếm hôm nay", (kcTuKiem.homNay || 0) + " / " + (kcTuKiem.tranNgay || 0) + " 💎") +
+      adminTheThongTin("Tổng tự kiếm", (kcTuKiem.tongCong || 0) + " 💎") +
+      adminTheThongTin("Quà chưa nhận", (c.quaTang || []).filter(function (q) { return !q.daNhan; }).length) +
+      adminTheThongTin("Tài khoản", adminThoat(tenVaiTro[c.vaiTro] || c.vaiTro || "")) +
+      adminTheThongTin("Ngày tạo", c.ngayTao ? adminDinhDangGio(c.ngayTao) : "—") +
+      adminTheThongTin("Lần chơi cuối", c.lanChoiCuoi ? adminDinhDangGio(c.lanChoiCuoi) : "—") +
+      adminTheThongTin("Phụ huynh", phuHuynh || "chưa liên kết")
+    ) : "");
+  if (thieuSql) {
+    adminEl("htChungCanSql").innerHTML = ADMIN_TIN_CAN_SQL_KC00D1B;
+    adminEl("htChungCanSql").style.display = "";
   }
 
-  // Lich su doi qua
-  var lsq = hoSo.lichSuDoiQua || [];
-  if (lsq.length === 0) {
-    adminEl("htBangDoiQua").innerHTML = '<tr><td colspan="5" class="adminRong">Chưa có lượt đổi quà nào.</td></tr>';
+  // Qua duoc tang (kc_qua_tang)
+  if (!hsChung) {
+    adminDongRong("htBangQuaTang", 6, thieuSql ? "Cần chạy SQL để xem." : "Không tải được.");
+  } else if (!(c.quaTang || []).length) {
+    adminDongRong("htBangQuaTang", 6, "Chưa được tặng quà nào.");
   } else {
-    var htmlQ = "";
-    lsq.forEach(function (ls) {
-      var choTrao = (ls.trangThai === "cho_trao");
-      var huyHieu = choTrao
+    adminEl("htBangQuaTang").innerHTML = c.quaTang.map(function (q) {
+      return "<tr>" +
+        "<td>" + adminThoat(q.tieuDe) + (q.loiNhan ? '<br><span class="adminGhiChu">“' + adminThoat(q.loiNhan) + "”</span>" : "") + "</td>" +
+        "<td>" + adminTenNguon(q.nguon) + "</td>" +
+        "<td>" + q.soKimCuong + " 💎</td>" +
+        "<td>" + adminThoat(q.nguoiTang || "") + "</td>" +
+        "<td>" + adminDinhDangGio(q.ngayTao) + "</td>" +
+        "<td>" + (q.daNhan
+          ? '<span class="adminHuyHieu adminHuyHieuXong">Đã nhận</span><br><span class="adminGhiChu">' + adminDinhDangGio(q.ngayNhan) + "</span>"
+          : '<span class="adminHuyHieu adminHuyHieuCho">Chưa nhận</span>') + "</td>" +
+      "</tr>";
+    }).join("");
+  }
+
+  // Qua da doi (Doi thuong CHUNG): lich su doi qua cua Co Vua, chi loai 'qua' (qua that)
+  var lsq = (hsCoVua && hsCoVua.lichSuDoiQua) || [];
+  var quaThat = lsq.filter(function (ls) { return ls.loai === "qua"; });
+  var muaCoVua = lsq.filter(function (ls) { return ls.loai !== "qua"; });
+  if (!hsCoVua) {
+    adminDongRong("htBangDoiQua", 4, "Không tải được.");
+  } else if (!quaThat.length) {
+    adminDongRong("htBangDoiQua", 4, "Chưa đổi quà nào.");
+  } else {
+    adminEl("htBangDoiQua").innerHTML = quaThat.map(function (ls) {
+      var huyHieu = ls.trangThai === "cho_trao"
         ? '<span class="adminHuyHieu adminHuyHieuCho">Chờ trao</span>'
         : '<span class="adminHuyHieu adminHuyHieuXong">Đã nhận</span>';
-      htmlQ +=
-        "<tr>" +
-          "<td>" + adminThoat(ls.tenVatPham) + "</td>" +
-          "<td>" + adminThoat(ls.loai) + "</td>" +
-          "<td>" + ls.giaLucDoi + " 💎</td>" +
-          "<td>" + huyHieu + "</td>" +
-          "<td>" + adminDinhDangGio(ls.thoiGianDoi) + "</td>" +
-        "</tr>";
-    });
-    adminEl("htBangDoiQua").innerHTML = htmlQ;
+      return "<tr><td>" + adminThoat(ls.tenVatPham) + "</td><td>" + ls.giaLucDoi + " 💎</td><td>" + huyHieu +
+        "</td><td>" + adminDinhDangGio(ls.thoiGianDoi) + "</td></tr>";
+    }).join("");
   }
 
-  // 50 tran gan nhat
-  var lst = hoSo.lichSuTran || [];
-  if (lst.length === 0) {
-    adminEl("htBangTran").innerHTML = '<tr><td colspan="4" class="adminRong">Chưa có trận nào.</td></tr>';
+  // Kim cuong tu kiem theo ngay / nguon
+  var theoNgay = kcTuKiem.theoNgay || [];
+  if (!hsChung) {
+    adminDongRong("htBangKimCuongNgay", 5, thieuSql ? "Cần chạy SQL để xem." : "Không tải được.");
+  } else if (!theoNgay.length) {
+    adminDongRong("htBangKimCuongNgay", 5, "Chưa tự kiếm được kim cương nào trong 30 ngày.");
   } else {
-    var htmlT = "";
-    lst.forEach(function (tr) {
-      var kq = tr.ketQua === "thang" ? "🏆 Thắng" : (tr.ketQua === "hoa" ? "🤝 Hòa" : "❌ Thua");
-      htmlT +=
-        "<tr>" +
-          "<td>" + adminDinhDangGio(tr.thoiGian) + "</td>" +
-          "<td>" + (tr.cheDo === "may" ? "Đấu máy" : "2 người") + "</td>" +
-          "<td>" + adminThoat(tr.doiThu) + "</td>" +
-          "<td>" + kq + "</td>" +
-        "</tr>";
-    });
-    adminEl("htBangTran").innerHTML = htmlT;
+    adminEl("htBangKimCuongNgay").innerHTML = theoNgay.map(function (d) {
+      var nn = String(d.ngay || "").split("-"); // "YYYY-MM-DD" -> "DD/MM/YYYY"
+      return "<tr><td>" + adminThoat(nn.length === 3 ? nn[2] + "/" + nn[1] + "/" + nn[0] : d.ngay) + "</td><td>" + adminTenNguon(d.nguon) + "</td><td>" + d.soLuot +
+        "</td><td>" + d.soXin + "</td><td><strong>" + d.soCong + " 💎</strong></td></tr>";
+    }).join("");
+  }
+
+  // ---------- TIEU MUC: CO VUA ----------
+  if (!hsCoVua) {
+    adminEl("htLuoiTheCoVua").innerHTML = '<p class="adminGhiChu">Không tải được số liệu Cờ Vua.</p>';
+    adminDongRong("htBangVatPham", 3, "Không tải được."); adminDongRong("htBangMuaCoVua", 4, "Không tải được.");
+    adminDongRong("htBangTran", 4, "Không tải được.");
+  } else {
+    adminEl("htLuoiTheCoVua").innerHTML =
+      adminTheThongTin("Hạng", "#" + tt.hangThu) +
+      adminTheThongTin("Level", tt.level) +
+      adminTheThongTin("Danh hiệu", adminThoat(tt.danhHieu)) +
+      adminTheThongTin("EXP", tt.kinhNghiem) +
+      adminTheThongTin("Đấu máy (thắng / khác)", tt.tranMayThang + " / " + tt.tranMayKhac) +
+      adminTheThongTin("2 người (T / B / H)", tt.tran2nThang + " / " + tt.tran2nThua + " / " + tt.tran2nHoa) +
+      adminTheThongTin("Tổng thắng / tổng trận", tt.tongThang + " / " + tt.tongTran) +
+      adminTheThongTin("Tỷ lệ thắng", tt.tyLeThang + "%");
+
+    var vps = hsCoVua.vatPhamSoHuu || [];
+    if (!vps.length) adminDongRong("htBangVatPham", 3, "Chưa đổi/mua vật phẩm nào.");
+    else adminEl("htBangVatPham").innerHTML = vps.map(function (vp) {
+      return "<tr><td>" + adminThoat(vp.loai) + "</td><td>" + adminThoat(vp.ten) + "</td><td><code>" + adminThoat(vp.maDinhDanh) + "</code></td></tr>";
+    }).join("");
+
+    if (!muaCoVua.length) adminDongRong("htBangMuaCoVua", 4, "Chưa mua gì ở Cửa hàng Cờ Vua.");
+    else adminEl("htBangMuaCoVua").innerHTML = muaCoVua.map(function (ls) {
+      return "<tr><td>" + adminThoat(ls.tenVatPham) + "</td><td>" + adminThoat(ls.loai) + "</td><td>" + ls.giaLucDoi +
+        " 💎</td><td>" + adminDinhDangGio(ls.thoiGianDoi) + "</td></tr>";
+    }).join("");
+
+    var lst = hsCoVua.lichSuTran || [];
+    if (!lst.length) adminDongRong("htBangTran", 4, "Chưa có trận nào.");
+    else adminEl("htBangTran").innerHTML = lst.map(function (tr) {
+      var kqTran = tr.ketQua === "thang" ? "🏆 Thắng" : (tr.ketQua === "hoa" ? "🤝 Hòa" : "❌ Thua");
+      return "<tr><td>" + adminDinhDangGio(tr.thoiGian) + "</td><td>" + (tr.cheDo === "may" ? "Đấu máy" : "2 người") +
+        "</td><td>" + adminThoat(tr.doiThu) + "</td><td>" + kqTran + "</td></tr>";
+    }).join("");
+  }
+
+  // ---------- TIEU MUC: GIAI CUU MEO CON ----------
+  var luotSanTu = (kcTuKiem.luotGanDay || []).filter(function (l) { return l.nguon === "san_tu"; });
+  var ngaySanTu = theoNgay.filter(function (d) { return d.nguon === "san_tu"; });
+  var tongSanTu = ngaySanTu.reduce(function (t, d) { return t + (d.soCong || 0); }, 0);
+  if (!hsChung) {
+    adminEl("htLuoiTheSanTu").innerHTML = "";
+    if (thieuSql) { adminEl("htSanTuCanSql").innerHTML = ADMIN_TIN_CAN_SQL_KC00D1B; adminEl("htSanTuCanSql").style.display = ""; }
+    adminDongRong("htBangSanTu", 7, thieuSql ? "Cần chạy SQL để xem." : "Không tải được.");
+  } else {
+    adminEl("htLuoiTheSanTu").innerHTML =
+      adminTheThongTin("Kim cương 30 ngày", tongSanTu + " 💎") +
+      adminTheThongTin("Số màn đã cất kim cương (30 ngày)", ngaySanTu.reduce(function (t, d) { return t + (d.soLuot || 0); }, 0));
+    if (!luotSanTu.length) adminDongRong("htBangSanTu", 7, "Bé chưa cất kim cương nào từ Giải Cứu Mèo Con.");
+    else adminEl("htBangSanTu").innerHTML = luotSanTu.map(function (l) {
+      var ct = l.chiTiet || {};
+      return "<tr><td>" + adminDinhDangGio(l.thoiDiem) + "</td>" +
+        "<td>" + (ADMIN_TEN_DUONG_SANTU[ct.duong] || adminThoat(ct.duong || "")) + "</td>" +
+        "<td>" + (ct.man || "—") + "</td>" +
+        "<td>" + (ADMIN_TEN_CAP_SANTU[ct.cap] || adminThoat(ct.cap || "")) + "</td>" +
+        "<td>" + (ct.thang === true ? "🚩 Qua màn" : ct.thang === false ? "⏰ Chưa qua" : "—") + "</td>" +
+        "<td>" + l.soXin + "</td><td><strong>" + l.soCong + " 💎</strong></td></tr>";
+    }).join("");
   }
 }
 
