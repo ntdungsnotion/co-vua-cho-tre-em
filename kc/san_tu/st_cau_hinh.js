@@ -32,6 +32,8 @@
              vật cản kẹo (KEO1..KEO6, cùng cấu trúc nhóm và cùng cách mở dần như Rừng xanh), hố sô-cô-la.
    CẬP NHẬT: 16/10/2026 - TC_00F: ST.themDuongDua / ST.taoKhoDuong: đường 3..10 khai báo ở file riêng
              st_duong_<mã>.js (nạp ngay sau file này). Tên loại trùng với đường khác thì báo lỗi ngay.
+   CẬP NHẬT: 17/10/2026 - TC_00G4: tốc độ chạy tăng dần rõ hơn qua 7 màn (140 -> 286),
+             màn 7 nhanh hơn 30% so với trước (220 -> 286).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -63,6 +65,7 @@
     khoangPhepToiThieu: 90,     // quái có máu: thanh đếm ngược hết khi quái còn cách chừng này
     giayMoiVien: 1.0,           // gặp quái phải bắn (đã hiện trên màn hình): mỗi viên còn lại cần chừng này giây;
     tiLeTocDoBanToiThieu: 0.65, // thiếu giờ thì bé chậm lại CHÚT ÍT, không chậm hơn 65% (giữ tính thử thách)
+    tocDoBanToiThieu: 143,      // ...nhưng màn chạy rất nhanh (màn 6-7) thì khi bắn được chậm tới tốc độ này (= 65% của 220 cũ) cho kịp hạ quái
     tamNhinMacDinh: 420,        // quái cách bé bao xa thì đã hiện trên màn hình (giao diện cập nhật theo khổ màn thật)
     // HANG KIM CƯƠNG (người dùng yêu cầu 16/10/2026): rơi hố có xác suất KHÔNG mất mạng mà vào hang bí mật,
     // nhặt kim cương, đồng hồ đứng yên; lối ra là cửa ánh sáng trên gờ đá, bấm đúng từ để nhảy vào.
@@ -140,12 +143,12 @@
   const KHO_KEO = [KEO1, KEO2, KEO3, KEO4, KEO5, KEO6, KEO6];
   ST.MAN_CHOI = [
     { mauQuai: 2, soPhuongAn: 2, doGiong: 0,    tocDo: 140, thoiGianPhanUng: 4.6, khoangThem: [30, 140], thoiGianDiDuKien: 49, loai: KHO1 },
-    { mauQuai: 2, soPhuongAn: 2, doGiong: 0.15, tocDo: 150, thoiGianPhanUng: 4.3, khoangThem: [30, 130], thoiGianDiDuKien: 49, loai: KHO2 },
-    { mauQuai: 3, soPhuongAn: 3, doGiong: 0.25, tocDo: 160, thoiGianPhanUng: 4.0, khoangThem: [25, 120], thoiGianDiDuKien: 49, loai: KHO3 },
-    { mauQuai: 3, soPhuongAn: 3, doGiong: 0.4,  tocDo: 175, thoiGianPhanUng: 3.7, khoangThem: [20, 110], thoiGianDiDuKien: 50, loai: KHO4 },
-    { mauQuai: 4, soPhuongAn: 3, doGiong: 0.55, tocDo: 190, thoiGianPhanUng: 3.5, khoangThem: [20, 100], thoiGianDiDuKien: 50, loai: KHO5 },
-    { mauQuai: 4, soPhuongAn: 4, doGiong: 0.7,  tocDo: 205, thoiGianPhanUng: 3.3, khoangThem: [15, 90],  thoiGianDiDuKien: 50, loai: KHO6 },
-    { mauQuai: 5, soPhuongAn: 4, doGiong: 0.85, tocDo: 220, thoiGianPhanUng: 3.1, khoangThem: [10, 80],  thoiGianDiDuKien: 50, loai: KHO6 }
+    { mauQuai: 2, soPhuongAn: 2, doGiong: 0.15, tocDo: 160, thoiGianPhanUng: 4.3, khoangThem: [30, 130], thoiGianDiDuKien: 49, loai: KHO2 },
+    { mauQuai: 3, soPhuongAn: 3, doGiong: 0.25, tocDo: 182, thoiGianPhanUng: 4.0, khoangThem: [25, 120], thoiGianDiDuKien: 49, loai: KHO3 },
+    { mauQuai: 3, soPhuongAn: 3, doGiong: 0.4,  tocDo: 206, thoiGianPhanUng: 3.7, khoangThem: [20, 110], thoiGianDiDuKien: 50, loai: KHO4 },
+    { mauQuai: 4, soPhuongAn: 3, doGiong: 0.55, tocDo: 232, thoiGianPhanUng: 3.5, khoangThem: [20, 100], thoiGianDiDuKien: 50, loai: KHO5 },
+    { mauQuai: 4, soPhuongAn: 4, doGiong: 0.7,  tocDo: 258, thoiGianPhanUng: 3.3, khoangThem: [15, 90],  thoiGianDiDuKien: 50, loai: KHO6 },
+    { mauQuai: 5, soPhuongAn: 4, doGiong: 0.85, tocDo: 286, thoiGianPhanUng: 3.1, khoangThem: [10, 80],  thoiGianDiDuKien: 50, loai: KHO6 }
   ].map((m, i) => Object.assign({}, chung, m, { soMan: i + 1 }));
   ST.SO_MAN = ST.MAN_CHOI.length;
 

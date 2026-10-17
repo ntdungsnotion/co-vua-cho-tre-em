@@ -34,6 +34,8 @@
              CÒN LẠI của màn (nhặt được trừ số đã đổi mạng) vào kho kim cương của bé (st_kho_kc.js);
              màn kết quả báo đã cất bao nhiêu / đủ trần ngày / mạng chập chờn giữ lại gửi sau.
              Tập chơi và Xem thử không cất.
+   CẬP NHẬT: 17/10/2026 - TC_00G4: cấp từ 3-4 vẫn ẩn chữ tiếng Anh nhưng HIỆN nghĩa tiếng Việt
+             dưới hình (người dùng yêu cầu).
    ================================================================ */
 (function () {
   "use strict";
@@ -444,9 +446,9 @@
     idDangHien = tt.id;
     $("hinhTu").textContent = tt.tu.e;
     $("hinhTu").classList.toggle("anChu", !!g.dk.anChu); $("chuTu").classList.toggle("anChu", !!g.dk.anChu);
-    // Cấp 3-4: không hiện chữ / nghĩa, bé nghe đọc từ và nhìn hình rồi chọn
+    // Cấp 3-4: không hiện chữ tiếng Anh, bé nghe đọc từ, nhìn hình + nghĩa tiếng Việt rồi chọn
     $("chuTu").textContent = g.dk.anChu ? "🔊 Nghe và chọn" : tt.tu.en;
-    $("nghiaTu").textContent = g.dk.anChu ? "Bấm vào hình để nghe lại" : tt.tu.vi;
+    $("nghiaTu").textContent = tt.tu.vi;
     $("kcTu").style.display = "none";
     veHanhDong(tt);
     cacNut.innerHTML = "";
