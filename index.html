@@ -141,6 +141,23 @@
     @media (min-width: 1280px) {
       .tcBoCuc > .kcLuoiThe { grid-template-columns: repeat(2, 1fr); }
     }
+    /* KC_00G4 (17/10/2026): laptop màn thấp (vd 14 inch phóng to 125%): thu gọn để thấy đủ 4 khu không phải cuộn nhiều */
+    @media (min-width: 1024px) and (max-height: 760px) {
+      .tcBoCuc { grid-template-columns: minmax(260px, 320px) 1fr; gap: 20px; padding: 18px 22px; }
+      .tcCotTrai { padding: 18px 16px; top: 12px; }
+      .tcChaoAvatar { width: 84px; height: 84px; font-size: 3rem; }
+      .tcChip { font-size: 1.05rem; padding: 7px 14px; }
+      .tcBoCuc > .kcLuoiThe { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+      .tcKhu { padding: 14px 16px; min-height: 0; }
+      .tcKhu .tcHinh { font-size: 3rem; }
+      .tcKhu h3 { font-size: 1.35rem; margin: 4px 0; }
+      .tcKhu p { font-size: 0.95rem; margin: 2px 0 6px; }
+      .tcCuaVaoTrai { padding: 28px 32px; }
+      .tcCuaVaoTraiHinh { font-size: 3.6rem; }
+      .tcCuaVaoTrai h2, #kcChuaDangNhap .tcCuaVaoTrai h2 { font-size: 1.8rem; margin: 6px 0 10px; }
+      .tcCuaVaoTrai li { padding: 4px 0; }
+      .tcCuaVaoPhai { padding: 26px 32px; }
+    }
     @media (min-width: 1600px) {
       .tcBoCuc { grid-template-columns: 480px 1fr; max-width: 1600px; }
       .tcKhu { min-height: 300px; }
