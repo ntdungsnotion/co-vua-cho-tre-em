@@ -32,6 +32,8 @@
              đã hiện trên màn hình và chậm ít. HANG KIM CƯƠNG: rơi hố có xác suất vào hang (vaoHang).
    CẬP NHẬT: 16/10/2026 - TC_00E: không còn dùng tên loại cố định ("cong", "nam") khi chọn quái:
              mọi lựa chọn lấy từ kho của đường đua (mỗi đường đua một kho riêng theo chủ đề).
+   CẬP NHẬT: 17/10/2026 - TC_00G4: màn chạy rất nhanh thì khi bắn quái nhiều máu được chậm tới
+             tocDoBanToiThieu (heSoBanToiThieu) để vẫn kịp hạ quái.
    TỌA ĐỘ: x = quãng đường (tăng về phía lâu đài), y = độ cao so với mặt đất.
            Nhân vật: x là TÂM người, y là CHÂN. Chướng ngại vật: x là MÉP TRÁI.
    THỨ TỰ XỬ LÝ MỖI BƯỚC (cố định để không chồng chéo):
@@ -658,7 +660,13 @@
       if (conMau <= 0) return 1;
       const co = (this.khoangTam(tt.o) - khoangHetHan(tt.o, this.v)) / tocDoKhep(tt.o, this.v);
       const can = conMau * CH.giayMoiVien;
-      return co >= can ? 1 : Math.max(CH.tiLeTocDoBanToiThieu, co / can);
+      return co >= can ? 1 : Math.max(this.heSoBanToiThieu(), co / can);
+    }
+    // Hệ số chậm nhất khi bắn: thường là tiLeTocDoBanToiThieu; màn chạy rất nhanh thì được chậm thêm
+    // để tốc độ khi bắn không vượt tocDoBanToiThieu (vẫn đủ giờ hạ quái nhiều máu, TC_00G4)
+    heSoBanToiThieu() {
+      const CH = this.CH;
+      return Math.min(CH.tiLeTocDoBanToiThieu, (CH.tocDoBanToiThieu || Infinity) / this.v);
     }
     // Phần trăm thời gian còn lại để chọn (cho thanh đếm ngược)
     phanThoiGianConLai() {
