@@ -114,6 +114,7 @@
   .lop { position: absolute; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; padding: 14px;
     background: rgba(36,26,82,0.55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); overflow-y: auto; }
   .lop.hien { display: flex; }
+  .lop > .the { margin: auto; } /* thẻ cao hơn màn hình thì cuộn được cả phần đầu (không bị cắt mất) */
   .the { background: #fff; border-radius: 24px; padding: 18px; width: 100%; max-width: 480px; box-shadow: 0 10px 0 rgba(36,26,82,.35); text-align: center; margin: auto; }
   .the h1 { margin: 0; font-size: 31px; line-height: 1.05; color: var(--chinh-dam); }
   .the h2 { margin: 0 0 6px; font-size: 26px; color: var(--chinh-dam); }
@@ -225,7 +226,7 @@
   }
 
   /* ----- ĐIỆN THOẠI NẰM NGANG: khung chữ sang bên phải ----- */
-  @media (orientation: landscape) and (max-height: 520px) {
+  @media (orientation: landscape) and (max-height: 520px) and (max-width: 1023px) {
     #ung { flex-direction: row; }
     #khuChon { width: 40%; max-width: 380px; border-top: 0; border-left: 4px solid var(--chinh); display: flex; flex-direction: column; justify-content: center; overflow-y: auto; }
     #cacNut, #cacNut.n3 { grid-template-columns: repeat(2, 1fr); }
@@ -319,6 +320,62 @@
     .theOnTap:hover:not(.biMat) { transform: translateY(-3px); }
     #onTapDem { font-size: 19px; }
     #onTapXong { font-size: 32px; }
+  }
+  /* ----- LAPTOP MÀN THẤP (vd 14 inch phóng to 125%: khoảng 1229 x 580): thu nhỏ để khung game không bị che ----- */
+  @media (min-width: 1024px) and (max-height: 760px) {
+    #hud { padding: 8px 14px; gap: 10px; }
+    .hudO { font-size: 18px; padding: 3px 12px; border-radius: 14px; }
+    #hudMang .tim { font-size: 17px; }
+    #tienDoBe { font-size: 19px; }
+    #thanhTienDo { height: 12px; }
+    #nutTamDung { width: 42px; height: 38px; font-size: 18px; }
+    #thongBao { top: 60px; }
+    .bao { font-size: 22px; padding: 4px 18px; }
+    #khuChon { padding: 4px max(20px, calc((100% - 1200px) / 2)) 10px; column-gap: 16px; }
+    #loiNhan { font-size: 16px; margin: 0 0 6px; min-height: 22px; }
+    #theTu { padding: 6px 12px; border-radius: 16px; min-height: 0; }
+    #hinhTu { font-size: 42px; width: 50px; }
+    #chuTu { font-size: 32px; }
+    #nghiaTu { font-size: 15px; }
+    #chuTu.anChu { font-size: 22px; }
+    #hinhTu.anChu { font-size: 54px; width: 62px; }
+    #demNguoc { margin: 6px 0 0; height: 8px; }
+    #cacNut, #cacNut.n3 { gap: 12px; }
+    .nutTu { min-height: 64px; --co: clamp(22px, 2.2vw, 34px); border-radius: 18px; border-width: 3px; box-shadow: 0 5px 0 var(--chinh-dam); }
+    .nutTu .so { font-size: 12px; }
+    .lop { padding: 10px; }
+    .the { padding: 16px 24px; border-radius: 24px; }
+    .the h1 { font-size: 34px; }
+    .the h2 { font-size: 28px; }
+    .phuDe { font-size: 15px; }
+    .cachChoi { font-size: 15px; }
+    .cachChoi b { font-size: 22px; }
+    .nhan { font-size: 16px; }
+    .nutDuong { padding: 5px 3px; }
+    .nutDuong .bt { font-size: 28px; }
+    .nutDuong b { font-size: 13px; min-height: 0; }
+    .nutDuong i { font-size: 12px; }
+    .nutMan .tron { width: 44px; height: 44px; font-size: 20px; }
+    #chonMan::before { top: 24px; }
+    .nutDoKho { padding: 7px 6px; }
+    .nutDoKho b { font-size: 19px; }
+    .nutDoKho span { font-size: 12.5px; }
+    .nutAm { font-size: 14px; padding: 6px 12px; }
+    .nutLon { font-size: 24px; padding: 10px; }
+    .nutTapChoi { padding: 6px 12px; }
+    .nutTapChoi .bt { font-size: 28px; }
+    .nutTapChoi b { font-size: 17px; }
+    #ketQuaHinh { font-size: 60px; }
+    #ketQuaSao { font-size: 36px; }
+    .soLieu b { font-size: 24px; }
+    #tuDaHoc { max-height: 120px; }
+    #onTapCoVu { font-size: 20px; min-height: 28px; margin-bottom: 4px; }
+    #onTapThuong { font-size: 16px; padding: 6px 14px; }
+    #onTapBang { gap: 10px; }
+    .theOnTap { min-height: 72px; border-radius: 16px; border-width: 3px; }
+    .theOnTap.hinh { font-size: 40px; }
+    .theOnTap.chu { font-size: clamp(20px, 2vw, 28px); }
+    #onTapXong { font-size: 24px; }
   }
   @media (min-width: 1600px) {
     #khuChon { padding: 10px max(48px, calc((100% - 1500px) / 2)) 22px; }
