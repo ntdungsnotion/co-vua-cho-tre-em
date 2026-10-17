@@ -181,6 +181,8 @@
         <button class="nut" data-cap="2">🌳 Cấp 3 · 4 chữ</button>
       </div>
       <p class="banThu">Bản chơi thử • Nhớ bật loa nhé 🔊</p>
+      <!-- KC_00F: chỗ hiện "Số lượt truy cập" (trang game toàn màn hình) -->
+      <p data-luot-truy-cap style="font-size:12px;opacity:.75;margin:4px 0 0"></p>
     </div>
   </section>
 
@@ -562,6 +564,8 @@ document.querySelectorAll("[data-cap]").forEach(b => b.onclick = () => vaoCap(+b
 for (let i = 0; i < 4; i++) { const m = document.createElement("div"); m.className = "may"; m.textContent = "☁️";
   m.style.top = (4 + i * 14) + "%"; m.style.animationDuration = (24 + i * 7) + "s"; m.style.animationDelay = (-i * 6) + "s"; $("canh").prepend(m); }
 </script>
+<!-- KC_00F 17/10/2026: số lượt truy cập ở chân trang (GoatCounter) -->
+<script src="kc_luot_truy_cap.js"></script>
 </body>
 </html>
 <!-- 14/10/2026 - BƯỚC: TC_00 -->
