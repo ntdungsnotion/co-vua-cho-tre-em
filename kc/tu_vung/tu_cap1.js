@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap1.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 1 (Dễ), 209 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 1 (Dễ), 210 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 19:06 - BƯỚC: TC_T02B (lô lo_003)
+   CẬP NHẬT: 19/10/2026 21:00 - BƯỚC: TC_T02C-F (lô lo_007)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(1, `
 cat|🐱|con mèo
@@ -219,4 +219,5 @@ film|🎞️|cuộn phim|khac
 palm|🌴|cây cọ|cay_hoa
 pine|🌲|cây thông|cay_hoa
 asia|🌏|châu Á|noi_chon
+can|🥫|đồ hộp|do_an
 `);
