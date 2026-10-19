@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap3.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 197 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 275 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 21:00 - BƯỚC: TC_T02C-F (lô lo_007)
+   CẬP NHẬT: 19/10/2026 21:14 - BƯỚC: TC_T02G (lô lo_008)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(3, `
 garden|🌷|khu vườn
@@ -207,4 +207,82 @@ teddy|🧸|gấu bông|do_vat
 speaker|🔊|cái loa|do_vat
 ruler|📏|thước kẻ|do_vat
 marker|🖊️|bút lông|do_vat
+eleven|1️⃣1️⃣|mười một|so_dem
+twelve|1️⃣2️⃣|mười hai|so_dem
+thirty|3️⃣0️⃣|ba mươi|so_dem
+forty|4️⃣0️⃣|bốn mươi|so_dem
+fifty|5️⃣0️⃣|năm mươi|so_dem
+sixty|6️⃣0️⃣|sáu mươi|so_dem
+eighty|8️⃣0️⃣|tám mươi|so_dem
+ninety|9️⃣0️⃣|chín mươi|so_dem
+tuesday|📅3️⃣|thứ ba|thoi_gian
+thursday|📅5️⃣|thứ năm|thoi_gian
+saturday|📅7️⃣|thứ bảy|thoi_gian
+january|📆1️⃣|tháng một|thoi_gian
+february|📆2️⃣|tháng hai|thoi_gian
+october|📆🔟|tháng mười|thoi_gian
+november|📆1️⃣1️⃣|tháng mười một|thoi_gian
+december|📆1️⃣2️⃣|tháng mười hai|thoi_gian
+evening|🌆|buổi tối|thoi_gian
+fever|🤒|cơn sốt|co_the
+dizzy|😵|chóng mặt|co_the
+sleepy|😪|buồn ngủ|cam_xuc
+snore|🛌💤|ngáy|co_the
+brave|🦸|dũng cảm|cam_xuc
+scared|😨|sợ hãi|cam_xuc
+lonely|😔|cô đơn|cam_xuc
+bored|😑|chán|cam_xuc
+silly|🤪|ngớ ngẩn|cam_xuc
+grumpy|😡|cáu kỉnh|cam_xuc
+relax|🛀|thư giãn|cam_xuc
+polite|🙇|lịch sự|tinh_chat
+climb|🧗|leo trèo|hanh_dong
+smell|👃🌸|ngửi|hanh_dong
+skate|🛼|trượt patin|hanh_dong
+airport|🛫🏢|sân bay|noi_chon
+bakery|🥖🏪|tiệm bánh|noi_chon
+jungle|🌴🐒|rừng nhiệt đới|thien_nhien
+highway|🛣️🚗|đường cao tốc|giao_thong
+bathroom|🛁🚽|phòng tắm|nha_cua
+bedroom|🛏️🌙|phòng ngủ|nha_cua
+theater|🎭🏛️|nhà hát|noi_chon
+circus|🎪|rạp xiếc|noi_chon
+cereal|🥣🌾|ngũ cốc|do_an
+yogurt|🥛🍓|sữa chua|do_an
+flour|🌾🍞|bột mì|do_an
+spice|🌶️🧂|gia vị|do_an
+stove|🔥🍳|cái bếp|nha_cua
+picnic|🧺🍉|đi dã ngoại|do_an
+feast|🍽️🎉|bữa tiệc lớn|do_an
+helmet|⛑️|mũ bảo hiểm|quan_ao
+heels|👠|giày cao gót|quan_ao
+ballet|🩰|giày múa|quan_ao
+meadow|🌾🌼|đồng cỏ|thien_nhien
+sprout|🌱|mầm cây|cay_hoa
+bamboo|🎋|cây tre|cay_hoa
+maple|🍁|lá phong|cay_hoa
+internet|🌐|mạng internet|do_vat
+website|🌐💻|trang web|do_vat
+pickup|🛻|xe bán tải|giao_thong
+moped|🛵|xe máy|giao_thong
+canoe|🛶|thuyền độc mộc|giao_thong
+yacht|🛥️|du thuyền|giao_thong
+ferry|⛴️|phà|giao_thong
+parking|🅿️|bãi đỗ xe|giao_thong
+concert|🎤🎶|buổi hòa nhạc|am_nhac
+sewing|🧵🪡|may vá|do_vat
+painting|🎨🖼️|bức tranh|do_vat
+hiking|🥾⛰️|đi bộ đường dài|the_thao
+karate|🥋🥊|võ karate|the_thao
+boxing|🥊|đấm bốc|the_thao
+darts|🎯|phóng phi tiêu|the_thao
+diving|🤿|môn lặn|the_thao
+skiing|🎿|trượt tuyết|the_thao
+champion|🏆👑|nhà vô địch|the_thao
+twins|👯|sinh đôi|gia_dinh
+goblin|👺|yêu tinh|con_nguoi
+phoenix|🔥🐦|chim phượng hoàng|con_vat
+witch|🧙‍♀️|phù thủy|con_nguoi
+elder|🧓|người già|con_nguoi
+hatch|🐣|nở trứng|con_vat
 `);

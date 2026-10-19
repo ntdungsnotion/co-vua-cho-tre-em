@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap2.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 2 (Trung bình), 238 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 2 (Trung bình), 298 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 21:00 - BƯỚC: TC_T02C-F (lô lo_007)
+   CẬP NHẬT: 19/10/2026 21:14 - BƯỚC: TC_T02G (lô lo_008)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(2, `
 apple|🍎|quả táo
@@ -248,4 +248,64 @@ dice|🎲|con xúc xắc|do_vat
 yoyo|🪀|con yo-yo|do_vat
 laptop|💻|máy tính xách tay|do_vat
 email|📧|thư điện tử|do_vat
+twenty|2️⃣0️⃣|hai mươi|so_dem
+monday|📅2️⃣|thứ hai|thoi_gian
+friday|📅6️⃣|thứ sáu|thoi_gian
+sunday|☀️📅|chủ nhật|thoi_gian
+march|📆3️⃣|tháng ba|thoi_gian
+april|📆4️⃣|tháng tư|thoi_gian
+august|📆8️⃣|tháng tám|thoi_gian
+noon|🕛|buổi trưa|thoi_gian
+color|🖍️|màu sắc|mau_sac
+gym|🏋️|phòng tập|the_thao
+yawn|🥱|ngáp|co_the
+dream|🌙💭|giấc mơ|co_the
+proud|🏅😊|tự hào|cam_xuc
+shy|🥺|nhút nhát|cam_xuc
+calm|😌|bình tĩnh|cam_xuc
+lucky|🍀|may mắn|cam_xuc
+smart|🤓|thông minh|tinh_chat
+lazy|🛋️😴|lười biếng|tinh_chat
+dig|⛏️|đào|hanh_dong
+build|🏗️|xây dựng|hanh_dong
+paint|🎨|vẽ tranh|hanh_dong
+wash|🧽🚿|rửa|hanh_dong
+clap|👏|vỗ tay|hanh_dong
+point|👆|chỉ tay|hanh_dong
+hug|🤗|ôm|hanh_dong
+listen|🎧👂|lắng nghe|hanh_dong
+taste|👅😋|nếm|hanh_dong
+bake|🧁🔥|nướng bánh|hanh_dong
+drive|🚘|lái xe|hanh_dong
+surf|🏄|lướt sóng|hanh_dong
+dive|🤿|lặn|hanh_dong
+count|1️⃣2️⃣3️⃣|đếm|hanh_dong
+learn|🎓|học|hanh_dong
+share|🍰🤝|chia sẻ|hanh_dong
+throw|🤾|ném|hanh_dong
+catch|🧤⚾|bắt bóng|hanh_dong
+kick|🥾⚽|đá bóng|hanh_dong
+search|🔎|tìm kiếm|hanh_dong
+zoo|🦁🦒|sở thú|noi_chon
+harbor|⚓🚢|bến cảng|noi_chon
+market|🛒🥬|cái chợ|noi_chon
+palace|👑🏰|cung điện|noi_chon
+cave|🕳️🦇|hang động|noi_chon
+pond|🦆💧|cái ao|thien_nhien
+coast|🏖️🌊|bờ biển|thien_nhien
+sugar|🍬🧂|đường|do_an
+oven|🔥🍞|cái lò nướng|nha_cua
+space|🚀🌌|vũ trụ|thien_nhien
+flood|🌊🏠|lũ lụt|thien_nhien
+lava|🌋🔥|dung nham|thien_nhien
+lesson|📖✏️|bài học|truong_hoc
+poem|📜✍️|bài thơ|truong_hoc
+tram|🚊|xe điện|giao_thong
+sled|🛷|xe trượt tuyết|giao_thong
+garage|🚗🏠|nhà để xe|giao_thong
+lego|🧱🧩|đồ chơi xếp hình|do_vat
+winner|🏆🥇|người thắng|the_thao
+prize|🎁🏆|giải thưởng|the_thao
+ogre|👹|yêu quái|con_nguoi
+hive|🐝🏠|tổ ong|con_vat
 `);
