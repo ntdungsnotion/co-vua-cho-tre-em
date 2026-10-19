@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap2.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 2 (Trung bình), 211 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 2 (Trung bình), 238 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 19:06 - BƯỚC: TC_T02B (lô lo_003)
+   CẬP NHẬT: 19/10/2026 21:00 - BƯỚC: TC_T02C-F (lô lo_007)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(2, `
 apple|🍎|quả táo
@@ -221,4 +221,31 @@ mount|🗻|ngọn núi|thien_nhien
 racing|🏎️|đua xe|the_thao
 flash|📸|đèn flash|do_vat
 japan|🗾|nước Nhật Bản|noi_chon
+bull|🐂|con bò đực|con_vat
+calf|🐄|con bê|con_vat
+swan|🦢|thiên nga|con_vat
+dodo|🦤|chim dodo|con_vat
+boar|🐗|lợn rừng|con_vat
+orca|🐋|cá voi sát thủ|con_vat
+taco|🌮|bánh taco|do_an
+jam|🍓|mứt|do_an
+lunch|🍱|bữa trưa|do_an
+coffee|☕|cà phê|do_an
+yam|🍠|khoai lang|do_an
+chef|🧑‍🍳|đầu bếp|nghe_nghiep
+judge|🧑‍⚖️|thẩm phán|nghe_nghiep
+pilot|🧑‍✈️|phi công|nghe_nghiep
+baker|🥖|thợ làm bánh|nghe_nghiep
+actor|🎬|diễn viên|nghe_nghiep
+writer|✍️|nhà văn|nghe_nghiep
+driver|🚖|tài xế|nghe_nghiep
+elf|🧝|yêu tinh|nghe_nghiep
+santa|🎅|ông già Noel|nghe_nghiep
+guard|💂|lính gác|nghe_nghiep
+tent|⛺|cái lều|do_vat
+axe|🪓|cái rìu|do_vat
+dice|🎲|con xúc xắc|do_vat
+yoyo|🪀|con yo-yo|do_vat
+laptop|💻|máy tính xách tay|do_vat
+email|📧|thư điện tử|do_vat
 `);

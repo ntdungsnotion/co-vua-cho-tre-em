@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap4.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 4 (Thử thách), 99 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 4 (Thử thách), 123 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 19:06 - BƯỚC: TC_T02B (lô lo_003)
+   CẬP NHẬT: 19/10/2026 21:00 - BƯỚC: TC_T02C-F (lô lo_007)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(4, `
 elephant|🐘|con voi
@@ -109,4 +109,28 @@ instrument|🎻|nhạc cụ|am_nhac
 television|📺|ti vi|do_vat
 newspaper|📰|tờ báo|truong_hoc
 telephone|📞|điện thoại|do_vat
+duckling|🐥|vịt con|con_vat
+goldfish|🐠|cá vàng|con_vat
+pufferfish|🐡|cá nóc|con_vat
+grasshopper|🦗|con châu chấu|con_vat
+burrito|🌯|bánh burrito|do_an
+dessert|🍨|món tráng miệng|do_an
+cracker|🍘|bánh quy giòn|do_an
+baguette|🥖|bánh mì dài|do_an
+cabbage|🥬|bắp cải|do_an
+mechanic|🧑‍🔧|thợ máy|nghe_nghiep
+dentist|🦷|nha sĩ|nghe_nghiep
+painter|🧑‍🎨|họa sĩ|nghe_nghiep
+gardener|🧑‍🌾|người làm vườn|nghe_nghiep
+fisherman|🎣|ngư dân|nghe_nghiep
+programmer|🧑‍💻|lập trình viên|nghe_nghiep
+postman|📮|người đưa thư|nghe_nghiep
+vampire|🧛|ma cà rồng|nghe_nghiep
+sunglasses|🕶️|kính râm|do_vat
+flashlight|🔦|đèn pin|do_vat
+lantern|🏮|lồng đèn|do_vat
+microphone|🎤|cái micro|do_vat
+paperclip|📎|kẹp giấy|do_vat
+bandage|🩹|băng cá nhân|do_vat
+stethoscope|🩺|ống nghe bác sĩ|do_vat
 `);

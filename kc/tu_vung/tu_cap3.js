@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap3.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 167 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 197 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 19:06 - BƯỚC: TC_T02B (lô lo_003)
+   CẬP NHẬT: 19/10/2026 21:00 - BƯỚC: TC_T02C-F (lô lo_007)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(3, `
 garden|🌷|khu vườn
@@ -177,4 +177,34 @@ athletic|🏃|thể thao|the_thao
 rugby|🏉|bóng bầu dục|the_thao
 football|🏈|bóng bầu dục Mỹ|the_thao
 uniform|🥋|đồng phục|quan_ao
+bunny|🐇|thỏ con|con_vat
+beetle|🪲|bọ cánh cứng|con_vat
+chick|🐤|gà con|con_vat
+piglet|🐖|heo con|con_vat
+bison|🦬|bò rừng bizon|con_vat
+olive|🫒|quả ô liu|do_an
+steak|🥩|bít tết|do_an
+fries|🍟|khoai tây chiên|do_an
+curry|🍛|cơm cà ri|do_an
+bagel|🥯|bánh vòng bagel|do_an
+oyster|🦪|con hàu|do_an
+pastry|🥐|bánh ngọt|do_an
+builder|👷|thợ xây|nghe_nghiep
+sailor|⛵|thủy thủ|nghe_nghiep
+barber|💈|thợ cắt tóc|nghe_nghiep
+cowboy|🤠|cao bồi|nghe_nghiep
+knight|🛡️|hiệp sĩ|nghe_nghiep
+genie|🧞|thần đèn|nghe_nghiep
+ninja|🥷|ninja|nghe_nghiep
+alien|👽|người ngoài hành tinh|nghe_nghiep
+bride|👰|cô dâu|nghe_nghiep
+groom|🤵|chú rể|nghe_nghiep
+broom|🧹|cái chổi|do_vat
+glasses|👓|mắt kính|do_vat
+wallet|👛|cái ví|do_vat
+wrench|🔧|cờ lê|do_vat
+teddy|🧸|gấu bông|do_vat
+speaker|🔊|cái loa|do_vat
+ruler|📏|thước kẻ|do_vat
+marker|🖊️|bút lông|do_vat
 `);
