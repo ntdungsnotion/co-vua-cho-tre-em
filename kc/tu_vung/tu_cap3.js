@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap3.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 122 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 146 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 17/10/2026 15:36 - BƯỚC: TC_T01 (lô thử lo_001)
+   CẬP NHẬT: 19/10/2026 17:32 - BƯỚC: TC_T02A (lô lo_002)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(3, `
 garden|🌷|khu vườn
@@ -132,4 +132,28 @@ berry|🫐|quả mọng|cay_hoa
 brick|🧱|viên gạch|nha_cua
 bucket|🪣|cái xô|do_vat
 bulb|💡|bóng đèn|do_vat
+needle|🪡|cây kim|do_vat
+receipt|🧾|hóa đơn|do_vat
+station|🚉|nhà ga|giao_thong
+thumb|👍|ngón cái|co_the
+tongue|👅|cái lưỡi|co_the
+electric|⚡|điện|khac
+building|🏙️|tòa nhà|noi_chon
+division|➗|phép chia|truong_hoc
+question|❓|câu hỏi|truong_hoc
+steam|♨️|hơi nước|thien_nhien
+thought|💭|suy nghĩ|cam_xuc
+writing|✍️|viết|truong_hoc
+together|🤝|cùng nhau|hanh_dong
+screw|🔩|đinh vít|do_vat
+brother|👦|anh em trai|gia_dinh
+insect|🦗|côn trùng|con_vat
+weather|🌦️|thời tiết|thoi_tiet
+journey|🧳|chuyến đi|giao_thong
+jelly|🍮|thạch|do_an
+science|🔬|khoa học|truong_hoc
+sneeze|🤧|hắt hơi|co_the
+cough|😷|ho|co_the
+history|📜|lịch sử|truong_hoc
+surprise|😮|bất ngờ|cam_xuc
 `);

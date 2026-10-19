@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap2.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 2 (Trung bình), 128 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 2 (Trung bình), 187 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 17/10/2026 15:36 - BƯỚC: TC_T01 (lô thử lo_001)
+   CẬP NHẬT: 19/10/2026 17:32 - BƯỚC: TC_T02A (lô lo_002)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(2, `
 apple|🍎|quả táo
@@ -138,4 +138,63 @@ branch|🌿|cành cây|cay_hoa
 chain|⛓️|dây xích|do_vat
 church|⛪|nhà thờ|noi_chon
 circle|⭕|hình tròn|mau_sac
+engine|⚙️|động cơ|giao_thong
+finger|☝️|ngón tay|co_the
+frame|🖼️|khung tranh|do_vat
+hook|🪝|cái móc|do_vat
+horn|📯|cái kèn|am_nhac
+knot|🪢|nút thắt|do_vat
+mouth|👄|cái miệng|co_the
+nail|💅|móng tay|co_the
+office|🏢|văn phòng|noi_chon
+rat|🐀|chuột cống|con_vat
+square|🟥|hình vuông|truong_hoc
+stick|🏒|cây gậy|do_vat
+store|🏪|cửa hàng|noi_chon
+thread|🧵|sợi chỉ|do_vat
+wheel|🛞|bánh xe|giao_thong
+broken|💔|bị vỡ|tinh_chat
+first|🥇|thứ nhất|so_dem
+second|🥈|thứ hai|so_dem
+cork|🍾|nút chai|do_vat
+cover|📔|bìa sách|truong_hoc
+family|👪|gia đình|gia_dinh
+father|👨|bố|gia_dinh
+field|🌾|cánh đồng|thien_nhien
+glass|🥛|cái ly|do_vat
+letter|✉️|lá thư|truong_hoc
+mother|🤱|mẹ|gia_dinh
+night|🌃|ban đêm|thoi_gian
+peace|🕊️|hòa bình|khac
+person|🧑|con người|con_nguoi
+place|📍|nơi chốn|noi_chon
+sound|🔊|âm thanh|am_nhac
+stone|🪨|hòn đá|thien_nhien
+weight|⚖️|cân nặng|khac
+woman|👩|phụ nữ|con_nguoi
+spring|🌸|mùa xuân|thoi_gian
+street|🛣️|đường phố|noi_chon
+clean|🧼|sạch sẽ|tinh_chat
+quiet|🤫|yên lặng|tinh_chat
+strong|💪|khỏe mạnh|tinh_chat
+loud|📢|ồn ào|tinh_chat
+wrong|❌|sai|tinh_chat
+right|➡️|bên phải|noi_chon
+animal|🐾|động vật|con_vat
+sister|👧|chị em gái|gia_dinh
+friend|👫|bạn bè|con_nguoi
+fruit|🍎🍌|trái cây|do_an
+month|📅|tháng|thoi_gian
+smoke|💨|khói|thien_nhien
+voice|🗣️|giọng nói|con_nguoi
+wool|🧶|len|quan_ao
+story|📚|câu chuyện|truong_hoc
+minute|⏱️|phút|thoi_gian
+danger|⚠️|nguy hiểm|khac
+number|🔢|con số|so_dem
+price|🏷️|giá tiền|khac
+stage|🎭|sân khấu|noi_chon
+start|🏁|bắt đầu|khac
+waste|🗑️|rác|nha_cua
+mist|🌫️|sương mù|thoi_tiet
 `);
