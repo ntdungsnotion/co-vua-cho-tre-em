@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap2.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 2 (Trung bình), 187 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 2 (Trung bình), 211 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 17:32 - BƯỚC: TC_T02A (lô lo_002)
+   CẬP NHẬT: 19/10/2026 19:06 - BƯỚC: TC_T02B (lô lo_003)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(2, `
 apple|🍎|quả táo
@@ -197,4 +197,28 @@ stage|🎭|sân khấu|noi_chon
 start|🏁|bắt đầu|khac
 waste|🗑️|rác|nha_cua
 mist|🌫️|sương mù|thoi_tiet
+hotel|🏨|khách sạn|noi_chon
+child|🧒|đứa trẻ|con_nguoi
+cream|🍦|kem|do_an
+tower|🗼|ngọn tháp|noi_chon
+shorts|🩳|quần soóc|quan_ao
+turkey|🦃|gà tây|con_vat
+prince|🤴|hoàng tử|con_nguoi
+shell|🐚|vỏ sò|thien_nhien
+soccer|⚽|bóng đá|the_thao
+cinema|🎦|rạp chiếu phim|noi_chon
+movie|🎥|bộ phim|khac
+party|🎉|bữa tiệc|khac
+magic|🪄|phép thuật|khac
+third|🥉|thứ ba|so_dem
+couple|💑|một cặp đôi|con_nguoi
+speed|🚄|tốc độ|giao_thong
+worker|👷|công nhân|nghe_nghiep
+pills|💊|viên thuốc|co_the
+coins|🪙|đồng xu|do_vat
+folder|📁|thư mục|do_vat
+mount|🗻|ngọn núi|thien_nhien
+racing|🏎️|đua xe|the_thao
+flash|📸|đèn flash|do_vat
+japan|🗾|nước Nhật Bản|noi_chon
 `);
