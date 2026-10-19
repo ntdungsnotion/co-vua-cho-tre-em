@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap1.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 1 (Dễ), 210 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 1 (Dễ), 241 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 21:00 - BƯỚC: TC_T02C-F (lô lo_007)
+   CẬP NHẬT: 19/10/2026 21:14 - BƯỚC: TC_T02G (lô lo_008)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(1, `
 cat|🐱|con mèo
@@ -220,4 +220,35 @@ palm|🌴|cây cọ|cay_hoa
 pine|🌲|cây thông|cay_hoa
 asia|🌏|châu Á|noi_chon
 can|🥫|đồ hộp|do_an
+zero|0️⃣|số không|so_dem
+june|📆6️⃣|tháng sáu|thoi_gian
+july|📆7️⃣|tháng bảy|thoi_gian
+yoga|🧘|tập yoga|the_thao
+cool|😎|ngầu|cam_xuc
+sick|🤧|bị ốm|cam_xuc
+wake|🥱☀️|thức dậy|hanh_dong
+wait|⏳|chờ đợi|hanh_dong
+ride|🚴|đạp xe|hanh_dong
+shop|🛍️|mua sắm|hanh_dong
+pay|💳|trả tiền|hanh_dong
+win|🏆|chiến thắng|hanh_dong
+lose|😞|thua|hanh_dong
+hold|🤲|cầm giữ|hanh_dong
+hide|🙈|trốn|hanh_dong
+find|🔍|tìm|hanh_dong
+lost|🧭❓|bị lạc|hanh_dong
+fix|🛠️|sửa chữa|hanh_dong
+lake|🏞️|cái hồ|thien_nhien
+hill|⛰️|ngọn đồi|thien_nhien
+fair|🎡|hội chợ|noi_chon
+menu|📋🍽️|thực đơn|do_an
+cafe|☕🏠|quán cà phê|noi_chon
+tie|👔|cà vạt|quan_ao
+math|➕✖️|môn toán|truong_hoc
+art|🖼️🎨|môn mỹ thuật|truong_hoc
+band|🎸🥁|ban nhạc|am_nhac
+golf|⛳|gôn|the_thao
+team|👥|đội|the_thao
+race|🏎️🏁|cuộc đua|the_thao
+pet|🐕🐈|thú cưng|con_vat
 `);
