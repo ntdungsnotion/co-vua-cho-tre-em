@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap1.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 1 (Dễ), 133 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 1 (Dễ), 193 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 17/10/2026 15:36 - BƯỚC: TC_T01 (lô thử lo_001)
+   CẬP NHẬT: 19/10/2026 17:32 - BƯỚC: TC_T02A (lô lo_002)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(1, `
 cat|🐱|con mèo
@@ -143,4 +143,64 @@ bone|🦴|khúc xương|co_the
 boot|🥾|giày ống|quan_ao
 card|🃏|lá bài|the_thao
 cart|🛒|xe đẩy|giao_thong
+drop|💧|giọt nước|thien_nhien
+flag|🚩|lá cờ|do_vat
+fly|🪰|con ruồi|con_vat
+head|👤|cái đầu|co_the
+line|➖|đường kẻ|truong_hoc
+lock|🔒|ổ khóa|do_vat
+net|🥅|tấm lưới|the_thao
+pin|🧷|cái ghim|do_vat
+pump|⛽|máy bơm|do_vat
+rail|🛤️|đường ray|giao_thong
+cut|✂️|cắt|hanh_dong
+good|👌|tốt|tinh_chat
+high|⬆️|cao|tinh_chat
+long|📏|dài|tinh_chat
+new|🆕|mới|tinh_chat
+open|🔓|mở|hanh_dong
+dark|🌑|tối|tinh_chat
+low|⬇️|thấp|tinh_chat
+old|👴|già|tinh_chat
+back|🔙|phía sau|noi_chon
+end|🔚|kết thúc|khac
+fear|😱|sợ hãi|cam_xuc
+food|🍱|đồ ăn|do_an
+hole|🕳️|cái lỗ|khac
+ink|🖋️|mực|truong_hoc
+look|👀|nhìn|hanh_dong
+love|❤️|yêu thương|cam_xuc
+mark|✅|dấu tích|truong_hoc
+name|📛|tên|con_nguoi
+news|📰|tin tức|khac
+note|🗒️|ghi chú|truong_hoc
+oil|🛢️|dầu|do_vat
+page|📄|trang giấy|truong_hoc
+salt|🧂|muối|do_an
+seat|💺|chỗ ngồi|giao_thong
+stop|🛑|dừng lại|giao_thong
+test|📝|bài kiểm tra|truong_hoc
+top|🔝|đỉnh|noi_chon
+wood|🪵|gỗ|thien_nhien
+seed|🌱|hạt giống|cay_hoa
+town|🏘️|thị trấn|noi_chon
+wet|💦|ướt|tinh_chat
+bad|👎|tệ|tinh_chat
+slow|🐢|chậm|tinh_chat
+left|⬅️|bên trái|noi_chon
+gold|🪙|vàng|khac
+sand|🏖️|cát|thien_nhien
+sky|🌤️|bầu trời|thien_nhien
+week|🗓️|tuần|thoi_gian
+word|🔤|từ|truong_hoc
+time|⌛|thời gian|thoi_gian
+hour|🕐|giờ|thoi_gian
+help|🆘|giúp đỡ|hanh_dong
+talk|💬|nói chuyện|hanh_dong
+step|👣|bước chân|hanh_dong
+work|💼|làm việc|nghe_nghiep
+send|📤|gửi|hanh_dong
+fall|🍂|mùa thu|thoi_gian
+pain|🤕|cơn đau|cam_xuc
+day|🌞|ban ngày|thoi_gian
 `);
