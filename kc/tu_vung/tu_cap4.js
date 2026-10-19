@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap4.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 4 (Thử thách), 198 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 4 (Thử thách), 260 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 21:14 - BƯỚC: TC_T02G (lô lo_008)
+   CẬP NHẬT: 20/10/2026 05:40 - BƯỚC: TC_T02H (lô lo_009)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(4, `
 elephant|🐘|con voi
@@ -208,4 +208,66 @@ toolbox|🧰|hộp dụng cụ|do_vat
 extinguisher|🧯|bình chữa cháy|do_vat
 recycle|♻️|tái chế|do_vat
 confetti|🎊|hoa giấy|do_vat
+difficult|🤯|khó|tinh_chat
+thirsty|🥵💧|khát|cam_xuc
+expensive|💎💰|đắt|tinh_chat
+different|🔀|khác nhau|tinh_chat
+careful|🧐⚠️|cẩn thận|tinh_chat
+shoulder|🤷|vai|co_the
+footprint|👣|dấu chân|co_the
+headache|🤕|đau đầu|co_the
+toothache|🦷😖|đau răng|co_the
+doorbell|🔔🚪|chuông cửa|nha_cua
+screwdriver|🪛|tua vít|do_vat
+furniture|🛋️🪑|đồ nội thất|nha_cua
+apartment|🏢|căn hộ|nha_cua
+mousetrap|🪤|bẫy chuột|do_vat
+briefcase|💼|cặp tài liệu|do_vat
+suitcase|🧳|va li|do_vat
+mailbox|📫|hộp thư|nha_cua
+pickaxe|⛏️|cuốc chim|do_vat
+syringe|💉|ống tiêm|co_the
+plunger|🪠|cây thông bồn cầu|nha_cua
+hourglass|⌛|đồng hồ cát|do_vat
+stopwatch|⏱️|đồng hồ bấm giờ|do_vat
+paintbrush|🖌️|cọ vẽ|am_nhac
+chimney|🏠💨|ống khói|nha_cua
+eyebrow|🤨|lông mày|co_the
+fingernail|💅|móng tay|co_the
+goggles|🥽|kính bơi|do_vat
+bouquet|💐|bó hoa|cay_hoa
+accordion|🪗|đàn xếp|am_nhac
+boomerang|🪃|bumơrang|do_vat
+firecracker|🧨|pháo|do_vat
+sparkler|🎇|pháo que|do_vat
+christmas|🎄|lễ Giáng sinh|thoi_gian
+eggplant|🍆|cà tím|do_an
+chestnut|🌰|hạt dẻ|do_an
+raccoon|🦝|gấu mèo|con_vat
+orangutan|🦧|đười ươi|con_vat
+cockroach|🪳|con gián|con_vat
+speedboat|🚤|ca nô|giao_thong
+locomotive|🚂|đầu máy xe lửa|giao_thong
+restroom|🚻|nhà vệ sinh|noi_chon
+luggage|🛅|hành lý|do_vat
+megaphone|📣|loa cầm tay|do_vat
+bookshelf|📚🪵|giá sách|nha_cua
+cupboard|🚪🍽️|tủ bát|nha_cua
+wardrobe|🚪👕|tủ quần áo|nha_cua
+ceiling|🏠⬆️|trần nhà|nha_cua
+basement|🏠⬇️|tầng hầm|nha_cua
+boiling|♨️|sôi|tinh_chat
+hairdryer|💨💇|máy sấy tóc|do_vat
+shampoo|🧴💇|dầu gội|do_vat
+toothpaste|🦷🧴|kem đánh răng|do_vat
+upstairs|🪜⬆️|tầng trên|nha_cua
+downstairs|🪜⬇️|tầng dưới|nha_cua
+shallow|🦶💧|nông|tinh_chat
+crowded|👥👥👥|đông đúc|tinh_chat
+allergy|🤧🌼|dị ứng|co_the
+dishwasher|🍽️💦|máy rửa bát|nha_cua
+laundry|👕🧺|đồ giặt|nha_cua
+cottage|🏡🌲|nhà nhỏ ở quê|nha_cua
+treehouse|🌳🏠|nhà trên cây|nha_cua
+doghouse|🐶🏠|chuồng chó|nha_cua
 `);

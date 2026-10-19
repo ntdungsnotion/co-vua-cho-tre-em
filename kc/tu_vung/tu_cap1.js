@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap1.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 1 (Dễ), 241 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 1 (Dễ), 278 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 21:14 - BƯỚC: TC_T02G (lô lo_008)
+   CẬP NHẬT: 20/10/2026 05:40 - BƯỚC: TC_T02H (lô lo_009)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(1, `
 cat|🐱|con mèo
@@ -251,4 +251,41 @@ golf|⛳|gôn|the_thao
 team|👥|đội|the_thao
 race|🏎️🏁|cuộc đua|the_thao
 pet|🐕🐈|thú cưng|con_vat
+big|🐘|to, lớn|tinh_chat
+tall|🦒|cao|tinh_chat
+warm|🌤️🧣|ấm|tinh_chat
+dry|🏜️|khô|tinh_chat
+fast|🐆💨|nhanh|tinh_chat
+hard|🪨✊|cứng|tinh_chat
+soft|☁️🧸|mềm|tinh_chat
+rich|💰|giàu|tinh_chat
+weak|🥀|yếu|tinh_chat
+easy|👌🧩|dễ|tinh_chat
+late|⏰😰|muộn|tinh_chat
+far|🔭|xa|tinh_chat
+deep|🌊⬇️|sâu|tinh_chat
+wide|↔️🛣️|rộng|tinh_chat
+thin|📄📏|mỏng|tinh_chat
+cute|🐱💕|dễ thương|tinh_chat
+busy|🐝⏳|bận rộn|tinh_chat
+safe|🛡️✅|an toàn|tinh_chat
+free|🆓|miễn phí|tinh_chat
+same|👯|giống nhau|tinh_chat
+kind|🤗|tốt bụng|tinh_chat
+half|🌗|một nửa|so_dem
+huge|🦕|khổng lồ|tinh_chat
+tiny|🐜🔍|tí hon|tinh_chat
+toe|🦶👆|ngón chân|co_the
+neck|🧣👤|cổ|co_the
+wall|🧱|bức tường|nha_cua
+pan|🍳⚫|cái chảo|do_vat
+gear|⚙️|bánh răng|do_vat
+roof|🏠🔺|mái nhà|nha_cua
+yard|🏡🌳|sân nhà|nha_cua
+link|🔗|mắt xích, liên kết|do_vat
+row|🚣|chèo thuyền|hanh_dong
+euro|💶|đồng euro|so_dem
+body|🧍‍♀️|cơ thể|co_the
+rest|🛌|nghỉ ngơi|hanh_dong
+wire|🔌〰️|dây điện|do_vat
 `);

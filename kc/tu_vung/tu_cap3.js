@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap3.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 275 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 322 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 21:14 - BƯỚC: TC_T02G (lô lo_008)
+   CẬP NHẬT: 20/10/2026 05:40 - BƯỚC: TC_T02H (lô lo_009)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(3, `
 garden|🌷|khu vườn
@@ -285,4 +285,51 @@ phoenix|🔥🐦|chim phượng hoàng|con_vat
 witch|🧙‍♀️|phù thủy|con_nguoi
 elder|🧓|người già|con_nguoi
 hatch|🐣|nở trứng|con_vat
+noisy|🔊😖|ồn ào|tinh_chat
+correct|✅|đúng|tinh_chat
+scary|👻|đáng sợ|tinh_chat
+healthy|🥗💪|khỏe mạnh|co_the
+salty|🧂|mặn|tinh_chat
+spicy|🌶️🔥|cay|tinh_chat
+bitter|☕😖|đắng|tinh_chat
+outside|🌳👧|bên ngoài|noi_chon
+awake|👀☀️|thức|tinh_chat
+messy|🧸🧦📚|bừa bộn|tinh_chat
+sticky|🍯🤚|dính|tinh_chat
+shiny|✨|sáng bóng|tinh_chat
+curly|➰|xoăn|tinh_chat
+beard|🧔|râu|co_the
+sweat|😓|mồ hôi|co_the
+medicine|💊|thuốc|co_the
+trash|🗑️|rác|do_vat
+razor|🪒|dao cạo|do_vat
+lotion|🧴|kem dưỡng da|do_vat
+fridge|🧊🚪|tủ lạnh|nha_cua
+stairs|🪜🏠|cầu thang|nha_cua
+fence|🚧|hàng rào|nha_cua
+massage|💆|xoa bóp|co_the
+amazed|😲|kinh ngạc|cam_xuc
+pinch|🤏|véo|hanh_dong
+punch|👊|đấm|hanh_dong
+wrist|⌚✋|cổ tay|co_the
+kimono|👘|áo kimono|quan_ao
+pouch|👝|túi nhỏ|do_vat
+abacus|🧮|bàn tính|truong_hoc
+banjo|🪕|đàn banjo|am_nhac
+pinata|🪅|con giấy pinata|do_vat
+poodle|🐩|chó xù|con_vat
+statue|🗽|bức tượng|noi_chon
+siren|🚨|còi báo động|giao_thong
+kettle|🫖🔥|ấm đun nước|do_vat
+frozen|🧊❄️|đông cứng|tinh_chat
+address|🏠📍|địa chỉ|nha_cua
+sweep|🧹💨|quét nhà|hanh_dong
+perfect|💯✨|hoàn hảo|tinh_chat
+vitamin|💊🍊|vitamin|co_the
+socket|🔌🧱|ổ cắm|nha_cua
+swing|🌳🪢|xích đu|nha_cua
+igloo|🧊🏠|nhà băng|nha_cua
+ladle|🥄🍲|cái muôi|do_vat
+napkin|🍽️📄|khăn ăn|do_vat
+charger|🔌📱|cục sạc|do_vat
 `);

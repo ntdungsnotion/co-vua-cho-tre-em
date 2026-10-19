@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap2.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 2 (Trung bình), 298 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 2 (Trung bình), 354 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 21:14 - BƯỚC: TC_T02G (lô lo_008)
+   CẬP NHẬT: 20/10/2026 05:40 - BƯỚC: TC_T02H (lô lo_009)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(2, `
 apple|🍎|quả táo
@@ -308,4 +308,60 @@ winner|🏆🥇|người thắng|the_thao
 prize|🎁🏆|giải thưởng|the_thao
 ogre|👹|yêu quái|con_nguoi
 hive|🐝🏠|tổ ong|con_vat
+small|🤏🐭|nhỏ|tinh_chat
+short|📏⬇️|ngắn, thấp|tinh_chat
+heavy|🐘🏋️|nặng|tinh_chat
+empty|📭|trống rỗng|tinh_chat
+closed|📕|đóng|tinh_chat
+young|👦🌱|trẻ|tinh_chat
+dirty|👕🟤|bẩn|tinh_chat
+sharp|🔪✨|sắc, nhọn|tinh_chat
+early|🌅⏰|sớm|tinh_chat
+thick|📏📚|dày|tinh_chat
+round|⚽⭕|tròn|mau_sac
+bright|🔆|sáng|tinh_chat
+sour|🍋😖|chua|tinh_chat
+fresh|🥬✨|tươi|tinh_chat
+cheap|🏷️⬇️|rẻ|tinh_chat
+alone|🧍|một mình|tinh_chat
+inside|🏠👧|bên trong|noi_chon
+tidy|🧹✨|gọn gàng|tinh_chat
+knee|🧎|đầu gối|co_the
+lips|💋|môi|co_the
+muscle|💪✨|cơ bắp|co_the
+lung|🫁|phổi|co_the
+fist|✊|nắm tay|co_the
+hurt|😣|đau|co_the
+hut|🛖|túp lều|nha_cua
+bolt|🔩|bu lông|do_vat
+alarm|⏰🔔|đồng hồ báo thức|do_vat
+tissue|🧻|giấy vệ sinh|nha_cua
+germ|🦠|vi trùng|co_the
+wink|😉|nháy mắt|hanh_dong
+grin|😁|cười toe toét|cam_xuc
+vase|🏺|bình hoa|nha_cua
+boots|👢|đôi bốt|quan_ao
+nest|🐣🪵|tổ chim|con_vat
+temple|🛕|ngôi đền|noi_chon
+vest|🦺|áo gi lê|quan_ao
+chart|📊|biểu đồ|truong_hoc
+dollar|💲|đô la|so_dem
+tap|🚰|vòi nước|nha_cua
+vacuum|🧹⚡|máy hút bụi|do_vat
+smooth|🥚✨|nhẵn, mịn|tinh_chat
+famous|🌟|nổi tiếng|tinh_chat
+secret|🤐|bí mật|tinh_chat
+nap|😴🛋️|giấc ngủ ngắn|hanh_dong
+narrow|🚪🤏|hẹp|tinh_chat
+fake|🥸|giả|tinh_chat
+health|🍎💪|sức khỏe|co_the
+flu|🤒🤧|cảm cúm|co_the
+switch|💡👆|công tắc|nha_cua
+barn|🐄🏠|chuồng trại|nha_cua
+pot|🍲🔥|cái nồi|do_vat
+glue|🧴📄|keo dán|truong_hoc
+string|🧵〰️|sợi dây|do_vat
+rope|🪢〰️|dây thừng|do_vat
+remote|📺👆|điều khiển TV|do_vat
+screen|🖥️|màn hình|do_vat
 `);
