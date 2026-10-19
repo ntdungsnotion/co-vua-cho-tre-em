@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap3.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 146 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 3 (Khó), 167 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 17:32 - BƯỚC: TC_T02A (lô lo_002)
+   CẬP NHẬT: 19/10/2026 19:06 - BƯỚC: TC_T02B (lô lo_003)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(3, `
 garden|🌷|khu vườn
@@ -156,4 +156,25 @@ sneeze|🤧|hắt hơi|co_the
 cough|😷|ho|co_the
 history|📜|lịch sử|truong_hoc
 surprise|😮|bất ngờ|cam_xuc
+factory|🏭|nhà máy|noi_chon
+buffalo|🐃|con trâu|con_vat
+monster|👾|quái vật|khac
+clothes|👚|quần áo|quan_ao
+wedding|💒|đám cưới|khac
+hundred|💯|một trăm|so_dem
+cabinet|🗄️|cái tủ|nha_cua
+thinking|🤔|đang nghĩ|hanh_dong
+standing|🧍|đang đứng|hanh_dong
+dancing|🕺|nhảy múa|hanh_dong
+package|📦|gói hàng|do_vat
+delivery|🚚|giao hàng|giao_thong
+printer|🖨️|máy in|do_vat
+vehicle|🚙|xe cộ|giao_thong
+traffic|🚦|giao thông|giao_thong
+desktop|🖥️|máy tính bàn|do_vat
+bookmark|🔖|thẻ đánh dấu sách|truong_hoc
+athletic|🏃|thể thao|the_thao
+rugby|🏉|bóng bầu dục|the_thao
+football|🏈|bóng bầu dục Mỹ|the_thao
+uniform|🥋|đồng phục|quan_ao
 `);

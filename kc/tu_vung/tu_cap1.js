@@ -1,13 +1,13 @@
 /* ================================================================
    FILE: kc/tu_vung/tu_cap1.js
-   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 1 (Dễ), 193 từ.
+   CHỨC NĂNG: KHO TỪ VỰNG TIẾNG ANH DÙNG CHUNG TOÀN APP - CẤP 1 (Dễ), 209 từ.
               Mỗi dòng: từ|hình|nghĩa|chủ đề (chủ đề có thể trống). Đọc bằng kc/tu_vung/tu_vung.js.
    THÊM TỪ: dùng công cụ nạp từ (kiểm tra trùng, định dạng, emoji, tự chia cấp) rồi để công cụ
             ghi lại file này. Không sửa tay: lần nạp sau công cụ sẽ ghi đè.
    GIẤY PHÉP: một phần nghĩa tiếng Việt tham khảo Wiktionary (https://www.wiktionary.org),
               Creative Commons Attribution-ShareAlike (CC BY-SA). Phần dữ liệu từ trong file này
               giữ giấy phép CC BY-SA.
-   CẬP NHẬT: 19/10/2026 17:32 - BƯỚC: TC_T02A (lô lo_002)
+   CẬP NHẬT: 19/10/2026 19:06 - BƯỚC: TC_T02B (lô lo_003)
    ================================================================ */
 (typeof window !== "undefined" ? window : globalThis).KC_TU_VUNG.them(1, `
 cat|🐱|con mèo
@@ -203,4 +203,20 @@ send|📤|gửi|hanh_dong
 fall|🍂|mùa thu|thoi_gian
 pain|🤕|cơn đau|cam_xuc
 day|🌞|ban ngày|thoi_gian
+saw|🪚|cái cưa|do_vat
+ram|🐏|cừu đực|con_vat
+ski|🎿|ván trượt tuyết|the_thao
+cap|🧢|mũ lưỡi trai|quan_ao
+plug|🔌|phích cắm|do_vat
+disc|💿|đĩa CD|do_vat
+bank|🏦|ngân hàng|noi_chon
+lab|🥼|phòng thí nghiệm|truong_hoc
+atom|⚛️|nguyên tử|truong_hoc
+tube|🧪|ống nghiệm|truong_hoc
+desk|🪑|bàn học|truong_hoc
+tabs|📑|thẻ trang|do_vat
+film|🎞️|cuộn phim|khac
+palm|🌴|cây cọ|cay_hoa
+pine|🌲|cây thông|cay_hoa
+asia|🌏|châu Á|noi_chon
 `);
