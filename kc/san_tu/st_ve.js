@@ -27,6 +27,7 @@
              sau / truoc / nang / dungYen): ván trượt, khủng long, vây bơi, đôi cánh, tàu vũ trụ. Hộp va chạm không đổi.
    CẬP NHẬT: 16/10/2026 - TC_00G3: ST.VE_CHUNG.veMatTroi (mặt trời có tia sáng + vành lửa).
    CẬP NHẬT: 16/10/2026 - TC_00G: hàm vẽ bé chuyển sang st_ve_be.js (vẽ lại bé 11 tuổi, tư thế bơi / bay / ngồi tàu).
+   CẬP NHẬT: 20/10/2026 - TC_T03A: biển chữ cấp 3-4 vẽ HÌNH RIÊNG của từ (nếu đã có, đã tải xong), không thì emoji.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -248,12 +249,13 @@
       c.fillStyle = cua; c.beginPath(); c.roundRect(gx - 30, dinh - 100, 60, 100, [30, 30, 2, 2]); c.fill();
       // biển chữ của cửa (giống biển chữ trên đường)
       if (H.tt) {
-        const daDung = H.tt.daDung, chu = g.dk.anChu && !daDung ? H.tt.tu.e + " 🔊" : H.tt.tu.en;
+        const daDung = H.tt.daDung;
         c.font = "800 19px " + FONT; c.textAlign = "center"; c.textBaseline = "middle";
-        const w = Math.max(64, c.measureText(chu).width + 24), by = Math.max(64, dinh - 150) + (daDung ? 0 : Math.sin(t * 7) * 3);
+        const nd = this.noiDungBien(H.tt.tu, g.dk.anChu && !daDung);
+        const w = Math.max(64, nd.rong + 24), by = Math.max(64, dinh - 150) + (daDung ? 0 : Math.sin(t * 7) * 3);
         c.fillStyle = daDung ? "#e6fff0" : "#fff"; c.beginPath(); c.roundRect(gx - w / 2, by, w, 30, 10); c.fill();
         c.lineWidth = daDung ? 2.5 : 4; c.strokeStyle = daDung ? "#2BB673" : "#FFB800"; c.stroke();
-        c.fillStyle = daDung ? "#1f8a55" : "#2B2640"; c.fillText(chu, gx, by + 16);
+        c.fillStyle = daDung ? "#1f8a55" : "#2B2640"; this.veNoiDungBien(nd, gx, by + 16);
       }
       // kim cương
       H.kimCuongs.forEach(k => { if (!k.daNhat) this.veKimCuong(k.x - camX, dat - k.y, 1, k.tHien); });
@@ -896,8 +898,8 @@
       if (o.nhom === "ho" || o.nhom === "kimCuong") dinhY = this.dat - 62; // hố / cụm kim cương: biển cắm trên đất
       dinhY = Math.max(dinhY, 64);
       c.font = "800 19px " + FONT;
-      const chu = g.dk.anChu && !daDung ? o.tu.e + " 🔊" : o.tu.en; // cấp 3-4: chưa đúng thì chỉ có hình
-      const w = Math.max(64, c.measureText(chu).width + 24), h = 30;
+      const nd = this.noiDungBien(o.tu, g.dk.anChu && !daDung); // cấp 3-4: chưa đúng thì chỉ có hình
+      const w = Math.max(64, nd.rong + 24), h = 30;
       const nay = dangHoi ? Math.sin(this.t * 7) * 3 : 0;
       const by = dinhY - h + nay;
       if (o.nhom === "ho" || o.nhom === "can" || o.nhom === "kimCuong") { c.fillStyle = "#7a4b25"; c.fillRect(tamX - 2, by + h, 4, this.dat - by - h - (o.nhom === "can" ? o.cao : 0)); }
@@ -905,7 +907,23 @@
       c.beginPath(); c.roundRect(tamX - w / 2, by, w, h, 10); c.fill();
       c.lineWidth = dangHoi ? 4 : 2.5; c.strokeStyle = daDung ? "#2BB673" : dangHoi ? "#FFB800" : "#4B2FB0"; c.stroke();
       c.fillStyle = daDung ? "#1f8a55" : "#2B2640"; c.textAlign = "center"; c.textBaseline = "middle";
-      c.fillText(chu, tamX, by + h / 2 + 1);
+      this.veNoiDungBien(nd, tamX, by + h / 2 + 1);
+    }
+    /* TC_T03A: nội dung biển chữ. Cấp 3-4 (laHinh) là hình của từ + 🔊: hình riêng đã tải xong thì vẽ
+       ảnh, chưa có / chưa tải xong thì emoji. Không thì chữ tiếng Anh. Cần đặt font trước khi gọi. */
+    noiDungBien(tu, laHinh, duoi) {
+      const TV = window.KC_TU_VUNG, anh = laHinh && TV && TV.anhVe ? TV.anhVe(tu) : null;
+      const chu = (laHinh ? (anh ? "" : tu.e) + " 🔊" : tu.en) + (duoi || "");
+      const coAnh = anh ? 24 : 0;
+      return { anh, chu, coAnh, rong: this.c.measureText(chu).width + coAnh };
+    }
+    veNoiDungBien(nd, cx, cy) { // căn giữa tại (cx, cy), textBaseline đã là middle
+      const c = this.c;
+      if (!nd.anh) { c.textAlign = "center"; c.fillText(nd.chu, cx, cy); return; }
+      const x0 = cx - nd.rong / 2, s = nd.coAnh, a = nd.anh;
+      const k = Math.min(s / (a.naturalWidth || s), s / (a.naturalHeight || s)), aw = (a.naturalWidth || s) * k, ah = (a.naturalHeight || s) * k;
+      c.drawImage(a, x0 + (s - aw) / 2, cy - ah / 2, aw, ah);
+      c.textAlign = "left"; c.fillText(nd.chu, x0 + s, cy); c.textAlign = "center";
     }
     veKimCuong(x, y, k, t) {
       const c = this.c, s = 13 * k, nay = Math.sin((t || 0) * 5) * 2;
@@ -935,12 +953,12 @@
       const x = tt.o.x + tt.o.rong / 2 - camX; if (x < this.rong - 10) return;
       const c = this.c, y = Math.max(70, this.dat - 120), nay = Math.sin(this.t * 8) * 4;
       c.font = "800 18px " + FONT;
-      const chuTu = g.dk.anChu ? tt.tu.e + " 🔊" : tt.tu.en;
-      const w = c.measureText(chuTu).width + 44;
+      const nd = this.noiDungBien(tt.tu, g.dk.anChu, " ➜");
+      const w = nd.rong + 44;
       c.fillStyle = "rgba(255,255,255,0.95)"; c.strokeStyle = "#FFB800"; c.lineWidth = 3;
       c.beginPath(); c.roundRect(this.rong - w - 14 + nay, y - 16, w, 32, 12); c.fill(); c.stroke();
       c.fillStyle = "#2B2640"; c.textAlign = "center"; c.textBaseline = "middle";
-      c.fillText(chuTu + " ➜", this.rong - w / 2 - 14 + nay, y + 1);
+      this.veNoiDungBien(nd, this.rong - w / 2 - 14 + nay, y + 1);
       if (tt.o.hanhDong === "ban" && tt.o.song) { // quái có máu còn ngoài màn hình: báo số viên còn phải bắn
         c.fillStyle = "#c2410c"; c.font = "800 13px " + FONT;
         c.fillText("💥 còn " + tt.o.mau + " viên", this.rong - w / 2 - 14 + nay, y + 28);

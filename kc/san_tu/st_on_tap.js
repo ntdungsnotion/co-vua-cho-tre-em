@@ -8,6 +8,7 @@
    NGÀY: 16/10/2026
    CẬP NHẬT: 16/10/2026 - TC_00G: đồng hồ thưởng kim cương (CAU_HINH.thuongOnTap): ghép càng nhanh
              càng nhiều kim cương (tối đa 5, trung bình 1, chậm 0), bấm sai thì bị trừ sớm hơn.
+   CẬP NHẬT: 20/10/2026 - TC_T03A: so trùng hình theo hình riêng của từ (nếu có), không chỉ emoji.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -23,11 +24,12 @@
   function chonTuOnTap(dsTu, tuSai, soCap, rng) {
     rng = rng || Math.random;
     const sai = new Set(tuSai || []), daCo = new Set(), hinh = new Set(), kq = [];
+    const khoaHinh = t => (t.hinh ? "h:" + t.hinh : "e:" + t.e); // TC_T03A: hình riêng hoặc emoji
     const uuTien = xaoTron(dsTu.filter(t => sai.has(t.en)), rng).concat(xaoTron(dsTu.filter(t => !sai.has(t.en)), rng));
     for (const t of uuTien) {
       if (kq.length >= soCap) break;
-      if (!t || daCo.has(t.en) || hinh.has(t.e)) continue;
-      daCo.add(t.en); hinh.add(t.e); kq.push(t);
+      if (!t || daCo.has(t.en) || hinh.has(khoaHinh(t))) continue;
+      daCo.add(t.en); hinh.add(khoaHinh(t)); kq.push(t);
     }
     return kq;
   }

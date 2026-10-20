@@ -8,6 +8,7 @@
    BƯỚC: TC_00B
    NGÀY: 15/10/2026
    CẬP NHẬT: 15/10/2026 - kho từ tách sang st_kho_tu.js; thêm sổ ghi nhớ để đổi từ mới.
+   CẬP NHẬT: 20/10/2026 - TC_T03A: mỗi từ có thêm hinh (file hình riêng, trống = dùng emoji).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -73,7 +74,7 @@
       this.soTay = soTay || null;
       this.daDung = new Set();
     }
-    static tatCa(cap) { return KHO[cap].map(([en, e, vi]) => ({ en, e, vi, cap })); }
+    static tatCa(cap) { return KHO[cap].map(([en, e, vi, hinh]) => ({ en, e, vi, hinh: hinh || "", cap })); }
     tron(mang) {
       const a = mang.slice();
       for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(this.rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
