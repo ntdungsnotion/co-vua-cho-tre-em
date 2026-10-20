@@ -36,10 +36,16 @@
              Tập chơi và Xem thử không cất.
    CẬP NHẬT: 17/10/2026 - TC_00G4: cấp từ 3-4 vẫn ẩn chữ tiếng Anh nhưng HIỆN nghĩa tiếng Việt
              dưới hình (người dùng yêu cầu).
+   CẬP NHẬT: 20/10/2026 - TC_T03A: kho từ tải từ kc/tu_vung/kho_tu.json (chờ tải xong mới vào màn; lỗi
+             mạng thì báo bé). Ô gợi ý, bảng ôn tập, chip từ đã học hiện HÌNH RIÊNG của từ nếu có,
+             chưa có thì emoji như cũ.
    ================================================================ */
 (function () {
   "use strict";
   const ST = window.ST, CH = ST.CAU_HINH;
+  const TV = window.KC_TU_VUNG;
+  // Hình của từ: hình riêng (kc/tu_vung/hinh/) nếu có, không thì emoji
+  const ganHinh = (el, t) => { if (TV && TV.ganHinh) TV.ganHinh(el, t); else el.textContent = t.e; };
   const $ = id => document.getElementById(id);
   const KHOA_DO_KHO = "kc_santu_do_kho";
   const KHOA_DUONG = "kc_santu_duong";
@@ -181,8 +187,22 @@
   }
 
   /* ---------------- BẮT ĐẦU / TẠM DỪNG / KẾT THÚC ---------------- */
+  // Kho từ chưa tải xong: chờ rồi mới vào màn; tải lỗi thì báo bé
+  let dangChoKho = false;
+  function baoLoiKho() {
+    $("ghiChuDuong").textContent = "😢 Chưa tải được kho từ. Con kiểm tra mạng (Wi-Fi) rồi tải lại trang nhé!";
+  }
+  function choKhoTu() {
+    if (dangChoKho) return;
+    dangChoKho = true;
+    const nut = $("nutBatDau"), chu = nut.textContent;
+    nut.textContent = "⏳ Đang tải từ..."; nut.disabled = true;
+    TV.sanSang.then(() => { dangChoKho = false; nut.textContent = chu; nut.disabled = false; veChonDoKho(); batDau(); },
+      () => { dangChoKho = false; nut.textContent = chu; nut.disabled = false; baoLoiKho(); });
+  }
   function batDau() {
     am.mo(); am.phat("nut");
+    if (TV && !TV.daNap) { choKhoTu(); return; }
     if (!tienDo.duongMo(maDuong)) { maDuong = "rung"; soManChon = tienDo.manMo("rung"); }
     else if (soManChon !== 0 && !tienDo.manChoiDuoc(maDuong, soManChon)) soManChon = tienDo.manMo(maDuong);
     // Tập chơi: luôn đủ mạng, không tính vào lượt đua. Màn 1-7: nhận mạng còn lại của lượt.
@@ -262,7 +282,10 @@
     tk.tuDung.forEach(t => {
       const b = document.createElement("button");
       const moi = tuMoiThuoc.includes(t.en);
-      b.type = "button"; b.className = "chipTu" + (moi ? " moiThuoc" : ""); b.textContent = `${moi ? "🎓" : t.e} ${t.en}`; b.title = t.vi;
+      b.type = "button"; b.className = "chipTu" + (moi ? " moiThuoc" : ""); b.title = t.vi;
+      const hinh = document.createElement("span"); hinh.className = "hinhChip";
+      if (moi) hinh.textContent = "🎓"; else ganHinh(hinh, t);
+      b.append(hinh, " " + t.en);
       b.onclick = () => { am.mo(); am.docTu(t.en); };
       hop.appendChild(b);
     });
@@ -372,7 +395,7 @@
     const taoThe = (ben, en) => {
       const t = bang.layTu(en), b = document.createElement("button");
       b.type = "button"; b.className = "theOnTap " + ben; b.dataset.ben = ben; b.dataset.en = en;
-      b.textContent = ben === "hinh" ? t.e : t.en;
+      if (ben === "hinh") ganHinh(b, t); else b.textContent = t.en;
       b.setAttribute("aria-label", ben === "hinh" ? "Hình: " + t.vi : "Chữ: " + t.en);
       b.onclick = () => bamTheOnTap(b);
       return b;
@@ -444,7 +467,7 @@
     }
     if (idDangHien === tt.id) return;
     idDangHien = tt.id;
-    $("hinhTu").textContent = tt.tu.e;
+    ganHinh($("hinhTu"), tt.tu);
     $("hinhTu").classList.toggle("anChu", !!g.dk.anChu); $("chuTu").classList.toggle("anChu", !!g.dk.anChu);
     // Cấp 3-4: không hiện chữ tiếng Anh, bé nghe đọc từ, nhìn hình + nghĩa tiếng Việt rồi chọn
     $("chuTu").textContent = g.dk.anChu ? "🔊 Nghe và chọn" : tt.tu.en;
@@ -760,6 +783,7 @@
   else window.addEventListener("resize", () => ve.doiCo());
 
   veChonDoKho();
+  if (TV && TV.sanSang) TV.sanSang.then(() => veChonDoKho(), baoLoiKho); // kho tải xong: cập nhật số từ đã thuộc
   veMenuChon();
   veCaiDatAm();
   veKhungChon();
