@@ -24,7 +24,9 @@
                  không hiện trong bảng cấu hình.
        NGUỒN: các màn hình chép NGUYÊN từ admin_NC.html (NC_06A-2, NC_09B, NC_09);
               logic DÙNG LẠI admin_NC.js ở gốc repo (không viết lại).
-       PHỤ THUỘC: kc_style.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js
+       CẬP NHẬT: 20/10/2026 - TC_T03B: thêm mục "📖 Kho từ vựng" (Quản trị chung): sửa kho từ
+                 dùng chung + tải hình của từ, lưu thẳng vào repo qua GitHub API (qt_kho_tu.js/.css).
+       PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
        BẢO MẬT: đọc phiên chung sessionStorage "coVuaTaiKhoanDangNhap". Kiểm tra
                 vai trò ở trình duyệt chỉ để hiện giao diện; mọi RPC tự kiểm tra
                 admin ở máy chủ (kiem_tra_admin).
@@ -34,6 +36,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kc_style.css">
+  <link rel="stylesheet" href="qt_kho_tu.css">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -431,6 +434,7 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="doithuong" type="button">📦 Đổi thưởng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="ytuong" type="button">💡 Ý tưởng các bé gửi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinhchung" type="button">⚙️ Cấu hình chung</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="khotu" type="button">📖 Kho từ vựng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="giongdoc" type="button">🔊 Giọng đọc</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="donkho" type="button">🧹 Dọn kho ảnh</button>
       </div>
@@ -1169,6 +1173,121 @@
     </section>
 
     <!-- ============================================================ -->
+    <!-- TC_T03B - MÀN HÌNH: KHO TỪ VỰNG (qt_kho_tu.js). Sửa kc/tu_vung/kho_tu.json +
+         hình kc/tu_vung/hinh/, lưu bằng commit qua GitHub API. -->
+    <!-- ============================================================ -->
+    <section class="adminManHinh" id="manhinh-khotu">
+      <div class="adminKhoi ktKhoiDau">
+        <h3>📖 Kho từ vựng tiếng Anh</h3>
+        <p class="adminGhiChu">
+          Kho từ dùng chung cho cả app (game Giải Cứu Mèo Con và các bài học sau này). Sửa thẳng trong bảng,
+          bấm <strong>📷</strong> để tải hình riêng của từ (SVG, PNG, WebP; app tự đặt tên file theo từ),
+          xong bấm <strong>💾 Lưu vào kho</strong>. Khoảng 1 phút sau game sẽ thấy từ và hình mới.
+          Từ chưa có hình riêng thì game dùng emoji.
+        </p>
+        <details class="ktKhoiMa" id="ktKhoiMa">
+          <summary><span id="ktTrangThaiMa" class="ktTrangThaiMa"></span></summary>
+          <div class="ktNoiDungMa">
+            <p class="adminGhiChu">
+              Để lưu, máy này cần <strong>mã truy cập GitHub</strong> (chỉ nhập một lần, máy tự nhớ).
+              Tạo mã ở GitHub: <em>Settings › Developer settings › Personal access tokens › Fine-grained tokens ›
+              Generate new token</em>; mục <em>Repository access</em> chọn <em>Only select repositories</em> ›
+              <strong>co-vua-cho-tre-em</strong>; mục <em>Permissions</em> chọn <strong>Contents: Read and write</strong>.
+              Mã chỉ lưu trên máy này, chỉ gửi tới GitHub. Đừng nhập mã trên máy dùng chung.
+            </p>
+            <div class="adminHang">
+              <div class="adminO">
+                <label for="ktONhapMa">Mã truy cập (bắt đầu bằng github_pat_)</label>
+                <input type="password" id="ktONhapMa" autocomplete="off" placeholder="github_pat_...">
+              </div>
+            </div>
+            <div class="ktHangNutLon">
+              <button class="adminNut" id="ktNutLuuMa" type="button">🔑 Lưu mã và thử</button>
+              <button class="adminNut adminNutNguyHiem" id="ktNutXoaMa" type="button">Xoá mã khỏi máy này</button>
+              <a class="adminNutLienKet" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Mở trang tạo mã ↗</a>
+            </div>
+          </div>
+        </details>
+        <p class="adminGhiChu" id="ktNguon"></p>
+        <div class="ktTongKet" id="ktTongKet"></div>
+      </div>
+
+      <div class="adminThongBao" id="ktThongBao"></div>
+
+      <div class="adminKhoi">
+        <div class="ktThanhLoc">
+          <input type="search" id="ktTim" class="ktTim" placeholder="🔍 Tìm từ, nghĩa, ghi chú…" aria-label="Tìm từ">
+          <select id="ktLocCap" aria-label="Lọc theo cấp">
+            <option value="">Mọi cấp</option>
+            <option value="1">Cấp 1 Dễ</option><option value="2">Cấp 2 Trung bình</option>
+            <option value="3">Cấp 3 Khó</option><option value="4">Cấp 4 Thử thách</option>
+          </select>
+          <select id="ktLocChuDe" aria-label="Lọc theo chủ đề">
+            <option value="">Mọi chủ đề</option><option value="_trong">(chưa có chủ đề)</option>
+          </select>
+          <select id="ktLocSoat" aria-label="Lọc theo soát">
+            <option value="">Soát: tất cả</option><option value="roi">Đã soát</option><option value="chua">Chưa soát</option>
+          </select>
+          <select id="ktLocHinh" aria-label="Lọc theo hình">
+            <option value="">Hình: tất cả</option><option value="rieng">Có hình riêng</option><option value="emoji">Chỉ có emoji</option>
+          </select>
+          <select id="ktLocBao" aria-label="Lọc theo kiểm tra">
+            <option value="">Kiểm tra: tất cả</option><option value="loi">Chỉ từ lỗi ❌</option>
+            <option value="cb">Lỗi hoặc cảnh báo ⚠️</option><option value="doi">Chỉ từ đã đổi (chưa lưu)</option>
+          </select>
+          <button class="adminNut adminNutPhu" id="ktBoLoc" type="button">Bỏ lọc</button>
+        </div>
+        <div class="ktHangNutLon">
+          <button class="adminNut adminNutThanhCong" id="ktNutThem" type="button">➕ Thêm từ</button>
+          <button class="adminNut adminNutPhu" id="ktNutXuat" type="button">📤 Xuất Excel</button>
+          <button class="adminNut adminNutPhu" id="ktNutNhap" type="button">📥 Nhập Excel</button>
+          <button class="adminNut adminNutPhu" id="ktNutTaiLai" type="button">🔄 Tải lại</button>
+          <input type="file" id="ktChonExcel" accept=".xlsx,.xls,.csv" hidden>
+          <input type="file" id="ktChonAnh" accept=".svg,.png,.webp,.jpg,.jpeg,image/svg+xml,image/png,image/webp,image/jpeg" hidden>
+        </div>
+        <p class="adminGhiChu">Nhập Excel: đọc cột "Từ tiếng Anh", "Nghĩa", "Emoji", "Cấp", "Chủ đề", "File hình", "Đã soát", "Ghi chú"
+          (file xuất ở đây hoặc bảng soát). Từ đã có thì sửa theo file, từ mới thì thêm; ô trống giữ nguyên, không xoá từ nào.</p>
+
+        <div class="ktChiaTrang" id="ktTrangTren">
+          <span id="ktSoKhop" class="ktSoKhop"></span>
+          <span class="ktNhomTrang">
+            <button class="adminNut adminNutPhu ktTruoc" type="button">‹ Trước</button>
+            <span class="ktSoTrang"></span>
+            <button class="adminNut adminNutPhu ktSau" type="button">Sau ›</button>
+          </span>
+        </div>
+        <div class="ktKhungBang">
+          <table class="adminBang ktBang">
+            <thead>
+              <tr>
+                <th class="ktOHinh">Hình</th><th class="ktOEn">Từ tiếng Anh</th><th class="ktOVi">Nghĩa</th>
+                <th class="ktOE">Emoji</th><th class="ktOCap">Cấp</th><th class="ktOCd">Chủ đề</th>
+                <th class="ktOSoat">Soát</th><th class="ktOGc">Ghi chú</th><th class="ktOBao">Kiểm tra</th><th class="ktOXoa"></th>
+              </tr>
+            </thead>
+            <tbody id="ktBang"></tbody>
+          </table>
+        </div>
+        <div class="ktChiaTrang" id="ktTrangDuoi">
+          <span></span>
+          <span class="ktNhomTrang">
+            <button class="adminNut adminNutPhu ktTruoc" type="button">‹ Trước</button>
+            <span class="ktSoTrang"></span>
+            <button class="adminNut adminNutPhu ktSau" type="button">Sau ›</button>
+          </span>
+        </div>
+      </div>
+
+      <div class="ktThanhLuu" id="ktThanhLuu">
+        <span id="ktThayDoi">Không có thay đổi chưa lưu.</span>
+        <span class="ktHangNutLon">
+          <button class="adminNut adminNutPhu" id="ktNutBoDoi" type="button" disabled>Bỏ thay đổi</button>
+          <button class="adminNut adminNutThanhCong" id="ktNutLuu" type="button" disabled>💾 Lưu vào kho</button>
+        </span>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
     <!-- MÀN HÌNH 9: DỌN KHO ẢNH - FILE MỒ CÔI (NC_06A-2) -->
     <!-- ============================================================ -->
     <section class="adminManHinh" id="manhinh-donkho">
@@ -1230,5 +1349,6 @@
   <script src="../api.js"></script>
   <script src="../admin_NC.js"></script>
   <script src="quantri_NC.js"></script>
+  <script src="qt_kho_tu.js"></script>
 </body>
 </html>
