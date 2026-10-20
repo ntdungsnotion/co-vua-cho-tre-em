@@ -1,0 +1,156 @@
+/* ================================================================
+   FILE: kc/qt_kho_tu.css
+   CHỨC NĂNG: Giao diện mục "📖 Kho từ vựng" của trang quản trị (qt_kho_tu.js).
+     - Máy tính rộng (>= 1200px): BẢNG nhiều cột giống Excel.
+     - Điện thoại và màn vừa (< 1200px, gồm máy 1024px có thanh bên): mỗi từ một THẺ,
+       lưới tự chia 1-3 cột theo bề ngang (không co thành một cột hẹp trên màn rộng).
+     - Thanh "Lưu" dính đáy màn hình để luôn thấy khi cuộn (chỉ hiện khi có thay đổi chưa lưu).
+   BƯỚC: TC_T03B - NGÀY: 20/10/2026
+   ================================================================ */
+
+#manhinh-khotu .adminKhoi { max-width: 1400px; }
+#manhinh-khotu .adminThongBao { max-width: 1400px; white-space: pre-line; }
+
+/* ----- Mã truy cập GitHub ----- */
+.ktKhoiMa { border: 2px dashed var(--mau-vien); border-radius: 12px; padding: 8px 12px; margin: 8px 0; background: var(--mau-nen-trang); }
+.ktKhoiMa summary { cursor: pointer; font-weight: bold; list-style-position: inside; }
+.ktTrangThaiMa.ktMaCo { color: #1e8449; }
+.ktTrangThaiMa.ktMaChua { color: var(--mau-phu-dam); }
+.ktNoiDungMa { padding-top: 6px; }
+.ktHangNutLon { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0; }
+
+/* ----- Tổng kết ----- */
+.ktTongKet { display: flex; flex-wrap: wrap; gap: 6px; }
+.ktThe { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--mau-chinh-nhat);
+  color: var(--mau-chinh-dam); font-size: 0.85rem; font-weight: bold; border: none; font-family: inherit; }
+button.ktThe { cursor: pointer; }
+.ktTheLoi { background: #fdecea; color: #a93226; }
+.ktTheCb { background: #fff3cd; color: #856404; }
+
+/* ----- Bộ lọc ----- */
+.ktThanhLoc { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.ktThanhLoc select, .ktTim { padding: 7px 8px; border: 1px solid var(--mau-vien); border-radius: 8px;
+  font-family: inherit; font-size: 0.92rem; background: #fff; }
+.ktTim { flex: 1 1 220px; min-width: 0; }
+.ktThanhLoc select { flex: 0 1 auto; max-width: 100%; }
+
+.ktChiaTrang { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.ktSoKhop { font-weight: bold; color: var(--mau-chinh-dam); }
+.ktNhomTrang { display: inline-flex; gap: 8px; align-items: center; }
+
+/* ----- Ô trong bảng / thẻ ----- */
+.ktBang input[type="text"], .ktBang select {
+  width: 100%; padding: 6px 7px; border: 1px solid var(--mau-vien); border-radius: 6px;
+  font-family: inherit; font-size: 0.92rem; box-sizing: border-box; background: #fff; min-width: 0;
+}
+.ktBang input[type="text"]:focus, .ktBang select:focus { outline: 2px solid var(--mau-chinh); border-color: var(--mau-chinh); }
+.ktBang input:disabled, .ktBang select:disabled { background: #f1f1f4; color: #8a8a99; text-decoration: line-through; }
+.ktOEn input { font-weight: bold; }
+.ktOE input { font-size: 1.15rem; text-align: center; }
+
+.ktXemHinh { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; line-height: 1; border: 1px solid var(--mau-vien); border-radius: 10px; background: #fff; overflow: hidden; }
+.ktXemHinh img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.ktHangNut { display: flex; gap: 4px; margin-top: 4px; }
+.ktNutNho { border: 1px solid var(--mau-vien); background: #fff; border-radius: 8px; padding: 4px 8px;
+  font-size: 1rem; cursor: pointer; line-height: 1.1; }
+.ktNutNho:hover { border-color: var(--mau-chinh); background: var(--mau-chinh-nhat); }
+.ktNhanSoat { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; cursor: pointer; font-weight: bold; }
+.ktNhanSoat input { width: 18px; height: 18px; }
+
+.ktOBao { font-size: 0.8rem; line-height: 1.35; }
+.ktLoi { color: #a93226; }
+.ktCanhBao { color: #856404; }
+.ktOn { color: #1e8449; font-weight: bold; }
+.ktNhanDoi { display: inline-block; padding: 1px 8px; border-radius: 999px; font-weight: bold; margin-bottom: 2px; }
+.ktNhanDoi.kt-moi { background: #e8f8f0; color: #1e8449; }
+.ktNhanDoi.kt-sua { background: #e7f0ff; color: #1d4f9c; }
+.ktNhanDoi.kt-xoa { background: #fdecea; color: #a93226; }
+
+.ktDong.kt-moi > td { background: #f2fcf6 !important; }
+.ktDong.kt-sua > td { background: #f3f7ff !important; }
+.ktDong.kt-xoa > td { background: #f6f3f3 !important; opacity: 0.75; }
+.ktDong.ktCoLoi > td.ktOBao { background: #fff4f2 !important; }
+
+/* ----- Thanh lưu dính đáy ----- */
+.ktThanhLuu { position: sticky; bottom: 0; z-index: 15; max-width: 1400px; margin: 0 auto;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 10px 14px; background: var(--mau-nen-khoi); border: 2px solid var(--mau-vien);
+  border-radius: 14px 14px 0 0; box-shadow: 0 -6px 18px rgba(75, 47, 176, 0.12); font-weight: bold; }
+.ktThanhLuu.coDoi { border-color: var(--mau-phu); background: #fffaf0; }
+/* Chưa sửa gì thì ẩn thanh lưu cho đỡ chật (nhất là laptop thấp và điện thoại) */
+.ktThanhLuu:not(.coDoi) { display: none; }
+.ktThanhLuu .ktHangNutLon { margin: 0; }
+
+/* ================================================================
+   MÁY TÍNH RỘNG (>= 1200px): BẢNG
+   ================================================================ */
+@media (min-width: 1200px) {
+  .ktKhungBang { overflow-x: auto; }
+  .ktBang { table-layout: fixed; min-width: 760px; }
+  .ktBang th.ktOHinh { width: 64px; }
+  .ktBang th.ktOEn { width: 10%; }
+  .ktBang th.ktOVi { width: 15%; }
+  .ktBang th.ktOE { width: 60px; }
+  .ktBang th.ktOCap { width: 88px; }
+  .ktBang th.ktOCd { width: 13%; }
+  .ktBang th.ktOSoat { width: 62px; }
+  .ktBang th.ktOGc { width: 11%; }
+  .ktBang th.ktOBao { width: auto; }
+  .ktBang th.ktOXoa { width: 50px; }
+  /* Bảng nằm trong khung cuộn ngang nên tiêu đề không dính được theo trang */
+  .ktBang thead th { position: static; }
+  .ktBang td { vertical-align: top; }
+  .ktOHinh .ktXemHinh { width: 48px; height: 48px; font-size: 1.7rem; }
+  .ktBang th, .ktBang td { padding: 5px 5px; }
+  .ktDongRong td { text-align: center; }
+}
+
+/* ================================================================
+   ĐIỆN THOẠI + MÀN VỪA (< 1200px): THẺ
+   ================================================================ */
+@media (max-width: 1199.98px) {
+  .ktBang, .ktBang tbody { display: block; width: 100%; }
+  .ktBang thead { display: none; }
+  .ktBang tbody { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .ktBang tr.ktDong {
+    display: grid; gap: 6px 8px; padding: 10px; border: 2px solid var(--mau-vien); border-radius: 14px; background: #fff;
+    grid-template-columns: 70px 1fr 1fr 44px;
+    grid-template-areas:
+      "hinh en en xoa"
+      "hinh vi vi vi"
+      "e cap cd cd"
+      "soat gc gc gc"
+      "bao bao bao bao";
+  }
+  .ktBang tr.ktDong.kt-moi { border-color: var(--mau-thanh-cong); }
+  .ktBang tr.ktDong.kt-sua { border-color: #7aa5e8; }
+  .ktBang tr.ktDong.ktCoLoi { border-color: var(--mau-that-bai); }
+  .ktBang tr.ktDong > td { display: block; border: none; padding: 0; background: transparent !important; min-width: 0; }
+  .ktBang tr.ktDong > td[data-nhan]:not([data-nhan=""])::before {
+    content: attr(data-nhan); display: block; font-size: 0.72rem; font-weight: bold; color: var(--mau-chu-nhat); margin-bottom: 1px;
+  }
+  .ktBang tr.ktDong > td.ktOHinh::before { display: none !important; }
+  .ktOHinh { grid-area: hinh; }
+  .ktOEn { grid-area: en; }
+  .ktOVi { grid-area: vi; }
+  .ktOE { grid-area: e; }
+  .ktOCap { grid-area: cap; }
+  .ktOCd { grid-area: cd; }
+  .ktOSoat { grid-area: soat; }
+  .ktOGc { grid-area: gc; }
+  .ktOBao { grid-area: bao; }
+  .ktBang tr.ktDong > td.ktOBao::before { display: none !important; }
+  .ktOXoa { grid-area: xoa; text-align: right; }
+  .ktOXoa .ktNutNho { padding: 6px 8px; }
+  .ktOHinh .ktXemHinh { width: 64px; height: 64px; font-size: 2.3rem; }
+  .ktBang tr.ktDongRong { display: block; grid-column: 1 / -1; }
+  .ktBang tr.ktDongRong td { display: block; border: none; }
+}
+
+@media (max-width: 480px) {
+  .ktBang tbody { grid-template-columns: 1fr; }
+  .ktThanhLoc select { flex: 1 1 calc(50% - 8px); }
+  .ktThanhLuu { padding: 8px 10px; font-size: 0.88rem; }
+  .ktThanhLuu .ktHangNutLon { width: 100%; justify-content: flex-end; }
+}
