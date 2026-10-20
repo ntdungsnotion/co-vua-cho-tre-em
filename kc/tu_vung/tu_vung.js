@@ -18,6 +18,9 @@
    CẬP NHẬT: 20/10/2026 - TC_T03A: kho từ chuyển sang MỘT file kho_tu.json trên repo (thay 4 file
              tu_cap1..4.js), tải bằng fetch; lần tải được gần nhất nhớ trên máy để mất mạng vẫn chơi.
              Thêm hình riêng của từ (thư mục hinh/), chưa có thì dùng emoji.
+             21/10/2026 - TC_T02I: kho có cả từ CHƯA có emoji lẫn hình (chờ vẽ). Từ đó nằm trong kho
+             và trang quản trị nhưng game chưa lấy ra chơi (bảng ôn ghép hình - chữ, cấp 3-4 cần hình
+             gợi ý); KC_TU_VUNG.soChoHinh = số từ đang chờ hình.
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -39,7 +42,9 @@
   TV.nap = function (du) {
     if (!du || !Array.isArray(du.tu)) throw new Error("kho từ không đúng định dạng (thiếu mảng tu)");
     const moi = { 1: [], 2: [], 3: [], 4: [] };
+    let cho = 0;
     du.tu.forEach(t => {
+      if (t && t.en && moi[t.cap] && !t.e && !t.hinh) { cho++; return; } // chưa có hình: chưa chơi
       if (t && t.en && moi[t.cap]) moi[t.cap].push({ en: t.en, e: t.e || "", vi: t.vi || "", cd: t.cd || "", hinh: t.hinh || "" });
     });
     for (let c = 1; c <= TV.SO_CAP; c++) {
@@ -47,6 +52,7 @@
       ds.length = 0;
       moi[c].forEach(t => ds.push(t));
     }
+    TV.soChoHinh = cho;
     TV.daNap = true;
     TV.capNhat = du.capNhat || "";
     nghe.forEach(fn => { try { fn(TV); } catch (e) { console.error(e); } });

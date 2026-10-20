@@ -12,6 +12,7 @@
 //   Kho trên repo đổi ở nơi khác (Claude nạp lô từ...) thì tự áp lại các thay đổi lên bản mới.
 // BƯỚC: TC_T03B - NGÀY: 20/10/2026
 // CẬP NHẬT: 21/10/2026 - TC_T03B (người dùng thêm): ô "Sắp xếp" (A-Z, Z-A, theo chủ đề, theo cấp, theo nghĩa).
+// CẬP NHẬT: 21/10/2026 - TC_T02I: từ chưa có emoji / hình chỉ cảnh báo (vẫn lưu được), game chưa lấy ra chơi.
 // PHỤ THUỘC: ../admin_NC.js (adminTaiKhoan, sự kiện "adminDaChuyenManHinh"), quantri_NC.html
 //   (khung #manhinh-khotu), qt_kho_tu.css. Excel: SheetJS tải từ CDN khi bấm nút.
 // ĐỊNH DẠNG FILE: GIỐNG HỆT vanBanKho() của repo_rieng/tu_dien/cong_cu/nap_tu.js (một từ một
@@ -282,7 +283,7 @@ function ktKiemTu(d, demTu, theoHinh) {
     if (/[`\\|]|\$\{/.test(x[1])) loi.push(x[0] + " chứa ký tự cấm (` \\ | ${).");
   });
   var cum = KT_TACH ? Array.from(KT_TACH.segment(t.e), function (s) { return s.segment; }).filter(function (s) { return s.trim(); }) : (t.e.trim() ? [t.e] : []);
-  if (!cum.length) { if (!t.hinh) loi.push("Thiếu hình: cần emoji hoặc tải hình riêng."); }
+  if (!cum.length) { if (!t.hinh) cb.push("Chưa có hình: game chưa lấy từ này ra chơi (thêm emoji hoặc tải hình)."); }
   else if (cum.length > 3) loi.push("Emoji quá 3 hình.");
   else if (KT_TACH && !cum.every(function (s) { return KT_LA_HINH.test(s); })) loi.push("Ô emoji có ký tự không phải emoji.");
   else if (Array.from(t.e).some(function (c) { var m = c.codePointAt(0); return KT_EMOJI_MOI.some(function (r) { return m >= r[0] && m <= r[1]; }); }))
