@@ -11,6 +11,7 @@
 //   của máy đó). GitHub Pages cập nhật khoảng 1 phút sau thì game thấy từ / hình mới.
 //   Kho trên repo đổi ở nơi khác (Claude nạp lô từ...) thì tự áp lại các thay đổi lên bản mới.
 // BƯỚC: TC_T03B - NGÀY: 20/10/2026
+// CẬP NHẬT: 21/10/2026 - TC_T03B (người dùng thêm): ô "Sắp xếp" (A-Z, Z-A, theo chủ đề, theo cấp, theo nghĩa).
 // PHỤ THUỘC: ../admin_NC.js (adminTaiKhoan, sự kiện "adminDaChuyenManHinh"), quantri_NC.html
 //   (khung #manhinh-khotu), qt_kho_tu.css. Excel: SheetJS tải từ CDN khi bấm nút.
 // ĐỊNH DẠNG FILE: GIỐNG HỆT vanBanKho() của repo_rieng/tu_dien/cong_cu/nap_tu.js (một từ một
@@ -347,9 +348,23 @@ function ktLocDong() {
     if (tim && ktBoDau(t.en).indexOf(tim) < 0 && ktBoDau(t.vi).indexOf(tim) < 0 && ktBoDau(t.ghiChu).indexOf(tim) < 0) return false;
     return true;
   });
-  // Từ mới thêm lên đầu (mới nhất trước), còn lại theo thứ tự trong file
+  // Từ mới thêm lên đầu (mới nhất trước), còn lại theo thứ tự đã chọn (mặc định: thứ tự trong file)
   var moi = ds.filter(function (d) { return !d.goc; }).reverse();
-  return moi.concat(ds.filter(function (d) { return d.goc; }));
+  var cu = ds.filter(function (d) { return d.goc; });
+  var cach = ktEl("ktSapXep").value;
+  if (cach) {
+    var soAbc = function (a, b) { return a.t.en.localeCompare(b.t.en, "en"); };
+    var tenCd = function (d) { return d.t.cd ? (KT.CHU_DE[d.t.cd] || d.t.cd) : "\uffff"; };  // chưa có chủ đề xếp cuối
+    var so = {
+      az: soAbc,
+      za: function (a, b) { return soAbc(b, a); },
+      chude: function (a, b) { return tenCd(a).localeCompare(tenCd(b), "vi") || soAbc(a, b); },
+      cap: function (a, b) { return (a.t.cap - b.t.cap) || soAbc(a, b); },
+      nghia: function (a, b) { return a.t.vi.localeCompare(b.t.vi, "vi") || soAbc(a, b); }
+    }[cach];
+    if (so) cu.sort(so);
+  }
+  return moi.concat(cu);
 }
 
 function ktVeLai(veTrangDau) {
@@ -560,7 +575,7 @@ function ktGanSuKien() {
   // Bộ lọc
   var chonCd = ktEl("ktLocChuDe");
   Object.keys(KT.CHU_DE).forEach(function (k) { chonCd.add(new Option(KT.CHU_DE[k], k)); });
-  ["ktLocCap", "ktLocChuDe", "ktLocSoat", "ktLocHinh", "ktLocBao"].forEach(function (id) {
+  ["ktLocCap", "ktLocChuDe", "ktLocSoat", "ktLocHinh", "ktLocBao", "ktSapXep"].forEach(function (id) {
     ktEl(id).addEventListener("change", function () { ktVeLai(true); });
   });
   var henTim = 0;
