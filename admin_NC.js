@@ -1071,7 +1071,7 @@ var ADMIN_KHOA_LINH_VUC = {
   kc_gioi_han_dang_lam: "thuthach"
 };
 var ADMIN_TEN_NHOM = {
-  chung: "Chung", covua: "Cờ Vua", santu: "Giải Cứu Mèo Con",
+  chung: "Chung", covua: "Cờ Vua", santu: "Giải Cứu Mèo Con", caro: "Cờ Caro",
   thuthach: "Thử Thách", hoctap: "Học Tập", khampha: "Khám Phá",
   giongdoc: "Giọng đọc", chuaxep: "Chưa xếp"
 };
@@ -1079,6 +1079,7 @@ var ADMIN_TEN_NHOM = {
 function adminNhomCuaKhoa(khoa) {
   if (Object.prototype.hasOwnProperty.call(ADMIN_KHOA_LINH_VUC, khoa)) return ADMIN_KHOA_LINH_VUC[khoa];
   if (khoa.indexOf("kc_santu_") === 0) return "santu";
+  if (khoa.indexOf("kc_caro_") === 0) return "caro";       // TC_02A 21/10/2026: Cờ Caro
   if (khoa.indexOf("kc_tt_") === 0) return "thuthach";
   if (khoa.indexOf("kc_ht_") === 0) return "hoctap";
   if (khoa.indexOf("kc_kp_") === 0) return "khampha";

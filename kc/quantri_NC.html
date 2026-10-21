@@ -26,6 +26,7 @@
               logic DÙNG LẠI admin_NC.js ở gốc repo (không viết lại).
        CẬP NHẬT: 20/10/2026 - TC_T03B: thêm mục "📖 Kho từ vựng" (Quản trị chung): sửa kho từ
                  dùng chung + tải hình của từ, lưu thẳng vào repo qua GitHub API (qt_kho_tu.js/.css).
+       CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
        BẢO MẬT: đọc phiên chung sessionStorage "coVuaTaiKhoanDangNhap". Kiểm tra
                 vai trò ở trình duyệt chỉ để hiện giao diện; mọi RPC tự kiểm tra
@@ -452,6 +453,10 @@
           <div class="qtTenNhomCon">🐱 Giải Cứu Mèo Con</div>
           <button class="adminNutManHinh qtMuc" data-manhinh="cauhinh-santu" type="button">⚙️ Cấu hình</button>
         </div>
+        <div class="qtNhomCon" data-ten-nhom="Trò Chơi › Cờ Caro">
+          <div class="qtTenNhomCon">❌ Cờ Caro</div>
+          <button class="adminNutManHinh qtMuc" data-manhinh="cauhinh-caro" type="button">⚙️ Cấu hình</button>
+        </div>
       </div>
 
       <div class="qtNhom" data-ten-nhom="Thử Thách">
@@ -798,7 +803,7 @@
         <p class="adminGhiChu">
           Chỉ dùng khi code có chỗ đọc khóa đó. Thêm khóa lạ vào đây sẽ không gây lỗi nhưng cũng không có tác dụng gì.
           Tên khóa chỉ gồm chữ thường không dấu, số và dấu gạch dưới.
-          <br>Khóa tự hiện đúng mục nhờ <strong>tiền tố</strong>: <code>kc_santu_</code> = Giải Cứu Mèo Con,
+          <br>Khóa tự hiện đúng mục nhờ <strong>tiền tố</strong>: <code>kc_santu_</code> = Giải Cứu Mèo Con, <code>kc_caro_</code> = Cờ Caro,
           <code>kc_tt_</code> = Thử Thách, <code>kc_ht_</code> = Học Tập, <code>kc_kp_</code> = Khám Phá,
           <code>kc_</code> khác = Chung (game mới: <code>kc_&lt;tên game&gt;_</code>).
         </p>
@@ -858,6 +863,28 @@
               <tr><th style="width:22%;">Khóa</th><th style="width:16%;">Giá trị</th><th>Ý nghĩa</th><th style="width:90px;"></th></tr>
             </thead>
             <tbody data-nhom-cau-hinh="santu">
+              <tr><td colspan="4" class="adminDangTai">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TC_02A 21/10/2026: cấu hình Cờ Caro (khóa kc_caro_) -->
+    <section class="adminManHinh" id="manhinh-cauhinh-caro">
+      <div class="adminKhoi">
+        <h3>⚙️ Cấu Hình Cờ Caro</h3>
+        <p class="adminGhiChu">
+          Số kim cương bé nhận khi thắng máy ở từng mức (Dễ / Vừa / Khó) và tổng tối đa mỗi ngày từ Caro.
+          Máy chủ tự kiểm ván thắng trước khi cộng. Trần chung mỗi ngày nằm ở ⚙️ Cấu hình chung.
+        </p>
+        <button class="adminNut adminNutPhu" data-lam-moi-cau-hinh type="button">🔄 Làm Mới</button>
+        <div class="adminCuonNgang" style="margin-top:10px;">
+          <table class="adminBang">
+            <thead>
+              <tr><th style="width:22%;">Khóa</th><th style="width:16%;">Giá trị</th><th>Ý nghĩa</th><th style="width:90px;"></th></tr>
+            </thead>
+            <tbody data-nhom-cau-hinh="caro">
               <tr><td colspan="4" class="adminDangTai">Đang tải...</td></tr>
             </tbody>
           </table>
