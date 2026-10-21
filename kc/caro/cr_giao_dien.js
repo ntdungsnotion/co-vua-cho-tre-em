@@ -1,8 +1,13 @@
 /* ================================================================
    FILE: caro/cr_giao_dien.js
    CHỨC NĂNG: Giao diện trang game_caro.html, 3 chế độ chơi:
-              - "may"     : bé đấu với máy (Gà Con / Cáo Nhỏ / Hổ Lớn), thắng được kim cương
-                            (TC_02A, gửi kết quả qua chung/vc_van_co.js);
+              - "may"     : bé đấu với máy, thắng được kim cương (TC_02A, gửi kết quả qua
+                            chung/vc_van_co.js). TC_02C: THANG 20 CẤP giống Cờ Vua - bé chỉ chọn
+                            máy cấp <= cấp của mình (cấp cao hơn có 🔒), mở trang chọn sẵn cấp của
+                            bé; thắng máy ĐÚNG cấp của mình thì lên cấp (pháo hoa), máy chủ giữ cấp
+                            (kc_co_thanh_tich.cap). Phụ huynh / admin mở sẵn mọi cấp để chơi thử.
+                            Cấp 6-20 nghĩ trong Web Worker caro/cr_may_nghi.js (không đơ màn hình);
+                            máy luôn "nghĩ" tối thiểu một lúc (giống nhịp Cờ Vua 4.11).
               - "mot_may" : 2 bạn chung 1 máy, thay phiên bấm, không tính kim cương (TC_02B);
               - "hai_may" : mỗi bạn 1 máy, qua phòng chơi chung game cờ chung/vc_phong_co.js
                             (TC_02B). Máy chủ giữ luật + tự cộng kim cương cho cả 2 bé khi hết
@@ -13,19 +18,18 @@
               Ván với máy đang dở lưu localStorage (kc_caro_van_do_<tên>); ván 2 máy nằm trên
               máy chủ, tải lại trang thì vào lại được.
               Chỉ tài khoản bé (vai trò 'tre') mới nhận kim cương; phụ huynh / admin vẫn chơi được.
-   BƯỚC: TC_02A | TC_02B (chơi 2 người chung 1 máy + 2 máy)
-   NGÀY: 21/10/2026 18:20 | 21/10/2026 21:00
+   BƯỚC: TC_02A | TC_02B (chơi 2 người chung 1 máy + 2 máy) | TC_02C (20 cấp + Web Worker)
+   NGÀY: 21/10/2026 18:20 | 21/10/2026 21:00 | 21/10/2026 23:22
    PHỤ THUỘC: kc_auth.js (sự kiện kcSanSang, kcDocPhien, kcLuuPhien), kc_api.js (kcGoiRpc),
               kc_config.js (kcSupabaseClient), chung/vc_van_co.js + chung/vc_phong_co.js (VC),
-              caro/cr_logic.js (CR).
+              caro/cr_logic.js (CR), caro/cr_may_nghi.js (Worker, nạp khi cần).
    ================================================================ */
 (function () {
   "use strict";
-  const DOI_THU = [
-    { muc: "de", ten: "Gà Con", hinh: "🐣", nhan: "Dễ", thuong: 3 },
-    { muc: "vua", ten: "Cáo Nhỏ", hinh: "🦊", nhan: "Vừa", thuong: 5 },
-    { muc: "kho", ten: "Hổ Lớn", hinh: "🐯", nhan: "Khó", thuong: 8 }
-  ];
+  const THUONG_CAP = { coBan: 2, moiCap: 1 };          // mặc định: thắng máy cấp N được 2 + N 💎
+  /* Nhịp nghĩ tối thiểu của máy (ms) = toiThieu + (cấp - 1) x moiCap + ngẫu nhiên(0..ngauNhien),
+     chặn trần toiDa - giống luật Cờ Vua 4.11 nhưng nhanh hơn cho cấp thấp (Caro đi nhiều nước). */
+  const NGHI = { toiThieu: 600, moiCap: 50, ngauNhien: 500, toiDa: 4000 };
   const THUONG_2N = { thang: 3, hoa: 2, thua: 1 };   // mặc định khi chưa đọc được cấu hình
   const VANG_LAU = 20;                                 // giây: bạn không còn hỏi phòng -> báo mất kết nối
   const LA_CHAM = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
@@ -35,8 +39,14 @@
   let laBe = false;           // vai trò 'tre' -> được ghi ván + nhận kim cương
   let cheDo = "may";          // "may" | "mot_may" | "hai_may"
   let van = null;             // CR.VanCaro đang chơi (CR.BE = người đi trước ❌, CR.MAY = người đi sau ⭕)
-  let doiThu = DOI_THU[1];
+  let doiThu = CR.CAP[1];     // cấp máy đang đấu (CR.CAP[n]: cap, muc, hinh, ten)
+  let capBe = 1;              // cấp của bé (máy chủ giữ; phụ huynh / admin = capToiDa)
+  let capToiDa = CR.CAP_TOI_DA;
   let dangNghi = false;       // máy đang nghĩ
+  let mayNghi = null;         // Web Worker máy nghĩ (cấp 6-20)
+  let mayNghiHong = false;    // Worker không chạy được (vd mở file://) -> nghĩ ở luồng chính
+  let choNghi = null;         // {id, xong, hen} câu hỏi đang chờ Worker trả lời
+  let soHoiNghi = 0;
   let oBong = -1;             // ô đang hiện bóng quân (chạm lần 1)
   let ketQuaVan = null;       // VC.KetQuaVan
   let tapTrung = null;        // VC.TapTrung
@@ -49,9 +59,24 @@
   let hoiLaiViec = null;      // việc chờ bé xác nhận ở khung hỏi lại
   const oBan = [];
 
-  const timDoiThu = muc => DOI_THU.find(d => d.muc === muc) || DOI_THU[1];
+  const timDoiThu = muc => CR.CAP[CR.capCuaMuc(muc)] || CR.CAP[1];
   const khoaVanDo = () => "kc_caro_van_do_" + (tk ? tk.tenDangNhap : "khach");
+  const khoaCap = () => "kc_caro_cap_" + (tk ? tk.tenDangNhap : "khach");
   const thuong2n = () => (thanhTich && thanhTich.thuong2n) || THUONG_2N;
+  const thuongCap = cap => {
+    const t = (thanhTich && thanhTich.thuongCap) || THUONG_CAP;
+    return t.coBan + t.moiCap * cap;
+  };
+
+  /* Cấp của bé: nhớ trên máy để mất mạng vẫn thấy đúng cấp đã mở */
+  function datCapBe(n) {
+    capBe = Math.max(1, Math.min(capToiDa, Number(n) || 1));
+    if (!laBe) return;
+    try { localStorage.setItem(khoaCap(), String(capBe)); } catch (e) { /* chặn lưu: bỏ qua */ }
+  }
+  function docCapDaLuu() {
+    try { return Number(localStorage.getItem(khoaCap())) || 1; } catch (e) { return 1; }
+  }
 
   function hienKhu(ten) {
     $("crKhuChon").style.display = ten === "chon" ? "" : "none";
@@ -60,25 +85,45 @@
     if (ten !== "sanh" && phongCo) phongCo.ngungSanh();
   }
 
-  /* ---------------- CHỌN ĐỐI THỦ / CHẾ ĐỘ ---------------- */
+  /* ---------------- CHỌN CẤP MÁY / CHẾ ĐỘ (TC_02C: thang 20 cấp) ---------------- */
   function veLuoiDoiThu() {
-    const luoi = $("crLuoiDoiThu");
+    // Thẻ "Cấp của con": cấp hiện tại + đấu ngay + lời nhắc lên cấp
+    const c = CR.CAP[capBe];
+    $("crCapBeHinh").textContent = c.hinh;
+    $("crCapBeSo").textContent = "Cấp " + capBe;
+    $("crCapBeTen").textContent = c.ten;
+    const sau = CR.CAP[capBe + 1];
+    $("crCapBeLoi").textContent = !laBe ? "Tài khoản phụ huynh / quản trị: mở sẵn cả " + capToiDa + " cấp để chơi thử."
+      : capBe >= capToiDa ? "Con đã lên cấp cao nhất! Thắng " + c.ten + " thêm nhiều lần nữa nhé."
+      : "Thắng " + c.hinh + " " + c.ten + " là con lên cấp " + (capBe + 1) + " và gặp " + sau.hinh + " " + sau.ten + "!";
+    $("crNutDauCapBe").textContent = "▶ Đấu " + c.hinh + " " + c.ten;
+    $("crCapBeThuong").textContent = laBe ? "Thắng: " + thuongCap(capBe) + " 💎" : "";
+    $("crCapBeThuong").style.display = laBe ? "" : "none";
+
+    // Lưới 20 cấp: cấp đã mở bấm là vào ván, cấp chưa mở có 🔒
+    const luoi = $("crLuoiCap");
     luoi.innerHTML = "";
-    DOI_THU.forEach(d => {
-      const thuong = thanhTich && thanhTich.thuong && typeof thanhTich.thuong[d.muc] === "number" ? thanhTich.thuong[d.muc] : d.thuong;
-      const soThang = thanhTich && thanhTich.theoMuc && thanhTich.theoMuc[d.muc] ? thanhTich.theoMuc[d.muc].thang : 0;
+    for (let n = 1; n <= capToiDa; n++) {
+      const d = CR.CAP[n];
+      if (!d) break;
+      const mo = n <= capBe;
+      const tc = thanhTich && thanhTich.theoCap && thanhTich.theoCap[n];
+      const soThang = tc ? tc.thang : 0;
       const the = document.createElement("button");
       the.type = "button";
-      the.className = "vcTheDoiThu";
+      the.className = "crTheCap" + (mo ? "" : " crCapKhoa") + (n === capBe && laBe ? " crCapCuaCon" : "");
+      the.disabled = !mo;
+      the.title = mo ? "Đấu " + d.ten + " (cấp " + n + ")" : "Thắng cấp " + (n - 1) + " để mở";
       the.innerHTML =
-        '<span class="vcHinhDoiThu">' + d.hinh + "</span>" +
-        '<span class="vcTenDoiThu">' + d.ten + "</span>" +
-        '<span class="vcMucDoiThu">Mức ' + d.nhan + "</span>" +
-        (laBe ? '<span class="vcThuong" title="Thắng được ' + thuong + ' kim cương">Thắng: ' + thuong + " 💎</span>" : "") +
-        '<span class="vcDaThang">' + (soThang ? "🏆 Đã thắng " + soThang + " ván" : "Thử sức nào!") + "</span>";
-      the.addEventListener("click", () => batDauVan(d.muc));
+        '<span class="crTheCapHinh">' + d.hinh + "</span>" +
+        '<span class="crTheCapSo">Cấp ' + n + "</span>" +
+        '<span class="crTheCapTen">' + d.ten + "</span>" +
+        (mo && laBe ? '<span class="crTheCapThuong">+' + thuongCap(n) + " 💎</span>" : "") +
+        (soThang ? '<span class="crTheCapThang">🏆 ' + soThang + "</span>" : "") +
+        (mo ? "" : '<span class="crTheCapKhoaHinh">🔒</span>');
+      if (mo) the.addEventListener("click", () => batDauVan(d.muc));
       luoi.appendChild(the);
-    });
+    }
     const ghiChu = $("crGhiChuThuong");
     if (!laBe) ghiChu.textContent = "Chỉ tài khoản của bé mới nhận kim cương khi thắng.";
     else if (thanhTich && thanhTich.thanhCong) ghiChu.textContent = "Hôm nay con đã nhận " + thanhTich.kimCuongHomNay + " / " + thanhTich.tranGame + " 💎 từ Cờ Caro.";
@@ -108,10 +153,12 @@
       else localStorage.removeItem(khoaVanDo());
     } catch (e) { /* chặn lưu: bỏ qua */ }
   }
+  /* Chỉ nhận ván dở theo cấp (TC_02C) và cấp đó đã mở; ván dở kiểu mức cũ (de/vua/kho) bỏ */
   function docVanDo() {
     try {
       const v = JSON.parse(localStorage.getItem(khoaVanDo()) || "null");
-      if (v && CR.MUC[v.muc] && Array.isArray(v.nuocDi) && v.nuocDi.length) return v;
+      const cap = v ? CR.capCuaMuc(v.muc) : 0;
+      if (cap && cap <= capBe && Array.isArray(v.nuocDi) && v.nuocDi.length) return v;
     } catch (e) { /* hỏng thì bỏ */ }
     return null;
   }
@@ -120,7 +167,7 @@
     $("crVanDo").style.display = v ? "" : "none";
     if (v) {
       const d = timDoiThu(v.muc);
-      $("crNutChoiTiep").textContent = "▶ Chơi tiếp ván đang dở với " + d.hinh + " " + d.ten;
+      $("crNutChoiTiep").textContent = "▶ Chơi tiếp ván đang dở với " + d.hinh + " " + d.ten + " (cấp " + d.cap + ")";
     }
     const p = phongCuaToi;
     const coVanBan = !!(p && (p.trangThai === "dang_choi" || p.trangThai === "ket_thuc"));
@@ -183,7 +230,7 @@
     const kc = '<span id="crKimCuongBe">💎 ' + (tk && typeof tk.diemSo === "number" ? tk.diemSo : 0) + "</span>";
     if (cheDo === "may") {
       veHaiThe({ ten: tk ? tk.tenDangNhap : "Con", avatar: tk && tk.avatarDaChon, phu: "quân ❌ · " + kc },
-               { ten: doiThu.ten, avatar: doiThu.hinh, phu: "quân ⭕ · mức " + doiThu.nhan });
+               { ten: doiThu.ten, avatar: doiThu.hinh, phu: "quân ⭕ · cấp " + doiThu.cap });
     } else if (cheDo === "mot_may") {
       veHaiThe({ ten: "Bạn ❌", macDinh: "😀", phu: "đi trước" }, { ten: "Bạn ⭕", macDinh: "😎", phu: "đi sau" });
     } else if (phong) {
@@ -245,8 +292,8 @@
     document.querySelectorAll(".crChi2May").forEach(n => { n.style.display = haiMay ? "" : "none"; });
     $("crNutVanMoi").style.display = haiMay ? "none" : "";
     $("crNutDoiDoiThu").style.display = haiMay ? "none" : "";
-    $("crNutDoiDoiThu").textContent = cheDo === "may" ? "🎚️ Đổi đối thủ" : "🎚️ Chọn cách chơi khác";
-    $("crNutKetQuaDoi").textContent = cheDo === "hai_may" ? "🚪 Rời phòng" : (cheDo === "may" ? "🎚️ Đổi đối thủ" : "🎚️ Chọn cách chơi khác");
+    $("crNutDoiDoiThu").textContent = cheDo === "may" ? "🎚️ Đổi cấp" : "🎚️ Chọn cách chơi khác";
+    $("crNutKetQuaDoi").textContent = cheDo === "hai_may" ? "🚪 Rời phòng" : (cheDo === "may" ? "🎚️ Đổi cấp" : "🎚️ Chọn cách chơi khác");
     if (haiMay && phong) {
       const dangChoi = phong.trangThai === "dang_choi";
       $("crNutXinHoa").style.display = dangChoi ? "" : "none";
@@ -278,6 +325,7 @@
   function batDauVan(muc, nuocDiCu) {
     roiPhongNeuCo();
     dongKetQua();
+    huyMayNghi();
     cheDo = "may";
     doiThu = timDoiThu(muc);
     van = new CR.VanCaro(doiThu.muc);
@@ -293,6 +341,7 @@
   function batDauMotMay() {
     roiPhongNeuCo();
     dongKetQua();
+    huyMayNghi();
     cheDo = "mot_may";
     van = new CR.VanCaro("vua");
     vaoBan();
@@ -324,33 +373,87 @@
     else if (cheDo === "may" && van.luot === CR.MAY) mayDi();
   }
 
+  /* Máy đi: cấp 1-5 nghĩ ngay ở luồng chính (nhẹ); cấp 6-20 hỏi Worker. Dù nghĩ xong sớm,
+     vẫn giữ đủ nhịp nghĩ tối thiểu mới đặt quân (giống Cờ Vua 4.11). */
   function mayDi() {
     dangNghi = true;
     veBan(); capNhatLuot();
     const vanNay = van;
-    setTimeout(() => {
-      if (van !== vanNay) return;        // bé đã bấm ván mới trong lúc máy nghĩ
-      van.mayDi();
-      dangNghi = false;
-      sauNuocDi();
-    }, 350 + Math.random() * 450);
+    const cap = CR.capCuaMuc(van.muc) || 1;
+    const batDau = Date.now();
+    const nghiToiThieu = Math.min(NGHI.toiDa, NGHI.toiThieu + (cap - 1) * NGHI.moiCap + Math.random() * NGHI.ngauNhien);
+    const datQuan = o => {
+      setTimeout(() => {
+        if (van !== vanNay) return;        // bé đã bấm ván mới trong lúc máy nghĩ
+        if (!(o >= 0 && van.ban[o] === 0 && van.di(o))) van.mayDi();   // Worker lỗi: bộ não cũ
+        dangNghi = false;
+        sauNuocDi();
+      }, Math.max(0, nghiToiThieu - (Date.now() - batDau)));
+    };
+    if (CR.CAP[cap] && CR.CAP[cap].dungEngine) hoiMayNghi(van.nuocDi, cap).then(datQuan);
+    else datQuan(-1);
+  }
+
+  /* ---------------- WEB WORKER MÁY NGHĨ (cấp 6-20) ---------------- */
+  /* -> Promise<ô máy đi>; -1 = Worker không chạy được / quá lâu (trang tự đi bằng bộ não cũ),
+     -2 = đã huỷ vì bé sang ván khác. Mỗi lúc chỉ một câu hỏi. */
+  function hoiMayNghi(nuocDi, cap) {
+    return new Promise(xong => {
+      huyMayNghi();
+      if (mayNghiHong || typeof Worker === "undefined") { xong(-1); return; }
+      try {
+        if (!mayNghi) {
+          mayNghi = new Worker("caro/cr_may_nghi.js");
+          mayNghi.onmessage = su => {
+            const d = su.data || {};
+            if (!choNghi || d.id !== choNghi.id) return;
+            const c = choNghi; choNghi = null; clearTimeout(c.hen);
+            c.xong(typeof d.o === "number" ? d.o : -1);
+          };
+          mayNghi.onerror = () => {
+            mayNghiHong = true;
+            const c = choNghi; choNghi = null; boMayNghi();
+            if (c) { clearTimeout(c.hen); c.xong(-1); }
+          };
+        }
+      } catch (e) { mayNghiHong = true; xong(-1); return; }
+      const id = ++soHoiNghi;
+      choNghi = { id, xong, hen: setTimeout(() => {
+        if (!choNghi || choNghi.id !== id) return;
+        choNghi = null; boMayNghi(); xong(-1);
+      }, 15000) };
+      mayNghi.postMessage({ id, nuocDi: nuocDi.slice(), cap });
+    });
+  }
+  function boMayNghi() { if (mayNghi) { mayNghi.terminate(); mayNghi = null; } }
+  /* Bé sang ván khác khi máy đang nghĩ: dừng hẳn Worker (đỡ tốn pin), lần sau tạo lại */
+  function huyMayNghi() {
+    if (!choNghi) return;
+    const c = choNghi; choNghi = null; clearTimeout(c.hen);
+    boMayNghi();
+    c.xong(-2);
   }
 
   /* ---------------- KẾT THÚC VÁN (máy / chung 1 máy) ---------------- */
   function ketThucVan() {
     const vanNay = van;
     let mucGui = null;
+    // Giống Cờ Vua: thắng máy ĐÚNG cấp của mình -> lên cấp (máy chủ chốt lại khi nhận kết quả)
+    const capVan = CR.capCuaMuc(van.muc);
+    const lenCap = cheDo === "may" && laBe && van.ketQua === "thang" && capVan === capBe && capBe < capToiDa;
+    if (lenCap) datCapBe(capBe + 1);
     if (cheDo === "may" && laBe && ketQuaVan) {
       mucGui = ketQuaVan.them({ cheDo: "may", muc: van.muc, ketQua: van.ketQua, nuocDi: van.nuocDi, doiThu: doiThu.ten });
     }
     // để bé kịp thấy 5 quân sáng lên rồi mới hiện khung kết quả
     setTimeout(() => {
       if (van !== vanNay) return;
-      hienKetQua(mucGui);
+      hienKetQua(mucGui, lenCap);
     }, van.ketQua === "hoa" ? 400 : 1100);
   }
 
   function datKetQua(hinh, tieuDe, loi) {
+    $("crKetQua").classList.remove("crLenCap");
     $("crKetQuaHinh").textContent = hinh;
     $("crKetQuaTieuDe").textContent = tieuDe;
     $("crKetQuaLoi").textContent = loi;
@@ -368,7 +471,7 @@
     $("crNutChoiLai").focus();
   }
 
-  function hienKetQua(mucGui) {
+  function hienKetQua(mucGui, lenCap) {
     const kq = van.ketQua;
     if (cheDo === "mot_may") {
       if (kq === "hoa") datKetQua("🤝", "Hoà rồi!", "Bàn cờ đầy mà chưa ai xếp được 5 quân. Hai bạn ngang tài!");
@@ -377,7 +480,15 @@
       return;
     }
     const d = doiThu;
-    if (kq === "thang") datKetQua("🏆", "Con thắng rồi!", "Con đã thắng " + d.hinh + " " + d.ten + ". Giỏi quá!");
+    if (kq === "thang" && lenCap) {
+      const moi = CR.CAP[capBe];
+      datKetQua("🎆", "Lên cấp " + capBe + "!", "Con đã thắng " + d.hinh + " " + d.ten + " và mở khoá cấp " + capBe +
+        ": " + moi.hinh + " " + moi.ten + ". Giỏi quá!");
+      $("crNutChoiLai").textContent = "▶ Đấu " + moi.hinh + " " + moi.ten;
+      $("crKetQua").classList.add("crLenCap");
+      phaoHoa();
+    }
+    else if (kq === "thang") datKetQua("🏆", "Con thắng rồi!", "Con đã thắng " + d.hinh + " " + d.ten + ". Giỏi quá!");
     else if (kq === "thua") datKetQua("💪", d.ten + " thắng ván này!", "Mẹo nhỏ: thấy " + d.ten + " có 3 quân ⭕ liền nhau là chặn ngay nhé. Chơi lại phục thù nào!");
     else datKetQua("🤝", "Hoà rồi!", "Bàn cờ đầy mà chưa ai xếp được 5 quân. Hai bên ngang tài!");
     const oKc = $("crKetQuaKimCuong");
@@ -385,6 +496,26 @@
     if (kq === "thang" && mucGui) oKc.textContent = "Đang cất kim cương vào kho... 💎";
     moKetQua();
     if (mucGui) guiKetQua(mucGui);
+  }
+
+  /* Pháo hoa khi lên cấp: emoji rơi vài giây (tắt nếu máy đặt "giảm chuyển động") */
+  function phaoHoa() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const khung = document.createElement("div");
+    khung.className = "crPhaoHoa";
+    khung.setAttribute("aria-hidden", "true");
+    const HINH = ["🎉", "✨", "⭐", "🎊", "💎", "🌟"];
+    for (let i = 0; i < 30; i++) {
+      const s = document.createElement("span");
+      s.textContent = HINH[i % HINH.length];
+      s.style.left = (Math.random() * 100) + "%";
+      s.style.animationDelay = (Math.random() * 0.9).toFixed(2) + "s";
+      s.style.animationDuration = (1.8 + Math.random() * 1.2).toFixed(2) + "s";
+      s.style.fontSize = (1.2 + Math.random() * 1.3).toFixed(2) + "rem";
+      khung.appendChild(s);
+    }
+    document.body.appendChild(khung);
+    setTimeout(() => khung.remove(), 3600);
   }
 
   /* Lời báo kim cương nói RÕ SỐ (người dùng góp ý 21/10/2026): nhận mấy viên, kho giờ có mấy viên;
@@ -402,10 +533,12 @@
       const k = r.ketQua[mucGui.maLuot];
       if (typeof r.diemSoMoi === "number") capNhatKimCuong(r.diemSoMoi);
       const oKc = $("crKetQuaKimCuong");
+      // máy chủ giữ cấp: nghe theo máy chủ (vd ván bị từ chối thì cấp không đổi)
+      if (k && typeof k.cap === "number") { datCapBe(k.cap); if (typeof k.capToiDa === "number") capToiDa = k.capToiDa; }
       if (mucGui.ketQua !== "thang") { taiThanhTich(); return; }
-      const thuong = thanhTich && thanhTich.thuong && typeof thanhTich.thuong[mucGui.muc] === "number" ? thanhTich.thuong[mucGui.muc] : timDoiThu(mucGui.muc).thuong;
+      const thuong = thuongCap(CR.capCuaMuc(mucGui.muc) || 1);
       if (!k) oKc.textContent = "Mạng đang chập chờn, " + thuong + " kim cương của ván này sẽ tự vào kho khi có mạng nhé.";
-      else if (k.hopLe === false) oKc.textContent = "Ván này máy chủ chưa ghi nhận được, con chơi ván khác nhé.";
+      else if (k.hopLe === false || k.thanhCong === false) oKc.textContent = "Ván này máy chủ chưa ghi nhận được, con chơi ván khác nhé.";
       else oKc.textContent = loiKimCuong(k);
       taiThanhTich();
     });
@@ -426,9 +559,13 @@
   function dongKetQua() { $("crKetQua").classList.remove("vcHien"); }
 
   function taiThanhTich() {
-    if (!tk) return;
-    VC.layThanhTich(kcGoiRpc, kcDocPhien(), "caro").then(kq => {
-      if (kq && kq.thanhCong) thanhTich = kq;
+    if (!tk) return Promise.resolve();
+    return VC.layThanhTich(kcGoiRpc, kcDocPhien(), "caro").then(kq => {
+      if (kq && kq.thanhCong) {
+        thanhTich = kq;
+        if (typeof kq.capToiDa === "number") capToiDa = Math.max(1, Math.min(CR.CAP_TOI_DA, kq.capToiDa));
+        if (typeof kq.cap === "number") datCapBe(kq.cap);
+      }
       if ($("crKhuChon").style.display !== "none") veLuoiDoiThu();
     });
   }
@@ -531,6 +668,7 @@
   function vaoPhongHaiMay(p) {
     phongCo.ngungSanh();
     dongKetQua();
+    huyMayNghi();
     cheDo = "hai_may";
     phong = null;
     van = new CR.VanCaro("vua");
@@ -650,7 +788,8 @@
   }
 
   function choiLai() {
-    if (cheDo === "may") { batDauVan(doiThu.muc); return; }
+    // vừa lên cấp: "Chơi ván nữa" là đấu luôn nhân vật cấp mới
+    if (cheDo === "may") { batDauVan($("crKetQua").classList.contains("crLenCap") ? CR.CAP[capBe].muc : doiThu.muc); return; }
     if (cheDo === "mot_may") { batDauMotMay(); return; }
     if (!phong) return;
     if (phong.trangThai === "dong") { moSanh(); return; }
@@ -721,6 +860,7 @@
     $("crHoiLai").addEventListener("click", su => { if (su.target === $("crHoiLai")) dongHoiLai(); });
     document.addEventListener("keydown", su => { if (su.key === "Escape") { dongKetQua(); dongHoiLai(); } });
     // TC_02B: chơi với bạn
+    $("crNutDauCapBe").addEventListener("click", () => batDauVan(CR.CAP[capBe].muc));   // TC_02C
     $("crTheMotMay").addEventListener("click", batDauMotMay);
     $("crTheHaiMay").addEventListener("click", () => { roiPhongNeuCo(); moSanh(); });
     $("crNutVaoLai").addEventListener("click", () => { if (phongCuaToi) vaoPhongHaiMay(phongCuaToi); });
@@ -741,12 +881,14 @@
     if (!ct.daDangNhap || !ct.taiKhoan) { tk = null; return; }
     tk = ct.taiKhoan;
     laBe = tk.vaiTro === "tre";
+    // TC_02C: cấp tạm (đã nhớ trên máy) cho tới khi máy chủ trả lời; phụ huynh / admin mở mọi cấp
+    capToiDa = CR.CAP_TOI_DA;
+    capBe = laBe ? Math.min(capToiDa, docCapDaLuu()) : capToiDa;
     ketQuaVan = new VC.KetQuaVan("caro", laBe ? tk.tenDangNhap : "", kcGoiRpc, kcDocPhien);
     phongCo = new VC.PhongCo("caro", kcGoiRpc, kcDocPhien, typeof kcSupabaseClient !== "undefined" ? kcSupabaseClient : null);
     hienKhuChon();
-    // ván đã xong lúc mất mạng: gửi bù
-    ketQuaVan.gui().then(r => { if (typeof r.diemSoMoi === "number") capNhatKimCuong(r.diemSoMoi); });
-    taiThanhTich();
+    // ván đã xong lúc mất mạng: gửi bù TRƯỚC rồi mới hỏi thành tích (ván thắng lên cấp được ghi trước)
+    ketQuaVan.gui().then(r => { if (typeof r.diemSoMoi === "number") capNhatKimCuong(r.diemSoMoi); }).then(taiThanhTich);
   });
 })();
-// 21/10/2026 21:00 - BƯỚC: TC_02B (chơi 2 người chung 1 máy + 2 máy) | 21/10/2026 19:20 - BƯỚC: TC_02A (lời báo kim cương nói rõ số) | 21/10/2026 18:20 - BƯỚC: TC_02A
+// 21/10/2026 23:22 - BƯỚC: TC_02C (20 cấp + Web Worker) | 21/10/2026 21:00 - BƯỚC: TC_02B (chơi 2 người chung 1 máy + 2 máy) | 21/10/2026 19:20 - BƯỚC: TC_02A (lời báo kim cương nói rõ số) | 21/10/2026 18:20 - BƯỚC: TC_02A

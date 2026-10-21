@@ -9,17 +9,19 @@
        FILE: game_caro.html
        CHỨC NĂNG: Trang game CỜ CARO (mảng Trò Chơi): chơi với máy, chơi 2 người chung
                   1 máy, chơi 2 người mỗi bạn 1 máy (TC_02B, phòng chơi chung game cờ). Bàn 15 x 15, bé ❌ đi
-                  trước, máy ⭕; 3 đối thủ Gà Con (Dễ) / Cáo Nhỏ (Vừa) / Hổ Lớn (Khó);
-                  5 quân liền là thắng. Thắng máy được kim cương (số đọc từ cấu hình
-                  quản trị, máy chủ tự kiểm ván trước khi cộng).
+                  trước, máy ⭕; 5 quân liền là thắng. TC_02C: thang 20 cấp máy giống Cờ Vua
+                  (🐣 Gà Con cấp 1 ... 🐉 Rồng Lửa cấp 20), thắng máy đúng cấp của mình thì lên cấp.
+                  Thắng máy được kim cương (2 + cấp, số đọc từ cấu hình quản trị, máy chủ tự kiểm
+                  ván trước khi cộng).
                   Điện thoại: bắt đầu ván là vào chế độ tập trung (chỉ còn bàn cờ).
                   Máy tính: bàn to bên trái, bảng người chơi bên phải.
-       BƯỚC: TC_02A | TC_02B (chơi 2 người: chung 1 máy + 2 máy, sảnh phòng)
-       NGÀY: 21/10/2026 18:10 | 21/10/2026 20:40
+       BƯỚC: TC_02A | TC_02B (chơi 2 người: chung 1 máy + 2 máy, sảnh phòng) | TC_02C (20 cấp)
+       NGÀY: 21/10/2026 18:10 | 21/10/2026 20:40 | 21/10/2026 23:22
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
                   chung/vc_van_co.css + .js (phần chung game cờ),
                   chung/vc_phong_co.js (phòng 2 người 2 máy - TC_02B),
-                  caro/cr_logic.js (luật + máy), caro/cr_giao_dien.css + .js
+                  caro/cr_logic.js (luật + máy), caro/cr_giao_dien.css + .js,
+                  caro/cr_may_nghi.js (Web Worker, tự nạp caro/thu_vien/gomoku_engine.js)
        ================================================================ -->
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -60,7 +62,7 @@
 
   <div id="kcNoiDungCanDangNhap" style="display:none;">
 
-    <!-- Chọn đối thủ: bấm thẻ là vào ván ngay -->
+    <!-- Chọn cấp máy (TC_02C): thẻ cấp của bé + lưới 20 cấp, bấm cấp đã mở là vào ván ngay -->
     <section id="crKhuChon" class="crKhuChon">
       <div class="kcGioiThieu">
         <h2>Con muốn đấu với ai? 🎉</h2>
@@ -69,7 +71,18 @@
       <div class="crVanDo" id="crVanDo" style="display:none;">
         <button class="vcNut" id="crNutChoiTiep" type="button">▶ Chơi tiếp ván đang dở</button>
       </div>
-      <div class="vcLuoiDoiThu" id="crLuoiDoiThu"></div>
+      <div class="crCapBe">
+        <span class="crCapBeHinh" id="crCapBeHinh">🐣</span>
+        <div class="crCapBeChu">
+          <div class="crCapBeNhan">Cấp của con</div>
+          <div class="crCapBeDong"><strong id="crCapBeSo">Cấp 1</strong> · <span id="crCapBeTen">Gà Con</span>
+            <span class="crCapBeThuong" id="crCapBeThuong"></span></div>
+          <div class="crCapBeLoi" id="crCapBeLoi"></div>
+        </div>
+        <button class="vcNut crNutDauCapBe" id="crNutDauCapBe" type="button">▶ Đấu ngay</button>
+      </div>
+      <h3 class="crTieuDeCap">🪜 Thang 20 cấp</h3>
+      <div class="crLuoiCap" id="crLuoiCap"></div>
       <p class="crGoiY" id="crGhiChuThuong"></p>
 
       <!-- TC_02B: chơi với bạn -->
@@ -135,7 +148,7 @@
             <span class="vcAvatar" id="crAvatarMay">🦊</span>
             <div class="vcChuNguoiChoi">
               <div class="vcTenNguoiChoi" id="crTenMay">Cáo Nhỏ</div>
-              <div class="vcPhuNguoiChoi" id="crPhuMay">quân ⭕ · mức Vừa</div>
+              <div class="vcPhuNguoiChoi" id="crPhuMay">quân ⭕ · cấp 1</div>
             </div>
           </div>
         </div>
@@ -155,7 +168,7 @@
       <div class="crNut">
         <div class="vcNutHang" id="crNutHang">
           <button class="vcNut" id="crNutVanMoi" type="button">🔄 Ván mới</button>
-          <button class="vcNut vcNutPhu" id="crNutDoiDoiThu" type="button">🎚️ Đổi đối thủ</button>
+          <button class="vcNut vcNutPhu" id="crNutDoiDoiThu" type="button">🎚️ Đổi cấp</button>
           <button class="vcNut vcNutPhu crChi2May" id="crNutXinHoa" type="button">🤝 Xin hoà</button>
           <button class="vcNut vcNutPhu crChi2May" id="crNutChiuThua" type="button">🏳️ Chịu thua</button>
           <button class="vcNut vcNutPhu crChi2May" id="crNutRoiPhong" type="button">🚪 Rời phòng</button>
@@ -177,7 +190,7 @@
       <div class="vcNutHang">
         <button class="vcNut" id="crNutChoiLai" type="button">▶ Chơi ván nữa</button>
         <button class="vcNut vcNutPhu" id="crNutXemBan" type="button">👀 Xem bàn cờ</button>
-        <button class="vcNut vcNutPhu" id="crNutKetQuaDoi" type="button">🎚️ Đổi đối thủ</button>
+        <button class="vcNut vcNutPhu" id="crNutKetQuaDoi" type="button">🎚️ Đổi cấp</button>
       </div>
     </div>
   </div>
@@ -206,4 +219,4 @@
 <script src="kc_luot_truy_cap.js"></script>
 </body>
 </html>
-<!-- 21/10/2026 20:40 - BƯỚC: TC_02B | 21/10/2026 18:10 - BƯỚC: TC_02A -->
+<!-- 21/10/2026 23:22 - BƯỚC: TC_02C | 21/10/2026 20:40 - BƯỚC: TC_02B | 21/10/2026 18:10 - BƯỚC: TC_02A -->

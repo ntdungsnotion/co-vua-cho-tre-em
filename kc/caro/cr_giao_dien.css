@@ -3,8 +3,8 @@
    CHỨC NĂNG: Bàn cờ Caro 15 x 15 + bố cục trang game_caro.html (điện thoại và máy
               tính). Phần chung (thẻ đối thủ, thẻ người chơi, kết quả) ở chung/vc_van_co.css.
               Quân vẽ bằng CSS (không dùng emoji) để mọi máy thấy giống nhau và nét ở mọi cỡ.
-   BƯỚC: TC_02A | TC_02B (thẻ chơi với bạn, sảnh 2 máy, hỏi hoà, bóng quân ⭕)
-   NGÀY: 21/10/2026 18:05 | 21/10/2026 21:10
+   BƯỚC: TC_02A | TC_02B (thẻ chơi với bạn, sảnh 2 máy, hỏi hoà, bóng quân ⭕) | TC_02C (thang 20 cấp, pháo hoa)
+   NGÀY: 21/10/2026 18:05 | 21/10/2026 21:10 | 21/10/2026 23:22
    ================================================================ */
 :root {
   --cr-mau-x: #E5484D;          /* quân của bé */
@@ -157,4 +157,95 @@
   .crSanhCho { padding: 28px 24px; max-width: 620px; margin: 12px auto; }
   .crHoiHoa { flex-direction: column; }
 }
-/* 21/10/2026 21:10 - BƯỚC: TC_02B | 21/10/2026 18:05 - BƯỚC: TC_02A */
+/* ================= TC_02C: thang 20 cấp ================= */
+/* Thẻ "Cấp của con" */
+.crCapBe {
+  max-width: 640px; margin: 0 auto 6px; margin-inline: 12px; display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap; padding: 12px 14px; border-radius: var(--bo-tron);
+  background: linear-gradient(135deg, var(--mau-chinh-nhat), #FFF3CC); border: 3px solid var(--mau-chinh);
+  box-shadow: var(--do-bong);
+}
+.crCapBeHinh { font-size: 3rem; line-height: 1; flex: none; animation: crNhun 1.6s ease-in-out infinite alternate; }
+@keyframes crNhun { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+.crCapBeChu { flex: 1; min-width: 0; }
+.crCapBeNhan { font-size: 0.75rem; font-weight: 700; color: var(--mau-chinh); text-transform: uppercase; letter-spacing: 0.04em; }
+.crCapBeDong { font-family: "Baloo 2", sans-serif; font-size: 1.2rem; color: var(--mau-chinh-dam); line-height: 1.2; }
+.crCapBeThuong {
+  display: inline-block; margin-left: 4px; background: var(--mau-phu); color: #5a3d00; font-weight: 700;
+  font-family: "Be Vietnam Pro", sans-serif; font-size: 0.78rem; padding: 1px 9px; border-radius: 999px;
+  white-space: nowrap; vertical-align: middle;
+}
+.crCapBeLoi { font-size: 0.85rem; color: var(--mau-chu); margin-top: 2px; }
+.crNutDauCapBe { flex: 1 1 100%; }
+.crTieuDeCap { font-family: "Baloo 2", sans-serif; color: var(--mau-chinh-dam); text-align: center; margin: 14px 0 8px; }
+
+/* Lưới 20 cấp */
+.crLuoiCap {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  max-width: 640px; margin: 0 auto; padding: 0 12px;
+}
+.crTheCap {
+  position: relative; font: inherit; color: inherit; cursor: pointer; min-width: 0;
+  background: var(--mau-nen-khoi); border: 3px solid var(--mau-vien); border-radius: 14px;
+  padding: 8px 3px 7px; text-align: center; box-shadow: var(--do-bong);
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.crTheCap:active { transform: translateY(3px); }
+.crTheCapHinh { font-size: 1.9rem; line-height: 1.1; }
+.crTheCapSo { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--mau-chinh-dam); line-height: 1.1; }
+.crTheCapTen { font-size: 0.7rem; color: var(--mau-chu-nhat); line-height: 1.15; min-height: 2.3em; display: flex; align-items: center; }
+.crTheCapThuong {
+  margin-top: 2px; background: var(--mau-phu); color: #5a3d00; font-weight: 700;
+  font-size: 0.7rem; padding: 0 7px; border-radius: 999px; white-space: nowrap;
+}
+.crTheCapThang {
+  position: absolute; top: -8px; right: -6px; background: var(--mau-thanh-cong); color: #fff;
+  font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 999px; white-space: nowrap;
+}
+.crTheCap.crCapCuaCon { border-color: var(--mau-chinh); background: var(--mau-chinh-nhat); box-shadow: 0 0 0 3px rgba(108, 76, 224, 0.25), var(--do-bong); }
+.crTheCap.crCapCuaCon::before {
+  content: "Cấp của con"; position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
+  background: var(--mau-chinh); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 1px 7px;
+  border-radius: 999px; white-space: nowrap;
+}
+.crTheCap.crCapKhoa { cursor: default; background: #F4F2F8; box-shadow: none; }
+.crTheCap.crCapKhoa:active { transform: none; }
+.crTheCap.crCapKhoa .crTheCapHinh { filter: grayscale(1); opacity: 0.35; }
+.crTheCap.crCapKhoa .crTheCapSo, .crTheCap.crCapKhoa .crTheCapTen { opacity: 0.55; }
+.crTheCapKhoaHinh { position: absolute; top: 4px; right: 6px; font-size: 0.95rem; }
+
+/* Lên cấp: khung kết quả nảy + pháo hoa emoji rơi */
+.vcKetQua.crLenCap .vcKetQuaHinh { animation: crNay 0.7s ease-in-out infinite alternate; }
+.vcKetQua.crLenCap h2 { color: var(--mau-chinh); }
+@keyframes crNay { from { transform: scale(1) rotate(-6deg); } to { transform: scale(1.25) rotate(6deg); } }
+.crPhaoHoa { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 3000; }
+.crPhaoHoa span { position: absolute; top: -3rem; animation-name: crRoi; animation-timing-function: ease-in; animation-fill-mode: forwards; }
+@keyframes crRoi { from { transform: translateY(0) rotate(0); opacity: 1; } to { transform: translateY(110vh) rotate(540deg); opacity: 0.7; } }
+
+@media (min-width: 600px) {
+  .crLuoiCap { grid-template-columns: repeat(5, 1fr); }
+  .crCapBe { margin-inline: auto; }
+  .crNutDauCapBe { flex: none; }
+}
+@media (min-width: 1024px) {
+  .crCapBe { max-width: 900px; padding: 16px 22px; gap: 18px; }
+  .crCapBeHinh { font-size: 4rem; }
+  .crCapBeDong { font-size: 1.5rem; }
+  .crCapBeLoi { font-size: 1rem; }
+  .crNutDauCapBe { padding: 12px 26px; font-size: 1.1rem; }
+  .crTieuDeCap { font-size: 1.3rem; margin-top: 22px; }
+  .crLuoiCap { max-width: 900px; grid-template-columns: repeat(5, 1fr); gap: 14px; padding: 0 32px; }
+  .crTheCap { padding: 12px 4px 10px; }
+  .crTheCap:not(.crCapKhoa):hover { border-color: var(--mau-chinh); transform: translateY(-3px); }
+  .crTheCapHinh { font-size: 2.3rem; }
+  .crTheCapSo { font-size: 1rem; }
+  .crTheCapTen { font-size: 0.78rem; }
+  .crTheCapThuong { font-size: 0.78rem; }
+  .crTheCapKhoaHinh { font-size: 1.1rem; }
+}
+/* Màn rộng: 2 hàng x 10 cấp, thấy cả thang không phải cuộn */
+@media (min-width: 1300px) {
+  .crCapBe, .crLuoiCap { max-width: 1100px; }
+  .crLuoiCap { grid-template-columns: repeat(10, 1fr); gap: 12px; }
+}
+/* 21/10/2026 23:22 - BƯỚC: TC_02C | 21/10/2026 21:10 - BƯỚC: TC_02B | 21/10/2026 18:05 - BƯỚC: TC_02A */
