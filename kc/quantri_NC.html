@@ -26,6 +26,7 @@
               logic DÙNG LẠI admin_NC.js ở gốc repo (không viết lại).
        CẬP NHẬT: 20/10/2026 - TC_T03B: thêm mục "📖 Kho từ vựng" (Quản trị chung): sửa kho từ
                  dùng chung + tải hình của từ, lưu thẳng vào repo qua GitHub API (qt_kho_tu.js/.css).
+       CẬP NHẬT: 21/10/2026 23:22 - TC_02C: ghi chú khóa cấp Caro (kc_caro_cap_toi_da, kc_caro_kc_thang_co_ban / moi_cap).
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
@@ -876,7 +877,10 @@
       <div class="adminKhoi">
         <h3>⚙️ Cấu Hình Cờ Caro</h3>
         <p class="adminGhiChu">
-          Số kim cương bé nhận khi thắng máy ở từng mức (Dễ / Vừa / Khó) và tổng tối đa mỗi ngày từ Caro.
+          Thang cấp máy (TC_02C, giống Cờ Vua): <code>kc_caro_cap_toi_da</code> = số cấp cao nhất; bé thắng máy
+          đúng cấp của mình thì lên cấp. Kim cương thắng máy = <code>kc_caro_kc_thang_co_ban</code> + cấp máy x
+          <code>kc_caro_kc_thang_moi_cap</code> (mặc định 2 + cấp). Ba khóa <code>kc_caro_kc_thang_de / vua / kho</code>
+          là của bản cũ, không còn dùng. Tổng tối đa mỗi ngày từ Caro: <code>kc_caro_kc_toi_da_ngay</code>.
           Chơi 2 người mỗi bạn một máy (khóa có <code>2n</code>): kim cương khi thắng / hoà / thua, tối đa mỗi ngày,
           và số nước tối thiểu của ván để được thưởng (TC_02B).
           Máy chủ tự kiểm ván thắng trước khi cộng. Trần chung mỗi ngày nằm ở ⚙️ Cấu hình chung.
