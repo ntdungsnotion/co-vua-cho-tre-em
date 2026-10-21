@@ -51,7 +51,7 @@
         '<span class="vcHinhDoiThu">' + d.hinh + "</span>" +
         '<span class="vcTenDoiThu">' + d.ten + "</span>" +
         '<span class="vcMucDoiThu">Mức ' + d.nhan + "</span>" +
-        (laBe ? '<span class="vcThuong" title="Thắng được ' + thuong + ' kim cương">+' + thuong + " 💎</span>" : "") +
+        (laBe ? '<span class="vcThuong" title="Thắng được ' + thuong + ' kim cương">Thắng: ' + thuong + " 💎</span>" : "") +
         '<span class="vcDaThang">' + (soThang ? "🏆 Đã thắng " + soThang + " ván" : "Thử sức nào!") + "</span>";
       the.addEventListener("click", () => batDauVan(d.muc));
       luoi.appendChild(the);
@@ -235,16 +235,26 @@
     if (mucGui) guiKetQua(mucGui);
   }
 
+  /* Lời báo kim cương nói RÕ SỐ (người dùng góp ý 21/10/2026): nhận mấy viên, kho giờ có mấy viên;
+     bị trần cắt bớt thì nói rõ được bao nhiêu trên bao nhiêu. */
+  function loiKimCuong(k) {
+    const kho = typeof k.diemSoMoi === "number" ? " Kho của con giờ có " + k.diemSoMoi + " 💎." : "";
+    if (k.soCong > 0 && k.soCong >= k.soXin) return "💎 Con nhận được " + k.soCong + " kim cương!" + kho;
+    if (k.soCong > 0) return "💎 Con nhận được " + k.soCong + " kim cương (ván này thưởng " + k.soXin +
+      " nhưng hôm nay chỉ còn nhận thêm được " + k.soCong + ")." + kho;
+    return "Hôm nay con đã nhận đủ kim cương rồi nên ván này không có thêm kim cương, mai chơi tiếp nhé!";
+  }
+
   function guiKetQua(mucGui) {
     ketQuaVan.gui().then(r => {
       const k = r.ketQua[mucGui.maLuot];
       if (typeof r.diemSoMoi === "number") capNhatKimCuong(r.diemSoMoi);
       const oKc = $("crKetQuaKimCuong");
       if (mucGui.ketQua !== "thang") { taiThanhTich(); return; }
-      if (!k) oKc.textContent = "Mạng đang chập chờn, kim cương sẽ tự vào kho khi có mạng nhé.";
+      const thuong = thanhTich && thanhTich.thuong && typeof thanhTich.thuong[mucGui.muc] === "number" ? thanhTich.thuong[mucGui.muc] : timDoiThu(mucGui.muc).thuong;
+      if (!k) oKc.textContent = "Mạng đang chập chờn, " + thuong + " kim cương của ván này sẽ tự vào kho khi có mạng nhé.";
       else if (k.hopLe === false) oKc.textContent = "Ván này máy chủ chưa ghi nhận được, con chơi ván khác nhé.";
-      else if (k.soCong > 0) oKc.textContent = "+" + k.soCong + " 💎 đã vào kho của con!";
-      else oKc.textContent = "Hôm nay con đã nhận đủ kim cương từ Cờ Caro rồi, mai chơi tiếp nhé!";
+      else oKc.textContent = loiKimCuong(k);
       taiThanhTich();
     });
   }
@@ -299,4 +309,4 @@
     taiThanhTich();
   });
 })();
-// 21/10/2026 18:20 - BƯỚC: TC_02A
+// 21/10/2026 19:20 - BƯỚC: TC_02A (lời báo kim cương nói rõ số) | 21/10/2026 18:20 - BƯỚC: TC_02A
