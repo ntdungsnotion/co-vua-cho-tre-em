@@ -1,0 +1,26 @@
+{
+  "_ghiChu": "Đấu Trường Tri Thức - BỐN THỜI KỲ (TC_D01, 21/10/2026; người dùng chốt danh hiệu: Thủ lĩnh, Tộc trưởng, Tù trưởng, Quốc vương). Thay 3 kỷ nguyên cũ của đặc tả. Số lượng tài nguyên cần để lên thời kỳ đặt ở cau_hinh.json (TC_D08), sửa được trong trang quản trị; ở đây chỉ ghi LOẠI tài nguyên và tên phát minh. ma trùng KC_NV.THOI_KY (trang phục nhân vật).",
+  "phienBan": 1,
+  "thoiKy": [
+    { "ma": "do_da", "ten": "Đồ đá", "danhHieu": "Thủ lĩnh", "nhaChinh": "Lều trại",
+      "moTa": "Lều da bên đống lửa. Nông dân cầm rìu đá chặt cây, hái quả.",
+      "canTaiNguyen": [], "phatMinh": [],
+      "moThem": ["Chặt cây", "Đào đá", "Hái quả", "Ruộng"],
+      "vungDat": "Thung Lũng Khởi Đầu", "theTriThuc": "Rìu đá, lửa, hang động (văn hóa Sơn Vi, Hòa Bình)" },
+    { "ma": "do_dong", "ten": "Đồ đồng", "danhHieu": "Tộc trưởng", "nhaChinh": "Nhà chính cấp 1",
+      "moTa": "Nhà gỗ mái lá, mũ lông chim, áo choàng ngắn.",
+      "canTaiNguyen": ["Gỗ", "Đá"], "phatMinh": ["Lửa", "Gốm", "Luyện đồng"],
+      "moThem": ["Mỏ sắt", "Nhà ở", "Nhà kho"],
+      "vungDat": "Rừng Thông + Đồi Gió", "theTriThuc": "Trống đồng Đông Sơn, mũi tên đồng" },
+    { "ma": "do_sat", "ten": "Đồ sắt", "danhHieu": "Tù trưởng", "nhaChinh": "Nhà chính cấp 2",
+      "moTa": "Tháp đá vững chãi, mũ sắt, áo choàng dài.",
+      "canTaiNguyen": ["Gỗ", "Đá", "Vàng"], "phatMinh": ["Lưỡi cày", "Rèn sắt", "Đắp đê"],
+      "moThem": ["Xưởng rèn", "Bến Cảng Tiếng Anh", "Chợ"],
+      "vungDat": "Hồ Gương + Sa Mạc", "theTriThuc": "Lưỡi cày sắt, Văn Lang - Âu Lạc" },
+    { "ma": "de_quoc", "ten": "Đế quốc", "danhHieu": "Quốc vương", "nhaChinh": "Nhà chính cấp 3",
+      "moTa": "Cung điện, vương miện, áo choàng hoàng gia và hào quang.",
+      "canTaiNguyen": ["Gỗ", "Đá", "Sắt", "Vàng"], "phatMinh": ["Chữ viết", "Luật lệ", "Thành lũy"], "canTrum": true,
+      "moThem": ["Quán Anh Hùng (tướng)", "Doanh trại", "Trạm Xá"],
+      "vungDat": "Núi Đá + vùng mới", "theTriThuc": "Thành Cổ Loa, chữ viết" }
+  ]
+}

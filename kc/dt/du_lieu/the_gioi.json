@@ -1,14 +1,6 @@
 {
-  "_ghiChu": "Đấu Trường Tri Thức - THẾ GIỚI GAME (TC_D00, 21/10/2026). Dữ liệu cấu hình, KHÔNG viết cứng trong code: 3 kỷ nguyên + các đấu trường môn học (môn, lớp áp dụng, công trình trong vương quốc, chỉ số nhân vật được nuôi). Bám đặc tả mục II.2, II.3, III.2, III.3. Trang quản trị sẽ sửa file này (TC_D07).",
-  "phienBan": 1,
-  "kyNguyen": [
-    { "ma": "khoi_nguyen", "ten": "Kỷ Khởi Nguyên", "capHoc": "Tiểu học", "tuLop": 1, "denLop": 5,
-      "moTa": "Làng cổ tích, nhà gỗ mái lá, đồng cỏ xanh, quái nhỏ đáng yêu." },
-    { "ma": "khai_sang", "ten": "Kỷ Khai Sáng", "capHoc": "THCS", "tuLop": 6, "denLop": 9,
-      "moTa": "Thị trấn đá, tháp phép thuật, phòng thí nghiệm giả kim." },
-    { "ma": "hoang_kim", "ten": "Kỷ Hoàng Kim", "capHoc": "THPT", "tuLop": 10, "denLop": 12,
-      "moTa": "Kinh đô pha lê và vàng, đài thiên văn, cầu bay, ánh sáng ma pháp." }
-  ],
+  "_ghiChu": "Đấu Trường Tri Thức - THẾ GIỚI GAME (TC_D00, 21/10/2026). Dữ liệu cấu hình, KHÔNG viết cứng trong code: các đấu trường môn học (môn, lớp áp dụng, công trình trong vương quốc, chỉ số nhân vật được nuôi). Bám đặc tả mục II.2, II.3, III.2, III.3. Trang quản trị sẽ sửa file này (TC_D07). TC_D01: bỏ 3 kỷ nguyên cũ, thời kỳ ở thoi_ky.json.",
+  "phienBan": 2,
   "dauTruong": [
     { "ma": "toan", "bieuTuong": "🔢", "chiSo": "Sức mạnh (STR)", "giaiDoan": [
       { "tuLop": 1, "denLop": 12, "ten": "Toán học", "congTrinh": "Tháp Số Học" } ] },
