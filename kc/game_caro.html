@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cờ Caro - Kids Challenge</title>
+
+  <!-- ================================================================
+       FILE: game_caro.html
+       CHỨC NĂNG: Trang game CỜ CARO chơi với máy (mảng Trò Chơi). Bàn 15 x 15, bé ❌ đi
+                  trước, máy ⭕; 3 đối thủ Gà Con (Dễ) / Cáo Nhỏ (Vừa) / Hổ Lớn (Khó);
+                  5 quân liền là thắng. Thắng máy được kim cương (số đọc từ cấu hình
+                  quản trị, máy chủ tự kiểm ván trước khi cộng).
+                  Điện thoại: bắt đầu ván là vào chế độ tập trung (chỉ còn bàn cờ).
+                  Máy tính: bàn to bên trái, bảng người chơi bên phải.
+       BƯỚC: TC_02A
+       NGÀY: 21/10/2026 18:10
+       PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
+                  chung/vc_van_co.css + .js (phần chung game cờ),
+                  caro/cr_logic.js (luật + máy), caro/cr_giao_dien.css + .js
+       ================================================================ -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kc_style.css">
+  <link rel="stylesheet" href="chung/vc_van_co.css">
+  <link rel="stylesheet" href="caro/cr_giao_dien.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header id="headerChinh" class="vcAnKhiTapTrung">
+    <h1>❌⭕ Cờ Caro</h1>
+    <div id="trangThaiDangNhap">
+      <span id="kcTenNguoiChoi"></span>
+      <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
+    </div>
+  </header>
+
+  <nav class="kcThanhTab vcAnKhiTapTrung" aria-label="Chuyển mảng">
+    <a class="kcTab" href="../index.html"><span class="kcTabIcon">🏠</span> Trang chủ</a>
+    <a class="kcTab" href="hoctap_NC.html"><span class="kcTabIcon">📚</span> Học Tập</a>
+    <a class="kcTab" href="khampha_NC.html"><span class="kcTabIcon">🧭</span> Khám Phá</a>
+    <a class="kcTab" href="trochoi_NC.html" aria-current="page"><span class="kcTabIcon">🎮</span> Trò Chơi</a>
+    <a class="kcTab" href="thuthach_NC.html"><span class="kcTabIcon">🎯</span> Thử Thách</a>
+  </nav>
+
+  <div id="kcChuaDangNhap" style="display:none;">
+    <h2>Con đăng nhập nhé!</h2>
+    <p>Một tài khoản dùng chung cho cả Cờ Vua và Thử Thách - Học Tập - Khám Phá - Trò Chơi. Đã đăng nhập bên Cờ Vua thì không cần đăng nhập lại.</p>
+    <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+    <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+    <button id="kcNutDangNhap" type="button">Đăng nhập</button>
+    <div id="kcThongBaoDangNhap"></div>
+  </div>
+
+  <div id="kcNoiDungCanDangNhap" style="display:none;">
+
+    <!-- Chọn đối thủ: bấm thẻ là vào ván ngay -->
+    <section id="crKhuChon" class="crKhuChon">
+      <div class="kcGioiThieu">
+        <h2>Con muốn đấu với ai? 🎉</h2>
+        <p>Xếp được <strong>5 quân ❌ liền nhau</strong> (ngang, dọc hoặc chéo) trước máy là thắng!</p>
+      </div>
+      <div class="crVanDo" id="crVanDo" style="display:none;">
+        <button class="vcNut" id="crNutChoiTiep" type="button">▶ Chơi tiếp ván đang dở</button>
+      </div>
+      <div class="vcLuoiDoiThu" id="crLuoiDoiThu"></div>
+      <p class="crGoiY" id="crGhiChuThuong"></p>
+    </section>
+
+    <!-- Ván đang chơi -->
+    <section id="crKhuChoi" class="vcKhuChoi" style="display:none;">
+      <div class="crDau">
+        <div class="vcHaiNguoi">
+          <div class="vcNguoiChoi" id="crTheBe">
+            <span class="vcAvatar" id="crAvatarBe">🙂</span>
+            <div class="vcChuNguoiChoi">
+              <div class="vcTenNguoiChoi" id="crTenBe">Con</div>
+              <div class="vcPhuNguoiChoi">quân ❌ · <span id="crKimCuongBe">💎 0</span></div>
+            </div>
+          </div>
+          <span class="vcChuVS">VS</span>
+          <div class="vcNguoiChoi" id="crTheMay">
+            <span class="vcAvatar" id="crAvatarMay">🦊</span>
+            <div class="vcChuNguoiChoi">
+              <div class="vcTenNguoiChoi" id="crTenMay">Cáo Nhỏ</div>
+              <div class="vcPhuNguoiChoi">quân ⭕ · <span id="crMucMay">Vừa</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="vcLoiLuot" id="crLoiLuot" aria-live="polite"></div>
+      </div>
+      <div class="crCotBan">
+        <div class="crBan" id="crBan" role="grid" aria-label="Bàn cờ caro 15 x 15"></div>
+        <p class="crGoiY" id="crGoiYCham"></p>
+      </div>
+      <div class="crNut">
+        <div class="vcNutHang" id="crNutHang">
+          <button class="vcNut" id="crNutVanMoi" type="button">🔄 Ván mới</button>
+          <button class="vcNut vcNutPhu" id="crNutDoiDoiThu" type="button">🎚️ Đổi đối thủ</button>
+          <a class="vcNut vcNutPhu" href="trochoi_NC.html" style="text-decoration:none;">🎮 Trò chơi khác</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Kết quả ván -->
+  <div class="vcKetQua" id="crKetQua" role="dialog" aria-modal="true" aria-labelledby="crKetQuaTieuDe">
+    <div class="vcKetQuaHop">
+      <div class="vcKetQuaHinh" id="crKetQuaHinh">🎉</div>
+      <h2 id="crKetQuaTieuDe"></h2>
+      <p id="crKetQuaLoi"></p>
+      <p class="vcKetQuaKimCuong" id="crKetQuaKimCuong"></p>
+      <div class="vcNutHang">
+        <button class="vcNut" id="crNutChoiLai" type="button">▶ Chơi ván nữa</button>
+        <button class="vcNut vcNutPhu" id="crNutXemBan" type="button">👀 Xem bàn cờ</button>
+        <button class="vcNut vcNutPhu" id="crNutKetQuaDoi" type="button">🎚️ Đổi đối thủ</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="kc_config.js"></script>
+  <script src="kc_api.js"></script>
+  <script src="kc_auth.js"></script>
+  <script src="chung/vc_van_co.js"></script>
+  <script src="caro/cr_logic.js"></script>
+  <script src="caro/cr_giao_dien.js"></script>
+
+<!-- KC_00F: số lượt truy cập ở chân trang (GoatCounter) -->
+<script src="kc_luot_truy_cap.js"></script>
+</body>
+</html>
+<!-- 21/10/2026 18:10 - BƯỚC: TC_02A -->
