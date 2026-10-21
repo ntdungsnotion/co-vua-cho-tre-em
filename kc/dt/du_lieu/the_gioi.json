@@ -1,0 +1,54 @@
+{
+  "_ghiChu": "Đấu Trường Tri Thức - THẾ GIỚI GAME (TC_D00, 21/10/2026). Dữ liệu cấu hình, KHÔNG viết cứng trong code: 3 kỷ nguyên + các đấu trường môn học (môn, lớp áp dụng, công trình trong vương quốc, chỉ số nhân vật được nuôi). Bám đặc tả mục II.2, II.3, III.2, III.3. Trang quản trị sẽ sửa file này (TC_D07).",
+  "phienBan": 1,
+  "kyNguyen": [
+    { "ma": "khoi_nguyen", "ten": "Kỷ Khởi Nguyên", "capHoc": "Tiểu học", "tuLop": 1, "denLop": 5,
+      "moTa": "Làng cổ tích, nhà gỗ mái lá, đồng cỏ xanh, quái nhỏ đáng yêu." },
+    { "ma": "khai_sang", "ten": "Kỷ Khai Sáng", "capHoc": "THCS", "tuLop": 6, "denLop": 9,
+      "moTa": "Thị trấn đá, tháp phép thuật, phòng thí nghiệm giả kim." },
+    { "ma": "hoang_kim", "ten": "Kỷ Hoàng Kim", "capHoc": "THPT", "tuLop": 10, "denLop": 12,
+      "moTa": "Kinh đô pha lê và vàng, đài thiên văn, cầu bay, ánh sáng ma pháp." }
+  ],
+  "dauTruong": [
+    { "ma": "toan", "bieuTuong": "🔢", "chiSo": "Sức mạnh (STR)", "giaiDoan": [
+      { "tuLop": 1, "denLop": 12, "ten": "Toán học", "congTrinh": "Tháp Số Học" } ] },
+    { "ma": "van", "bieuTuong": "📜", "chiSo": "Ma lực (MP)", "giaiDoan": [
+      { "tuLop": 1, "denLop": 5, "ten": "Tiếng Việt", "congTrinh": "Thư Viện Chữ" },
+      { "tuLop": 6, "denLop": 12, "ten": "Ngữ văn", "congTrinh": "Học Viện Ngữ Văn" } ] },
+    { "ma": "tieng_anh", "bieuTuong": "⛵", "chiSo": "Nhanh nhẹn (AGI)", "giaiDoan": [
+      { "tuLop": 3, "denLop": 12, "ten": "Tiếng Anh", "congTrinh": "Bến Cảng Tiếng Anh" } ] },
+    { "ma": "dao_duc", "bieuTuong": "🕊️", "chiSo": "Hồi phục, bùa hộ mệnh", "giaiDoan": [
+      { "tuLop": 1, "denLop": 5, "ten": "Đạo đức", "congTrinh": "Đền Đạo Đức" },
+      { "tuLop": 6, "denLop": 9, "ten": "Giáo dục công dân", "congTrinh": "Tòa Công Dân" },
+      { "tuLop": 10, "denLop": 12, "ten": "Giáo dục kinh tế và pháp luật", "congTrinh": "Viện Kinh Tế và Pháp Luật" } ] },
+    { "ma": "khoa_hoc", "bieuTuong": "🌱", "chiSo": "Phòng thủ (DEF)", "giaiDoan": [
+      { "tuLop": 1, "denLop": 3, "ten": "Tự nhiên và Xã hội", "congTrinh": "Vườn Khám Phá" },
+      { "tuLop": 4, "denLop": 5, "ten": "Khoa học", "congTrinh": "Đài Khoa Học" } ] },
+    { "ma": "khtn", "bieuTuong": "⚗️", "chiSo": "Phòng thủ (DEF)", "giaiDoan": [
+      { "tuLop": 6, "denLop": 9, "ten": "Khoa học tự nhiên", "congTrinh": "Phòng Thí Nghiệm Khoa Học Tự Nhiên" } ],
+      "nhanh": [
+        { "tuLop": 8, "ten": "Nhánh Hóa", "congTrinh": "Lò Giả Kim" },
+        { "tuLop": 8, "ten": "Nhánh Vật lý", "congTrinh": "Đài Quan Sát" },
+        { "tuLop": 9, "ten": "Nhánh Sinh học", "congTrinh": "Vườn Sự Sống" } ] },
+    { "ma": "vat_ly", "bieuTuong": "🔭", "chiSo": "Phòng thủ (DEF)", "giaiDoan": [
+      { "tuLop": 10, "denLop": 12, "ten": "Vật lý", "congTrinh": "Viện Vật Lý" } ] },
+    { "ma": "hoa_hoc", "bieuTuong": "🧪", "chiSo": "Phòng thủ (DEF)", "giaiDoan": [
+      { "tuLop": 10, "denLop": 12, "ten": "Hóa học", "congTrinh": "Viện Hóa Học" } ] },
+    { "ma": "sinh_hoc", "bieuTuong": "🧬", "chiSo": "Phòng thủ (DEF)", "giaiDoan": [
+      { "tuLop": 10, "denLop": 12, "ten": "Sinh học", "congTrinh": "Viện Sinh Học" } ] },
+    { "ma": "su_dia", "bieuTuong": "🗺️", "chiSo": "Sinh lực (HP)", "giaiDoan": [
+      { "tuLop": 4, "denLop": 9, "ten": "Lịch sử và Địa lý", "congTrinh": "Bảo Tàng Lịch Sử và Địa Lý" } ] },
+    { "ma": "lich_su", "bieuTuong": "🏛️", "chiSo": "Sinh lực (HP)", "giaiDoan": [
+      { "tuLop": 10, "denLop": 12, "ten": "Lịch sử", "congTrinh": "Bảo Tàng Lịch Sử" } ] },
+    { "ma": "dia_ly", "bieuTuong": "🧭", "chiSo": "Sinh lực (HP)", "giaiDoan": [
+      { "tuLop": 10, "denLop": 12, "ten": "Địa lý", "congTrinh": "Đài Địa Lý" } ] },
+    { "ma": "tin_cn", "bieuTuong": "🛠️", "chiSo": "Giảm giá rèn trang bị", "giaiDoan": [
+      { "tuLop": 3, "denLop": 5, "ten": "Tin học và Công nghệ", "congTrinh": "Xưởng Sáng Chế" } ] },
+    { "ma": "tin_hoc", "bieuTuong": "💻", "chiSo": "Giảm giá rèn trang bị", "giaiDoan": [
+      { "tuLop": 6, "denLop": 12, "ten": "Tin học", "congTrinh": "Xưởng Tin Học" } ] },
+    { "ma": "cong_nghe", "bieuTuong": "⚙️", "chiSo": "Giảm giá rèn trang bị", "giaiDoan": [
+      { "tuLop": 6, "denLop": 12, "ten": "Công nghệ", "congTrinh": "Xưởng Công Nghệ" } ] },
+    { "ma": "tong_hop", "bieuTuong": "🌟", "chiSo": "Câu hỏi liên môn, trùm kỷ nguyên", "giaiDoan": [
+      { "tuLop": 5, "denLop": 12, "ten": "Tri thức tổng hợp", "congTrinh": "Kỳ Đài Liên Môn" } ] }
+  ]
+}

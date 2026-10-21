@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#14204a">
+  <title>Đấu Trường Tri Thức - Kids Challenge</title>
+
+  <!-- ================================================================
+       FILE: dautruongtrithuc.html
+       CHỨC NĂNG: Trang KHỞI TẠO game "Đấu Trường Tri Thức" (mảng TRÒ CHƠI).
+                  Game nhập vai: dùng kiến thức lớp 1-12 để chiến đấu và xây vương
+                  quốc (Nhà chính cấp 1-12 = lớp 1-12). Bản này là SẢNH CHỜ: giới
+                  thiệu thế giới game, cho bé xem 3 kỷ nguyên (vương quốc đổi kiến
+                  trúc gỗ -> đá -> pha lê) và các đấu trường môn học của từng kỷ
+                  nguyên, cùng lộ trình xây game. Không có nút giả: phần chưa làm
+                  ghi "Đang rèn" và không bấm được.
+                  Thế giới game (kỷ nguyên, đấu trường, công trình) đọc từ dữ liệu
+                  kc/dt/du_lieu/the_gioi.json, không viết cứng trong code.
+       BƯỚC: TC_D00
+       NGÀY: 21/10/2026
+       PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js, dt/dt_khoi_tao.js
+       ================================================================ -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kc_style.css">
+  <style>
+    /* Bảng màu theo đặc tả (mục XI): xanh đêm + vàng cam, khung bo góc phát sáng */
+    .dtSanh { --dem: #14204a; --dem2: #1f2f6b; --dem3: #2b3f8a; --vang: #ffc24b; --cam: #ff8a3d; --sang: #fff6dc; --nhat: #b9c3ec;
+      max-width: 1100px; margin: 18px auto 28px; padding: 0 14px; color: var(--sang); }
+    .dtKhung { background: radial-gradient(120% 90% at 50% 0%, var(--dem3), var(--dem) 70%); border: 2px solid rgba(255,194,75,.55);
+      border-radius: 22px; box-shadow: 0 0 0 4px rgba(255,194,75,.12), 0 10px 30px rgba(20,32,74,.35); padding: 18px 16px; margin-bottom: 18px; }
+    .dtKhung h2 { font-family: "Baloo 2", sans-serif; color: var(--vang); margin: 0 0 4px; font-size: 1.35rem; }
+    .dtKhung > p.dtPhu { margin: 0 0 12px; color: var(--nhat); font-size: .92rem; }
+
+    /* ----- Phần mở đầu: tên game + vương quốc ----- */
+    .dtMoDau { display: grid; gap: 10px; text-align: center; }
+    .dtTen { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 2rem; line-height: 1.1; margin: 4px 0 0;
+      background: linear-gradient(180deg, #fff3c4, var(--vang) 55%, var(--cam)); -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35)); }
+    .dtKhauHieu { margin: 0; font-size: 1.05rem; color: var(--sang); font-weight: 600; }
+    .dtGioiThieu { margin: 6px 0 0; color: var(--nhat); font-size: .95rem; line-height: 1.5; }
+    .dtVuongQuoc { width: 100%; max-width: 420px; margin: 0 auto; display: block; }
+    .dtTenNha { font-family: "Baloo 2", sans-serif; font-weight: 700; color: var(--vang); margin: 0; }
+
+    /* ----- Chọn kỷ nguyên ----- */
+    .dtChonKy { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 12px; }
+    .dtNutKy { border: 2px solid rgba(185,195,236,.35); background: rgba(255,255,255,.06); color: var(--sang); border-radius: 16px; padding: 8px 4px;
+      font-family: "Baloo 2", sans-serif; font-weight: 700; font-size: .95rem; line-height: 1.15; cursor: pointer; min-height: 56px; }
+    .dtNutKy small { display: block; font-family: "Be Vietnam Pro", sans-serif; font-weight: 400; font-size: .72rem; color: var(--nhat); }
+    .dtNutKy[aria-pressed="true"] { border-color: var(--vang); background: linear-gradient(180deg, rgba(255,194,75,.28), rgba(255,138,61,.18));
+      box-shadow: 0 0 14px rgba(255,194,75,.45); }
+    .dtNutKy:focus-visible { outline: 3px solid var(--vang); outline-offset: 2px; }
+    .dtMoTaKy { margin: 0 0 12px; color: var(--nhat); font-size: .9rem; text-align: center; }
+
+    /* ----- Lưới đấu trường môn học ----- */
+    .dtLuoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .dtDauTruong { background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,194,75,.35); border-radius: 16px; padding: 10px 10px 12px; text-align: center; }
+    .dtDauTruong .dtBieuTuong { font-size: 2rem; display: block; line-height: 1.2; }
+    .dtDauTruong h3 { margin: 4px 0 2px; font-family: "Baloo 2", sans-serif; font-size: 1rem; color: var(--sang); line-height: 1.2; }
+    .dtDauTruong .dtCongTrinh { margin: 0; color: var(--vang); font-size: .8rem; font-weight: 600; }
+    .dtDauTruong .dtLop { margin: 4px 0 0; color: var(--nhat); font-size: .74rem; }
+    .dtDauTruong .dtChiSo { display: inline-block; margin-top: 6px; background: rgba(255,194,75,.16); color: #ffe3a3; border-radius: 99px; padding: 2px 8px; font-size: .7rem; }
+    .dtThongBaoLoi { color: #ffd0c4; text-align: center; margin: 10px 0; }
+
+    /* ----- Lộ trình 5 giai đoạn ----- */
+    .dtLoTrinh { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+    .dtGiaiDoan { position: relative; background: rgba(255,255,255,.06); border: 1.5px solid rgba(185,195,236,.25); border-radius: 16px; padding: 10px 12px 10px 52px; }
+    .dtGiaiDoan .dtSo { position: absolute; left: 10px; top: 10px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+      background: rgba(185,195,236,.2); font-family: "Baloo 2", sans-serif; font-weight: 800; color: var(--sang); }
+    .dtGiaiDoan h3 { margin: 0; font-family: "Baloo 2", sans-serif; font-size: 1rem; color: var(--sang); }
+    .dtGiaiDoan p { margin: 2px 0 0; font-size: .82rem; color: var(--nhat); line-height: 1.4; }
+    .dtGiaiDoan .dtTrangThai { display: inline-block; margin-top: 6px; font-size: .72rem; font-weight: 600; border-radius: 99px; padding: 2px 9px;
+      background: rgba(185,195,236,.16); color: var(--nhat); }
+    .dtGiaiDoan.dangRen { border-color: var(--vang); box-shadow: 0 0 12px rgba(255,194,75,.3); }
+    .dtGiaiDoan.dangRen .dtSo { background: var(--vang); color: #4a2a00; }
+    .dtGiaiDoan.dangRen .dtTrangThai { background: var(--vang); color: #4a2a00; }
+
+    /* ----- Hoạt ảnh vương quốc (tắt khi bật giảm chuyển động) ----- */
+    .dtSao { animation: dtLapLanh 2.6s ease-in-out infinite alternate; }
+    .dtSao:nth-child(2n) { animation-delay: .9s; }
+    .dtSao:nth-child(3n) { animation-delay: 1.7s; }
+    @keyframes dtLapLanh { from { opacity: .25; } to { opacity: 1; } }
+    .dtDen { animation: dtDenSang 1.8s ease-in-out infinite alternate; }
+    @keyframes dtDenSang { from { opacity: .7; } to { opacity: 1; filter: drop-shadow(0 0 4px #ffd36b); } }
+    .dtCo { transform-box: fill-box; transform-origin: left center; animation: dtCoBay 1.2s ease-in-out infinite alternate; }
+    @keyframes dtCoBay { from { transform: skewY(-6deg) scaleX(.92); } to { transform: skewY(5deg) scaleX(1); } }
+    .dtHatSang { animation: dtBay 3.4s ease-in-out infinite alternate; }
+    .dtHatSang:nth-child(2n) { animation-delay: 1.1s; }
+    @keyframes dtBay { from { transform: translateY(0); opacity: .4; } to { transform: translateY(-10px); opacity: 1; } }
+    .dtNha { animation: dtHienRa .5s ease-out; }
+    @keyframes dtHienRa { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      .dtSao, .dtDen, .dtCo, .dtHatSang, .dtNha { animation: none; }
+    }
+
+    /* ----- GIAO DIỆN MÁY TÍNH (>= 1024px): mở đầu 2 cột, lưới nhiều cột, lộ trình nằm ngang ----- */
+    @media (min-width: 1024px) {
+      .dtSanh { padding: 0 24px; margin-top: 24px; }
+      .dtKhung { padding: 24px 28px; }
+      .dtKhung h2 { font-size: 1.6rem; }
+      .dtMoDau { grid-template-columns: 1.05fr 1fr; align-items: center; text-align: left; gap: 24px; }
+      .dtTen { font-size: 2.9rem; }
+      .dtKhauHieu { font-size: 1.25rem; }
+      .dtGioiThieu { font-size: 1rem; }
+      .dtVuongQuoc { max-width: 480px; }
+      .dtTenNha { text-align: center; }
+      .dtNutKy { font-size: 1.1rem; min-height: 64px; }
+      .dtNutKy:hover { border-color: var(--vang); }
+      .dtNutKy small { font-size: .8rem; }
+      .dtLuoi { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+      .dtDauTruong { padding: 14px 12px 16px; }
+      .dtDauTruong .dtBieuTuong { font-size: 2.6rem; }
+      .dtDauTruong h3 { font-size: 1.1rem; }
+      .dtLoTrinh { grid-template-columns: repeat(5, 1fr); }
+      .dtGiaiDoan { padding: 52px 12px 12px; }
+      .dtGiaiDoan .dtSo { left: 12px; top: 12px; }
+    }
+    /* Laptop màn thấp (14 inch, phóng to 125%): bớt khoảng trống, vương quốc nhỏ lại */
+    @media (min-width: 1024px) and (max-height: 760px) {
+      .dtSanh { margin-top: 16px; }
+      .dtKhung { padding: 18px 22px; margin-bottom: 14px; }
+      .dtTen { font-size: 2.4rem; }
+      .dtVuongQuoc { max-width: 380px; }
+    }
+    @media (min-width: 1600px) {
+      .dtSanh { max-width: 1400px; }
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header id="headerChinh">
+    <h1>⚔️ Đấu Trường Tri Thức</h1>
+    <div id="trangThaiDangNhap">
+      <span id="kcTenNguoiChoi"></span>
+      <a class="kcNutLienKet" href="trochoi_NC.html">🎮 Trò Chơi</a>
+      <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
+    </div>
+  </header>
+
+  <nav class="kcThanhTab" aria-label="Chuyển mảng">
+    <a class="kcTab" href="../index.html"><span class="kcTabIcon">🏠</span> Trang chủ</a>
+    <a class="kcTab" href="hoctap_NC.html"><span class="kcTabIcon">📚</span> Học Tập</a>
+    <a class="kcTab" href="khampha_NC.html"><span class="kcTabIcon">🧭</span> Khám Phá</a>
+    <a class="kcTab" href="trochoi_NC.html" aria-current="page"><span class="kcTabIcon">🎮</span> Trò Chơi</a>
+    <a class="kcTab" href="thuthach_NC.html"><span class="kcTabIcon">🎯</span> Thử Thách</a>
+  </nav>
+
+  <div id="kcChuaDangNhap" style="display:none;">
+    <h2>Con đăng nhập nhé!</h2>
+    <p>Một tài khoản dùng chung cho cả Cờ Vua và Thử Thách - Học Tập - Khám Phá - Trò Chơi. Đã đăng nhập bên Cờ Vua thì không cần đăng nhập lại.</p>
+    <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+    <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+    <button id="kcNutDangNhap" type="button">Đăng nhập</button>
+    <div id="kcThongBaoDangNhap"></div>
+  </div>
+
+  <div id="kcNoiDungCanDangNhap" style="display:none;">
+    <main class="dtSanh">
+
+      <!-- MỞ ĐẦU: tên game + vương quốc của kỷ nguyên đang chọn -->
+      <section class="dtKhung dtMoDau" aria-labelledby="dtTenGame">
+        <div>
+          <p class="dtTen" id="dtTenGame">Đấu Trường Tri Thức</p>
+          <p class="dtKhauHieu">✨ Học mà như chơi ✨</p>
+          <p class="dtGioiThieu">Trong thế giới này, <b>kiến thức là sức mạnh</b>. Mỗi câu trả lời đúng là một đòn phép, mỗi lần giải nhanh là một cú né đẹp mắt.
+            Học càng giỏi, vương quốc của con càng lớn: Nhà chính lên từ cấp 1 đến cấp 12, đúng bằng lớp 1 đến lớp 12.</p>
+        </div>
+        <div>
+          <svg class="dtVuongQuoc" id="dtVuongQuoc" viewBox="0 0 320 220" role="img" aria-labelledby="dtTenNha"></svg>
+          <p class="dtTenNha" id="dtTenNha">Nhà chính</p>
+        </div>
+      </section>
+
+      <!-- BA KỶ NGUYÊN + ĐẤU TRƯỜNG MÔN HỌC (đọc từ dt/du_lieu/the_gioi.json) -->
+      <section class="dtKhung" aria-labelledby="dtTieuDeKy">
+        <h2 id="dtTieuDeKy">🌍 Ba kỷ nguyên</h2>
+        <p class="dtPhu">Chọn một kỷ nguyên để xem vương quốc và các đấu trường của nó. Mỗi môn học là một đấu trường, mỗi đấu trường là một công trình trong vương quốc.</p>
+        <div class="dtChonKy" id="dtChonKy" role="group" aria-label="Chọn kỷ nguyên"></div>
+        <p class="dtMoTaKy" id="dtMoTaKy"></p>
+        <div class="dtLuoi" id="dtLuoiDauTruong" aria-live="polite"></div>
+      </section>
+
+      <!-- LỘ TRÌNH XÂY GAME (5 giai đoạn của đặc tả, mục XIV) -->
+      <section class="dtKhung" aria-labelledby="dtTieuDeLoTrinh">
+        <h2 id="dtTieuDeLoTrinh">⚒️ Đấu trường đang được xây</h2>
+        <p class="dtPhu">Các thợ rèn đang làm từng phần một. Phần đầu tiên là một trận đấu Toán thật hay.</p>
+        <ol class="dtLoTrinh">
+          <li class="dtGiaiDoan dangRen"><span class="dtSo">1</span><h3>Trận đấu đầu tiên</h3>
+            <p>Đấu trường Toán lớp 6, một nhân vật, bốn quái, phòng thủ bằng câu trả lời.</p><span class="dtTrangThai">⚒️ Đang rèn</span></li>
+          <li class="dtGiaiDoan"><span class="dtSo">2</span><h3>Vương quốc</h3>
+            <p>Nhà chính cấp 1-12, Nhà môn học, Vàng, Gỗ, Đá, Ngọc Tri Thức, Kỳ thi thăng cấp.</p><span class="dtTrangThai">🔒 Sắp mở</span></li>
+          <li class="dtGiaiDoan"><span class="dtSo">3</span><h3>Đủ môn, đủ lớp</h3>
+            <p>Tiếng Việt, Tiếng Anh, Khoa học, Sử Địa, Tin học... từ lớp 1 đến lớp 12.</p><span class="dtTrangThai">🔒 Sắp mở</span></li>
+          <li class="dtGiaiDoan"><span class="dtSo">4</span><h3>Nhân vật và trang bị</h3>
+            <p>Sáu lớp nhân vật, cây kỹ năng, trang bị, xưởng rèn, thú cưng, trùm kỷ nguyên.</p><span class="dtTrangThai">🔒 Sắp mở</span></li>
+          <li class="dtGiaiDoan"><span class="dtSo">5</span><h3>Thách đấu</h3>
+            <p>Tháp câu đố, chinh phục vương quốc của bạn bè, đấu bạn bè.</p><span class="dtTrangThai">🔒 Sắp mở</span></li>
+        </ol>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="kc_config.js"></script>
+  <script src="kc_api.js"></script>
+  <script src="kc_auth.js"></script>
+  <script src="dt/dt_khoi_tao.js"></script>
+
+<!-- KC_00F 17/10/2026: số lượt truy cập ở chân trang (GoatCounter) -->
+<script src="kc_luot_truy_cap.js"></script>
+</body>
+</html>
+<!-- 21/10/2026 - BƯỚC: TC_D00 (trang khởi tạo Đấu Trường Tri Thức) -->
