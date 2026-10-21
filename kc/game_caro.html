@@ -7,16 +7,18 @@
 
   <!-- ================================================================
        FILE: game_caro.html
-       CHỨC NĂNG: Trang game CỜ CARO chơi với máy (mảng Trò Chơi). Bàn 15 x 15, bé ❌ đi
+       CHỨC NĂNG: Trang game CỜ CARO (mảng Trò Chơi): chơi với máy, chơi 2 người chung
+                  1 máy, chơi 2 người mỗi bạn 1 máy (TC_02B, phòng chơi chung game cờ). Bàn 15 x 15, bé ❌ đi
                   trước, máy ⭕; 3 đối thủ Gà Con (Dễ) / Cáo Nhỏ (Vừa) / Hổ Lớn (Khó);
                   5 quân liền là thắng. Thắng máy được kim cương (số đọc từ cấu hình
                   quản trị, máy chủ tự kiểm ván trước khi cộng).
                   Điện thoại: bắt đầu ván là vào chế độ tập trung (chỉ còn bàn cờ).
                   Máy tính: bàn to bên trái, bảng người chơi bên phải.
-       BƯỚC: TC_02A
-       NGÀY: 21/10/2026 18:10
+       BƯỚC: TC_02A | TC_02B (chơi 2 người: chung 1 máy + 2 máy, sảnh phòng)
+       NGÀY: 21/10/2026 18:10 | 21/10/2026 20:40
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
                   chung/vc_van_co.css + .js (phần chung game cờ),
+                  chung/vc_phong_co.js (phòng 2 người 2 máy - TC_02B),
                   caro/cr_logic.js (luật + máy), caro/cr_giao_dien.css + .js
        ================================================================ -->
 
@@ -69,6 +71,52 @@
       </div>
       <div class="vcLuoiDoiThu" id="crLuoiDoiThu"></div>
       <p class="crGoiY" id="crGhiChuThuong"></p>
+
+      <!-- TC_02B: chơi với bạn -->
+      <div class="kcGioiThieu crTieuDeBan">
+        <h2>Hay chơi với bạn? 👫</h2>
+      </div>
+      <div class="crVanDo" id="crVanHaiMay" style="display:none;">
+        <button class="vcNut" id="crNutVaoLai" type="button">▶ Vào lại ván với bạn</button>
+      </div>
+      <div class="vcLuoiDoiThu vcLuoi2" id="crLuoiBan">
+        <button class="vcTheDoiThu" id="crTheMotMay" type="button">
+          <span class="vcHinhDoiThu">👫</span>
+          <span class="vcTenDoiThu">Chung một máy</span>
+          <span class="vcMucDoiThu">Hai bạn ngồi cạnh nhau, thay phiên bấm</span>
+          <span class="vcDaThang">Chơi cho vui, không tính kim cương</span>
+        </button>
+        <button class="vcTheDoiThu" id="crTheHaiMay" type="button">
+          <span class="vcHinhDoiThu">📱📱</span>
+          <span class="vcTenDoiThu">Mỗi bạn một máy</span>
+          <span class="vcMucDoiThu">Điện thoại hay máy tính đều được</span>
+          <span class="vcThuong" id="crThuong2n">Thắng 3 💎 · Hoà 2 · Thua 1</span>
+          <span class="vcDaThang" id="crThanhTich2n">Thử sức nào!</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- TC_02B: sảnh chơi 2 máy -->
+    <section id="crKhuSanh" class="crKhuSanh" style="display:none;">
+      <div class="kcGioiThieu">
+        <h2>Mỗi bạn một máy 📱📱</h2>
+        <p>Một bạn bấm <strong>Tạo phòng</strong>. Bạn kia mở Cờ Caro trên máy của mình, chọn <strong>Mỗi bạn một máy</strong> rồi bấm vào phòng của bạn.</p>
+      </div>
+      <div class="crSanhCho" id="crSanhCho" style="display:none;">
+        <div class="crSanhChoHinh">⏳</div>
+        <h3>Phòng của con đã mở!</h3>
+        <p>Đang chờ bạn vào phòng... Nhắc bạn mở Cờ Caro, chọn <strong>Mỗi bạn một máy</strong> rồi bấm vào phòng có tên <strong id="crTenPhongCho">con</strong> nhé.</p>
+        <button class="vcNut vcNutPhu" id="crNutHuyPhong" type="button">✖ Huỷ phòng</button>
+      </div>
+      <div id="crSanhChon">
+        <div class="vcNutHang">
+          <button class="vcNut" id="crNutTaoPhong" type="button">➕ Tạo phòng</button>
+          <button class="vcNut vcNutPhu" id="crNutRoiSanh" type="button">⬅ Quay lại</button>
+        </div>
+        <h3 class="crSanhTieuDe">Phòng đang chờ bạn vào</h3>
+        <div class="crDsPhong" id="crDsPhong"></div>
+      </div>
+      <p class="crGoiY" id="crSanhBao" aria-live="polite"></p>
     </section>
 
     <!-- Ván đang chơi -->
@@ -79,7 +127,7 @@
             <span class="vcAvatar" id="crAvatarBe">🙂</span>
             <div class="vcChuNguoiChoi">
               <div class="vcTenNguoiChoi" id="crTenBe">Con</div>
-              <div class="vcPhuNguoiChoi">quân ❌ · <span id="crKimCuongBe">💎 0</span></div>
+              <div class="vcPhuNguoiChoi" id="crPhuBe">quân ❌ · <span id="crKimCuongBe">💎 0</span></div>
             </div>
           </div>
           <span class="vcChuVS">VS</span>
@@ -87,11 +135,18 @@
             <span class="vcAvatar" id="crAvatarMay">🦊</span>
             <div class="vcChuNguoiChoi">
               <div class="vcTenNguoiChoi" id="crTenMay">Cáo Nhỏ</div>
-              <div class="vcPhuNguoiChoi">quân ⭕ · <span id="crMucMay">Vừa</span></div>
+              <div class="vcPhuNguoiChoi" id="crPhuMay">quân ⭕ · mức Vừa</div>
             </div>
           </div>
         </div>
         <div class="vcLoiLuot" id="crLoiLuot" aria-live="polite"></div>
+        <div class="crHoiHoa" id="crHoiHoa" style="display:none;">
+          <span id="crHoiHoaChu"></span>
+          <span class="crHoiHoaNut" id="crHoiHoaNut">
+            <button class="vcNut" id="crNutDongYHoa" type="button">🤝 Đồng ý hoà</button>
+            <button class="vcNut vcNutPhu" id="crNutTuChoiHoa" type="button">▶ Chơi tiếp</button>
+          </span>
+        </div>
       </div>
       <div class="crCotBan">
         <div class="crBan" id="crBan" role="grid" aria-label="Bàn cờ caro 15 x 15"></div>
@@ -101,6 +156,9 @@
         <div class="vcNutHang" id="crNutHang">
           <button class="vcNut" id="crNutVanMoi" type="button">🔄 Ván mới</button>
           <button class="vcNut vcNutPhu" id="crNutDoiDoiThu" type="button">🎚️ Đổi đối thủ</button>
+          <button class="vcNut vcNutPhu crChi2May" id="crNutXinHoa" type="button">🤝 Xin hoà</button>
+          <button class="vcNut vcNutPhu crChi2May" id="crNutChiuThua" type="button">🏳️ Chịu thua</button>
+          <button class="vcNut vcNutPhu crChi2May" id="crNutRoiPhong" type="button">🚪 Rời phòng</button>
           <a class="vcNut vcNutPhu" href="trochoi_NC.html" style="text-decoration:none;">🎮 Trò chơi khác</a>
         </div>
       </div>
@@ -115,6 +173,7 @@
       <h2 id="crKetQuaTieuDe"></h2>
       <p id="crKetQuaLoi"></p>
       <p class="vcKetQuaKimCuong" id="crKetQuaKimCuong"></p>
+      <p class="crKetQuaCho" id="crKetQuaCho"></p>
       <div class="vcNutHang">
         <button class="vcNut" id="crNutChoiLai" type="button">▶ Chơi ván nữa</button>
         <button class="vcNut vcNutPhu" id="crNutXemBan" type="button">👀 Xem bàn cờ</button>
@@ -123,10 +182,23 @@
     </div>
   </div>
 
+  <!-- TC_02B: hỏi lại trước khi chịu thua / rời phòng (bấm nhầm trên điện thoại) -->
+  <div class="vcKetQua" id="crHoiLai" role="dialog" aria-modal="true" aria-labelledby="crHoiLaiTieuDe">
+    <div class="vcKetQuaHop">
+      <div class="vcKetQuaHinh" id="crHoiLaiHinh">🤔</div>
+      <h2 id="crHoiLaiTieuDe"></h2>
+      <p id="crHoiLaiLoi"></p>
+      <div class="vcNutHang">
+        <button class="vcNut vcNutPhu" id="crNutHoiLaiCo" type="button"></button>
+        <button class="vcNut" id="crNutHoiLaiKhong" type="button">▶ Chơi tiếp</button>
+    </div>
+  </div>
+
   <script src="kc_config.js"></script>
   <script src="kc_api.js"></script>
   <script src="kc_auth.js"></script>
   <script src="chung/vc_van_co.js"></script>
+  <script src="chung/vc_phong_co.js"></script>
   <script src="caro/cr_logic.js"></script>
   <script src="caro/cr_giao_dien.js"></script>
 
@@ -134,4 +206,4 @@
 <script src="kc_luot_truy_cap.js"></script>
 </body>
 </html>
-<!-- 21/10/2026 18:10 - BƯỚC: TC_02A -->
+<!-- 21/10/2026 20:40 - BƯỚC: TC_02B | 21/10/2026 18:10 - BƯỚC: TC_02A -->

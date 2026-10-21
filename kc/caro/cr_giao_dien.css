@@ -3,8 +3,8 @@
    CHỨC NĂNG: Bàn cờ Caro 15 x 15 + bố cục trang game_caro.html (điện thoại và máy
               tính). Phần chung (thẻ đối thủ, thẻ người chơi, kết quả) ở chung/vc_van_co.css.
               Quân vẽ bằng CSS (không dùng emoji) để mọi máy thấy giống nhau và nét ở mọi cỡ.
-   BƯỚC: TC_02A
-   NGÀY: 21/10/2026 18:05
+   BƯỚC: TC_02A | TC_02B (thẻ chơi với bạn, sảnh 2 máy, hỏi hoà, bóng quân ⭕)
+   NGÀY: 21/10/2026 18:05 | 21/10/2026 21:10
    ================================================================ */
 :root {
   --cr-mau-x: #E5484D;          /* quân của bé */
@@ -78,11 +78,83 @@
   .crDau { grid-area: dau; }
   .crCotBan { grid-area: ban; }
   .crNut { grid-area: nut; }
-  .crBan { --cr-co-ban: min(calc(100vh - 150px), 680px); margin: 0; }
+  /* TC_02B: trừ cả thanh tab trái 250px + cột 300px, để khổ 1024 không tràn ngang */
+  .crBan { --cr-co-ban: min(calc(100vh - 150px), 680px, calc(100vw - 646px)); margin: 0; }
   .crGoiY { font-size: 0.95rem; }
 }
 @media (min-width: 1024px) and (max-height: 760px) {
   .vcKhuChoi { padding: 14px 24px; }
-  .crBan { --cr-co-ban: min(calc(100vh - 110px), 600px); }
+  .crBan { --cr-co-ban: min(calc(100vh - 110px), 600px, calc(100vw - 590px)); }
 }
-/* 21/10/2026 18:05 - BƯỚC: TC_02A */
+/* ================= TC_02B: chơi với bạn ================= */
+.vcLuoiDoiThu.vcLuoi2 { grid-template-columns: repeat(2, 1fr); max-width: 520px; }
+.crTieuDeBan { margin-top: 22px; }
+.crTieuDeBan h2 { text-align: center; }
+.vcLuoi2 .vcHinhDoiThu { letter-spacing: -0.15em; }
+
+/* Lượt ⭕ (2 người): bóng quân xem trước là vòng tròn xanh */
+.crBan.crLuotO .crO.crBong::before, .crBan.crLuotO .crO.crBong::after { content: none; }
+.crBan.crLuotO .crO.crBong::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 52%; height: 52%; background: none;
+  transform: translate(-50%, -50%); border: max(2px, 0.16em) solid var(--cr-mau-o); border-radius: 50%; opacity: 0.4;
+}
+.crBan.crLuotO .crO.crBong { animation-name: crBongNhayO; }
+@keyframes crBongNhayO { from { background: rgba(47, 108, 216, 0.06); } to { background: rgba(47, 108, 216, 0.18); } }
+@media (hover: hover) and (pointer: fine) {
+  .crBan.crLuotO:not(.crChoMay):not(.crXong) .crO:not(.crX):not(.crOO):hover::after { content: none; }
+  .crBan.crLuotO:not(.crChoMay):not(.crXong) .crO:not(.crX):not(.crOO):hover::before {
+    width: 52%; height: 52%; background: none; border-radius: 50%; transform: translate(-50%, -50%);
+    border: max(2px, 0.16em) solid var(--cr-mau-o);
+  }
+}
+
+/* Hỏi hoà */
+.crHoiHoa {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px;
+  margin: 4px 0 2px; padding: 8px 10px; border-radius: 14px;
+  background: #FFF3CC; border: 2px solid var(--mau-phu); font-weight: 600; text-align: center;
+}
+.crHoiHoaNut { display: inline-flex; gap: 8px; }
+.crHoiHoa .vcNut { padding: 6px 14px; }
+.vcNut:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+/* Sảnh 2 máy */
+.crKhuSanh { max-width: 640px; margin: 0 auto; padding: 0 12px 20px; }
+.crKhuSanh h2, .crKhuSanh .kcGioiThieu p { text-align: center; }
+.crSanhTieuDe { font-family: "Baloo 2", sans-serif; color: var(--mau-chinh-dam); margin: 14px 0 8px; text-align: center; }
+.crDsPhong { display: grid; gap: 10px; }
+.crSanhTrong { text-align: center; color: var(--mau-chu-nhat); margin: 8px 0; }
+.crThePhong {
+  font: inherit; color: inherit; cursor: pointer; width: 100%; text-align: left;
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: var(--mau-nen-khoi); border: 3px solid var(--mau-vien); border-radius: var(--bo-tron); box-shadow: var(--do-bong);
+}
+.crThePhong:active { transform: translateY(3px); }
+.crThePhongChu { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.crThePhongTen { font-weight: 700; color: var(--mau-chinh-dam); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.crThePhongPhu { font-size: 0.8rem; color: var(--mau-chu-nhat); }
+.crThePhongVao { flex: none; padding: 7px 14px; }
+.crSanhCho {
+  text-align: center; background: var(--mau-nen-khoi); border: 3px dashed var(--mau-chinh);
+  border-radius: var(--bo-tron); padding: 18px 14px; margin: 8px 0;
+}
+.crSanhCho h3 { margin: 6px 0; color: var(--mau-chinh-dam); }
+.crSanhChoHinh { font-size: 2.8rem; animation: crXoay 2s linear infinite; display: inline-block; }
+@keyframes crXoay { to { transform: rotate(360deg); } }
+.crKetQuaCho { font-weight: 600; color: var(--mau-chinh-dam); min-height: 1.2em; }
+
+@media (min-width: 1024px) {
+  .vcLuoiDoiThu.vcLuoi2 { max-width: 640px; }
+  .crTieuDeBan { margin-top: 32px; }
+  .crKhuSanh { max-width: 900px; padding: 0 32px 28px; }
+  .crKhuSanh .vcNutHang { flex-direction: row; justify-content: center; }
+  .crKhuSanh .vcNutHang .vcNut { padding: 12px 28px; font-size: 1.05rem; }
+  .crDsPhong { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .crThePhong { padding: 16px 18px; }
+  .crThePhong:hover { border-color: var(--mau-chinh); transform: translateY(-3px); }
+  .crThePhongTen { font-size: 1.15rem; }
+  .crThePhongPhu { font-size: 0.95rem; }
+  .crSanhCho { padding: 28px 24px; max-width: 620px; margin: 12px auto; }
+  .crHoiHoa { flex-direction: column; }
+}
+/* 21/10/2026 21:10 - BƯỚC: TC_02B | 21/10/2026 18:05 - BƯỚC: TC_02A */
