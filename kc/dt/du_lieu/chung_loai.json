@@ -1,0 +1,19 @@
+{
+  "_ghiChu": "Đấu Trường Tri Thức - BA CHỦNG LOẠI (TC_D01, 21/10/2026; người dùng chốt tên + chỉ số mạnh). chiSo là thanh 1-5 chỉ để bé so sánh trên màn tạo nhân vật; chỉ số thật trong trận đặt ở cau_hinh.json (TC_D05, TC_D08). Hình vẽ ở kc/chung/nv_ve.js (ma trùng KC_NV.CHUNG_LOAI).",
+  "phienBan": 1,
+  "chungLoai": [
+    { "ma": "nhan", "ten": "Nhân tộc", "bieuTuong": "🛡️",
+      "moTa": "Cân đối sức mạnh và trí tuệ. Giỏi đủ thứ, dễ chơi nhất.",
+      "kienTruc": "Nhà gỗ mái lá, cối xay gió",
+      "chiSo": { "sucManh": 3, "triTue": 3, "phapThuat": 2, "sinhLuc": 3 } },
+    { "ma": "quy", "ten": "Quỷ tộc", "bieuTuong": "🔥",
+      "moTa": "Sức mạnh vượt trội, máu trâu. Ngầu và bí ẩn với cặp sừng nhỏ.",
+      "kienTruc": "Tháp đá đen, đèn lửa tím, cờ cánh dơi",
+      "chiSo": { "sucManh": 5, "triTue": 2, "phapThuat": 1, "sinhLuc": 4 } },
+    { "ma": "tien", "ten": "Tiên tộc", "bieuTuong": "🌿",
+      "moTa": "Pháp thuật mạnh, trí tuệ cao. Tai nhọn, đội vòng lá, sống trên cây.",
+      "kienTruc": "Nhà trên cây, đèn đom đóm",
+      "chiSo": { "sucManh": 1, "triTue": 4, "phapThuat": 5, "sinhLuc": 2 } }
+  ],
+  "tenChiSo": { "sucManh": "Sức mạnh", "triTue": "Trí tuệ", "phapThuat": "Pháp thuật", "sinhLuc": "Sinh lực" }
+}

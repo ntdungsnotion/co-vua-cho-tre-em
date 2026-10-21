@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xem thử nhân vật - Kids Challenge</title>
+  <!-- ================================================================
+       FILE: chung/nv_xem_thu.html
+       CHỨC NĂNG: Trang XEM THỬ bộ vẽ nhân vật dùng chung (chung/nv_ve.js): mọi chủng
+                  loại x giới x thời kỳ x tư thế, có hoạt ảnh. Dùng khi vẽ thêm đồ hoặc
+                  nối nhân vật vào game mới (vd Giải Cứu Mèo Con). Không cần đăng nhập,
+                  không lưu gì. Thêm #tinh vào địa chỉ để dừng hoạt ảnh (chụp ảnh).
+       BƯỚC: TC_D01
+       NGÀY: 21/10/2026
+       ================================================================ -->
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; background: #14204a; color: #fff6dc; font-family: system-ui, sans-serif; }
+    h1 { font-size: 1.2rem; margin: 14px 16px 4px; color: #ffc24b; }
+    p { margin: 0 16px 10px; color: #b9c3ec; font-size: .9rem; }
+    .thanh { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 16px 10px; }
+    .thanh button { background: rgba(255,255,255,.08); color: inherit; border: 1.5px solid rgba(185,195,236,.4); border-radius: 12px; padding: 6px 10px; font: inherit; cursor: pointer; }
+    .thanh button[aria-pressed="true"] { border-color: #ffc24b; background: rgba(255,194,75,.22); }
+    canvas { display: block; width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>Xem thử nhân vật dùng chung</h1>
+  <p>Hàng: chủng loại x giới. Cột: tư thế (Thủ lĩnh) rồi nông dân. Bấm thời kỳ để đổi trang phục.</p>
+  <div class="thanh" id="thanhKy"></div>
+  <canvas id="khung"></canvas>
+  <script src="nv_ve.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      var K = window.KC_NV, ky = "do_da", tinh = location.hash === "#tinh";
+      var TEN_KY = { do_da: "Đồ đá", do_dong: "Đồ đồng", do_sat: "Đồ sắt", de_quoc: "Đế quốc" };
+      var thanh = document.getElementById("thanhKy");
+      K.THOI_KY.forEach(function (m) {
+        var b = document.createElement("button"); b.type = "button"; b.textContent = TEN_KY[m];
+        b.setAttribute("aria-pressed", m === ky ? "true" : "false");
+        b.onclick = function () { ky = m; Array.prototype.forEach.call(thanh.children, function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); }); if (tinh) ve(1.3); };
+        thanh.appendChild(b);
+      });
+      var cv = document.getElementById("khung"), c = cv.getContext("2d");
+      var COT = ["dung", "di", "vay", "chay", "nhay", "nd_dung", "nd_chat"], HANG = [];
+      K.CHUNG_LOAI.forEach(function (cl) { ["nam", "nu"].forEach(function (g) { HANG.push({ chungLoai: cl, gioi: g }); }); });
+      function ve(t) {
+        var w = cv.clientWidth, dpr = window.devicePixelRatio || 1, o = Math.max(70, Math.min(150, w / COT.length)), cao = o * 1.25;
+        cv.style.height = (cao * HANG.length + 20) + "px";
+        cv.width = w * dpr; cv.height = (cao * HANG.length + 20) * dpr;
+        c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        c.clearRect(0, 0, w, cv.height);
+        HANG.forEach(function (h, i) {
+          var hs = { chungLoai: h.chungLoai, gioi: h.gioi, kieuToc: i % 3, mauToc: [1, 0, 3, 4, 5, 6][i], mauDa: i % 4, mauAo: i % 6 };
+          COT.forEach(function (cot, j) {
+            var nd = cot.indexOf("nd_") === 0, x = o * (j + 0.5), y = cao * (i + 1) - 10;
+            c.fillStyle = (i + j) % 2 ? "rgba(255,255,255,.04)" : "rgba(255,255,255,.08)";
+            c.fillRect(o * j, cao * i, o, cao);
+            K.ve(c, nd ? K.hoSoNongDan(h.chungLoai, i) : hs, { x: x, y: y, co: o / 95, t: t, lech: i * 0.37 + j * 0.2, tuThe: nd ? cot.slice(3) : cot, thoiKy: ky, vaiTro: nd ? "nong_dan" : "thu_linh" });
+          });
+        });
+      }
+      if (tinh) { ve(1.3); window.addEventListener("resize", function () { ve(1.3); }); return; }
+      function lap(ms) { ve(ms / 1000); requestAnimationFrame(lap); }
+      requestAnimationFrame(lap);
+    })();
+  </script>
+</body>
+</html>
