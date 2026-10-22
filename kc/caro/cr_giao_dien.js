@@ -18,8 +18,8 @@
               Ván với máy đang dở lưu localStorage (kc_caro_van_do_<tên>); ván 2 máy nằm trên
               máy chủ, tải lại trang thì vào lại được.
               Chỉ tài khoản bé (vai trò 'tre') mới nhận kim cương; phụ huynh / admin vẫn chơi được.
-   BƯỚC: TC_02A | TC_02B (chơi 2 người chung 1 máy + 2 máy) | TC_02C (20 cấp + Web Worker)
-   NGÀY: 21/10/2026 18:20 | 21/10/2026 21:00 | 21/10/2026 23:22
+   BƯỚC: TC_02A | TC_02B (chơi 2 người chung 1 máy + 2 máy) | TC_02C (20 cấp + Web Worker) | TC_02D (thông báo ghi rõ số 💎)
+   NGÀY: 21/10/2026 18:20 | 21/10/2026 21:00 | 21/10/2026 23:22 | 22/10/2026 07:20
    PHỤ THUỘC: kc_auth.js (sự kiện kcSanSang, kcDocPhien, kcLuuPhien), kc_api.js (kcGoiRpc),
               kc_config.js (kcSupabaseClient), chung/vc_van_co.js + chung/vc_phong_co.js (VC),
               caro/cr_logic.js (CR), caro/cr_may_nghi.js (Worker, nạp khi cần).
@@ -492,7 +492,7 @@
     else if (kq === "thua") datKetQua("💪", d.ten + " thắng ván này!", "Mẹo nhỏ: thấy " + d.ten + " có 3 quân ⭕ liền nhau là chặn ngay nhé. Chơi lại phục thù nào!");
     else datKetQua("🤝", "Hoà rồi!", "Bàn cờ đầy mà chưa ai xếp được 5 quân. Hai bên ngang tài!");
     const oKc = $("crKetQuaKimCuong");
-    if (kq === "thang" && !laBe) oKc.textContent = "Tài khoản của bé mới nhận kim cương nhé.";
+    if (kq === "thang" && !laBe) oKc.textContent = "Tài khoản của bé mới nhận " + thuongCap(d.cap) + " kim cương nhé.";
     if (kq === "thang" && mucGui) oKc.textContent = "Đang cất kim cương vào kho... 💎";
     moKetQua();
     if (mucGui) guiKetQua(mucGui);
@@ -759,7 +759,8 @@
     }
     const oKc = $("crKetQuaKimCuong");
     const k = p.thuong && p.thuong[h.toi];
-    if (!laBe) oKc.textContent = "Tài khoản của bé mới nhận kim cương nhé.";
+    if (!laBe) oKc.textContent = "Tài khoản của bé mới nhận " +
+      thuong2n()[p.ketQua === "hoa" ? "hoa" : p.nguoiThang === h.toi ? "thang" : "thua"] + " kim cương nhé.";
     else if (!k) oKc.textContent = "";
     else if (k.duNuoc === false) oKc.textContent = "Ván ngắn quá nên chưa có kim cương. Chơi ván dài hơn (từ " + ((thanhTich && thanhTich.soNuocToiThieu2n) || 10) + " nước) là có nhé!";
     else {
