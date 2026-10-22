@@ -4,6 +4,7 @@
 //   9 man hinh: Vat Pham | Doi Thuong | Y Tuong | Cau Hinh Chung |
 //               Cap Do May | Loi Dong Vien | Giong Doc | Ho So Tre | Don Kho Anh
 // BUOC: NC_06A-2 (nang cap tu NC_09B) - NGAY: 12/07/2026 21:00
+// CAP NHAT: 22/10/2026 - BUOC: TC_03A: khoa kc_co_tuong_ ve nhom "cotuong" (Co Tuong, trang quan tri chung).
 // CAP NHAT: 17/10/2026 - BUOC: KC_00D-1B (nguoi dung thu KC_00D-1 - chung / rieng ro rang):
 //   (1) HO SO CAC BE chia tieu muc Thong tin chung / Co Vua / Giai Cuu Meo Con / sap co;
 //       danh sach chi thong tin chung (RPC admin moi kc_admin_lay_danh_sach_tre,
@@ -1071,7 +1072,7 @@ var ADMIN_KHOA_LINH_VUC = {
   kc_gioi_han_dang_lam: "thuthach"
 };
 var ADMIN_TEN_NHOM = {
-  chung: "Chung", covua: "Cờ Vua", santu: "Giải Cứu Mèo Con", caro: "Cờ Caro",
+  chung: "Chung", covua: "Cờ Vua", santu: "Giải Cứu Mèo Con", caro: "Cờ Caro", cotuong: "Cờ Tướng",
   thuthach: "Thử Thách", hoctap: "Học Tập", khampha: "Khám Phá",
   giongdoc: "Giọng đọc", chuaxep: "Chưa xếp"
 };
@@ -1080,6 +1081,7 @@ function adminNhomCuaKhoa(khoa) {
   if (Object.prototype.hasOwnProperty.call(ADMIN_KHOA_LINH_VUC, khoa)) return ADMIN_KHOA_LINH_VUC[khoa];
   if (khoa.indexOf("kc_santu_") === 0) return "santu";
   if (khoa.indexOf("kc_caro_") === 0) return "caro";       // TC_02A 21/10/2026: Cờ Caro
+  if (khoa.indexOf("kc_co_tuong_") === 0) return "cotuong"; // TC_03A 22/10/2026: Cờ Tướng
   if (khoa.indexOf("kc_tt_") === 0) return "thuthach";
   if (khoa.indexOf("kc_ht_") === 0) return "hoctap";
   if (khoa.indexOf("kc_kp_") === 0) return "khampha";
