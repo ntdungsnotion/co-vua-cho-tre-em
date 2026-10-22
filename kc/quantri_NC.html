@@ -26,6 +26,8 @@
               logic DÙNG LẠI admin_NC.js ở gốc repo (không viết lại).
        CẬP NHẬT: 20/10/2026 - TC_T03B: thêm mục "📖 Kho từ vựng" (Quản trị chung): sửa kho từ
                  dùng chung + tải hình của từ, lưu thẳng vào repo qua GitHub API (qt_kho_tu.js/.css).
+       CẬP NHẬT: 22/10/2026 22:55 - TC_03D: Cờ Tướng thêm mục "💬 Lời động viên" (qt_loi_dong_vien.js,
+                 bảng kc_loi_dong_vien) + ghi chú 2 khóa mốc khen kc_co_tuong_khen_....
        CẬP NHẬT: 22/10/2026 - TC_03A: nhóm "🐘 Cờ Tướng" trong Trò Chơi, mục Cấu hình (khóa kc_co_tuong_).
        CẬP NHẬT: 21/10/2026 23:22 - TC_02C: ghi chú khóa cấp Caro (kc_caro_cap_toi_da, kc_caro_kc_thang_co_ban / moi_cap).
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
@@ -462,6 +464,7 @@
         </div>
         <div class="qtNhomCon" data-ten-nhom="Trò Chơi › Cờ Tướng">
           <div class="qtTenNhomCon">🐘 Cờ Tướng</div>
+          <button class="adminNutManHinh qtMuc" data-manhinh="loidongvien-cotuong" type="button">💬 Lời động viên</button>
           <button class="adminNutManHinh qtMuc" data-manhinh="cauhinh-cotuong" type="button">⚙️ Cấu hình</button>
         </div>
       </div>
@@ -913,7 +916,10 @@
           đúng cấp của mình thì lên cấp. Kim cương thắng máy = <code>kc_co_tuong_kc_thang_co_ban</code> + cấp máy x
           <code>kc_co_tuong_kc_thang_moi_cap</code> (mặc định 2 + cấp). Tổng tối đa mỗi ngày từ Cờ Tướng:
           <code>kc_co_tuong_kc_toi_da_ngay</code>. Máy chủ tự kiểm ván thắng theo luật cờ tướng (chiếu bí thật)
-          trước khi cộng. Trần chung mỗi ngày nằm ở ⚙️ Cấu hình chung.
+          trước khi cộng. Trần chung mỗi ngày nằm ở ⚙️ Cấu hình chung.<br>
+          Trợ lý 🦉 khen theo <strong>cấp Cờ Tướng của bé</strong>: cấp 1 tới <code>kc_co_tuong_khen_moi_nuoc_toi_cap</code>
+          (mặc định 5) khen mọi nước; tới <code>kc_co_tuong_khen_nuoc_tot_toi_cap</code> (mặc định 9) chỉ khen nước tốt
+          (ăn quân, chiếu tướng) và động viên khi bé bị ăn quân / bị chiếu; cao hơn thì tắt khen. Câu nói sửa ở 💬 Lời động viên.
         </p>
         <button class="adminNut adminNutPhu" data-lam-moi-cau-hinh type="button">🔄 Làm Mới</button>
         <div class="adminCuonNgang" style="margin-top:10px;">
@@ -923,6 +929,72 @@
             </thead>
             <tbody data-nhom-cau-hinh="cotuong">
               <tr><td colspan="4" class="adminDangTai">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TC_03D 22/10/2026: lời động viên Cờ Tướng (qt_loi_dong_vien.js, bảng kc_loi_dong_vien) -->
+    <section class="adminManHinh" id="manhinh-loidongvien-cotuong" data-ldv-tro-choi="co_tuong">
+      <div class="adminKhoi">
+        <h3>➕ Thêm Câu Nói Mới (Cờ Tướng)</h3>
+        <p class="adminGhiChu">
+          Trợ lý 🦉 của Cờ Tướng nói những câu này (hiện chữ + đọc thành tiếng). Tách riêng với câu của Cờ Vua.
+          Mỗi tình huống nên có <strong>nhiều biến thể</strong> — trợ lý đọc ngẫu nhiên để bé không thấy nhàm.
+          Viết tiếng Việt <strong>CÓ DẤU</strong>, tối đa 300 ký tự. Tình huống nào chưa có câu thì trợ lý dùng câu có sẵn trong app.<br>
+          Ô <strong>Link âm thanh</strong> chỉ dùng khi máy của bé không đọc được tiếng Việt: mỗi câu một file MP3 đọc trọn câu. Để trống cũng được.
+        </p>
+        <div class="adminHang">
+          <div class="adminO">
+            <label for="ldvCtLoaiMoi">Tình huống</label>
+            <select id="ldvCtLoaiMoi" data-ldv="loaiMoi"></select>
+          </div>
+          <div class="adminO" style="flex:2 1 320px;">
+            <label for="ldvCtNoiDungMoi">Nội dung câu nói (có dấu)</label>
+            <input type="text" id="ldvCtNoiDungMoi" data-ldv="noiDungMoi" maxlength="300" placeholder="Con ăn Xe rồi, giỏi quá!">
+          </div>
+        </div>
+        <div class="adminHang">
+          <div class="adminO" style="flex:2 1 320px;">
+            <label for="ldvCtLinkMoi">Link âm thanh MP3 (tùy chọn)</label>
+            <input type="text" id="ldvCtLinkMoi" data-ldv="linkMoi" placeholder="Dán link hoặc tải file lên bên cạnh">
+          </div>
+          <div class="adminO">
+            <label for="ldvCtFileMoi">Tải file MP3 lên</label>
+            <input type="file" id="ldvCtFileMoi" data-ldv="fileMoi" accept="audio/*">
+          </div>
+          <div class="adminO" style="flex:0 0 auto; justify-content:flex-end;">
+            <button class="adminNut adminNutPhu" data-ldv="ngheMoi" type="button">▶️ Nghe Thử</button>
+          </div>
+          <div class="adminO" style="flex:0 0 auto; justify-content:flex-end;">
+            <button class="adminNut adminNutThanhCong" data-ldv="them" type="button">💾 Thêm Câu</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="adminKhoi">
+        <h3>💬 Danh Sách Câu Nói Cờ Tướng</h3>
+        <div class="adminHang">
+          <div class="adminO">
+            <label for="ldvCtLocLoai">Lọc theo tình huống</label>
+            <select id="ldvCtLocLoai" data-ldv="locLoai"></select>
+          </div>
+          <div class="adminO" style="flex:0 0 auto; justify-content:flex-end;">
+            <button class="adminNut adminNutPhu" data-ldv="lamMoi" type="button">🔄 Làm Mới</button>
+          </div>
+        </div>
+        <div class="adminCuonNgang">
+          <table class="adminBang">
+            <thead>
+              <tr>
+                <th style="width:50px;">ID</th><th style="width:130px;">Tình huống</th>
+                <th>Nội dung</th><th style="width:200px;">Link âm thanh</th>
+                <th style="width:60px;">Hiện</th><th style="width:210px;"></th>
+              </tr>
+            </thead>
+            <tbody data-ldv="bang">
+              <tr><td colspan="6" class="adminDangTai">Đang tải...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1419,5 +1491,6 @@
   <script src="../admin_NC.js"></script>
   <script src="quantri_NC.js"></script>
   <script src="qt_kho_tu.js"></script>
+  <script src="qt_loi_dong_vien.js"></script>
 </body>
 </html>

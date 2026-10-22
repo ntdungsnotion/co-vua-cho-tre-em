@@ -15,10 +15,17 @@
               - Ván dở lưu localStorage (kc_cotuong_van_do_<tên>), tải lại trang chơi tiếp được.
               - Thắng / thua / hoà / chịu thua gửi qua VC.KetQuaVan (máy chủ kiểm ván thắng
                 theo luật cờ tướng rồi mới cộng kim cương). Chỉ tài khoản bé nhận kim cương.
+              - TC_03D: TRỢ LÝ 🦉 khen / động viên giống Cờ Vua (chung/vc_tro_ly.js): câu hiện ở ô
+                lời lượt + đọc thành tiếng. Khen theo CẤP Cờ Tướng của bé (phụ huynh / admin: theo
+                cấp máy đang đấu để xem thử); máy chỉ đi sau khi câu khen đọc xong (lưới an toàn
+                15 giây); bé chạm bàn cờ là tắt tiếng ngay. Câu sự kiện: bắt đầu ván, thắng, thua,
+                hoà, lên cấp. Câu lấy từ bảng kc_loi_dong_vien (quản trị sửa), thiếu thì dùng LOI_MAC_DINH.
    BƯỚC: TC_03A
    NGÀY: 22/10/2026 21:10
+   CẬP NHẬT: 22/10/2026 22:40 - TC_03D (trợ lý 🦉 khen / động viên)
    PHỤ THUỘC: kc_auth.js (sự kiện kcSanSang, kcDocPhien, kcLuuPhien), kc_api.js (kcGoiRpc),
-              chung/vc_van_co.js (VC), co_tuong/ct_logic.js (CT), co_tuong/ct_may_nghi.js (Worker).
+              chung/vc_van_co.js (VC), chung/vc_tro_ly.js (VC.giong, VC.LoiDongVien),
+              co_tuong/ct_logic.js (CT), co_tuong/ct_may_nghi.js (Worker).
    ================================================================ */
 (function () {
   "use strict";
@@ -46,6 +53,28 @@
   let tapTrung = null;        // VC.TapTrung
   let thanhTich = null;       // kết quả kc_co_thanh_tich
   const oBan = [];
+
+  /* ---- TC_03D: trợ lý 🦉 ---- */
+  /* Câu dự phòng khi bảng kc_loi_dong_vien chưa có câu / mất mạng (giống câu gieo trong SQL TC_03D) */
+  const LOI_MAC_DINH = {
+    chao_hoi: ["Xin chào! Chúc con chơi cờ tướng thật vui nhé."],
+    bat_dau_van: ["Bắt đầu ván mới! Con cầm quân Đỏ, đi trước nhé."],
+    nuoc_thuong: ["Con đi hay lắm!", "Giỏi quá, tiếp tục nhé!", "Cố lên, con làm tốt lắm!"],
+    an_quan: ["Ăn quân giỏi quá!", "Hay lắm, con bắt được một quân rồi!"],
+    chieu_tuong: ["Chiếu tướng! Con giỏi quá!"],
+    bi_an_quan: ["Không sao đâu, mất một quân vẫn còn cơ hội. Cố lên con!"],
+    bi_chieu: ["Cẩn thận, Tướng của con đang bị chiếu đấy!"],
+    thang_van: ["Con thắng rồi! Giỏi quá đi!"],
+    thua_van: ["Ván này máy thắng rồi. Không sao, ván sau con cố lên nhé!"],
+    hoa_van: ["Hoà rồi! Hai bên ngang tài ngang sức."],
+    len_cap: ["Chúc mừng con đã lên cấp mới! Tuyệt vời!"]
+  };
+  const troLy = new VC.LoiDongVien(TRO_CHOI, LOI_MAC_DINH);
+  let loiTroLy = "";          // câu trợ lý đang hiện ở ô lời lượt
+  let henTroLy = null;
+  /* Khen theo cấp Cờ Tướng của bé; phụ huynh / admin (mở sẵn mọi cấp) theo cấp máy đang đấu */
+  const capKhen = () => (laBe ? capBe : doiThu.cap);
+  const demQuan = () => { let n = 0; for (let o = 0; o < CT.SO_O; o++) if (van.quan(o)) n++; return n; };
 
   const timDoiThu = muc => CT.CAP[CT.capCuaMuc(muc)] || CT.CAP[1];
   const khoaVanDo = () => "kc_cotuong_van_do_" + (tk ? tk.tenDangNhap : "khach");
@@ -116,6 +145,7 @@
 
   function hienKhuChon() {
     if (tapTrung) tapTrung.thoat();
+    VC.giong.dung();
     huyMayNghi();
     dangNghi = false;
     hienKhu("chon");
@@ -312,9 +342,49 @@
       if (van.chieu) loi = "⚠️ Tướng của con đang bị chiếu! Cứu Tướng nhanh nào!";
       else loi = van.nuocDi.length === 0 ? "Con đi trước! Bấm vào một quân Đỏ nhé" : "Lượt của con!";
     } else loi = may + " đang nghĩ...";
-    $("ctLoiLuot").textContent = loi;
+    const oLoi = $("ctLoiLuot");
+    oLoi.textContent = loiTroLy ? "🦉 " + loiTroLy : loi;
+    oLoi.classList.toggle("ctLoiTroLy", !!loiTroLy);
     if (tapTrung) tapTrung.capNhatNut();
   }
+
+  /* ---------------- TRỢ LÝ 🦉 (TC_03D) ---------------- */
+  /* Hiện câu ở ô lời lượt + đọc. khiXong chạy khi đọc xong (tắt tiếng thì chạy ngay). Câu còn
+     hiện thêm một lúc cho bé kịp đọc, rồi ô trở lại lời lượt. */
+  function noiTroLy(cau, khiXong) {
+    if (!cau) { if (khiXong) khiXong(); return; }
+    if (henTroLy) { clearTimeout(henTroLy); henTroLy = null; }
+    loiTroLy = cau.noiDung;
+    if (van) capNhatLuot();
+    const batDau = Date.now();
+    VC.giong.noi(cau.noiDung, cau.duongDanAmThanh, () => {
+      henTroLy = setTimeout(() => { henTroLy = null; anTroLy(); }, Math.max(1500, 3000 - (Date.now() - batDau)));
+      if (khiXong) khiXong();
+    });
+  }
+  function anTroLy() {
+    if (henTroLy) { clearTimeout(henTroLy); henTroLy = null; }
+    if (!loiTroLy) return;
+    loiTroLy = "";
+    if (van) capNhatLuot();
+  }
+  /* Bé chạm bàn cờ / sang ván khác: tắt tiếng ngay, câu đang hiện cũng thôi */
+  function imTroLy() { VC.giong.dung(); anTroLy(); }
+
+  function veNutTroLy() {
+    const bat = VC.giong.dangBat();
+    const nut = $("ctNutTroLy");
+    nut.textContent = bat ? "🦉 Trợ lý: đang nói" : "🦉 Trợ lý: im lặng";
+    nut.setAttribute("aria-pressed", bat ? "true" : "false");
+  }
+  function doiTroLy() {
+    const bat = !VC.giong.dangBat();
+    VC.giong.datBat(bat);
+    veNutTroLy();
+    if (bat) { VC.giong.moKhoa(); noiTroLy(troLy.lay(["chao_hoi"])); }
+    else { anTroLy(); if (choKhenXong) choKhenXong(); }   // đang chờ câu khen -> máy đi luôn
+  }
+  let choKhenXong = null;     // máy đang chờ câu khen đọc xong: hàm cho máy đi tiếp
 
   function veTatCa() { veNguoiChoi(); veBan(); capNhatLuot(); }
 
@@ -322,6 +392,8 @@
   function batDauVan(muc, nuocDiCu) {
     dongKetQua();
     huyMayNghi();
+    imTroLy();
+    choKhenXong = null;
     doiThu = timDoiThu(muc);
     van = nuocDiCu ? CT.VanCoTuong.tuNuocDi(doiThu.muc, nuocDiCu) : new CT.VanCoTuong(doiThu.muc);
     if (van.daXong || (nuocDiCu && van.nuocDi.length !== nuocDiCu.length)) van = new CT.VanCoTuong(doiThu.muc);
@@ -331,15 +403,18 @@
     veTatCa();
     luuVanDo();
     if (van.luot === CT.DEN) mayDi();
+    else if (!van.nuocDi.length) noiTroLy(troLy.lay(["bat_dau_van"]));
   }
 
   function bamO(o) {
     if (!van || van.daXong || dangNghi || van.luot !== CT.DO) return;
+    imTroLy();                // bé chạm bàn cờ: trợ lý thôi nói ngay (giống Cờ Vua NC_03B)
     const q = van.quan(o);
     if (oChon >= 0 && dichChon.indexOf(o) !== -1) {
       const tu = oChon;
       oChon = -1; dichChon = [];
-      if (van.di(tu, o)) sauNuocDi();
+      const truoc = demQuan();
+      if (van.di(tu, o)) sauNuocBe(demQuan() < truoc);
       else veBan();
       return;
     }
@@ -356,11 +431,32 @@
     veBan(); capNhatLuot();
   }
 
-  function sauNuocDi() {
+  /* TC_03D: sau nước của BÉ - khoá bàn ngay, khen (nếu có), đọc xong mới cho máy đi */
+  function sauNuocBe(anQuan) {
+    luuVanDo();
+    if (van.daXong) { veBan(); capNhatLuot(); ketThucVan(); return; }
+    const khen = troLy.chonKhen(capKhen(), van.chieu ? "chieu_tuong" : anQuan ? "an_quan" : "nuoc_thuong");
+    if (!khen) { mayDi(); return; }
+    dangNghi = true;          // bé không bấm được trong lúc trợ lý khen
+    veBan(); capNhatLuot();
+    const vanNay = van;
+    let daDi = false;
+    const diTiep = () => {
+      if (daDi) return;
+      daDi = true; choKhenXong = null; clearTimeout(hen);
+      if (van === vanNay && !van.daXong && van.luot === CT.DEN) mayDi();
+    };
+    const hen = setTimeout(diTiep, 15000);   // lưới an toàn: trình duyệt không báo "đọc xong"
+    choKhenXong = diTiep;
+    noiTroLy(khen, diTiep);
+  }
+
+  /* Sau nước của MÁY: bị chiếu / bị ăn quân thì động viên (chỉ cấp còn được khen) */
+  function sauNuocMay(biAn) {
     luuVanDo();
     veBan(); capNhatLuot();
-    if (van.daXong) ketThucVan();
-    else if (van.luot === CT.DEN) mayDi();
+    if (van.daXong) { ketThucVan(); return; }
+    noiTroLy(troLy.chonSauNuocMay(capKhen(), van.chieu, biAn));
   }
 
   function mayDi() {
@@ -374,13 +470,14 @@
       if (n === -2 || van !== vanNay) return;          // bé đã sang ván khác
       const datQuan = n2 => setTimeout(() => {
         if (van !== vanNay) return;
+        const truoc = demQuan();
         if (!van.diSo(n2)) {
           // phòng hờ: nước lỗi thì đi nước hợp lệ đầu tiên (không bao giờ kẹt ván)
           const ds = van.the.nuocHopLe();
           if (ds.length) van.diSo(CT.maNuoc(ds[0]));
         }
         dangNghi = false;
-        sauNuocDi();
+        sauNuocMay(demQuan() < truoc);
       }, Math.max(0, nghiToiThieu - (Date.now() - batDau)));
       if (n >= 0) { datQuan(n); return; }
       // Worker không chạy được: nạp bộ não vào luồng chính rồi nghĩ
@@ -451,6 +548,9 @@
     const capVan = CT.capCuaMuc(van.muc);
     const lenCap = laBe && van.ketQua === "thang" && capVan === capBe && capBe < capToiDa;
     if (lenCap) datCapBe(capBe + 1);
+    // TC_03D: câu sự kiện nói ở mọi cấp (giống Cờ Vua); lên cấp thì nói câu lên cấp
+    choKhenXong = null;
+    noiTroLy(troLy.lay(lenCap ? ["len_cap", "thang_van"] : [van.ketQua + "_van"]));
     let mucGui = null;
     if (laBe && ketQuaVan) {
       mucGui = ketQuaVan.them({ cheDo: "may", muc: van.muc, ketQua: van.ketQua, nuocDi: van.nuocDi, doiThu: doiThu.ten });
@@ -616,6 +716,9 @@
     $("ctNutHoiLaiCo").addEventListener("click", chiuThua);
     $("ctNutHoiLaiKhong").addEventListener("click", () => $("ctHoiLai").classList.remove("vcHien"));
     $("ctNutDoiChu").addEventListener("click", doiChu);
+    VC.giong.khoiDong();
+    veNutTroLy();
+    $("ctNutTroLy").addEventListener("click", doiTroLy);
     $("ctNutChoiTiep").addEventListener("click", () => { const v = docVanDo(); if (v) batDauVan(v.muc, v.nuocDi); });
     $("ctNutChoiLai").addEventListener("click", choiLai);
     $("ctNutXemBan").addEventListener("click", dongKetQua);
@@ -637,8 +740,9 @@
     capBe = laBe ? Math.min(capToiDa, docCapDaLuu()) : capToiDa;
     ketQuaVan = new VC.KetQuaVan(TRO_CHOI, laBe ? tk.tenDangNhap : "", kcGoiRpc, kcDocPhien);
     hienKhuChon();
+    troLy.tai(kcGoiRpc).then(() => VC.giong.datGiongQuanTri(troLy.giongDocTen));   // TC_03D
     // ván đã xong lúc mất mạng: gửi bù TRƯỚC rồi mới hỏi thành tích (ván thắng lên cấp được ghi trước)
     ketQuaVan.gui().then(r => { if (typeof r.diemSoMoi === "number") capNhatKimCuong(r.diemSoMoi); }).then(taiThanhTich);
   });
 })();
-// 22/10/2026 21:10 - BƯỚC: TC_03A
+// 22/10/2026 22:40 - BƯỚC: TC_03D

@@ -18,9 +18,11 @@
                   Máy tính: bàn to bên trái, bảng người chơi bên phải.
                   Chơi 2 người: bước TC_03C.
        BƯỚC: TC_03A
+       CẬP NHẬT: 22/10/2026 22:40 - TC_03D: trợ lý 🦉 khen / động viên giống Cờ Vua (chữ + giọng
+                  đọc, theo cấp của bé), nút 🦉 bật / tắt; chung/vc_tro_ly.js
        NGÀY: 22/10/2026 21:10
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
-                  chung/vc_van_co.css + .js (phần chung game cờ),
+                  chung/vc_van_co.css + .js (phần chung game cờ), chung/vc_tro_ly.js (trợ lý 🦉),
                   co_tuong/ct_logic.js (luật), co_tuong/ct_giao_dien.css + .js,
                   co_tuong/ct_may_nghi.js (Web Worker, tự nạp ct_logic.js + ct_bo_nao.js)
        ================================================================ -->
@@ -122,6 +124,7 @@
           <button class="vcNut vcNutPhu" id="ctNutDoiCap" type="button">🎚️ Đổi cấp</button>
           <button class="vcNut vcNutPhu" id="ctNutChiuThua" type="button">🏳️ Chịu thua</button>
           <button class="vcNut vcNutPhu" id="ctNutDoiChu" type="button">字 Chữ Hán</button>
+          <button class="vcNut vcNutPhu" id="ctNutTroLy" type="button" aria-pressed="true">🦉 Trợ lý: đang nói</button>
           <a class="vcNut vcNutPhu" href="trochoi_NC.html" style="text-decoration:none;">🎮 Trò chơi khác</a>
         </div>
       </div>
@@ -161,6 +164,7 @@
   <script src="kc_api.js"></script>
   <script src="kc_auth.js"></script>
   <script src="chung/vc_van_co.js"></script>
+  <script src="chung/vc_tro_ly.js"></script>
   <script src="co_tuong/ct_logic.js"></script>
   <script src="co_tuong/ct_giao_dien.js"></script>
 
@@ -168,4 +172,4 @@
 <script src="kc_luot_truy_cap.js"></script>
 </body>
 </html>
-<!-- 22/10/2026 21:10 - BƯỚC: TC_03A -->
+<!-- 22/10/2026 22:40 - BƯỚC: TC_03D -->

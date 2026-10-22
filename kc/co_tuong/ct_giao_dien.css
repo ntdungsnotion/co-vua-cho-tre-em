@@ -6,6 +6,7 @@
               do ct_giao_dien.js vẽ). Thang 20 cấp: cùng kiểu thang cấp của Cờ Caro.
    BƯỚC: TC_03A
    NGÀY: 22/10/2026 21:10
+   CẬP NHẬT: 22/10/2026 22:40 - TC_03D (bóng thoại trợ lý 🦉 ở ô lời lượt, nút 🦉)
    ================================================================ */
 :root {
   --ct-go: #F3D9A4;             /* màu gỗ bàn cờ */
@@ -189,6 +190,20 @@ body.vcTapTrung .ctBan { --ct-o: min(calc((100vw - 12px) / 9), calc((100vh - 190
 .ctPhaoHoa span { position: absolute; top: -3rem; animation-name: ctRoi; animation-timing-function: ease-in; animation-fill-mode: forwards; }
 @keyframes ctRoi { from { transform: translateY(0) rotate(0); opacity: 1; } to { transform: translateY(110vh) rotate(540deg); opacity: 0.7; } }
 
+/* ---------- TC_03D: trợ lý 🦉 nói ở ô lời lượt (bóng thoại vàng) ----------
+   Ô luôn cao đủ 2 dòng để câu khen dài không đẩy bàn cờ nhảy lên xuống. Viền bóng bằng
+   box-shadow nên không đổi kích thước ô. */
+.ctKhuChoi .vcLoiLuot {
+  min-height: 2.5em; display: flex; align-items: center; justify-content: center;
+  line-height: 1.2; padding: 0 6px;
+}
+.ctKhuChoi .vcLoiLuot.ctLoiTroLy {
+  background: #FFF4C9; color: #6B4A00; border-radius: 14px; font-size: 0.95em;
+  box-shadow: 0 0 0 3px #FFE07A; animation: ctTroLyHien 0.3s ease-out;
+}
+@keyframes ctTroLyHien { from { transform: scale(0.94); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
+#ctNutTroLy[aria-pressed="false"] { opacity: 0.65; }
+
 @media (min-width: 600px) {
   .ctLuoiCap { grid-template-columns: repeat(5, 1fr); }
   .ctCapBe { margin-inline: auto; }
@@ -215,4 +230,4 @@ body.vcTapTrung .ctBan { --ct-o: min(calc((100vw - 12px) / 9), calc((100vh - 190
   .ctCapBe, .ctLuoiCap { max-width: 1100px; }
   .ctLuoiCap { grid-template-columns: repeat(10, 1fr); gap: 12px; }
 }
-/* 22/10/2026 21:10 - BƯỚC: TC_03A */
+/* 22/10/2026 22:40 - BƯỚC: TC_03D */
