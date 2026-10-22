@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cờ Tướng - Kids Challenge</title>
+
+  <!-- ================================================================
+       FILE: game_co_tuong.html
+       CHỨC NĂNG: Trang game CỜ TƯỚNG (mảng Trò Chơi): bé (quân Đỏ, đi trước) đấu với máy
+                  (quân Đen). Thang 20 cấp giống Cờ Vua / Cờ Caro, mỗi cấp một nhân vật
+                  (👦 Tiểu Đồng cấp 1 ... 👑 Thánh Cờ cấp 20); thắng máy đúng cấp của mình thì
+                  lên cấp. Thắng được kim cương (2 + cấp, số đọc từ cấu hình quản trị, máy chủ
+                  tự kiểm ván theo luật cờ tướng trước khi cộng).
+                  Bấm quân -> hiện chấm ở các chỗ đi được -> bấm chấm là đi. Quân ghi chữ Việt
+                  (Xe, Mã, Pháo...) hoặc chữ Hán, bé tự đổi.
+                  Điện thoại: bắt đầu ván là vào chế độ tập trung (chỉ còn bàn cờ).
+                  Máy tính: bàn to bên trái, bảng người chơi bên phải.
+                  Chơi 2 người: bước TC_03C.
+       BƯỚC: TC_03A
+       NGÀY: 22/10/2026 21:10
+       PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
+                  chung/vc_van_co.css + .js (phần chung game cờ),
+                  co_tuong/ct_logic.js (luật), co_tuong/ct_giao_dien.css + .js,
+                  co_tuong/ct_may_nghi.js (Web Worker, tự nạp ct_logic.js + ct_bo_nao.js)
+       ================================================================ -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kc_style.css">
+  <link rel="stylesheet" href="chung/vc_van_co.css">
+  <link rel="stylesheet" href="co_tuong/ct_giao_dien.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header id="headerChinh" class="vcAnKhiTapTrung">
+    <h1>🐘 Cờ Tướng</h1>
+    <div id="trangThaiDangNhap">
+      <span id="kcTenNguoiChoi"></span>
+      <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
+    </div>
+  </header>
+
+  <nav class="kcThanhTab vcAnKhiTapTrung" aria-label="Chuyển mảng">
+    <a class="kcTab" href="../index.html"><span class="kcTabIcon">🏠</span> Trang chủ</a>
+    <a class="kcTab" href="hoctap_NC.html"><span class="kcTabIcon">📚</span> Học Tập</a>
+    <a class="kcTab" href="khampha_NC.html"><span class="kcTabIcon">🧭</span> Khám Phá</a>
+    <a class="kcTab" href="trochoi_NC.html" aria-current="page"><span class="kcTabIcon">🎮</span> Trò Chơi</a>
+    <a class="kcTab" href="thuthach_NC.html"><span class="kcTabIcon">🎯</span> Thử Thách</a>
+  </nav>
+
+  <div id="kcChuaDangNhap" style="display:none;">
+    <h2>Con đăng nhập nhé!</h2>
+    <p>Một tài khoản dùng chung cho cả Cờ Vua và Thử Thách - Học Tập - Khám Phá - Trò Chơi. Đã đăng nhập bên Cờ Vua thì không cần đăng nhập lại.</p>
+    <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+    <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+    <button id="kcNutDangNhap" type="button">Đăng nhập</button>
+    <div id="kcThongBaoDangNhap"></div>
+  </div>
+
+  <div id="kcNoiDungCanDangNhap" style="display:none;">
+
+    <!-- Chọn cấp máy: thẻ cấp của bé + lưới 20 cấp, bấm cấp đã mở là vào ván ngay -->
+    <section id="ctKhuChon" class="ctKhuChon">
+      <div class="kcGioiThieu">
+        <h2>Con muốn đấu với ai? 🎉</h2>
+        <p>Con cầm quân <strong class="ctChuDo">Đỏ</strong> và đi trước. <strong>Chiếu bí Tướng</strong> của máy (Tướng hết đường chạy) là thắng!</p>
+      </div>
+      <div class="ctVanDo" id="ctVanDo" style="display:none;">
+        <button class="vcNut" id="ctNutChoiTiep" type="button">▶ Chơi tiếp ván đang dở</button>
+      </div>
+      <div class="ctCapBe">
+        <span class="ctCapBeHinh" id="ctCapBeHinh">👦</span>
+        <div class="ctCapBeChu">
+          <div class="ctCapBeNhan">Cấp của con</div>
+          <div class="ctCapBeDong"><strong id="ctCapBeSo">Cấp 1</strong> · <span id="ctCapBeTen">Tiểu Đồng</span>
+            <span class="ctCapBeThuong" id="ctCapBeThuong"></span></div>
+          <div class="ctCapBeLoi" id="ctCapBeLoi"></div>
+        </div>
+        <button class="vcNut ctNutDauCapBe" id="ctNutDauCapBe" type="button">▶ Đấu ngay</button>
+      </div>
+      <h3 class="ctTieuDeCap">🪜 Thang 20 cấp</h3>
+      <div class="ctLuoiCap" id="ctLuoiCap"></div>
+      <p class="ctGoiY" id="ctGhiChuThuong"></p>
+      <p class="ctGoiY">👫 Chơi với bạn: sắp có!</p>
+    </section>
+
+    <!-- Ván đang chơi -->
+    <section id="ctKhuChoi" class="vcKhuChoi ctKhuChoi" style="display:none;">
+      <div class="ctDau">
+        <div class="vcHaiNguoi">
+          <div class="vcNguoiChoi" id="ctTheBe">
+            <span class="vcAvatar" id="ctAvatarBe">🙂</span>
+            <div class="vcChuNguoiChoi">
+              <div class="vcTenNguoiChoi" id="ctTenBe">Con</div>
+              <div class="vcPhuNguoiChoi">quân <span class="ctChuDo">Đỏ</span> · <span id="ctKimCuongBe">💎 0</span></div>
+              <div class="ctDaAn" id="ctDaAnBe" aria-label="Quân con đã ăn"></div>
+            </div>
+          </div>
+          <span class="vcChuVS">VS</span>
+          <div class="vcNguoiChoi" id="ctTheMay">
+            <span class="vcAvatar" id="ctAvatarMay">👦</span>
+            <div class="vcChuNguoiChoi">
+              <div class="vcTenNguoiChoi" id="ctTenMay">Tiểu Đồng</div>
+              <div class="vcPhuNguoiChoi" id="ctPhuMay">quân Đen · cấp 1</div>
+              <div class="ctDaAn" id="ctDaAnMay" aria-label="Quân máy đã ăn"></div>
+            </div>
+          </div>
+        </div>
+        <div class="vcLoiLuot" id="ctLoiLuot" aria-live="polite"></div>
+      </div>
+      <div class="ctCotBan">
+        <div class="ctBan" id="ctBan" role="grid" aria-label="Bàn cờ tướng 9 x 10"></div>
+        <p class="ctGoiY" id="ctGoiYCham">Bấm vào quân của con, rồi bấm vào chấm xanh để đi.</p>
+      </div>
+      <div class="ctNut">
+        <div class="vcNutHang" id="ctNutHang">
+          <button class="vcNut" id="ctNutVanMoi" type="button">🔄 Ván mới</button>
+          <button class="vcNut vcNutPhu" id="ctNutDoiCap" type="button">🎚️ Đổi cấp</button>
+          <button class="vcNut vcNutPhu" id="ctNutChiuThua" type="button">🏳️ Chịu thua</button>
+          <button class="vcNut vcNutPhu" id="ctNutDoiChu" type="button">字 Chữ Hán</button>
+          <a class="vcNut vcNutPhu" href="trochoi_NC.html" style="text-decoration:none;">🎮 Trò chơi khác</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Kết quả ván -->
+  <div class="vcKetQua" id="ctKetQua" role="dialog" aria-modal="true" aria-labelledby="ctKetQuaTieuDe">
+    <div class="vcKetQuaHop">
+      <div class="vcKetQuaHinh" id="ctKetQuaHinh">🎉</div>
+      <h2 id="ctKetQuaTieuDe"></h2>
+      <p id="ctKetQuaLoi"></p>
+      <p class="vcKetQuaKimCuong" id="ctKetQuaKimCuong"></p>
+      <div class="vcNutHang">
+        <button class="vcNut" id="ctNutChoiLai" type="button">▶ Chơi ván nữa</button>
+        <button class="vcNut vcNutPhu" id="ctNutXemBan" type="button">👀 Xem bàn cờ</button>
+        <button class="vcNut vcNutPhu" id="ctNutKetQuaDoi" type="button">🎚️ Đổi cấp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hỏi lại trước khi chịu thua (bấm nhầm trên điện thoại) -->
+  <div class="vcKetQua" id="ctHoiLai" role="dialog" aria-modal="true" aria-labelledby="ctHoiLaiTieuDe">
+    <div class="vcKetQuaHop">
+      <div class="vcKetQuaHinh">🏳️</div>
+      <h2 id="ctHoiLaiTieuDe">Con chịu thua ván này?</h2>
+      <p>Còn nước đi thì cứ cố thêm chút nữa nhé! Biết đâu máy sơ hở.</p>
+      <div class="vcNutHang">
+        <button class="vcNut vcNutPhu" id="ctNutHoiLaiCo" type="button">🏳️ Chịu thua</button>
+        <button class="vcNut" id="ctNutHoiLaiKhong" type="button">▶ Chơi tiếp</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="kc_config.js"></script>
+  <script src="kc_api.js"></script>
+  <script src="kc_auth.js"></script>
+  <script src="chung/vc_van_co.js"></script>
+  <script src="co_tuong/ct_logic.js"></script>
+  <script src="co_tuong/ct_giao_dien.js"></script>
+
+<!-- KC_00F: số lượt truy cập ở chân trang (GoatCounter) -->
+<script src="kc_luot_truy_cap.js"></script>
+</body>
+</html>
+<!-- 22/10/2026 21:10 - BƯỚC: TC_03A -->
