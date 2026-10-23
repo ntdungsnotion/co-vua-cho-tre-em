@@ -8,6 +8,7 @@
    NGÀY: 22/10/2026 21:10
    CẬP NHẬT: 22/10/2026 22:40 - TC_03D (bóng thoại trợ lý 🦉 ở ô lời lượt, nút 🦉)
    CẬP NHẬT: 23/10/2026 07:40 - TC_03E (nút 💡 Gợi Ý, 2 ô gợi ý nhấp nháy)
+   CẬP NHẬT: 23/10/2026 11:50 - TC_03C (thẻ "Mỗi bạn một máy", sảnh phòng, hỏi hoà)
    ================================================================ */
 :root {
   --ct-go: #F3D9A4;             /* màu gỗ bàn cờ */
@@ -279,4 +280,60 @@ body.vcTapTrung #ctGoiYCham { display: none; }
   .ctCapBe, .ctLuoiCap { max-width: 1100px; }
   .ctLuoiCap { grid-template-columns: repeat(10, 1fr); gap: 12px; }
 }
-/* 23/10/2026 07:40 - BƯỚC: TC_03E */
+
+/* ================= TC_03C: chơi với bạn, mỗi bạn một máy (cùng kiểu sảnh Cờ Caro) ================= */
+.ctTieuDeBan { margin-top: 22px; }
+.ctTieuDeBan h2 { text-align: center; }
+.vcLuoiDoiThu.ctLuoiBan { grid-template-columns: 1fr; max-width: 340px; }
+.ctLuoiBan .vcHinhDoiThu { letter-spacing: -0.15em; }
+
+/* Bạn xin hoà */
+.ctHoiHoa {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px;
+  margin: 4px 0 2px; padding: 8px 10px; border-radius: 14px;
+  background: #FFF3CC; border: 2px solid var(--mau-phu); font-weight: 600; text-align: center;
+}
+.ctHoiHoaNut { display: inline-flex; gap: 8px; }
+.ctHoiHoa .vcNut { padding: 6px 14px; }
+.ctKhuChoi .vcNut:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+/* Sảnh */
+.ctKhuSanh { max-width: 640px; margin: 0 auto; padding: 0 12px 20px; }
+.ctKhuSanh h2, .ctKhuSanh .kcGioiThieu p { text-align: center; }
+.ctSanhTieuDe { font-family: "Baloo 2", sans-serif; color: var(--mau-chinh-dam); margin: 14px 0 8px; text-align: center; }
+.ctDsPhong { display: grid; gap: 10px; }
+.ctSanhTrong { text-align: center; color: var(--mau-chu-nhat); margin: 8px 0; }
+.ctThePhong {
+  font: inherit; color: inherit; cursor: pointer; width: 100%; text-align: left;
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: var(--mau-nen-khoi); border: 3px solid var(--mau-vien); border-radius: var(--bo-tron); box-shadow: var(--do-bong);
+}
+.ctThePhong:active { transform: translateY(3px); }
+.ctThePhongChu { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.ctThePhongTen { font-weight: 700; color: var(--mau-chinh-dam); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ctThePhongPhu { font-size: 0.8rem; color: var(--mau-chu-nhat); }
+.ctThePhongVao { flex: none; padding: 7px 14px; }
+.ctSanhCho {
+  text-align: center; background: var(--mau-nen-khoi); border: 3px dashed var(--ct-do);
+  border-radius: var(--bo-tron); padding: 18px 14px; margin: 8px 0;
+}
+.ctSanhCho h3 { margin: 6px 0; color: var(--mau-chinh-dam); }
+.ctSanhChoHinh { font-size: 2.8rem; animation: ctXoay 2s linear infinite; display: inline-block; }
+@keyframes ctXoay { to { transform: rotate(360deg); } }
+.ctKetQuaCho { font-weight: 600; color: var(--mau-chinh-dam); min-height: 1.2em; }
+
+@media (min-width: 1024px) {
+  .vcLuoiDoiThu.ctLuoiBan { max-width: 380px; }
+  .ctTieuDeBan { margin-top: 32px; }
+  .ctKhuSanh { max-width: 900px; padding: 0 32px 28px; }
+  .ctKhuSanh .vcNutHang { flex-direction: row; justify-content: center; }
+  .ctKhuSanh .vcNutHang .vcNut { padding: 12px 28px; font-size: 1.05rem; }
+  .ctDsPhong { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .ctThePhong { padding: 16px 18px; }
+  .ctThePhong:hover { border-color: var(--ct-do); transform: translateY(-3px); }
+  .ctThePhongTen { font-size: 1.15rem; }
+  .ctThePhongPhu { font-size: 0.95rem; }
+  .ctSanhCho { padding: 28px 24px; max-width: 620px; margin: 12px auto; }
+  .ctHoiHoa { flex-direction: column; }
+}
+/* 23/10/2026 11:50 - BƯỚC: TC_03C | 23/10/2026 07:40 - BƯỚC: TC_03E */
