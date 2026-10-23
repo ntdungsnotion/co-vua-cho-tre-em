@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#14204a">
+  <title>Xem thử từng phần 3D - Đấu Trường Tri Thức</title>
+  <!-- ================================================================
+       FILE: dt/3d/xem.html
+       CHỨC NĂNG: Trang NỘI BỘ xem thử TỪNG PHẦN vẽ 3D của Đấu Trường Tri Thức (không có nút
+                  dẫn tới, mở bằng địa chỉ): chọn phần ở ô trên cùng -> chỉ phần đó (và phần
+                  nền nó cần) được dựng, để sửa đồ họa một phần mà so được trước / sau.
+                  ?phan=tai_nguyen | nhan_vat | cong_trinh | dia_hinh
+       BƯỚC: TC_D02A
+       NGÀY: 23/10/2026
+       PHỤ THUỘC: dt/3d/xem.js và các phần dt/3d/*.js, chung/nv_ve.js, dt/dt_luoi.js, dt/dt_lang.js
+       ================================================================ -->
+  <style>
+    :root { --dem: #14204a; --vang: #ffc24b; --sang: #fff6dc; --nhat: #b9c3ec; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); color: var(--sang); font-family: system-ui, sans-serif; }
+    #d3Canh { position: fixed; inset: 0; }
+    #d3Canh canvas { display: block; width: 100%; height: 100%; }
+    .xTren { position: fixed; top: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .xKhung { background: rgba(20, 32, 74, .85); border: 2px solid rgba(255, 194, 75, .6); border-radius: 12px; padding: 6px 10px; }
+    select, a { font: inherit; color: var(--sang); }
+    select { background: #1f2f6b; border: 1px solid var(--vang); border-radius: 8px; padding: 6px; min-height: 40px; }
+    #xGhiChu { font-size: .9rem; line-height: 1.4; max-width: 640px; }
+    #xFps { font-size: .85rem; color: var(--nhat); }
+    #d3ChuNoi { position: fixed; inset: 0; pointer-events: none; }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "../../thu_vien/three/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <div id="d3Canh"></div>
+  <div id="d3ChuNoi"></div>
+  <div class="xTren">
+    <label class="xKhung">Phần:
+      <select id="xPhan">
+        <option value="tai_nguyen">Tài nguyên (cây, mầm, gốc, mỏ, cá, bụi)</option>
+        <option value="nhan_vat">Nhân vật (3 chủng loại, đồ mang, động tác)</option>
+        <option value="cong_trinh">Công trình (lều, lửa trại, ruộng)</option>
+        <option value="dia_hinh">Địa hình (đất, suối, cầu, rừng viền)</option>
+      </select>
+    </label>
+    <a class="xKhung" href="../../dt_thu_3d.html">Toàn cảnh làng ↗</a>
+    <span class="xKhung" id="xFps">…</span>
+    <div class="xKhung" id="xGhiChu">Đang dựng…</div>
+  </div>
+  <script src="../../chung/nv_ve.js"></script>
+  <script src="../dt_luoi.js"></script>
+  <script src="../dt_lang.js"></script>
+  <script type="module" src="xem.js"></script>
+</body>
+</html>
+<!-- 23/10/2026 19:00 - BƯỚC: TC_D02A -->

@@ -1,5 +1,5 @@
 {
-  "_ghiChu": "Đấu Trường Tri Thức - BẢN ĐỒ MẪU THỬ 3D (TC_D01C, 23/10/2026). Thung lũng Đồ đá nhỏ để thử đồ họa + tìm đường; bản đồ thật ở vung_dat.json (TC_D02). Toạ độ theo ô: x sang phải, z xuống dưới, 1 ô = 1 đơn vị 3D. 'mo' = tên mô hình trong kc/dt/mo_hinh/lang.glb, 'ti' = tỉ lệ phóng. Tỉ lệ kiểu Đế Chế (người dùng chốt 23/10/2026): 1 ô ~ 1 người; cây 1 ô; lều 2x2; ruộng 3x3; tảng đá 1 ô.",
+  "_ghiChu": "Đấu Trường Tri Thức - BẢN ĐỒ MẪU THỬ 3D (TC_D01C, 23/10/2026; TC_D02A: mỏ Đá / Vàng, bụi trái cây, bãi cá có cỡ nho/vua/to, trữ lượng theo cau_hinh.json). Thung lũng Đồ đá nhỏ để thử đồ họa + lõi làng; bản đồ thật ở vung_dat.json (TC_D02B). Toạ độ theo ô: x sang phải, z xuống dưới, 1 ô = 1 đơn vị 3D. 'mo' = tên mô hình trong kc/dt/mo_hinh/lang.glb, 'ti' = tỉ lệ phóng. Tỉ lệ kiểu Đế Chế (người dùng chốt 23/10/2026): 1 ô ~ 1 người; cây 1 ô; lều 2x2; ruộng 3x3; tảng đá 1 ô.",
   "phienBan": 1,
   "rong": 44,
   "cao": 44,
@@ -18,7 +18,18 @@
     { "x": 37, "z": 33, "banKinh": 4, "soCay": 34 }
   ],
   "cayLe": 12,
-  "moDa": [{ "x": 30, "z": 24, "soDa": 6, "banKinh": 1.8 }],
+  "moDa": [
+    { "x": 30.5, "z": 24.5, "co": "to" }, { "x": 31.5, "z": 24.5, "co": "vua" }, { "x": 30.5, "z": 25.5, "co": "vua" }, { "x": 29.5, "z": 23.5, "co": "nho" }
+  ],
+  "moVang": [
+    { "x": 32.5, "z": 29.5, "co": "vua" }, { "x": 33.5, "z": 29.5, "co": "nho" }, { "x": 32.5, "z": 30.5, "co": "to" }
+  ],
+  "buiTraiCay": [
+    { "x": 18.5, "z": 18.5, "co": "vua" }, { "x": 19.5, "z": 17.5, "co": "nho" }, { "x": 17.5, "z": 19.5, "co": "to" }, { "x": 20.5, "z": 18.5, "co": "nho" }
+  ],
+  "baiCa": [
+    { "x": 12, "z": 17, "co": "vua" }, { "x": 15, "z": 31, "co": "to" }, { "x": 14.5, "z": 37, "co": "nho" }
+  ],
   "vien": { "soCayXa": 260, "soCayGan": 40 },
   "trangTri": [
     { "mo": "resource_lumber", "x": 25.7, "z": 20.5, "ti": 2, "goc": 30 },
