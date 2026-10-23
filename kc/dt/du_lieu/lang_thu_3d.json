@@ -23,7 +23,7 @@
   "trangTri": [
     { "mo": "resource_lumber", "x": 25.7, "z": 20.5, "ti": 2, "goc": 30 },
     { "mo": "sack", "x": 25.9, "z": 23.3, "ti": 2.2, "goc": 0 },
-    { "mo": "barrel", "x": 22.2, "z": 20.7, "ti": 2.2, "goc": 0 },
+    { "mo": "barrel", "x": 26.6, "z": 22.2, "ti": 2.2, "goc": 0 },
     { "mo": "wheelbarrow", "x": 21.7, "z": 22.9, "ti": 2, "goc": 120 },
     { "mo": "flag_red", "x": 25.7, "z": 24.1, "ti": 2.2, "goc": 0 },
     { "mo": "waterlily_A", "x": 10.4, "z": 15.4, "ti": 2, "goc": 0 },

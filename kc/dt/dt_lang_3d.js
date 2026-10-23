@@ -106,7 +106,8 @@ function datCamera() {
 function coKhung() {
   const w = vungVe.clientWidth, h = vungVe.clientHeight;
   renderer.setSize(w, h);
-  caoNhin = w < h ? THREE.MathUtils.clamp(8 * h / w, 11, 18) : 12;
+  // Như Đế Chế: màn hình càng lớn càng thấy nhiều ô (1 ô ~ 60 điểm ảnh), không phóng to hình
+  caoNhin = w < h ? THREE.MathUtils.clamp(8 * h / w, 11, 18) : THREE.MathUtils.clamp(h / 60, 10, 18);
   const a = w / h;
   camera.left = -caoNhin * a / 2; camera.right = caoNhin * a / 2; camera.top = caoNhin / 2; camera.bottom = -caoNhin / 2;
   camera.updateProjectionMatrix();
