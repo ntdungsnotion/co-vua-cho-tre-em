@@ -19,7 +19,8 @@
               máy chủ, tải lại trang thì vào lại được.
               Chỉ tài khoản bé (vai trò 'tre') mới nhận kim cương; phụ huynh / admin vẫn chơi được.
    BƯỚC: TC_02A | TC_02B (chơi 2 người chung 1 máy + 2 máy) | TC_02C (20 cấp + Web Worker) | TC_02D (thông báo ghi rõ số 💎)
-         | TC_03C (sảnh: xoá thẻ phòng cũ khi mở lại, phòng đã đóng thì báo chứ không vào)
+         | TC_03C (sảnh: xoá thẻ phòng cũ khi mở lại, phòng đã đóng thì báo chứ không vào,
+           huỷ phòng ngay sau khi tạo vẫn huỷ thật)
    NGÀY: 21/10/2026 18:20 | 21/10/2026 21:00 | 21/10/2026 23:22 | 22/10/2026 07:20 | 23/10/2026 12:45
    PHỤ THUỘC: kc_auth.js (sự kiện kcSanSang, kcDocPhien, kcLuuPhien), kc_api.js (kcGoiRpc),
               kc_config.js (kcSupabaseClient), chung/vc_van_co.js + chung/vc_phong_co.js (VC),
@@ -651,6 +652,7 @@
       if (kq && kq.ma === "dang_co_phong" && kq.phong) { vaoPhongHaiMay(kq.phong); return; }
       if (!kq || !kq.thanhCong) { baoSanh("Chưa tạo được phòng, con thử lại nhé."); return; }
       baoSanh("");
+      phongCuaToi = kq.phong;             // TC_03C: nhớ ngay để "Huỷ phòng" bấm liền vẫn huỷ thật
       $("crSanhCho").style.display = "";
       $("crSanhChon").style.display = "none";
       $("crTenPhongCho").textContent = tk.tenDangNhap;
