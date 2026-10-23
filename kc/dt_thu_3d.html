@@ -12,11 +12,13 @@
                   trang game chính, chưa có nút dẫn tới; mở bằng địa chỉ). Toàn màn hình:
                   cảnh 3D + thanh tài nguyên + gợi ý + nút đồ họa Đẹp / Nhẹ + số khung hình.
                   Không cần đăng nhập: ngoại hình Thủ lĩnh đọc hồ sơ chung có sẵn trên máy.
-                  Thử nhiều nông dân: thêm ?nd=20 vào địa chỉ.
-       BƯỚC: TC_D01C
+                  Thử nhiều nông dân: thêm ?nd=20 vào địa chỉ. Nút "Tua 3 giờ" để xem cây / mỏ /
+                  cá / bụi mọc lại (chỉ có ở trang thử).
+       BƯỚC: TC_D01C; TC_D02A (lõi dt_lang.js + phần vẽ tách từng phần dt/3d/, 4 loại tài nguyên)
        NGÀY: 23/10/2026
-       PHỤ THUỘC: thu_vien/three (Three.js r170, MIT), chung/nv_ve.js, dt/dt_luoi.js,
-                  dt/dt_lang_3d.js, dt/mo_hinh/*.glb (KayKit, CC0), dt/du_lieu/lang_thu_3d.json
+       PHỤ THUỘC: thu_vien/three (Three.js r170, MIT), chung/nv_ve.js, dt/dt_luoi.js, dt/dt_lang.js,
+                  dt/3d/*.js (khởi động: dt/3d/dt3d_thu.js), dt/mo_hinh/*.glb (KayKit, CC0),
+                  dt/du_lieu/lang_thu_3d.json, dt/du_lieu/cau_hinh.json
        ================================================================ -->
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -51,7 +53,7 @@
     #d3ChuNoi { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
     .d3Noi { position: absolute; left: 0; top: 0; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.5rem; color: #fff6c8;
       text-shadow: 0 2px 0 #6b3a00, 0 0 8px rgba(0, 0, 0, .45); white-space: nowrap; }
-    #d3Ranh { position: fixed; left: 0; top: 0; pointer-events: none; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.6rem;
+    .d3Ranh { position: absolute; left: 0; top: 0; pointer-events: none; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.6rem;
       color: #fff; background: var(--cam); border: 2px solid #fff; border-radius: 50%; width: 30px; height: 30px; line-height: 28px; text-align: center;
       animation: nay 0.8s ease-in-out infinite alternate; }
     @keyframes nay { to { margin-top: -6px; } }
@@ -65,14 +67,16 @@
       .d3Ten { flex: 0 1 auto; }
     }
     @media (max-width: 600px) {
-      .d3Tn { min-width: 52px; font-size: 1rem; }
+      .d3Ten { display: none; } /* điện thoại: nhường chỗ cho 4 ô tài nguyên */
+      .d3Kho { flex: 1 1 auto; justify-content: space-around; gap: 2px; padding: 4px; min-width: 0; }
+      .d3Tn { min-width: 0; font-size: .95rem; padding: 4px 2px; }
       #d3GoiY { font-size: .95rem; padding: 8px 12px; }
       .d3Nut { font-size: .92rem; padding: 6px 8px; }
       .d3Chu { display: none; }
       .d3Duoi { gap: 6px; }
       .d3HangNut { gap: 6px; }
     }
-    @media (prefers-reduced-motion: reduce) { #d3Ranh { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { .d3Ranh { animation: none; } }
   </style>
   <script type="importmap">
     { "imports": { "three": "./thu_vien/three/three.module.min.js" } }
@@ -81,7 +85,6 @@
 <body>
   <div id="d3Canh" aria-label="Thung lũng 3D: kéo để xem, chạm để chọn và ra lệnh"></div>
   <div id="d3ChuNoi"></div>
-  <div id="d3Ranh" hidden aria-hidden="true">!</div>
 
   <div class="d3Tren">
     <a class="d3Nut d3Khung" href="dautruongtrithuc.html" aria-label="Về sảnh Đấu Trường">⬅</a>
@@ -89,6 +92,8 @@
     <div class="d3Kho d3Khung" aria-label="Tài nguyên">
       <span class="d3Tn" title="Gỗ">🪵 <b id="d3Go">0</b></span>
       <span class="d3Tn" title="Đá">🪨 <b id="d3Da">0</b></span>
+      <span class="d3Tn" title="Vàng">🪙 <b id="d3Vang">0</b></span>
+      <span class="d3Tn" title="Lương thực">🍖 <b id="d3Lt">0</b></span>
     </div>
   </div>
 
@@ -103,6 +108,7 @@
       <button class="d3Nut d3Khung" id="d3DoHoa" type="button">✨ Đồ họa: Đẹp</button>
       <button class="d3Nut d3Khung" id="d3DoiHinh" type="button" aria-label="Thử ngoại hình">🎨<span class="d3Chu"> Ngoại hình</span></button>
       <button class="d3Nut d3Khung" id="d3ThuTran" type="button" aria-label="Thử động tác trận">⚔️<span class="d3Chu"> Động tác trận</span></button>
+      <button class="d3Nut d3Khung" id="d3Tua" type="button" aria-label="Tua nhanh 3 giờ">⏩<span class="d3Chu"> Tua 3 giờ</span></button>
       <button class="d3Nut d3Khung" id="d3ThemNd" type="button" aria-label="Thêm nông dân">➕🧑‍🌾 <span id="d3SoNd">0</span></button>
     </div>
   </div>
@@ -111,7 +117,8 @@
 
   <script src="chung/nv_ve.js"></script>
   <script src="dt/dt_luoi.js"></script>
-  <script type="module" src="dt/dt_lang_3d.js"></script>
+  <script src="dt/dt_lang.js"></script>
+  <script type="module" src="dt/3d/dt3d_thu.js"></script>
 </body>
 </html>
-<!-- 23/10/2026 15:48 - BƯỚC: TC_D01C -->
+<!-- 23/10/2026 18:45 - BƯỚC: TC_D02A -->

@@ -1,0 +1,28 @@
+{
+  "_ghiChu": "Đấu Trường Tri Thức - MỌI CON SỐ CÂN BẰNG của game (TC_D02A, 23/10/2026). Code chỉ đọc file này, không viết cứng con số nào. Chỉ người lớn sửa (trang quản trị sau này). Khối 'lang': tài nguyên trên bản đồ + nông dân. Thời gian mọc lại tính bằng GIỜ THẬT.",
+  "phienBan": 1,
+  "lang": {
+    "nguon": {
+      "cay":          { "ten": "Cây",          "taiNguyen": "go",         "truLuong": { "nho": 75,  "vua": 125, "to": 250 }, "nhipLam": 0.8, "mocLaiGio": 12 },
+      "mo_da":        { "ten": "Mỏ Đá",        "taiNguyen": "da",         "truLuong": { "nho": 100, "vua": 200, "to": 400 }, "nhipLam": 1.0, "mocLaiGio": 24 },
+      "mo_vang":      { "ten": "Mỏ Vàng",      "taiNguyen": "vang",       "truLuong": { "nho": 100, "vua": 200, "to": 400 }, "nhipLam": 1.0, "mocLaiGio": 24 },
+      "mo_sat":       { "ten": "Mỏ Sắt",       "taiNguyen": "sat",        "truLuong": { "nho": 100, "vua": 200, "to": 400 }, "nhipLam": 1.0, "mocLaiGio": 24 },
+      "bai_ca":       { "ten": "Bãi cá",       "taiNguyen": "luong_thuc", "truLuong": { "nho": 75,  "vua": 125, "to": 300 }, "nhipLam": 1.0, "mocLaiGio": 3 },
+      "bui_trai_cay": { "ten": "Bụi trái cây", "taiNguyen": "luong_thuc", "truLuong": { "nho": 75,  "vua": 125, "to": 150 }, "nhipLam": 0.8, "mocLaiGio": 6 }
+    },
+    "taiNguyen": {
+      "go":         { "ten": "Gỗ",         "bieuTuong": "🪵" },
+      "da":         { "ten": "Đá",         "bieuTuong": "🪨" },
+      "vang":       { "ten": "Vàng",       "bieuTuong": "🪙" },
+      "sat":        { "ten": "Sắt",        "bieuTuong": "⛓️" },
+      "luong_thuc": { "ten": "Lương thực", "bieuTuong": "🍖" }
+    },
+    "sucMang": { "nhan": 10, "quy": 12, "tien": 8 },
+    "khoangTuChuyenO": 2,
+    "banKinhChonBia": 8,
+    "tamVoi": 1.6,
+    "tocDo": { "di": 1.5, "chay": 2.3, "chayKhiXaHon": 7 },
+    "rung": { "tiLeCo": { "nho": 0.3, "vua": 0.45, "to": 0.25 }, "soLoai": 4 },
+    "mocLai": { "ganRungO": 3, "cachLeuO": 6, "tiLeCoMoi": { "nho": 0.4, "vua": 0.4, "to": 0.2 } }
+  }
+}
