@@ -26,6 +26,7 @@
               logic DÙNG LẠI admin_NC.js ở gốc repo (không viết lại).
        CẬP NHẬT: 20/10/2026 - TC_T03B: thêm mục "📖 Kho từ vựng" (Quản trị chung): sửa kho từ
                  dùng chung + tải hình của từ, lưu thẳng vào repo qua GitHub API (qt_kho_tu.js/.css).
+       CẬP NHẬT: 23/10/2026 12:30 - TC_03C: ghi chú khóa Cờ Tướng chơi 2 người (kc_co_tuong_kc_2n_..., kc_co_tuong_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 23/10/2026 07:40 - TC_03E: Cờ Tướng thêm mục "💡 Gợi ý" (qt_goi_y.js, bảng kc_goi_y_cap:
                  số lần / kim cương gợi ý theo cấp) + ghi chú 2 khóa câu nhắc kc_co_tuong_..._goi_y.
        CẬP NHẬT: 22/10/2026 22:55 - TC_03D: Cờ Tướng thêm mục "💬 Lời động viên" (qt_loi_dong_vien.js,
@@ -925,7 +926,11 @@
           (ăn quân, chiếu tướng) và động viên khi bé bị ăn quân / bị chiếu; cao hơn thì tắt khen. Câu nói sửa ở 💬 Lời động viên.<br>
           Nút 💡 Gợi Ý: bé <code>kc_co_tuong_giay_cho_hoi_goi_y</code> giây (mặc định 30, 0 = tắt) chưa đi thì trợ lý hỏi
           "Con có cần gợi ý không?" và nút nhấp nháy, chỉ với bé cấp 1 tới <code>kc_co_tuong_hoi_goi_y_toi_cap</code> (mặc định 9).
-          Số lần / giá gợi ý theo cấp sửa ở 💡 Gợi ý.
+          Số lần / giá gợi ý theo cấp sửa ở 💡 Gợi ý.<br>
+          Chơi 2 người mỗi bạn một máy (khóa có <code>2n</code>): kim cương khi thắng / hoà / thua
+          (<code>kc_co_tuong_kc_2n_thang</code> / <code>_hoa</code> / <code>_thua</code>, mặc định 3 / 2 / 1, cả 2 bé đều được),
+          tối đa mỗi ngày <code>kc_co_tuong_kc_2n_toi_da_ngay</code>, ván phải đủ <code>kc_co_tuong_2n_so_nuoc_toi_thieu</code>
+          nước (mặc định 20, cả 2 bên cộng lại) mới có thưởng. Máy chủ giữ luật và tự chốt ván.
         </p>
         <button class="adminNut adminNutPhu" data-lam-moi-cau-hinh type="button">🔄 Làm Mới</button>
         <div class="adminCuonNgang" style="margin-top:10px;">
@@ -1530,4 +1535,4 @@
   <script src="qt_goi_y.js"></script>
 </body>
 </html>
-<!-- 23/10/2026 07:40 - BƯỚC: TC_03E -->
+<!-- 23/10/2026 12:30 - BƯỚC: TC_03C | 23/10/2026 07:40 - BƯỚC: TC_03E -->

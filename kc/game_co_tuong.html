@@ -16,16 +16,17 @@
                   (Xe, Mã, Pháo...) hoặc chữ Hán, bé tự đổi.
                   Điện thoại: bắt đầu ván là vào chế độ tập trung (chỉ còn bàn cờ).
                   Máy tính: bàn to bên trái, bảng người chơi bên phải.
-                  Chơi 2 người: bước TC_03C.
        BƯỚC: TC_03A
        CẬP NHẬT: 22/10/2026 22:40 - TC_03D: trợ lý 🦉 khen / động viên giống Cờ Vua (chữ + giọng
                   đọc, theo cấp của bé), nút 🦉 bật / tắt; chung/vc_tro_ly.js
        CẬP NHẬT: 23/10/2026 07:40 - TC_03E: nút "💡 Gợi Ý" dưới bàn cờ (nhấp nháy ô đi + ô đến,
                   lượt / giá theo cấp do máy chủ quyết) + câu nhắc khi bé lâu không đi; chung/vc_goi_y.js
+       CẬP NHẬT: 23/10/2026 12:30 - TC_03C: chơi 2 người MỖI BẠN MỘT MÁY (sảnh tạo phòng / vào phòng,
+                  xin hoà, chịu thua, rời phòng, chơi ván nữa đổi người cầm Đỏ) qua chung/vc_phong_co.js
        NGÀY: 22/10/2026 21:10
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
                   chung/vc_van_co.css + .js (phần chung game cờ), chung/vc_tro_ly.js (trợ lý 🦉),
-                  chung/vc_goi_y.js (nút Gợi Ý),
+                  chung/vc_goi_y.js (nút Gợi Ý), chung/vc_phong_co.js (phòng 2 người 2 máy),
                   co_tuong/ct_logic.js (luật), co_tuong/ct_giao_dien.css + .js,
                   co_tuong/ct_may_nghi.js (Web Worker, tự nạp ct_logic.js + ct_bo_nao.js)
        ================================================================ -->
@@ -90,7 +91,46 @@
       <h3 class="ctTieuDeCap">🪜 Thang 20 cấp</h3>
       <div class="ctLuoiCap" id="ctLuoiCap"></div>
       <p class="ctGoiY" id="ctGhiChuThuong"></p>
-      <p class="ctGoiY">👫 Chơi với bạn: sắp có!</p>
+
+      <!-- TC_03C: chơi với bạn, mỗi bạn một máy -->
+      <div class="kcGioiThieu ctTieuDeBan">
+        <h2>Hay chơi với bạn? 👫</h2>
+      </div>
+      <div class="ctVanDo" id="ctVanHaiMay" style="display:none;">
+        <button class="vcNut" id="ctNutVaoLai" type="button">▶ Vào lại ván với bạn</button>
+      </div>
+      <div class="vcLuoiDoiThu ctLuoiBan">
+        <button class="vcTheDoiThu" id="ctTheHaiMay" type="button">
+          <span class="vcHinhDoiThu">📱📱</span>
+          <span class="vcTenDoiThu">Mỗi bạn một máy</span>
+          <span class="vcMucDoiThu">Điện thoại hay máy tính đều được</span>
+          <span class="vcThuong" id="ctThuong2n">Thắng 3 💎 · Hoà 2 · Thua 1</span>
+          <span class="vcDaThang" id="ctThanhTich2n">Rủ bạn chơi nào!</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- TC_03C: sảnh chơi 2 máy -->
+    <section id="ctKhuSanh" class="ctKhuSanh" style="display:none;">
+      <div class="kcGioiThieu">
+        <h2>Mỗi bạn một máy 📱📱</h2>
+        <p>Một bạn bấm <strong>Tạo phòng</strong>. Bạn kia mở Cờ Tướng trên máy của mình, chọn <strong>Mỗi bạn một máy</strong> rồi bấm vào phòng của bạn. Người tạo phòng cầm quân <strong class="ctChuDo">Đỏ</strong> đi trước, ván sau đổi lại.</p>
+      </div>
+      <div class="ctSanhCho" id="ctSanhCho" style="display:none;">
+        <div class="ctSanhChoHinh">⏳</div>
+        <h3>Phòng của con đã mở!</h3>
+        <p>Đang chờ bạn vào phòng... Nhắc bạn mở Cờ Tướng, chọn <strong>Mỗi bạn một máy</strong> rồi bấm vào phòng có tên <strong id="ctTenPhongCho">con</strong> nhé.</p>
+        <button class="vcNut vcNutPhu" id="ctNutHuyPhong" type="button">✖ Huỷ phòng</button>
+      </div>
+      <div id="ctSanhChon">
+        <div class="vcNutHang">
+          <button class="vcNut" id="ctNutTaoPhong" type="button">➕ Tạo phòng</button>
+          <button class="vcNut vcNutPhu" id="ctNutRoiSanh" type="button">⬅ Quay lại</button>
+        </div>
+        <h3 class="ctSanhTieuDe">Phòng đang chờ bạn vào</h3>
+        <div class="ctDsPhong" id="ctDsPhong"></div>
+      </div>
+      <p class="ctGoiY" id="ctSanhBao" aria-live="polite"></p>
     </section>
 
     <!-- Ván đang chơi -->
@@ -101,7 +141,7 @@
             <span class="vcAvatar" id="ctAvatarBe">🙂</span>
             <div class="vcChuNguoiChoi">
               <div class="vcTenNguoiChoi" id="ctTenBe">Con</div>
-              <div class="vcPhuNguoiChoi">quân <span class="ctChuDo">Đỏ</span> · <span id="ctKimCuongBe">💎 0</span></div>
+              <div class="vcPhuNguoiChoi">quân <span class="ctChuDo" id="ctMauBe">Đỏ</span> · <span id="ctKimCuongBe">💎 0</span></div>
               <div class="ctDaAn" id="ctDaAnBe" aria-label="Quân con đã ăn"></div>
             </div>
           </div>
@@ -116,13 +156,21 @@
           </div>
         </div>
         <div class="vcLoiLuot" id="ctLoiLuot" aria-live="polite"></div>
+        <!-- TC_03C: bạn xin hoà -->
+        <div class="ctHoiHoa" id="ctHoiHoa" style="display:none;">
+          <span id="ctHoiHoaChu"></span>
+          <span class="ctHoiHoaNut" id="ctHoiHoaNut">
+            <button class="vcNut" id="ctNutDongYHoa" type="button">🤝 Đồng ý hoà</button>
+            <button class="vcNut vcNutPhu" id="ctNutTuChoiHoa" type="button">▶ Chơi tiếp</button>
+          </span>
+        </div>
       </div>
       <div class="ctCotBan">
         <div class="ctBan" id="ctBan" role="grid" aria-label="Bàn cờ tướng 9 x 10"></div>
         <p class="ctGoiY" id="ctGoiYCham">Bấm vào quân của con, rồi bấm vào chấm xanh để đi.</p>
       </div>
       <!-- TC_03E: nút Gợi Ý - nhấp nháy ô quân nên đi + ô đến, không đi thay bé -->
-      <div class="ctKhuGoiY">
+      <div class="ctKhuGoiY ctChiMay">
         <button class="ctNutGoiY" id="ctNutGoiY" type="button" disabled>
           <span class="ctNutGoiYChu" id="ctNutGoiYChu">💡 Gợi Ý</span>
           <span class="ctNutGoiYGia" id="ctNutGoiYGia"></span>
@@ -130,11 +178,13 @@
       </div>
       <div class="ctNut">
         <div class="vcNutHang" id="ctNutHang">
-          <button class="vcNut" id="ctNutVanMoi" type="button">🔄 Ván mới</button>
-          <button class="vcNut vcNutPhu" id="ctNutDoiCap" type="button">🎚️ Đổi cấp</button>
+          <button class="vcNut ctChiMay" id="ctNutVanMoi" type="button">🔄 Ván mới</button>
+          <button class="vcNut vcNutPhu ctChiMay" id="ctNutDoiCap" type="button">🎚️ Đổi cấp</button>
+          <button class="vcNut vcNutPhu ctChi2May" id="ctNutXinHoa" type="button" style="display:none;">🤝 Xin hoà</button>
           <button class="vcNut vcNutPhu" id="ctNutChiuThua" type="button">🏳️ Chịu thua</button>
+          <button class="vcNut vcNutPhu ctChi2May" id="ctNutRoiPhong" type="button" style="display:none;">🚪 Rời phòng</button>
           <button class="vcNut vcNutPhu" id="ctNutDoiChu" type="button">字 Chữ Hán</button>
-          <button class="vcNut vcNutPhu" id="ctNutTroLy" type="button" aria-pressed="true">🦉 Trợ lý: đang nói</button>
+          <button class="vcNut vcNutPhu ctChiMay" id="ctNutTroLy" type="button" aria-pressed="true">🦉 Trợ lý: đang nói</button>
           <a class="vcNut vcNutPhu" href="trochoi_NC.html" style="text-decoration:none;">🎮 Trò chơi khác</a>
         </div>
       </div>
@@ -149,6 +199,7 @@
       <h2 id="ctKetQuaTieuDe"></h2>
       <p id="ctKetQuaLoi"></p>
       <p class="vcKetQuaKimCuong" id="ctKetQuaKimCuong"></p>
+      <p class="ctKetQuaCho" id="ctKetQuaCho"></p>
       <div class="vcNutHang">
         <button class="vcNut" id="ctNutChoiLai" type="button">▶ Chơi ván nữa</button>
         <button class="vcNut vcNutPhu" id="ctNutXemBan" type="button">👀 Xem bàn cờ</button>
@@ -157,12 +208,12 @@
     </div>
   </div>
 
-  <!-- Hỏi lại trước khi chịu thua (bấm nhầm trên điện thoại) -->
+  <!-- Hỏi lại trước khi chịu thua / rời phòng (bấm nhầm trên điện thoại) -->
   <div class="vcKetQua" id="ctHoiLai" role="dialog" aria-modal="true" aria-labelledby="ctHoiLaiTieuDe">
     <div class="vcKetQuaHop">
-      <div class="vcKetQuaHinh">🏳️</div>
+      <div class="vcKetQuaHinh" id="ctHoiLaiHinh">🏳️</div>
       <h2 id="ctHoiLaiTieuDe">Con chịu thua ván này?</h2>
-      <p>Còn nước đi thì cứ cố thêm chút nữa nhé! Biết đâu máy sơ hở.</p>
+      <p id="ctHoiLaiLoi">Còn nước đi thì cứ cố thêm chút nữa nhé! Biết đâu máy sơ hở.</p>
       <div class="vcNutHang">
         <button class="vcNut vcNutPhu" id="ctNutHoiLaiCo" type="button">🏳️ Chịu thua</button>
         <button class="vcNut" id="ctNutHoiLaiKhong" type="button">▶ Chơi tiếp</button>
@@ -176,6 +227,7 @@
   <script src="chung/vc_van_co.js"></script>
   <script src="chung/vc_tro_ly.js"></script>
   <script src="chung/vc_goi_y.js"></script>
+  <script src="chung/vc_phong_co.js"></script>
   <script src="co_tuong/ct_logic.js"></script>
   <script src="co_tuong/ct_giao_dien.js"></script>
 
@@ -183,4 +235,4 @@
 <script src="kc_luot_truy_cap.js"></script>
 </body>
 </html>
-<!-- 23/10/2026 07:40 - BƯỚC: TC_03E -->
+<!-- 23/10/2026 12:30 - BƯỚC: TC_03C | 23/10/2026 07:40 - BƯỚC: TC_03E -->
