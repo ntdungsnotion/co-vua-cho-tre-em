@@ -1,0 +1,37 @@
+{
+  "_ghiChu": "Đấu Trường Tri Thức - BẢN ĐỒ MẪU THỬ 3D (TC_D01C, 23/10/2026). Thung lũng Đồ đá nhỏ để thử đồ họa + tìm đường; bản đồ thật ở vung_dat.json (TC_D02). Toạ độ theo ô: x sang phải, z xuống dưới, 1 ô = 1 đơn vị 3D. 'mo' = tên mô hình trong kc/dt/mo_hinh/lang.glb, 'ti' = tỉ lệ phóng. Tỉ lệ kiểu Đế Chế (người dùng chốt 23/10/2026): 1 ô ~ 1 người; cây 1 ô; lều 2x2; ruộng 3x3; tảng đá 1 ô.",
+  "phienBan": 1,
+  "rong": 44,
+  "cao": 44,
+  "hatGiong": 7,
+  "suoi": { "rong": 2.2, "diem": [[-6, 9], [4, 11], [10, 15], [14, 21], [15, 28], [13, 35], [16, 41], [20, 50]] },
+  "cau": [{ "x": 14.6, "z": 24.5 }],
+  "leu": { "x": 24, "z": 22, "ti": 3.4 },
+  "lua": { "x": 22.4, "z": 24.3 },
+  "ruong": [
+    { "x": 20.4, "z": 27.2, "rong": 3, "dai": 3, "goc": 8, "mam": true },
+    { "x": 24.2, "z": 27.6, "rong": 3, "dai": 3, "goc": 8, "mam": false }
+  ],
+  "rung": [
+    { "x": 34, "z": 10, "banKinh": 6.5, "soCay": 95 },
+    { "x": 6, "z": 27, "banKinh": 4.5, "soCay": 45 },
+    { "x": 37, "z": 33, "banKinh": 4, "soCay": 34 }
+  ],
+  "cayLe": 12,
+  "moDa": [{ "x": 30, "z": 24, "soDa": 6, "banKinh": 1.8 }],
+  "vien": { "soCayXa": 260, "soCayGan": 40 },
+  "trangTri": [
+    { "mo": "resource_lumber", "x": 25.7, "z": 20.5, "ti": 2, "goc": 30 },
+    { "mo": "sack", "x": 25.9, "z": 23.3, "ti": 2.2, "goc": 0 },
+    { "mo": "barrel", "x": 26.6, "z": 22.2, "ti": 2.2, "goc": 0 },
+    { "mo": "wheelbarrow", "x": 21.7, "z": 22.9, "ti": 2, "goc": 120 },
+    { "mo": "flag_red", "x": 25.7, "z": 24.1, "ti": 2.2, "goc": 0 },
+    { "mo": "waterlily_A", "x": 10.4, "z": 15.4, "ti": 2, "goc": 0 },
+    { "mo": "waterplant_A", "x": 15.6, "z": 31, "ti": 2, "goc": 40 },
+    { "mo": "waterplant_B", "x": 13, "z": 18.6, "ti": 2, "goc": 0 }
+  ],
+  "batDau": {
+    "thuLinh": { "x": 23, "z": 25.2 },
+    "nongDan": [{ "x": 25.6, "z": 25.4 }]
+  }
+}
