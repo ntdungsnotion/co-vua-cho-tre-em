@@ -20,9 +20,12 @@
        BƯỚC: TC_03A
        CẬP NHẬT: 22/10/2026 22:40 - TC_03D: trợ lý 🦉 khen / động viên giống Cờ Vua (chữ + giọng
                   đọc, theo cấp của bé), nút 🦉 bật / tắt; chung/vc_tro_ly.js
+       CẬP NHẬT: 23/10/2026 07:40 - TC_03E: nút "💡 Gợi Ý" dưới bàn cờ (nhấp nháy ô đi + ô đến,
+                  lượt / giá theo cấp do máy chủ quyết) + câu nhắc khi bé lâu không đi; chung/vc_goi_y.js
        NGÀY: 22/10/2026 21:10
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
                   chung/vc_van_co.css + .js (phần chung game cờ), chung/vc_tro_ly.js (trợ lý 🦉),
+                  chung/vc_goi_y.js (nút Gợi Ý),
                   co_tuong/ct_logic.js (luật), co_tuong/ct_giao_dien.css + .js,
                   co_tuong/ct_may_nghi.js (Web Worker, tự nạp ct_logic.js + ct_bo_nao.js)
        ================================================================ -->
@@ -118,6 +121,13 @@
         <div class="ctBan" id="ctBan" role="grid" aria-label="Bàn cờ tướng 9 x 10"></div>
         <p class="ctGoiY" id="ctGoiYCham">Bấm vào quân của con, rồi bấm vào chấm xanh để đi.</p>
       </div>
+      <!-- TC_03E: nút Gợi Ý - nhấp nháy ô quân nên đi + ô đến, không đi thay bé -->
+      <div class="ctKhuGoiY">
+        <button class="ctNutGoiY" id="ctNutGoiY" type="button" disabled>
+          <span class="ctNutGoiYChu" id="ctNutGoiYChu">💡 Gợi Ý</span>
+          <span class="ctNutGoiYGia" id="ctNutGoiYGia"></span>
+        </button>
+      </div>
       <div class="ctNut">
         <div class="vcNutHang" id="ctNutHang">
           <button class="vcNut" id="ctNutVanMoi" type="button">🔄 Ván mới</button>
@@ -165,6 +175,7 @@
   <script src="kc_auth.js"></script>
   <script src="chung/vc_van_co.js"></script>
   <script src="chung/vc_tro_ly.js"></script>
+  <script src="chung/vc_goi_y.js"></script>
   <script src="co_tuong/ct_logic.js"></script>
   <script src="co_tuong/ct_giao_dien.js"></script>
 
@@ -172,4 +183,4 @@
 <script src="kc_luot_truy_cap.js"></script>
 </body>
 </html>
-<!-- 22/10/2026 22:40 - BƯỚC: TC_03D -->
+<!-- 23/10/2026 07:40 - BƯỚC: TC_03E -->

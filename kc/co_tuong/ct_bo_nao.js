@@ -12,8 +12,11 @@
                 thỉnh thoảng đi bừa (giống người mới tập); cấp cao nghĩ theo giờ, không nhiễu.
                 Bảng chỉnh theo kết quả tự đấu (nhật ký TC_03A). Cấp 20 trình độ chuyên nghiệp
                 sẽ dùng máy mạnh hơn ở bước TC_03B; tới lúc đó cấp 20 = bộ não này hết sức.
+              - TC_03E: CT.goiYNuoc - nút "💡 Gợi Ý" của bé: bộ não hết sức (cấp 20, không nhiễu,
+                không đi bừa) nghĩ trong CT.GOI_Y_GIAY giây cho bên đang tới lượt.
    BƯỚC: TC_03A
    NGÀY: 22/10/2026 21:10
+   CẬP NHẬT: 23/10/2026 07:40 - TC_03E (CT.goiYNuoc)
    PHỤ THUỘC: co_tuong/ct_logic.js (CT.TheCo, CT.VanCoTuong)
    ================================================================ */
 (function (goc) {
@@ -443,7 +446,13 @@
     const kq = boNao.nghi(t, tc);
     return kq.nuoc ? CT.maNuoc(kq.nuoc) : CT.maNuoc(ds[0]);
   };
+  /* TC_03E: nước GỢI Ý cho bên đang tới lượt (bé) = nước tốt nhất bộ não tìm được trong
+     giay giây (mặc định CT.GOI_Y_GIAY). Trả về số tu * 90 + den, hoặc -1 (hết nước). */
+  CT.GOI_Y_GIAY = 1;
+  CT.goiYNuoc = function (nuocDi, giay) {
+    return CT.mayDiCap(nuocDi, CT.NAO_CAP.length - 1, Math.random, { giay: giay > 0 ? giay : CT.GOI_Y_GIAY });
+  };
   /* Như trên nhưng trả cả thông tin (độ sâu, số nút) - cho tự đấu */
   CT.nghiChiTiet = function (the, tuyChon) { return boNao.nghi(the, tuyChon); };
 })(typeof window !== "undefined" ? window : globalThis);
-// 22/10/2026 21:10 - BƯỚC: TC_03A
+// 23/10/2026 07:40 - BƯỚC: TC_03E
