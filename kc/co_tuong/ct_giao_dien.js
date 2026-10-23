@@ -35,7 +35,7 @@
    NGÀY: 22/10/2026 21:10
    CẬP NHẬT: 22/10/2026 22:40 - TC_03D (trợ lý 🦉 khen / động viên)
    CẬP NHẬT: 23/10/2026 07:40 - TC_03E (nút Gợi Ý + câu nhắc gợi ý)
-   CẬP NHẬT: 23/10/2026 12:30 - TC_03C (chơi 2 người, mỗi bạn một máy)
+   CẬP NHẬT: 23/10/2026 11:50 - TC_03C (chơi 2 người, mỗi bạn một máy)
    PHỤ THUỘC: kc_auth.js (sự kiện kcSanSang, kcDocPhien, kcLuuPhien), kc_api.js (kcGoiRpc),
               kc_config.js (kcSupabaseClient), chung/vc_van_co.js (VC), chung/vc_phong_co.js (VC.PhongCo),
               chung/vc_tro_ly.js (VC.giong, VC.LoiDongVien), chung/vc_goi_y.js (VC.GoiY, VC.taoMaVan),
@@ -1302,4 +1302,4 @@
     ketQuaVan.gui().then(r => { if (typeof r.diemSoMoi === "number") capNhatKimCuong(r.diemSoMoi); }).then(taiThanhTich);
   });
 })();
-// 23/10/2026 12:30 - BƯỚC: TC_03C (chơi 2 người, mỗi bạn một máy) | 23/10/2026 07:40 - BƯỚC: TC_03E
+// 23/10/2026 11:50 - BƯỚC: TC_03C (chơi 2 người, mỗi bạn một máy) | 23/10/2026 07:40 - BƯỚC: TC_03E
