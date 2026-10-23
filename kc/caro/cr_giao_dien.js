@@ -19,7 +19,8 @@
               máy chủ, tải lại trang thì vào lại được.
               Chỉ tài khoản bé (vai trò 'tre') mới nhận kim cương; phụ huynh / admin vẫn chơi được.
    BƯỚC: TC_02A | TC_02B (chơi 2 người chung 1 máy + 2 máy) | TC_02C (20 cấp + Web Worker) | TC_02D (thông báo ghi rõ số 💎)
-   NGÀY: 21/10/2026 18:20 | 21/10/2026 21:00 | 21/10/2026 23:22 | 22/10/2026 07:20
+         | TC_03C (sảnh: xoá thẻ phòng cũ khi mở lại, phòng đã đóng thì báo chứ không vào)
+   NGÀY: 21/10/2026 18:20 | 21/10/2026 21:00 | 21/10/2026 23:22 | 22/10/2026 07:20 | 23/10/2026 12:45
    PHỤ THUỘC: kc_auth.js (sự kiện kcSanSang, kcDocPhien, kcLuuPhien), kc_api.js (kcGoiRpc),
               kc_config.js (kcSupabaseClient), chung/vc_van_co.js + chung/vc_phong_co.js (VC),
               caro/cr_logic.js (CR), caro/cr_may_nghi.js (Worker, nạp khi cần).
@@ -581,6 +582,7 @@
     hienKhu("sanh");
     $("crSanhCho").style.display = "none";
     $("crSanhChon").style.display = "";
+    $("crDsPhong").innerHTML = "";        // TC_03C: không để thẻ phòng của lần trước (có thể đã đóng) cho bé bấm nhầm
     baoSanh("Đang tìm phòng...");
     phongCo.theoDoiSanh(nhanSanh);
   }
@@ -634,7 +636,8 @@
       the.addEventListener("click", () => {
         baoSanh("Đang vào phòng...");
         phongCo.vaoPhong(p.id).then(kq => {
-          if (kq && kq.thanhCong && kq.phong) vaoPhongHaiMay(kq.phong);
+          if (kq && kq.thanhCong && kq.phong && ["dong", "huy"].indexOf(kq.phong.trangThai) !== -1) baoSanh("Phòng này đã đóng, con chọn phòng khác nhé.");
+          else if (kq && kq.thanhCong && kq.phong) vaoPhongHaiMay(kq.phong);
           else baoSanh(kq && kq.ma === "phong_da_day" ? "Phòng này đã có bạn khác vào rồi." : "Chưa vào được phòng, con thử lại nhé.");
         });
       });
@@ -892,4 +895,4 @@
     ketQuaVan.gui().then(r => { if (typeof r.diemSoMoi === "number") capNhatKimCuong(r.diemSoMoi); }).then(taiThanhTich);
   });
 })();
-// 21/10/2026 23:22 - BƯỚC: TC_02C (20 cấp + Web Worker) | 21/10/2026 21:00 - BƯỚC: TC_02B (chơi 2 người chung 1 máy + 2 máy) | 21/10/2026 19:20 - BƯỚC: TC_02A (lời báo kim cương nói rõ số) | 21/10/2026 18:20 - BƯỚC: TC_02A
+// 23/10/2026 12:45 - BƯỚC: TC_03C (sảnh 2 máy: thẻ phòng cũ, phòng đã đóng) | 21/10/2026 23:22 - BƯỚC: TC_02C (20 cấp + Web Worker) | 21/10/2026 21:00 - BƯỚC: TC_02B (chơi 2 người chung 1 máy + 2 máy) | 21/10/2026 19:20 - BƯỚC: TC_02A (lời báo kim cương nói rõ số) | 21/10/2026 18:20 - BƯỚC: TC_02A
