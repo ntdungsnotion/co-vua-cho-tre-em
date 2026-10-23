@@ -7,6 +7,7 @@
    BƯỚC: TC_03A
    NGÀY: 22/10/2026 21:10
    CẬP NHẬT: 22/10/2026 22:40 - TC_03D (bóng thoại trợ lý 🦉 ở ô lời lượt, nút 🦉)
+   CẬP NHẬT: 23/10/2026 07:40 - TC_03E (nút 💡 Gợi Ý, 2 ô gợi ý nhấp nháy)
    ================================================================ */
 :root {
   --ct-go: #F3D9A4;             /* màu gỗ bàn cờ */
@@ -124,8 +125,8 @@
   .vcKhuChoi.ctKhuChoi { padding: 14px 24px; }
   .ctBan { --ct-o: min(calc((100vh - 110px) / 10), 64px, calc((100vw - 590px) / 9)); }
 }
-/* Chế độ tập trung trên điện thoại: bàn to nhất có thể, vẫn thấy thẻ người chơi */
-body.vcTapTrung .ctBan { --ct-o: min(calc((100vw - 12px) / 9), calc((100vh - 190px) / 10), 58px); }
+/* Chế độ tập trung trên điện thoại: bàn to nhất có thể, vẫn thấy thẻ người chơi + nút Gợi Ý (TC_03E: 190 -> 236px) */
+body.vcTapTrung .ctBan { --ct-o: min(calc((100vw - 12px) / 9), calc((100vh - 236px) / 10), 58px); }
 
 /* ================= Thang 20 cấp (cùng kiểu Cờ Caro) ================= */
 .ctCapBe {
@@ -204,6 +205,54 @@ body.vcTapTrung .ctBan { --ct-o: min(calc((100vw - 12px) / 9), calc((100vh - 190
 @keyframes ctTroLyHien { from { transform: scale(0.94); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
 #ctNutTroLy[aria-pressed="false"] { opacity: 0.65; }
 
+/* ---------- TC_03E: nút "💡 Gợi Ý" + 2 ô gợi ý nhấp nháy ----------
+   Ô quân nên đi: quân phát sáng vàng; ô đến: vòng vàng nhấp nháy (vẽ bằng box-shadow của chính ô
+   để không đụng ::before / ::after của nước vừa đi và chấm xanh). */
+.ctKhuGoiY { text-align: center; margin: 10px 0 2px; }
+.ctNutGoiY {
+  font: inherit; cursor: pointer; display: inline-flex; flex-direction: column; align-items: center;
+  min-width: 190px; padding: 6px 24px 5px; border-radius: 999px; color: #5a3d00;
+  background: linear-gradient(180deg, #FFE680, #FFC93C); border: 3px solid #E5A800;
+  box-shadow: 0 4px 0 #C98F00; -webkit-tap-highlight-color: transparent; line-height: 1.15;
+}
+.ctNutGoiY:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #C98F00; }
+.ctNutGoiYChu { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.15rem; }
+.ctNutGoiYGia { font-size: 0.75rem; font-weight: 600; min-height: 1em; }
+.ctNutGoiY:disabled { cursor: default; opacity: 0.55; box-shadow: 0 2px 0 #C98F00; }
+.ctNutGoiY.ctDangGoiY { opacity: 1; }
+.ctNutGoiY.ctHetGoiY { filter: grayscale(0.9); }
+/* Trợ lý mời bấm: nút nảy + toả sáng */
+.ctNutGoiY.ctMoiGoiY { animation: ctMoiGoiY 0.75s ease-in-out infinite alternate; }
+@keyframes ctMoiGoiY {
+  from { transform: scale(1); box-shadow: 0 4px 0 #C98F00, 0 0 0 0 rgba(255, 196, 0, 0.7); }
+  to { transform: scale(1.08); box-shadow: 0 4px 0 #C98F00, 0 0 0 10px rgba(255, 196, 0, 0); }
+}
+.ctO.ctGoiYTu .ctQuan { animation: ctNhayGoiYTu 0.6s ease-in-out infinite alternate; }
+@keyframes ctNhayGoiYTu {
+  from { box-shadow: 0 0 0 0.05em #FFC400, 0 0.05em 0 rgba(0, 0, 0, 0.35); transform: scale(1); }
+  to { box-shadow: 0 0 0 0.15em #FFC400, 0 0 0.3em 0.1em rgba(255, 196, 0, 0.8); transform: scale(1.1); }
+}
+.ctO.ctGoiYDen { border-radius: 50%; animation: ctNhayGoiYDen 0.6s ease-in-out infinite alternate; }
+@keyframes ctNhayGoiYDen {
+  from { box-shadow: inset 0 0 0 0.07em rgba(255, 184, 0, 0.85); background: rgba(255, 220, 80, 0.25); }
+  to { box-shadow: inset 0 0 0 0.14em #FFB800; background: rgba(255, 220, 80, 0.6); }
+}
+.ctKhuChoi .vcLoiLuot.ctLoiGoiY {
+  background: #FFF8DC; color: #6B4A00; border-radius: 14px; font-size: 0.95em; box-shadow: 0 0 0 2px #FFD95A;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ctNutGoiY.ctMoiGoiY, .ctO.ctGoiYTu .ctQuan, .ctO.ctGoiYDen { animation-duration: 1.6s; }
+}
+/* Điện thoại tập trung: bỏ dòng hướng dẫn nhỏ, chừa chỗ cho nút Gợi Ý dưới bàn (cỡ bàn: xem trên) */
+body.vcTapTrung #ctGoiYCham { display: none; }
+@media (min-width: 1024px) {
+  .vcKhuChoi.ctKhuChoi { grid-template-rows: auto auto 1fr; grid-template-areas: "ban dau" "ban goiy" "ban nut"; }
+  .ctKhuGoiY { grid-area: goiy; margin: 14px 0 0; }
+  .ctNutGoiY { width: 100%; padding: 8px 20px 7px; }
+  .ctNutGoiYChu { font-size: 1.35rem; }
+  .ctNutGoiYGia { font-size: 0.85rem; }
+}
+
 @media (min-width: 600px) {
   .ctLuoiCap { grid-template-columns: repeat(5, 1fr); }
   .ctCapBe { margin-inline: auto; }
@@ -230,4 +279,4 @@ body.vcTapTrung .ctBan { --ct-o: min(calc((100vw - 12px) / 9), calc((100vh - 190
   .ctCapBe, .ctLuoiCap { max-width: 1100px; }
   .ctLuoiCap { grid-template-columns: repeat(10, 1fr); gap: 12px; }
 }
-/* 22/10/2026 22:40 - BƯỚC: TC_03D */
+/* 23/10/2026 07:40 - BƯỚC: TC_03E */

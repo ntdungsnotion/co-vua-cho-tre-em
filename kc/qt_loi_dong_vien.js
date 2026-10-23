@@ -7,6 +7,7 @@
 //   Mỗi màn là 1 <section id="manhinh-<tên>" data-ldv-tro-choi="<mã game>">; thêm game khác chỉ cần
 //   thêm section + mục thanh bên + mã tình huống trong SQL (kc_ldv_loai_hop_le).
 // BƯỚC: TC_03D - NGÀY: 22/10/2026
+// CẬP NHẬT: 23/10/2026 - TC_03E: thêm tình huống hoi_goi_y (câu nhắc "Con có cần gợi ý không?")
 // PHỤ THUỘC: ../admin_NC.js (adminTaiKhoan, adminGoiRpc, adminBaoTin, adminXuLyLoi, adminThoat,
 //   adminTaiFileLen, adminNgheThu, sự kiện "adminDaChuyenManHinh").
 //   RPC (SQL repo riêng supabase_tc03d_loi_dong_vien_co_tuong.sql): kc_admin_lay_loi_dong_vien,
@@ -25,7 +26,8 @@ var QL_TEN_TINH_HUONG = {
   thang_van: "Bé thắng ván",
   thua_van: "Bé thua ván",
   hoa_van: "Ván hoà",
-  len_cap: "Bé lên cấp"
+  len_cap: "Bé lên cấp",
+  hoi_goi_y: "Hỏi khi bé lâu không đi (💡 Gợi Ý)"
 };
 // Thứ tự hiện trong ô chọn khi máy chủ chưa trả danh sách mã
 var QL_MA_MAC_DINH = Object.keys(QL_TEN_TINH_HUONG);
@@ -191,4 +193,4 @@ function qlXoa(man, id, nut) {
     qlTai(man);
   });
 }
-// 22/10/2026 22:55 - BƯỚC: TC_03D
+// 23/10/2026 07:40 - BƯỚC: TC_03E
