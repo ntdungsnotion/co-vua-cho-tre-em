@@ -1,0 +1,82 @@
+"1. Game là gì
+
+Bé tạo nhân vật, đặt tên vương quốc, chọn chủng loại. **Nhân vật bé tạo là người đứng đầu vương quốc**, lớn lên qua 4 thời kỳ: **Thủ lĩnh** (Đồ đá) → **Tộc trưởng** (Đồ đồng) → **Tù trưởng** (Đồ sắt) → **Quốc vương** (Đế quốc). Vào game, bé thấy Thủ lĩnh và **một người nông dân cầm rìu** cạnh lều trại giữa thung lũng có sông suối, cây cối, mỏ đá, ruộng hoang. Bé giao việc cho nông dân: **chặt cây, đào mỏ, làm ruộng**. Quanh làng có quái nhỏ đi lang thang; bé chạm vào quái thì Thủ lĩnh ra đánh, chuyển sang **màn chiến đấu theo lượt**: mỗi lượt một câu hỏi, bên tấn công bấm đúng là ra đòn, bên phòng thủ bấm đúng trước thì né (đặc tả mục VI). Thắng thì **quái chạy mất, rơi lại khối thịt (quái động vật) hoặc đồ vật (quái khác)** trên mặt đất; nông dân ra lấy thịt (Lương thực), hết 5 phút phần còn lại tự mất (người dùng chốt 23/10/2026 17:1x; mục 4). Đủ tài nguyên và hoàn thành các **phát minh** (nhiệm vụ kiến thức) thì vương quốc **lên thời kỳ mới**: cả làng đổi kiến trúc, danh hiệu mới, vùng đất mới, quái mạnh hơn. Lên **Đế quốc (Nhà chính cấp 3)** thì đăng quang **Quốc vương**, chiêu mộ **tướng** và luyện **lính**.
+
+Câu hỏi **ai cũng bắt đầu từ lớp 1**, rồi game **tự tính xác suất bé trả lời đúng để nâng (hoặc hạ) độ khó** (mục 5). Nhờ vậy bé lớp 2 và bé lớp 6 đều luôn gặp câu vừa sức mình, kiếm tài nguyên cùng tốc độ, và cùng chơi được với nhau.
+"
+"Tài liệu Dự án 3D - Cờ vua cho trẻ em
+
+Mọi phần dựng 3D nằm trong repo công khai, thư mục co-vua-cho-tre-em/kc/dt/. Trên máy hiện chưa có phần mềm chỉnh 3D nào. Tôi đề xuất cài Blender (miễn phí) để sửa nhân vật và hoạt ảnh. Hiệu ứng phép thuật thì không cần phần mềm: tôi viết thẳng bằng mã.
+
+---
+
+## Các file dựng 3D
+
+### Mô hình (thư mục mo_hinh/, dạng .glb, lấy từ bộ KayKit miễn phí)
+
+| File | Chứa gì |
+| --- | --- |
+| nhan_vat.glb | Nhân vật và 8 động tác trên bản đồ (đi, chạy, chặt, đào…) |
+| dong_tac_tran.glb | Gói động tác dùng khi đánh trận |
+| lang.glb | Cây, đá, đồ trang trí trong làng |
+
+### Mã vẽ (thư mục 3d/, mỗi file lo một phần)
+
+| File | Lo phần gì |
+| --- | --- |
+| dt3d_canh.js | Khung cảnh, ánh sáng, sương, hai chế độ Đẹp / Nhẹ |
+| dt3d_camera.js | Góc nhìn chéo kiểu Đế Chế |
+| dt3d_dia_hinh.js | Mặt đất, suối, cầu, đồi |
+| dt3d_mo_hinh.js | Nạp các file .glb ở trên |
+| dt3d_nhan_vat.js | Nhân vật theo ngoại hình bé chọn: màu da, tóc, áo, động tác |
+| dt3d_tai_nguyen.js | Cây, mỏ, bãi cá, bụi trái cây (đầy, cạn, mọc lại) |
+| dt3d_cong_trinh.js | Lều, lửa trại, ruộng. Lều đang dựng bằng hình khối vì bộ KayKit không có lều Đồ đá |
+| dt3d_dieu_khien.js | Chạm để chọn nhân vật rồi chạm chỗ để ra lệnh |
+| dt3d_thu.js | Ghép các phần trên thành trang thử kc/dt_thu_3d.html |
+| xem.html + xem.js | Trang xem riêng từng phần |
+
+Thư viện vẽ là **Three.js**, nằm sẵn ở kc/thu_vien/three/.
+
+---
+
+## Phần mềm tôi dùng được
+
+Tôi không bấm chuột vào phần mềm có giao diện được. Nhưng có thể điều khiển bằng câu lệnh, và tôi dùng được loại đó.
+
+| Việc | Công cụ | Tôi làm được gì |
+| --- | --- | --- |
+| **Sửa nhân vật** (thêm sừng, cánh, áo giáp, đổi dáng) | Blender (miễn phí) | Tôi viết lệnh để Blender tự chạy ngầm: mở .glb, gắn thêm chi tiết, đổi màu, xuất file, chụp ảnh kết quả để tự kiểm tra. |
+| **Hoạt ảnh** (động tác mới, ghép động tác) | Blender, cộng thêm Mixamo (trang web miễn phí của Adobe) nếu cần | Cắt, ghép, chuyển động tác giữa các nhân vật.<br> *Mixamo có hàng nghìn động tác sẵn, nhưng bạn phải tự đăng nhập và tải về vì tôi không dùng được giao diện web.* |
+| **Hiệu ứng phép thuật** (lửa, sáng, vòng tròn phát sáng, rung khung hình) | Viết mã Three.js, không cần phần mềm | Cách này nhẹ và chạy tốt trên điện thoại. Mỗi chủng tộc một màu: Tiên tím lấp lánh, Quỷ lửa... |
+| **Làm file .glb nhẹ hơn** | gltf-transform (công cụ miễn phí) | Giảm dung lượng file giúp tải nhanh trên điện thoại. |
+
+---
+
+## Đề xuất
+
+1. **Cài Blender:** Đây là thêm phần mềm mới nên tôi hỏi bạn trước.
+  - **Cách cài:** Vào trang blender.org, bấm Download, chạy file tải về.
+  - **Kiểm tra:** Gõ vào ô chat:
+    ! "C:/Program Files/Blender Foundation/Blender 4.5/blender.exe" --version *(số 4.5 đổi theo bản bạn cài)*. Thấy dòng "Blender 4.x" là được.
+2. **Hiệu ứng phép thuật:** Tôi làm bằng mã khi tới bước đánh trận, không cần cài gì.
+3. **Mixamo:** Chỉ dùng khi cần động tác mà bộ KayKit không có.
+
+> **Xác nhận:** Bạn đồng ý cài Blender không? Nếu đồng ý, ở phiên sau tôi sẽ thử sửa nhân vật bằng Blender, và giao cho phụ tá việc thử sửa mẫu một nhân vật. Hôm nay tôi chưa sửa file nào." hãy thiết kế thủ lĩnh
+
+Đây là thiết kế Thủ lĩnh thời kỳ Đồ đá cho game của bé, theo phong cách nhân vật 3D hoạt hình, phù hợp với góc nhìn chéo kiểu Đế Chế.
+
+Nhân vật được thiết kế với:
+
+Ngoại hình: Tóc nâu, băng đô, áo da và áo choàng lông thú.
+
+Trang bị: Vũ khí bằng đá, dây da và phụ kiện xương.
+
+Tạo hình: Đầu hơi lớn, khuôn mặt thân thiện, dễ nhận diện khi thu nhỏ trên bản đồ.
+
+Động tác: Đứng, chạy, chặt cây, đào mỏ, làm ruộng và ra lệnh.
+
+Bối cảnh: Lều trại, nông dân và thung lũng xanh, giúp hình dung nhân vật khi xuất hiện trong game.
+
+Đây là bản thiết kế ý tưởng hình ảnh, chưa phải mô hình .glb có thể đưa trực tiếp vào game. Để sử dụng thực tế, cần dựng nhân vật 3D theo hình mẫu, tạo hoặc ghép hoạt ảnh, sau đó xuất .glb và tích hợp vào Three.js.
+
+thủ lĩnh các thời kỳ tiếp theo
