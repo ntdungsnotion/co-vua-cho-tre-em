@@ -12,8 +12,8 @@
 //        veLaiMam() (sau khi tua giờ) }
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh (dt3d_mo_hinh.js), diaHinh.doCao / MUC_NUOC
 //           (dt3d_dia_hinh.js), lang (lõi: đọc nguon / gocCay, nghe sự kiện).
-// BƯỚC: TC_D02A
-// NGÀY: 23/10/2026
+// BƯỚC: TC_D02A; TC_D02B2a (sức chứa theo số nguồn thật, xoá gốc / mầm khi đặt móng)
+// NGÀY: 23/10/2026; 26/10/2026
 // ================================================================
 import * as THREE from "three";
 import { bam } from "./dt3d_canh.js";
@@ -43,21 +43,24 @@ export function taoTaiNguyen(ctx, moHinh, diaHinh, lang) {
     const t = new THREE.CanvasTexture(cv); t.flipY = goc.flipY; t.colorSpace = goc.colorSpace; t.wrapS = goc.wrapS; t.wrapT = goc.wrapT;
     const vl = moHinh.vatLieu.clone(); vl.map = t; return vl;
   })();
+  // Sức chứa mỗi bộ theo số nguồn thật (bản mẫu 44 x 44 vài trăm cây, vùng đất 128 x 128 vài nghìn) + chỗ cho mọc thêm
+  const dem = loai => lang.nguon.filter(n => loai.test(n.loai)).length;
+  const SO_CAY = dem(/^cay$/) + 200, SO_MO = dem(/^mo_/) + 60, SO_BUI = dem(/^bui/) + 40, SO_CA_BAI = dem(/^bai_ca$/) + 20;
   const khoaCay = l => l[0] + (l[2] ? "_thu" : "");
-  const boCay = {}; for (const l of LOAI_CAY) boCay[khoaCay(l)] = boCay[khoaCay(l)] || new BoNhieuBan(l[0], 900, l[2] ? { vatLieu: vlThu } : {});
-  const boGoc = new BoNhieuBan("tree_single_A_cut", 900);
-  const boMam = new BoNhieuBan(new THREE.ConeGeometry(0.2, 0.62, 6).translate(0, 0.31, 0), 400, { vatLieu: new THREE.MeshLambertMaterial({ color: "#6fbf45" }) });
-  const boDa = Object.fromEntries(DA.map(t => [t, new BoNhieuBan(t, 120)]));
-  const boVang = new BoNhieuBan(new THREE.IcosahedronGeometry(0.1, 0), 120 * SO_CUC_VANG,
+  const boCay = {}; for (const l of LOAI_CAY) boCay[khoaCay(l)] = boCay[khoaCay(l)] || new BoNhieuBan(l[0], SO_CAY, l[2] ? { vatLieu: vlThu } : {});
+  const boGoc = new BoNhieuBan("tree_single_A_cut", SO_CAY);
+  const boMam = new BoNhieuBan(new THREE.ConeGeometry(0.2, 0.62, 6).translate(0, 0.31, 0), Math.max(400, SO_CAY >> 1), { vatLieu: new THREE.MeshLambertMaterial({ color: "#6fbf45" }) });
+  const boDa = Object.fromEntries(DA.map(t => [t, new BoNhieuBan(t, SO_MO)]));
+  const boVang = new BoNhieuBan(new THREE.IcosahedronGeometry(0.1, 0), SO_MO * SO_CUC_VANG,
     { vatLieu: new THREE.MeshStandardMaterial({ color: "#ffcc33", metalness: 0.75, roughness: 0.28, emissive: "#6b4a00", emissiveIntensity: 0.6 }), bong: false });
-  const boBui = new BoNhieuBan(new THREE.IcosahedronGeometry(0.42, 1).scale(1, 0.78, 1).translate(0, 0.28, 0), 80,
+  const boBui = new BoNhieuBan(new THREE.IcosahedronGeometry(0.42, 1).scale(1, 0.78, 1).translate(0, 0.28, 0), SO_BUI,
     { vatLieu: new THREE.MeshLambertMaterial({ color: "#4f9a3c", flatShading: true }) });
-  const boQua = new BoNhieuBan(new THREE.SphereGeometry(0.075, 7, 5), 80 * SO_QUA, { vatLieu: new THREE.MeshLambertMaterial({ color: "#e8433a", emissive: "#5a0a05" }), bong: false });
+  const boQua = new BoNhieuBan(new THREE.SphereGeometry(0.075, 7, 5), SO_BUI * SO_QUA, { vatLieu: new THREE.MeshLambertMaterial({ color: "#e8433a", emissive: "#5a0a05" }), bong: false });
   // Cá màu cam cho nổi trên nước xanh (bé nhìn thấy ngay chỗ có cá)
   const vlCa = new THREE.MeshLambertMaterial({ color: "#ff9a3c", emissive: "#6a2a00" });
-  const boThanCa = new BoNhieuBan(new THREE.SphereGeometry(0.1, 8, 6).scale(0.75, 0.7, 2), 40 * 4, { vatLieu: vlCa, bong: false });
-  const boDuoiCa = new BoNhieuBan(new THREE.ConeGeometry(0.1, 0.16, 4).rotateX(-Math.PI / 2).scale(0.3, 1, 1), 40 * 4, { vatLieu: vlCa, bong: false });
-  const boGon = new BoNhieuBan(new THREE.RingGeometry(0.36, 0.44, 24).rotateX(-Math.PI / 2), 40,
+  const boThanCa = new BoNhieuBan(new THREE.SphereGeometry(0.1, 8, 6).scale(0.75, 0.7, 2), SO_CA_BAI * 4, { vatLieu: vlCa, bong: false });
+  const boDuoiCa = new BoNhieuBan(new THREE.ConeGeometry(0.1, 0.16, 4).rotateX(-Math.PI / 2).scale(0.3, 1, 1), SO_CA_BAI * 4, { vatLieu: vlCa, bong: false });
+  const boGon = new BoNhieuBan(new THREE.RingGeometry(0.36, 0.44, 24).rotateX(-Math.PI / 2), SO_CA_BAI,
     { vatLieu: new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.6, depthWrite: false }), bong: false });
   const nhomTrungCa = new THREE.Group(); ctx.canh.add(nhomTrungCa);
   const hinhTrungCa = new THREE.CylinderGeometry(0.6, 0.6, 0.8, 8), vlTrung = new THREE.MeshBasicMaterial({ visible: false });
@@ -138,7 +141,8 @@ export function taoTaiNguyen(ctx, moHinh, diaHinh, lang) {
     for (const p of r.phu || []) p.bo.an(p.i);
     if (r.ca) { for (const c of r.ca) { boThanCa.an(c.than); boDuoiCa.an(c.duoi); } boGon.an(r.gon); nhomTrungCa.remove(r.trung); dsCa.delete(r); }
   }
-  function veGoc(g) { boGoc.them(g.x, doCao(g.x, g.z), g.z, TI_CAY[g.co] * 0.95, bam(g.o.x, g.o.y) * 360, null, mauC.setRGB(...LOAI_CAY[g.giong % LOAI_CAY.length][1]).lerp(new THREE.Color(1, 1, 1), 0.5)); }
+  const iGoc = new Map(); // "x,y" -> chỗ trong bộ gốc cây (xoá khi đặt móng)
+  function veGoc(g) { iGoc.set(g.o.x + "," + g.o.y, boGoc.them(g.x, doCao(g.x, g.z), g.z, TI_CAY[g.co] * 0.95, bam(g.o.x, g.o.y) * 360, null, mauC.setRGB(...LOAI_CAY[g.giong % LOAI_CAY.length][1]).lerp(new THREE.Color(1, 1, 1), 0.5))); }
 
   for (const n of lang.nguon) ve(n);
   for (const g of lang.gocCay) veGoc(g);
@@ -149,6 +153,8 @@ export function taoTaiNguyen(ctx, moHinh, diaHinh, lang) {
     switch (su.loai) {
       case "them_nguon": ve(n); break;
       case "mam_lon": xoa(n); ve(n); break;
+      case "bo_mam": xoa(n); break;
+      case "xoa_goc": { const k = su.o.x + "," + su.o.y; if (iGoc.has(k)) { boGoc.an(iGoc.get(k)); iGoc.delete(k); } break; }
       case "het_nguon": xoa(n); if (n.loai === "cay") { veGoc(lang.gocCay[lang.gocCay.length - 1]); boGoc.xong(); } break;
       case "lay":
         if (!r) break;
@@ -206,4 +212,4 @@ export function taoTaiNguyen(ctx, moHinh, diaHinh, lang) {
     veLaiMam
   };
 }
-// 23/10/2026 18:20 - BƯỚC: TC_D02A
+// 26/10/2026 22:05 - BƯỚC: TC_D02B2a

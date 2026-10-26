@@ -11,8 +11,8 @@
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), cam.khiCham / camera (dt3d_camera.js), taiNguyen.chon
 //           (dt3d_tai_nguyen.js), boNhanVat.dsHinh (dt3d_nhan_vat.js), diaHinh.matDat / doCaoDi,
 //           lang (lõi: giaoViec, lenhDi, nghe).
-// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C)
-// NGÀY: 23/10/2026
+// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (datCheDoCham: chế độ chạm riêng)
+// NGÀY: 23/10/2026; 26/10/2026
 // ================================================================
 import * as THREE from "three";
 
@@ -46,7 +46,18 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     ui.baoGoiY(laTl ? "Chạm mặt đất để Thủ lĩnh đi tới đó." : "Chạm cây để chặt gỗ, chạm mỏ để đào đá / vàng, chạm bãi cá hoặc bụi trái cây để lấy lương thực, hoặc chạm đất để đi.");
   }
 
+  // Chế độ chạm riêng (TC_D02B2a: "🔍 Soi đất"): chạm đất -> gọi fn(ô) thay cho ra lệnh đi
+  let cheDoRieng = null;
+  const oDuoiTay = e => {
+    const r = canvas.getBoundingClientRect();
+    diem.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    tia.setFromCamera(diem, cam.camera);
+    const t = tia.intersectObject(diaHinh.matDat, false)[0];
+    return t ? { x: Math.floor(t.point.x), y: Math.floor(t.point.z) } : null;
+  };
+
   cam.khiCham(e => {
+    if (cheDoRieng) { const o = oDuoiTay(e); if (o) cheDoRieng(o, "cham"); return; }
     const r = canvas.getBoundingClientRect();
     diem.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     tia.setFromCamera(diem, cam.camera);
@@ -105,6 +116,12 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     }
   });
 
-  return { chon, dangChon: () => dangChon };
+  // Máy tính: rê chuột (không bấm) cũng báo ô dưới tay cho chế độ riêng
+  canvas.addEventListener("pointermove", e => {
+    if (!cheDoRieng || e.pointerType !== "mouse" || e.buttons) return;
+    const o = oDuoiTay(e); if (o) cheDoRieng(o, "re");
+  });
+
+  return { chon, dangChon: () => dangChon, datCheDoCham(fn) { cheDoRieng = fn || null; } };
 }
-// 23/10/2026 18:40 - BƯỚC: TC_D02A
+// 26/10/2026 22:05 - BƯỚC: TC_D02B2a

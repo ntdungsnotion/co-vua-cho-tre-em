@@ -7,8 +7,8 @@
 // HÀM KHAI RA:
 //   taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam) -> { leu, lua }
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh (dt3d_mo_hinh.js), diaHinh.doCao (dt3d_dia_hinh.js).
-// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C)
-// NGÀY: 23/10/2026
+// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (chưa có lều)
+// NGÀY: 23/10/2026; 26/10/2026
 // ================================================================
 import * as THREE from "three";
 import { bam } from "./dt3d_canh.js";
@@ -16,9 +16,9 @@ import { bam } from "./dt3d_canh.js";
 export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam) {
   const nhe = ctx.nhe, doCao = diaHinh.doCao;
 
-  // Lều da hình nón, cọc gỗ ló trên đỉnh, cửa tối, dải hoa văn
+  // Lều da hình nón, cọc gỗ ló trên đỉnh, cửa tối, dải hoa văn (vùng đất thật chưa có lều: TC_D02B2b)
   const leu = new THREE.Group();
-  {
+  if (banDo.leu) {
     const R = banDo.leu.ti * 0.32, C = banDo.leu.ti * 0.62;
     const cv = document.createElement("canvas"); cv.width = 256; cv.height = 64; const g = cv.getContext("2d");
     g.fillStyle = "#c9a476"; g.fillRect(0, 0, 256, 64);
@@ -81,4 +81,4 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam) {
   }
   return { leu, lua };
 }
-// 23/10/2026 18:05 - BƯỚC: TC_D02A
+// 26/10/2026 22:05 - BƯỚC: TC_D02B2a

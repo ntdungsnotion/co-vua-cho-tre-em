@@ -8,8 +8,8 @@
 //   taoDiaHinh(ctx, moHinh, banDo, lang) -> { doCao(x, z), doCaoDi(x, z) (đứng trên cầu),
 //        matDat (mesh để chạm), MUC_NUOC }
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh.BoNhieuBan (dt3d_mo_hinh.js), lang (lõi, chỉ đọc).
-// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C)
-// NGÀY: 23/10/2026
+// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (chưa có lều, mỏ tra theo ô)
+// NGÀY: 23/10/2026; 26/10/2026
 // ================================================================
 import * as THREE from "three";
 import { bam, nhieu, mem, taoNgauNhien } from "./dt3d_canh.js";
@@ -19,7 +19,8 @@ export const MUC_NUOC = -0.32;
 export function taoDiaHinh(ctx, moHinh, banDo, lang) {
   const W = banDo.rong, H = banDo.cao, nhe = ctx.nhe;
   const kcSuoi = lang.kcSuoi, nuaSuoi = lang.nuaSuoi;
-  const phang = [{ x: banDo.leu.x, z: banDo.leu.z, r: 4 }, ...(banDo.ruong || []).map(r => ({ x: r.x, z: r.z, r: Math.max(r.rong, r.dai) * 0.75 + 0.8 }))];
+  const leu = banDo.leu || null; // vùng đất thật chưa có lều (TC_D02B2a)
+  const phang = [...(leu ? [{ x: leu.x, z: leu.z, r: 4 }] : []), ...(banDo.ruong || []).map(r => ({ x: r.x, z: r.z, r: Math.max(r.rong, r.dai) * 0.75 + 0.8 }))];
   function doCao(x, z) {
     let h = 0.12 + (nhieu(x * 0.13, z * 0.13) - 0.5) * 0.55 + (nhieu(x * 0.6 + 40, z * 0.6) - 0.5) * 0.12;
     for (const p of phang) h = THREE.MathUtils.lerp(h, 0.1, 1 - mem(p.r * 0.6, p.r, Math.hypot(x - p.x, z - p.z)));
@@ -35,12 +36,19 @@ export function taoDiaHinh(ctx, moHinh, banDo, lang) {
   const MAU = { co1: new THREE.Color("#79ad45"), co2: new THREE.Color("#5c9536"), co3: new THREE.Color("#a3c95c"), dat: new THREE.Color("#b48c58"),
     cat: new THREE.Color("#d2bf8a"), bun: new THREE.Color("#7f6d48"), da: new THREE.Color("#9d9a88"), vang: new THREE.Color("#b59a5a") };
   const mo = lang.nguon.filter(n => n.loai.startsWith("mo_")).map(n => ({ x: n.x, z: n.z, mau: n.loai === "mo_da" ? MAU.da : MAU.vang }));
+  // Mỏ theo ô (vùng đất 128 x 128 có cả trăm mỏ: chỉ xét mỏ trong ô quanh điểm, không quét hết)
+  const moO = new Map();
+  for (const m of mo) { const k = Math.floor(m.x / 4) + "," + Math.floor(m.z / 4); if (!moO.has(k)) moO.set(k, []); moO.get(k).push(m); }
+  function moGan(x, z) {
+    const kx = Math.floor(x / 4), kz = Math.floor(z / 4), ra = [];
+    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) { const d = moO.get((kx + dx) + "," + (kz + dz)); if (d) ra.push(...d); }
+    return ra;
+  }
   function mauDat(x, z, h, mau) {
     const n = nhieu(x * 0.22 + 7, z * 0.22), n2 = nhieu(x * 0.9, z * 0.9 + 11);
     mau.copy(MAU.co2).lerp(MAU.co1, mem(0.25, 0.65, n)).lerp(MAU.co3, mem(0.62, 0.9, n2) * 0.6);
-    const dl = Math.hypot(x - banDo.leu.x, z - banDo.leu.z);
-    mau.lerp(MAU.dat, (1 - mem(1.8, 3.8, dl + (n2 - 0.5) * 1.2)) * 0.85);
-    for (const m of mo) { const d = Math.hypot(x - m.x, z - m.z); if (d < 2.6) mau.lerp(m.mau, (1 - mem(0.6, 2.4, d + (n2 - 0.5) * 1.2)) * 0.6); }
+    if (leu) { const dl = Math.hypot(x - leu.x, z - leu.z); mau.lerp(MAU.dat, (1 - mem(1.8, 3.8, dl + (n2 - 0.5) * 1.2)) * 0.85); }
+    for (const m of moGan(x, z)) { const d = Math.hypot(x - m.x, z - m.z); if (d < 2.6) mau.lerp(m.mau, (1 - mem(0.6, 2.4, d + (n2 - 0.5) * 1.2)) * 0.6); }
     mau.lerp(MAU.cat, 1 - mem(nuaSuoi + 0.2, nuaSuoi + 1.4, kcSuoi(x, z) + (n - 0.5)));
     if (h < MUC_NUOC + 0.05) mau.lerp(MAU.bun, 0.8);
     if (h > 2.5) mau.lerp(MAU.co2, 0.5).lerp(MAU.da, mem(4, 9, h + (n - 0.5) * 3) * 0.7); // vách đồi: cỏ sẫm rồi đá
@@ -110,4 +118,4 @@ export function taoDiaHinh(ctx, moHinh, banDo, lang) {
   }
   return { doCao, doCaoDi, matDat, MUC_NUOC };
 }
-// 23/10/2026 18:05 - BƯỚC: TC_D02A
+// 26/10/2026 22:05 - BƯỚC: TC_D02B2a
