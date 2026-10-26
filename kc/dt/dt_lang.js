@@ -14,12 +14,20 @@
 //            HAI KIỂU BẢN ĐỒ: (1) bản mẫu thử lang_thu_3d.json (suối là đường gấp khúc, rừng
 //            là vòng tròn, đặt cây ngẫu nhiên); (2) vùng đất thật vung_dat.json (TC_D02B2a):
 //            'o' = mỗi hàng ô một chuỗi ký tự theo bảng 'kyHieu', nguồn đặt đúng ô, mã nguồn
-//            chung n.ma = z * rong + x. Vùng đất chưa có lều (bé tự dựng ở TC_D02B2b).
+//            chung n.ma = z * rong + x. Vùng đất chưa có lều: bé tự dựng (TC_D02B2b).
+//            CÔNG TRÌNH (TC_D02B2b): móng đặt ngay (chặn ô), Thủ lĩnh / nông dân đứng sát móng
+//            làm đủ giayXay giây thì xong; Lều trại xong mới có chỗ cất đồ (mọi ô đi được quanh lều).
+//            SƯƠNG MÙ (TC_D02B2b, datBiet): lệnh đi chỉ qua ô đã biết + mép vùng đen; đích sâu
+//            trong vùng đen thì đi từng chặng (tới mép, chỗ mới sáng ra, tìm đường tiếp);
+//            khamPhaTuDo: nông dân tự đi mở vùng đen gần nhất tới khi hết chỗ.
 // SỰ KIỆN (lang.nghe): them_nguon, het_nguon, mam_lon, lay (một nhịp làm), cat (đồ về kho),
-//            ranh (nông dân hết việc), lenh_di (bé ra lệnh đi: lưu "lệnh" lên máy chủ),
-//            xoa_goc (đặt móng lên gốc cây), bo_mam (đặt móng lên mầm cây)
-// BƯỚC: TC_D02A; TC_D02B2a (vùng đất 128 x 128, chưa lều, đặt móng, tìm chỗ mọc nhanh)
-// NGÀY: 23/10/2026; 26/10/2026
+//            ranh (nông dân hết việc), lenh_di (đơn vị nhận đường đi mới: lưu "lệnh" lên máy chủ),
+//            giao_viec, xoa_goc (đặt móng lên gốc cây), bo_mam (đặt móng lên mầm cây),
+//            cong_trinh (thêm móng / công trình), xay_xong, xay_ket (không tới được móng),
+//            het_kham_pha (nông dân tự khám phá: hết chỗ để mở)
+// BƯỚC: TC_D02A; TC_D02B2a (vùng đất 128 x 128, chưa lều, đặt móng, tìm chỗ mọc nhanh);
+//       TC_D02B2b (công trình + dựng lều, khám phá theo sương mù, nạp trữ lượng từ máy chủ)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI)
 // ================================================================
 (function (goc) {
@@ -110,8 +118,8 @@
       return { x: c.x, z: c.z, doc, ngang, goc: Math.atan2(dx, dz) };
     });
     // Lều 2 x 2 ô, lửa trại, trang trí: chặn; quanh lều + ruộng: dành (không mọc cây / mỏ).
-    // Vùng đất thật chưa có lều (bé tự dựng, TC_D02B2b) -> chưa có chỗ cất đồ
-    const leu = bd.leu || null, lx = leu && Math.floor(leu.x), lz = leu && Math.floor(leu.z);
+    // Vùng đất thật chưa có lều (bé tự dựng: themCongTrinh) -> chưa có chỗ cất đồ
+    let leu = bd.leu || null, lx = leu && Math.floor(leu.x), lz = leu && Math.floor(leu.z);
     const danhVung = (cx, cz, r) => { for (let y = Math.floor(cz - r); y <= cz + r; y++) for (let x = Math.floor(cx - r); x <= cx + r; x++) if (trongBan(x, y) && Math.hypot(x + 0.5 - cx, y + 0.5 - cz) <= r) danh[chiSo(x, y)] = 1; };
     if (leu) {
       for (let y = -1; y < 1; y++) for (let x = -1; x < 1; x++) LUOI.datChan(luoi, lx + x, lz + y, true);
@@ -222,19 +230,30 @@
       n.lucTrong = bayGio(); n.lucLon = n.lucTrong + CH.nguon.cay.mocLaiGio * GIO_MS;
       return n;
     }
-    function canNguon(n) {
+    // khongMoc: nạp trạng thái từ máy chủ (vào lại thung lũng) -> chỉ thành gốc / biến mất, không
+    // mọc mầm, không hẹn mỏ mới (mọc lại theo giờ máy chủ: TC_D02B3)
+    function canNguon(n, khongMoc) {
       n.con = 0; n.trangThai = "het";
       boNguon(n);
       if (n.loai === "cay") {
         coGoc[chiSo(n.o.x, n.o.y)] = 1;
         gocCay.push({ x: n.x, z: n.z, o: n.o, giong: n.giong, co: n.co });
         phat({ loai: "het_nguon", n });
+        if (khongMoc) return;
         const o = timCho("cay", n.o); // mầm mọc NGAY, lớn sau mocLaiGio giờ
         if (o) trongMam(o); else hen.push({ loai: "cay", luc: bayGio(), tranh: n.o });
       } else {
         phat({ loai: "het_nguon", n });
-        hen.push({ loai: n.loai, luc: bayGio() + CH.nguon[n.loai].mocLaiGio * GIO_MS, tranh: n.o });
+        if (!khongMoc) hen.push({ loai: n.loai, luc: bayGio() + CH.nguon[n.loai].mocLaiGio * GIO_MS, tranh: n.o });
       }
+    }
+    // Trữ lượng còn lại theo máy chủ (chỉ giảm, không tăng)
+    function capNhatNguon(ma, con) {
+      const n = nguonO.get(ma);
+      if (!dangSong(n)) return false;
+      if (con > 0) { n.con = Math.min(n.con, con); return true; }
+      canNguon(n, true);
+      return true;
     }
     function xuLyHen() {
       const t = bayGio();
@@ -262,18 +281,31 @@
     function themDonVi(vaiTro, x, z, ten) {
       const o = LUOI.oTrongGan(luoi, Math.floor(x), Math.floor(z));
       const dv = { id: donVi.length + 1, vaiTro, ten, x: o.x + 0.5, z: o.y + 0.5, huongMuon: 0, trangThai: "dung", duong: [], viec: null,
-        mang: { loai: null, so: 0 }, henLam: 0, ranh: false, chay: false };
+        mang: { loai: null, so: 0 }, henLam: 0, ranh: false, chay: false, dich: null, xay: null, tuKhamPha: false };
       donVi.push(dv);
       return dv;
     }
-    function diToi(dv, o, ganNhat) {
+    // ---------------- Sương mù: ô đã biết (TC_D02B2b) ----------------
+    // biet(x, y): bé đã khám phá ô này chưa (trang game nối vào sương mù dt_ban_do.js). Không nối
+    // (bản mẫu, máy chủ) thì đi đâu cũng được như cũ. capNhatBiet(): soi lại sương ngay trước khi
+    // tìm chặng mới (chỗ vừa tới sáng ra liền, không chờ nhịp soi 0,2 giây).
+    let biet = null, capNhatBiet = null, timKhamPha = null;
+    const choPhep = (x, y) => {
+      if (biet(x, y)) return true;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && trongBan(x + dx, y + dy) && biet(x + dx, y + dy)) return true;
+      return false;
+    };
+    function diToi(dv, o, ganNhat, theoSuong) {
       if (!o) return false;
       const tu = LUOI.oCuaDiem(dv.x, dv.z);
-      const d = LUOI.timDuong(luoi, tu, o, ganNhat);
+      const d = LUOI.timDuong(luoi, tu, o, ganNhat, theoSuong && biet ? choPhep : null);
       if (!d) return false;
       dv.duong = (LUOI.lamMuot(luoi, tu, d) || []).map(c => ({ x: c.x + 0.5, z: c.y + 0.5 }));
       return true;
     }
+    // Ô cuối của đường đang đi (ô đang đứng nếu không phải đi)
+    const oCuoi = dv => { const c = dv.duong[dv.duong.length - 1] || dv; return LUOI.oCuaDiem(c.x, c.z); };
+    const baoLenhDi = (dv, tu) => phat({ loai: "lenh_di", dv, tu, den: oCuoi(dv), khamPha: !!dv.tuKhamPha });
     // Nguồn có ô trống sát bên (đứng làm được). Cây giữa rừng rậm chưa chặt được, như Đế Chế.
     function coKe(n) {
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && LUOI.diDuoc(luoi, n.o.x + dx, n.o.y + dy)) return true;
@@ -301,11 +333,73 @@
     }
     // Lệnh của bé: đi tới ô (bỏ việc, giữ đồ đang mang). Vùng đất thật: không tới được thì đi
     // tới chỗ gần nhất (chạm giữa rừng rậm -> tới bìa rừng), như Đế Chế; bản mẫu giữ như cũ.
-    function lenhDi(dv, o) {
-      dv.viec = null; dv.ranh = false; dv.trangThai = "di";
+    // Có sương mù: đi từng chặng qua ô đã biết, dv.dich nhớ chỗ bé chạm để đi tiếp.
+    // tuDong: lệnh do chính lõi ra (tự khám phá), không tắt chế độ tự khám phá.
+    function lenhDi(dv, o, tuDong) {
+      dv.viec = null; dv.xay = null; dv.ranh = false; dv.trangThai = "di";
+      if (!tuDong) dv.tuKhamPha = false;
+      dv.dich = biet ? { x: o.x, y: o.y } : null;
       const tu = { x: dv.x, z: dv.z };
-      if (diToi(dv, o, laVung)) { phat({ loai: "lenh_di", dv, tu, den: o }); return true; }
-      dv.trangThai = "dung"; return false;
+      if (diToi(dv, o, laVung, true)) { baoLenhDi(dv, tu); return true; }
+      dv.trangThai = "dung"; dv.dich = null; return false;
+    }
+    // Tới cuối chặng: còn xa chỗ bé chạm thì tìm chặng mới qua chỗ vừa sáng ra. Trả true nếu đi tiếp.
+    function diTiepChang(dv) {
+      const o = dv.dich, oDung = LUOI.oCuaDiem(dv.x, dv.z);
+      dv.dich = null;
+      if (!o || (oDung.x === o.x && oDung.y === o.y)) return false;
+      if (capNhatBiet) capNhatBiet();
+      const tu = { x: dv.x, z: dv.z }, kc0 = Math.hypot(oDung.x - o.x, oDung.y - o.y);
+      if (!diToi(dv, o, true, true) || !dv.duong.length) { dv.duong = []; return false; }
+      const c = oCuoi(dv);
+      if (Math.hypot(c.x - o.x, c.y - o.y) > kc0 - 0.5) { dv.duong = []; return false; } // không gần thêm: dừng
+      dv.dich = o; dv.trangThai = "di";
+      baoLenhDi(dv, tu);
+      return true;
+    }
+    // Nông dân tự đi khám phá (nút "🔭 Đi khám phá"): đi tới mép vùng đen gần nhất, tới nơi thì
+    // tìm chỗ tiếp, tới khi hết chỗ hoặc bé ra lệnh khác. Trả false nếu không còn chỗ nào để mở.
+    function khamPhaTuDo(dv) {
+      if (dv.vaiTro !== "nong_dan" || !timKhamPha) return false;
+      if (capNhatBiet) capNhatBiet();
+      dv.tuKhamPha = true;
+      const o = timKhamPha(dv);
+      if (o && lenhDi(dv, o, true)) return true;
+      dv.tuKhamPha = false;
+      return false;
+    }
+
+    // ---------------- Công trình của bé (TC_D02B2b: Lều trại) ----------------
+    // ct = { id, loai, x, y, rong, sau, xong, tienDo (0..1), giayXay }; (x, y) = ô góc trên-trái.
+    const congTrinh = [];
+    // Ô viền ngoài móng, đi được, gần (x, z) nhất (chỗ đứng dựng nhà, chỗ cất đồ quanh lều)
+    function oQuanh(ct, x, z) {
+      let tot = null, kc = Infinity;
+      for (let oy = ct.y - 1; oy <= ct.y + ct.sau; oy++) for (let ox = ct.x - 1; ox <= ct.x + ct.rong; ox++) {
+        if (oy >= ct.y && oy < ct.y + ct.sau && ox >= ct.x && ox < ct.x + ct.rong) continue;
+        if (!LUOI.diDuoc(luoi, ox, oy)) continue;
+        const d = Math.hypot(ox + 0.5 - x, oy + 0.5 - z); if (d < kc) { kc = d; tot = { x: ox, y: oy }; }
+      }
+      return tot;
+    }
+    const kcToiMong = (dv, ct) => Math.hypot(Math.max(ct.x - dv.x, 0, dv.x - ct.x - ct.rong), Math.max(ct.y - dv.z, 0, dv.z - ct.y - ct.sau));
+    function datLeuCho(ct) { leu = { x: ct.x + ct.rong / 2, z: ct.y + ct.sau / 2, ct }; lx = Math.floor(leu.x); lz = Math.floor(leu.z); }
+    function themCongTrinh(ct) {
+      ct.tienDo = ct.xong ? 1 : (ct.tienDo || 0);
+      datMong(ct.x, ct.y, ct.rong, ct.sau);
+      congTrinh.push(ct);
+      if (ct.xong && ct.loai === "leu") datLeuCho(ct);
+      phat({ loai: "cong_trinh", ct });
+      return ct;
+    }
+    // Lệnh dựng: tới ô sát móng gần nhất rồi làm. Trả false nếu móng bị vây kín, không có chỗ đứng.
+    function lenhXay(dv, ct) {
+      dv.viec = null; dv.dich = null; dv.tuKhamPha = false; dv.ranh = false;
+      const o = oQuanh(ct, dv.x, dv.z), tu = { x: dv.x, z: dv.z };
+      if (!o || !diToi(dv, o)) { dv.trangThai = "dung"; return false; }
+      dv.xay = ct; dv.trangThai = "toi_xay";
+      baoLenhDi(dv, tu);
+      return true;
     }
 
     // ---------------- Đặt móng (TC_D02B2a: lõi; bé xây thật từ TC_D02B2b) ----------------
@@ -335,12 +429,14 @@
       if (!coKe(n)) n = nguonGanNhat(n.loai, n.x, n.z, CH.banKinhChonBia);
       if (!n) return null;
       if (dv.mang.so && dv.mang.loai !== n.taiNguyen) dv.mang = { loai: null, so: 0 }; // đổi loại tài nguyên thì bỏ đồ đang mang
-      dv.viec = n; dv.ranh = false; dv.trangThai = "toi_viec";
+      dv.viec = n; dv.ranh = false; dv.trangThai = "toi_viec"; dv.dich = null; dv.xay = null; dv.tuKhamPha = false;
       diToi(dv, n.o);
+      phat({ loai: "giao_viec", dv, n });
       return n;
     }
     const ganNguon = (dv, n) => Math.hypot(dv.x - n.x, dv.z - n.z) < CH.tamVoi;
     function choCatGanNhat(dv) {
+      if (leu && leu.ct) return oQuanh(leu.ct, dv.x, dv.z) || { x: lx, y: lz + 1 }; // lều bé dựng: ô quanh lều gần nhất
       let tot = diemCat[0] || null, kc = Infinity; // chưa có lều: không có chỗ cất
       for (const c of diemCat) { const d = Math.hypot(c.x + 0.5 - dv.x, c.y + 0.5 - dv.z); if (d < kc) { kc = d; tot = c; } }
       return tot;
@@ -371,7 +467,33 @@
       dv.chay = false;
       const n = dv.viec;
       switch (dv.trangThai) {
-        case "di": dv.trangThai = "dung"; break;
+        case "di":
+          dv.trangThai = "dung";
+          if (diTiepChang(dv)) break;
+          if (dv.tuKhamPha) {
+            if (capNhatBiet) capNhatBiet();
+            const o = timKhamPha(dv);
+            if (o && lenhDi(dv, o, true)) break;
+            dv.tuKhamPha = false; phat({ loai: "het_kham_pha", dv }); nghi(dv);
+          }
+          break;
+        case "toi_xay":
+          if (!dv.xay || dv.xay.xong) { dv.xay = null; dv.trangThai = "dung"; }
+          else if (kcToiMong(dv, dv.xay) <= CH.tamVoi) dv.trangThai = "xay";
+          else { const ct = dv.xay; dv.xay = null; dv.trangThai = "dung"; phat({ loai: "xay_ket", ct, dv }); }
+          break;
+        case "xay": {
+          const ct = dv.xay;
+          if (!ct || ct.xong) { dv.xay = null; dv.trangThai = "dung"; break; }
+          dv.huongMuon = Math.atan2(ct.x + ct.rong / 2 - dv.x, ct.y + ct.sau / 2 - dv.z);
+          ct.tienDo = Math.min(1, ct.tienDo + dt / ct.giayXay);
+          if (ct.tienDo >= 1) {
+            ct.xong = true; dv.xay = null; dv.trangThai = "dung";
+            if (ct.loai === "leu") datLeuCho(ct);
+            phat({ loai: "xay_xong", ct, dv });
+          }
+          break;
+        }
         case "toi_viec":
           if (!dangSong(n)) hetViec(dv);
           else if (ganNguon(dv, n)) { dv.trangThai = "lam"; dv.henLam = CH.nguon[n.loai].nhipLam; }
@@ -413,8 +535,12 @@
     }
 
     return {
-      W, H, luoi, nuoc, laCau, coGoc, danh, laVung, leu, chiSo, kcSuoi, nuaSuoi, suoi, cau, diemCat, nguon, gocCay, hen, donVi, kho, CH,
-      xoaGoc, datMong, nguonTheoMa: ma => nguonO.get(ma) || null,
+      W, H, luoi, nuoc, laCau, coGoc, danh, laVung, chiSo, kcSuoi, nuaSuoi, suoi, cau, diemCat, nguon, gocCay, hen, donVi, kho, CH, congTrinh,
+      get leu() { return leu; },
+      xoaGoc, datMong, nguonTheoMa: ma => nguonO.get(ma) || null, capNhatNguon,
+      themCongTrinh, lenhXay, oQuanh, khamPhaTuDo,
+      // Nối sương mù (TC_D02B2b): biet(x, y) ô đã khám phá; capNhat() soi lại sương; timBien(dv) -> ô để đi khám phá tiếp
+      datBiet(fnBiet, fnCapNhat, fnTimBien) { biet = fnBiet || null; capNhatBiet = fnCapNhat || null; timKhamPha = fnTimBien || null; },
       bayGio, get lechGio() { return lechGio; },
       tuaNhanh(ms) { lechGio += ms; xuLyHen(); },
       get chungLoai() { return chungLoai; }, datChungLoai(cl) { if (CH.sucMang[cl] != null) chungLoai = cl; }, sucMang,
@@ -426,4 +552,4 @@
 
   goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS };
 })(typeof window !== "undefined" ? window : globalThis);
-// 26/10/2026 22:05 - BƯỚC: TC_D02B2a
+// 27/10/2026 00:52 - BƯỚC: TC_D02B2b

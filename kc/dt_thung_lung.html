@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#14204a">
+  <title>Thung Lũng Khởi Đầu - Đấu Trường Tri Thức</title>
+  <link rel="icon" href="data:,">
+
+
+  <!-- ================================================================
+       FILE: dt_thung_lung.html
+       CHỨC NĂNG: TRANG GAME thung lũng 3D của Đấu Trường Tri Thức: bé bấm "▶️ Tiếp tục" ở sảnh
+                  (dautruongtrithuc.html) là vào đây. Thung Lũng Khởi Đầu 128 x 128 có sương mù:
+                  lần đầu Thủ lĩnh ở cổng thung lũng, bé chạm chỗ đất xanh để dựng Lều trại, dựng
+                  xong có nông dân đi làm; chạm chỗ tối hoặc bấm "🔭 Đi khám phá" để nông dân mở
+                  đất mới. Lưu trên máy (máy chủ giả, TC_D02B3 chuyển lên Supabase).
+                  Cần đăng nhập + đã tạo Thủ lĩnh (chưa thì tự về sảnh). Không có nút thử
+                  (trang thử: dt_thu_3d.html?vung).
+       BƯỚC: TC_D02B2b
+       NGÀY: 27/10/2026
+       PHỤ THUỘC: thu_vien/three (Three.js r170, MIT), chung/nv_ve.js, chung/nv_ho_so.js,
+                  dt/dt_tien_do.js, dt/dt_luoi.js, dt/dt_lang.js, dt/dt_ban_do.js, dt/dt_may_chu.js,
+                  dt/3d/dt3d.css, dt/3d/*.js (khởi động: dt/3d/dt3d_thu.js chế độ game),
+                  dt/mo_hinh/*.glb (KayKit, CC0), dt/du_lieu/vung_dat.json, dt/du_lieu/cau_hinh.json;
+                  phiên đăng nhập (sessionStorage) do kc_auth.js của sảnh ghi
+       ================================================================ -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dt/3d/dt3d.css">
+  <script type="importmap">
+    { "imports": { "three": "./thu_vien/three/three.module.min.js" } }
+  </script>
+</head>
+<body data-che-do="game">
+  <div id="d3Canh" aria-label="Thung lũng 3D: kéo để xem, chạm để chọn và ra lệnh"></div>
+  <div id="d3ChuNoi"></div>
+
+  <div class="d3Tren">
+    <a class="d3Nut d3Khung" href="dautruongtrithuc.html" aria-label="Về sảnh Đấu Trường">⬅</a>
+    <div class="d3Ten d3Khung" id="d3TenVuong">Thung Lũng Khởi Đầu</div>
+    <div class="d3Kho d3Khung" aria-label="Tài nguyên">
+      <span class="d3Tn" title="Gỗ">🪵 <b id="d3Go">0</b></span>
+      <span class="d3Tn" title="Đá">🪨 <b id="d3Da">0</b></span>
+      <span class="d3Tn" title="Vàng">🪙 <b id="d3Vang">0</b></span>
+      <span class="d3Tn" title="Lương thực">🍖 <b id="d3Lt">0</b></span>
+    </div>
+  </div>
+
+  <div class="d3Duoi">
+    <div class="d3Khung" id="d3GoiY" role="status" aria-live="polite">Đang dựng thung lũng…</div>
+    <div class="d3HangNut">
+      <span class="d3Khung d3Do" id="d3Chon">Chưa chọn ai</span>
+      <span class="d3Khung d3Do d3Pt" id="d3KhamPha" hidden>🗺️ Đã khám phá 0%</span>
+      <span class="d3Khung d3Do" id="d3Fps">… khung/giây</span>
+    </div>
+    <div class="d3HangNut">
+      <button class="d3Nut d3Khung" id="d3VeLang" type="button" aria-label="Về chỗ Thủ lĩnh">👑<span class="d3Chu"> Về Thủ lĩnh</span></button>
+      <button class="d3Nut d3Khung" id="d3SoiDat" type="button" aria-label="Chọn chỗ dựng Lều trại" aria-pressed="false" hidden>🏕️<span class="d3Chu"> Dựng lều</span></button>
+      <button class="d3Nut d3Khung" id="d3KhamPhaNut" type="button" aria-label="Nông dân đi khám phá" hidden>🔭<span class="d3Chu"> Đi khám phá</span></button>
+      <button class="d3Nut d3Khung" id="d3DoHoa" type="button">✨ Đồ họa: Đẹp</button>
+      <!-- Nút thử (dt3d_thu.js cần có phần tử, trang game luôn ẩn) -->
+      <button class="d3Nut d3Khung" id="d3DoiHinh" type="button" hidden>🎨</button>
+      <button class="d3Nut d3Khung" id="d3ThuTran" type="button" hidden>⚔️</button>
+      <button class="d3Nut d3Khung" id="d3Tua" type="button" hidden>⏩</button>
+      <button class="d3Nut d3Khung" id="d3ThemNd" type="button" hidden>➕ <span id="d3SoNd">0</span></button>
+      <button class="d3Nut d3Khung" id="d3LamLai" type="button" hidden>🔄</button>
+    </div>
+  </div>
+
+  <div id="d3Tai"><div id="d3TaiChu">Đang dựng thung lũng…</div></div>
+
+  <script src="chung/nv_ve.js"></script>
+  <script src="chung/nv_ho_so.js"></script>
+  <script src="dt/dt_tien_do.js"></script>
+  <script src="dt/dt_luoi.js"></script>
+  <script src="dt/dt_lang.js"></script>
+  <script src="dt/dt_ban_do.js"></script>
+  <script src="dt/dt_may_chu.js"></script>
+  <script type="module" src="dt/3d/dt3d_thu.js"></script>
+</body>
+</html>
+<!-- 27/10/2026 00:52 - BƯỚC: TC_D02B2b -->

@@ -7,12 +7,16 @@
 //            kho, dấu "!" trên đầu nông dân đang rảnh.
 // HÀM KHAI RA:
 //   taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) -> { chon(hinh), dangChon() }
-//   ui: { baoGoiY(chu), baoChon(chu), lop (phần tử DOM phủ trên cảnh cho chữ nổi + "!") }
+//   ui: { baoGoiY(chu), baoChon(chu), lop (phần tử DOM phủ trên cảnh cho chữ nổi + "!"),
+//         (TC_D02B2b, đều không bắt buộc) thayNguon(n) -> false thì coi như chạm đất (nguồn trong
+//         vùng đen), loiDi(dv, ô) -> câu báo khi ra lệnh đi, loiChon(hinh) -> câu gợi ý khi chọn }
+//   datCheDoCham(fn(ô {x, y, px, pz}, "cham" | "re")): chế độ chạm riêng (soi đất, chọn chỗ dựng)
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), cam.khiCham / camera (dt3d_camera.js), taiNguyen.chon
 //           (dt3d_tai_nguyen.js), boNhanVat.dsHinh (dt3d_nhan_vat.js), diaHinh.matDat / doCaoDi,
 //           lang (lõi: giaoViec, lenhDi, nghe).
-// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (datCheDoCham: chế độ chạm riêng)
-// NGÀY: 23/10/2026; 26/10/2026
+// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (datCheDoCham: chế độ chạm riêng);
+//       TC_D02B2b (ô chạm kèm điểm chính xác, nguồn trong vùng đen, lời báo khám phá)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026
 // ================================================================
 import * as THREE from "three";
 
@@ -43,7 +47,7 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     if (!h) { ui.baoChon("Chưa chọn ai"); return; }
     const laTl = h.vaiTro === "thu_linh";
     ui.baoChon((laTl ? "👑 " : "🧑‍🌾 ") + h.dv.ten);
-    ui.baoGoiY(laTl ? "Chạm mặt đất để Thủ lĩnh đi tới đó." : "Chạm cây để chặt gỗ, chạm mỏ để đào đá / vàng, chạm bãi cá hoặc bụi trái cây để lấy lương thực, hoặc chạm đất để đi.");
+    ui.baoGoiY((ui.loiChon && ui.loiChon(h)) || (laTl ? "Chạm mặt đất để Thủ lĩnh đi tới đó." : "Chạm cây để chặt gỗ, chạm mỏ để đào đá / vàng, chạm bãi cá hoặc bụi trái cây để lấy lương thực, hoặc chạm đất để đi."));
   }
 
   // Chế độ chạm riêng (TC_D02B2a: "🔍 Soi đất"): chạm đất -> gọi fn(ô) thay cho ra lệnh đi
@@ -53,7 +57,7 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     diem.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     tia.setFromCamera(diem, cam.camera);
     const t = tia.intersectObject(diaHinh.matDat, false)[0];
-    return t ? { x: Math.floor(t.point.x), y: Math.floor(t.point.z) } : null;
+    return t ? { x: Math.floor(t.point.x), y: Math.floor(t.point.z), px: t.point.x, pz: t.point.z } : null;
   };
 
   cam.khiCham(e => {
@@ -65,7 +69,8 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     const trungNv = tia.intersectObjects(boNhanVat.dsHinh.map(h => h.trung), false)[0];
     if (trungNv) { chon(trungNv.object.userData.hinh); return; }
     // 2) chạm nguồn tài nguyên
-    const n = taiNguyen.chon(tia);
+    let n = taiNguyen.chon(tia);
+    if (n && ui.thayNguon && !ui.thayNguon(n)) n = null; // nguồn còn trong sương đen: bé chưa thấy
     if (n) {
       if (dangChon && dangChon.vaiTro === "nong_dan") {
         const that = lang.giaoViec(dangChon.dv, n);
@@ -82,7 +87,7 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
       if (lang.lenhDi(dangChon.dv, o)) {
         const c = dangChon.dv.duong[dangChon.dv.duong.length - 1];
         if (c) dauDich(c.x, c.z); else dauDich(trungDat.point.x, trungDat.point.z);
-        ui.baoGoiY(dangChon.dv.ten + " đang đi.");
+        ui.baoGoiY((ui.loiDi && ui.loiDi(dangChon.dv, o)) || dangChon.dv.ten + " đang đi.");
       } else ui.baoGoiY("Chỗ đó không tới được đâu.");
     } else if (!dangChon) ui.baoGoiY("Chạm vào Thủ lĩnh hoặc nông dân để chọn.");
   });
@@ -124,4 +129,4 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
 
   return { chon, dangChon: () => dangChon, datCheDoCham(fn) { cheDoRieng = fn || null; } };
 }
-// 26/10/2026 22:05 - BƯỚC: TC_D02B2a
+// 27/10/2026 00:52 - BƯỚC: TC_D02B2b

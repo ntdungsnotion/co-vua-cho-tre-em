@@ -2,14 +2,14 @@
 // FILE: dt/dt_khoi_tao.js
 // CHỨC NĂNG: Sảnh + màn mở đầu của game Đấu Trường Tri Thức (kc/dautruongtrithuc.html).
 //            - Chưa có Thủ lĩnh: nút "Bắt đầu" mở màn tạo Thủ lĩnh (dt_tao_nhan_vat.js).
-//            - Đã có: chào Thủ lĩnh, nút "Tiếp tục" vào Lều trại (Thủ lĩnh + nông dân
-//              vung rìu chặt cây), nút "Sửa Thủ lĩnh".
+//            - Đã có: chào Thủ lĩnh, nút "Tiếp tục" vào THUNG LŨNG 3D (dt_thung_lung.html,
+//              TC_D02B2b; tạo / sửa Thủ lĩnh xong cũng vào đó), nút "Sửa Thủ lĩnh".
 //            - Bốn thời kỳ (dt/du_lieu/thoi_ky.json): Nhà chính + Thủ lĩnh của bé mặc
 //              trang phục từng thời kỳ, danh hiệu, cần gì để lên, mở thêm gì.
 //            - Các đấu trường môn học (dt/du_lieu/the_gioi.json).
 //            Nhân vật vẽ bằng bộ vẽ DÙNG CHUNG toàn app (chung/nv_ve.js).
-// BƯỚC: TC_D01 (bản đầu TC_D00: 3 kỷ nguyên, nay thay bằng 4 thời kỳ)
-// NGÀY: 21/10/2026
+// BƯỚC: TC_D01 (bản đầu TC_D00: 3 kỷ nguyên, nay thay bằng 4 thời kỳ); TC_D02B2b ("Tiếp tục" vào thung lũng 3D)
+// NGÀY: 21/10/2026; 27/10/2026
 // PHỤ THUỘC: kc_auth.js (sự kiện kcSanSang), chung/nv_*.js, chung/loc_ten.js,
 //            dt/dt_tien_do.js, dt/dt_tao_nhan_vat.js
 // ================================================================
@@ -291,11 +291,16 @@
     window.KC_DT_TAO.mo({
       tenDangNhap: tenDangNhap, dsChungLoai: duLieu.chungLoai.chungLoai, tenChiSo: duLieu.chungLoai.tenChiSo,
       tienDo: sua ? tienDo : null, hoSo: sua ? hoSo : null,
-      xong: function (td, hs) { tienDo = td; hoSo = hs; moLeu(); },
+      xong: function (td, hs) { tienDo = td; hoSo = hs; vaoThungLung(); },
       huy: hienSanh
     });
   }
 
+  // TC_D02B2b: "Tiếp tục" / tạo Thủ lĩnh xong -> vào thung lũng 3D (trang game dt_thung_lung.html).
+  // Hồ sơ + tiến độ đã lưu trên máy (dt_tao_nhan_vat.js) nên trang thung lũng đọc lại được.
+  function vaoThungLung() { window.location.href = "dt_thung_lung.html"; }
+
+  // Màn Lều trại 2D của TC_D01 (không còn nút dẫn tới từ TC_D02B2b, giữ lại chờ người dùng quyết)
   function moLeu() {
     $("dtMoDau").hidden = true; $("dtSanhPhu").hidden = true; $("dtManTao").hidden = true;
     $("dtManLeu").hidden = false;
@@ -334,7 +339,7 @@
         dungNutKy(); dungDauTruong();
         $("dtNutBatDau").addEventListener("click", function () { moTao(false); });
         $("dtNutSua").addEventListener("click", function () { moTao(true); });
-        $("dtNutTiepTuc").addEventListener("click", moLeu);
+        $("dtNutTiepTuc").addEventListener("click", vaoThungLung);
         $("dtNutVeSanh").addEventListener("click", function () { hienSanh(); $("dtMoDau").scrollIntoView({ block: "start" }); });
         $("dtNutSuaLeu").addEventListener("click", function () { moTao(true); });
         SK.dang($("dtCanhMoDau"), taoCanhMoDau());
@@ -348,3 +353,4 @@
     if (su.detail && su.detail.daDangNhap) khoiDong(su.detail.taiKhoan);
   });
 })();
+// 27/10/2026 00:52 - BƯỚC: TC_D02B2b

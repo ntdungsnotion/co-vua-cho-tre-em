@@ -32,6 +32,11 @@
     "banKinhCong": 12,
     "soBeToiDa": 8,
     "chuKyGui": 10,
-    "chuKyLuuKhamPha": 5
+    "chuKyLuuKhamPha": 5,
+    "cachNhauKhamPha": 10
+  },
+  "_ghiChuCongTrinh": "Khối 'congTrinh' (TC_D02B2b, 27/10/2026, dac_ta_cong_trinh.md mục 4.1): cỡ móng (ô), số giây dựng (người đứng sát móng làm), Lều trại miễn phí, dựng xong có 'nongDanDau' nông dân. banDo.cachNhauKhamPha (TC_D02B2b): các nông dân bấm '🔭 Đi khám phá' chọn mép vùng đen cách nhau ít nhất bấy nhiêu ô (mỗi người một hướng).",
+  "congTrinh": {
+    "leu": { "ten": "Lều trại", "rong": 2, "sau": 2, "giayXay": 20, "nongDanDau": 3 }
   }
 }
