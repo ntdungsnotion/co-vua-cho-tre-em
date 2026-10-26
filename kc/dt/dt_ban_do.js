@@ -20,8 +20,9 @@
 //        the = { lang, suong?, coCongTrinh?(x, y), coDoiThu?(x, y), laLanhDiaDoiThu?(x, y) }
 //   viTriTuLenh(lang, lenh, bayGio) -> { x, z, huong, xong }
 //   locDonViThayDuoc(dsDonVi, cungPhe(chu), suong, viTri(dv)) -> đơn vị bé được thấy
-// BƯỚC: TC_D02B2a
-// NGÀY: 26/10/2026
+//   timBienKhamPha(lang, suong, x, z, tranh?, cachNhau?) -> ô mép vùng đen gần nhất | null
+// BƯỚC: TC_D02B2a; TC_D02B2b (timBienKhamPha)
+// NGÀY: 26/10/2026; 27/10/2026
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI); tham số lang là lõi dt/dt_lang.js
 // ================================================================
 (function (goc) {
@@ -167,6 +168,35 @@
     });
   }
 
-  goc.KC_DT_BAN_DO = { DEN, MO, SANG, tamNhin, taoSuongMu, oXayDuoc, oXayDuocVung, viTriTuLenh, locDonViThayDuoc, LY_DO };
+  // ---------------- Tìm chỗ đi khám phá (mục 3; TC_D02B2b, nút "🔭 Đi khám phá") ----------------
+  // Loang từ chỗ nông dân qua ô ĐÃ BIẾT đi được; ô đầu tiên sát vùng đen (4 hướng) là mép cần
+  // tới (cách chỗ đứng từ 2 ô). tranh = [{x, y}] đích của nông dân khác đang khám phá: bỏ qua mép
+  // cách đó dưới cachNhau ô để mỗi người một hướng. Trả {x, y} hoặc null (hết chỗ tới được).
+  function timBienKhamPha(lang, suong, x, z, tranh, cachNhau) {
+    const LUOI = goc.KC_DT_LUOI, W = lang.W, H = lang.H, l = lang.luoi, biet = suong.daKham;
+    const tu = LUOI.oTrongGan(l, Math.floor(x), Math.floor(z), null, 4);
+    if (!tu) return null;
+    const da = new Uint8Array(W * H), q = new Int32Array(W * H);
+    let dau = 0, cuoi = 0;
+    da[tu.y * W + tu.x] = 1; q[cuoi++] = tu.y * W + tu.x;
+    const satDen = (cx, cy) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+      const nx = cx + dx, ny = cy + dy;
+      return nx >= 0 && ny >= 0 && nx < W && ny < H && !biet[ny * W + nx];
+    });
+    while (dau < cuoi) {
+      const c = q[dau++], cx = c % W, cy = (c - cx) / W;
+      if (Math.hypot(cx - tu.x, cy - tu.y) >= 2 && satDen(cx, cy) && !(tranh || []).some(t => Math.hypot(t.x - cx, t.y - cy) < (cachNhau || 0))) return { x: cx, y: cy };
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const nx = cx + dx, ny = cy + dy, n = ny * W + nx;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H || da[n] || !biet[n] || !LUOI.diDuoc(l, nx, ny)) continue;
+        if (dx && dy && (!LUOI.diDuoc(l, cx + dx, cy) || !LUOI.diDuoc(l, cx, cy + dy))) continue; // không cắt góc
+        da[n] = 1; q[cuoi++] = n;
+      }
+    }
+    return null;
+  }
+
+  goc.KC_DT_BAN_DO = { DEN, MO, SANG, tamNhin, taoSuongMu, oXayDuoc, oXayDuocVung, viTriTuLenh, locDonViThayDuoc, timBienKhamPha, LY_DO };
 })(typeof window !== "undefined" ? window : globalThis);
-// 26/10/2026 22:05 - BƯỚC: TC_D02B2a
+// 27/10/2026 00:52 - BƯỚC: TC_D02B2b

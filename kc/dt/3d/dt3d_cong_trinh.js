@@ -4,28 +4,37 @@
 //            trại có ngọn lửa + đèn chập chờn (đồ họa Nhẹ bỏ đèn), ruộng (luống cày, có mầm
 //            hoặc không), đồ trang trí quanh lều và dưới suối (thùng, bao, xe cút kít, cờ...).
 //            Chỗ đứng / ô chặn do LÕI tính (dt_lang.js); phần này chỉ vẽ.
+//            Công trình bé dựng (TC_D02B2b, lõi lang.congTrinh): móng gỗ 2 x 2 + lều mọc dần theo
+//            ct.tienDo, xong thì nảy nhẹ một cái.
 // HÀM KHAI RA:
-//   taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam) -> { leu, lua }
-// LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh (dt3d_mo_hinh.js), diaHinh.doCao (dt3d_dia_hinh.js).
-// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (chưa có lều)
-// NGÀY: 23/10/2026; 26/10/2026
+//   taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang?) -> { leu, lua, hinhCt(id) }
+// LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh (dt3d_mo_hinh.js), diaHinh.doCao (dt3d_dia_hinh.js),
+//           lang (lõi: congTrinh, sự kiện cong_trinh / xay_xong).
+// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (chưa có lều); TC_D02B2b (bé dựng lều)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026
 // ================================================================
 import * as THREE from "three";
 import { bam } from "./dt3d_canh.js";
 
-export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam) {
-  const nhe = ctx.nhe, doCao = diaHinh.doCao;
+const TI_LEU = 3.4; // như lều làng mẫu (móng 2 x 2 ô)
 
-  // Lều da hình nón, cọc gỗ ló trên đỉnh, cửa tối, dải hoa văn (vùng đất thật chưa có lều: TC_D02B2b)
-  const leu = new THREE.Group();
-  if (banDo.leu) {
-    const R = banDo.leu.ti * 0.32, C = banDo.leu.ti * 0.62;
-    const cv = document.createElement("canvas"); cv.width = 256; cv.height = 64; const g = cv.getContext("2d");
-    g.fillStyle = "#c9a476"; g.fillRect(0, 0, 256, 64);
-    for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(110,70,35,${0.08 + bam(i, 3) * 0.12})`; g.fillRect(bam(i, 1) * 256, bam(i, 2) * 64, 18, 3); }
-    g.fillStyle = "#9b4a2c"; g.fillRect(0, 40, 256, 6); for (let i = 0; i < 16; i++) { g.beginPath(); g.moveTo(i * 16, 40); g.lineTo(i * 16 + 8, 32); g.lineTo(i * 16 + 16, 40); g.fill(); }
-    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.repeat.x = 3;
-    const vai = new THREE.Mesh(new THREE.ConeGeometry(R, C, 9, 1, true), new THREE.MeshLambertMaterial({ map: t, side: THREE.DoubleSide }));
+export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
+  const nhe = ctx.nhe, doCao = diaHinh.doCao;
+  const gocCua = Math.atan2(huongCam.x, huongCam.z) + 0.35; // cửa lều quay về phía camera
+
+  // Lều da hình nón, cọc gỗ ló trên đỉnh, cửa tối, dải hoa văn
+  let anhVaiLeu = null;
+  function taoLeu(ti) {
+    const leu = new THREE.Group();
+    const R = ti * 0.32, C = ti * 0.62;
+    if (!anhVaiLeu) {
+      const cv = document.createElement("canvas"); cv.width = 256; cv.height = 64; const g = cv.getContext("2d");
+      g.fillStyle = "#c9a476"; g.fillRect(0, 0, 256, 64);
+      for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(110,70,35,${0.08 + bam(i, 3) * 0.12})`; g.fillRect(bam(i, 1) * 256, bam(i, 2) * 64, 18, 3); }
+      g.fillStyle = "#9b4a2c"; g.fillRect(0, 40, 256, 6); for (let i = 0; i < 16; i++) { g.beginPath(); g.moveTo(i * 16, 40); g.lineTo(i * 16 + 8, 32); g.lineTo(i * 16 + 16, 40); g.fill(); }
+      anhVaiLeu = new THREE.CanvasTexture(cv); anhVaiLeu.colorSpace = THREE.SRGBColorSpace; anhVaiLeu.wrapS = THREE.RepeatWrapping; anhVaiLeu.repeat.x = 3;
+    }
+    const vai = new THREE.Mesh(new THREE.ConeGeometry(R, C, 9, 1, true), new THREE.MeshLambertMaterial({ map: anhVaiLeu, side: THREE.DoubleSide }));
     vai.position.y = C / 2; vai.castShadow = vai.receiveShadow = !nhe; leu.add(vai);
     const vlGo = new THREE.MeshLambertMaterial({ color: "#6b4524" });
     for (let i = 0; i < 6; i++) {
@@ -35,9 +44,57 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam) {
     }
     const cua = new THREE.Mesh(new THREE.CircleGeometry(R * 0.42, 3), new THREE.MeshBasicMaterial({ color: "#2a1a10" }));
     cua.position.set(0, R * 0.36, R * 0.72); cua.rotation.set(-0.42, 0, Math.PI / 2); leu.add(cua);
+    leu.rotation.y = gocCua;
+    return leu;
+  }
+  // Lều của làng mẫu (vùng đất thật: bé tự dựng, xem dưới)
+  const leu = banDo.leu ? taoLeu(banDo.leu.ti) : new THREE.Group();
+  if (banDo.leu) {
     leu.position.set(banDo.leu.x, doCao(banDo.leu.x, banDo.leu.z) - 0.05, banDo.leu.z);
-    leu.rotation.y = Math.atan2(huongCam.x, huongCam.z) + 0.35; // cửa quay về phía camera
     ctx.canh.add(leu);
+  }
+
+  // Công trình bé dựng (TC_D02B2b): móng gỗ (khung 4 cọc + sàn đất nện) + nhà mọc dần theo tiến độ
+  const dsCt = new Map(); // id -> { ct, nhom, nha, mong, nay }
+  const vlMong = new THREE.MeshLambertMaterial({ color: "#9a7448" }), vlCoc = new THREE.MeshLambertMaterial({ color: "#6b4524" });
+  function themCt(ct) {
+    if (dsCt.has(ct.id)) return;
+    const cx = ct.x + ct.rong / 2, cz = ct.y + ct.sau / 2;
+    let y = -Infinity; for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]]) y = Math.max(y, doCao(ct.x + a * ct.rong, ct.y + b * ct.sau));
+    const nhom = new THREE.Group(); nhom.position.set(cx, y, cz);
+    const mong = new THREE.Group();
+    const san = new THREE.Mesh(new THREE.BoxGeometry(ct.rong * 0.96, 0.08, ct.sau * 0.96), vlMong);
+    san.position.y = 0.0; san.receiveShadow = !nhe; mong.add(san);
+    for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const coc = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.55, 5), vlCoc);
+      coc.position.set(a * ct.rong * 0.44, 0.27, b * ct.sau * 0.44); coc.castShadow = !nhe; mong.add(coc);
+    }
+    nhom.add(mong);
+    const nha = taoLeu(TI_LEU * Math.min(ct.rong, ct.sau) / 2); // TC_D03..: nhà khác theo ct.loai
+    nha.position.y = -0.05; nhom.add(nha);
+    ctx.canh.add(nhom);
+    const h = { ct, nhom, nha, mong, nay: 0 };
+    dsCt.set(ct.id, h);
+    datTienDo(h);
+  }
+  function datTienDo(h) {
+    const p = h.ct.xong ? 1 : h.ct.tienDo;
+    h.nha.visible = p > 0.02;
+    h.nha.scale.set(0.75 + 0.25 * p, Math.max(0.02, p), 0.75 + 0.25 * p);
+    h.mong.visible = !h.ct.xong;
+  }
+  if (lang) {
+    for (const ct of lang.congTrinh) themCt(ct);
+    lang.nghe(su => {
+      if (su.loai === "cong_trinh") themCt(su.ct);
+      if (su.loai === "xay_xong") { const h = dsCt.get(su.ct.id); if (h) { datTienDo(h); h.nay = 0.5; } }
+    });
+    ctx.moiKhung(dt => {
+      for (const h of dsCt.values()) {
+        if (!h.ct.xong) datTienDo(h);
+        else if (h.nay > 0) { h.nay = Math.max(0, h.nay - dt); const k = 1 + Math.sin((0.5 - h.nay) / 0.5 * Math.PI) * 0.12; h.nha.scale.set(k, k, k); }
+      }
+    });
   }
 
   // Ruộng: tấm phẳng sát đất, luống cày vẽ bằng canvas ('mam' = có mầm xanh). TC_D03: vòng đời ruộng
@@ -79,6 +136,6 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam) {
       if (den) den.intensity = 5 + Math.sin(t * 11) * 1.2 + Math.sin(t * 17) * 0.8;
     });
   }
-  return { leu, lua };
+  return { leu, lua, hinhCt: id => dsCt.get(id) || null };
 }
-// 26/10/2026 22:05 - BƯỚC: TC_D02B2a
+// 27/10/2026 00:52 - BƯỚC: TC_D02B2b

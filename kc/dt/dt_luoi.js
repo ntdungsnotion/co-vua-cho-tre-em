@@ -8,8 +8,9 @@
 //            - timDuong: A* 8 hướng, không cắt góc, đích bị chặn thì tới ô trống gần nhất
 //            - lamMuot: kéo thẳng đường (bỏ điểm thừa khi nhìn thấy nhau) để đi tự nhiên
 //            - oTrongGan: ô trống gần một ô (chỗ đứng chặt cây, đào mỏ)
-// BƯỚC: TC_D01C (mẫu thử 3D); TC_D02B2a (timDuong ganNhat: lệnh đi tới chỗ gần nhất)
-// NGÀY: 23/10/2026; 26/10/2026
+// BƯỚC: TC_D01C (mẫu thử 3D); TC_D02B2a (timDuong ganNhat: lệnh đi tới chỗ gần nhất);
+//       TC_D02B2b (timDuong choPhep: chỉ đi qua ô đã biết + mép vùng đen)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026
 // ================================================================
 (function (goc) {
   "use strict";
@@ -75,7 +76,9 @@
   // Đích bị chặn (cây, đá) thì đi tới ô trống gần đích nhất, ưu tiên phía mình đứng.
   // ganNhat (TC_D02B2a, lệnh đi của bé như Đế Chế): không tới được thì đi tới ô tới được
   // gần đích nhất (chạm giữa rừng rậm -> đi tới bìa rừng) thay vì trả null.
-  function timDuong(l, tu, den, ganNhat) {
+  // choPhep(x, y) (TC_D02B2b, sương mù): chỉ đi qua ô hàm này cho phép (ô đã biết + mép vùng
+  // đen); thường đi kèm ganNhat: đích nằm sâu trong vùng đen thì đi tới chỗ gần nhất được phép.
+  function timDuong(l, tu, den, ganNhat, choPhep) {
     if (!diDuoc(l, tu.x, tu.y)) { const t = oTrongGan(l, tu.x, tu.y); if (!t) return null; tu = t; }
     let dich = den;
     if (!diDuoc(l, den.x, den.y)) { dich = oTrongGan(l, den.x, den.y, tu); if (!dich) return ganNhat ? [] : null; }
@@ -93,7 +96,7 @@
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
         const nx = cx + dx, ny = cy + dy;
-        if (!diDuoc(l, nx, ny)) continue;
+        if (!diDuoc(l, nx, ny) || (choPhep && !choPhep(nx, ny))) continue;
         if (dx && dy && (!diDuoc(l, cx + dx, cy) || !diDuoc(l, cx, cy + dy))) continue; // không cắt góc
         const n = ny * l.rong + nx, g = G[c] + (dx && dy ? CHEO : 1);
         if (g < G[n]) { G[n] = g; cha[n] = c; q.push(n, g + h(nx, ny)); }
@@ -142,4 +145,4 @@
 
   goc.KC_DT_LUOI = { taoLuoi, datChan, diDuoc, oCuaDiem, oTrongGan, timDuong, thayNhau, lamMuot };
 })(typeof window !== "undefined" ? window : globalThis);
-// 26/10/2026 22:05 - BƯỚC: TC_D02B2a
+// 27/10/2026 00:52 - BƯỚC: TC_D02B2b
