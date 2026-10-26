@@ -11,10 +11,15 @@
 //            - Kho: Gỗ, Đá, Vàng, Sắt, Lương thực
 //            MỌI CON SỐ đọc từ cau_hinh.json (khối "lang"), không viết cứng.
 //            Luật đầy đủ: repo_rieng dau_truong_tri_thuc/dac_ta_lang.md.
+//            HAI KIỂU BẢN ĐỒ: (1) bản mẫu thử lang_thu_3d.json (suối là đường gấp khúc, rừng
+//            là vòng tròn, đặt cây ngẫu nhiên); (2) vùng đất thật vung_dat.json (TC_D02B2a):
+//            'o' = mỗi hàng ô một chuỗi ký tự theo bảng 'kyHieu', nguồn đặt đúng ô, mã nguồn
+//            chung n.ma = z * rong + x. Vùng đất chưa có lều (bé tự dựng ở TC_D02B2b).
 // SỰ KIỆN (lang.nghe): them_nguon, het_nguon, mam_lon, lay (một nhịp làm), cat (đồ về kho),
-//            ranh (nông dân hết việc)
-// BƯỚC: TC_D02A
-// NGÀY: 23/10/2026
+//            ranh (nông dân hết việc), lenh_di (bé ra lệnh đi: lưu "lệnh" lên máy chủ),
+//            xoa_goc (đặt móng lên gốc cây), bo_mam (đặt móng lên mầm cây)
+// BƯỚC: TC_D02A; TC_D02B2a (vùng đất 128 x 128, chưa lều, đặt móng, tìm chỗ mọc nhanh)
+// NGÀY: 23/10/2026; 26/10/2026
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI)
 // ================================================================
 (function (goc) {
@@ -53,20 +58,47 @@
     const chiSo = (x, y) => y * W + x;
     const trongBan = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
     const nuoc = new Uint8Array(W * H), danh = new Uint8Array(W * H), laCau = new Uint8Array(W * H), coGoc = new Uint8Array(W * H);
-    const suoi = bd.suoi.diem.map(([x, z]) => ({ x, z }));
-    const nuaSuoi = bd.suoi.rong / 2;
-    function kcSuoi(x, z) {
-      let m = Infinity;
-      for (let i = 0; i < suoi.length - 1; i++) {
-        const a = suoi[i], b = suoi[i + 1], abx = b.x - a.x, abz = b.z - a.z;
-        const t = Math.max(0, Math.min(1, ((x - a.x) * abx + (z - a.z) * abz) / (abx * abx + abz * abz)));
-        m = Math.min(m, Math.hypot(x - a.x - abx * t, z - a.z - abz * t));
+    const laVung = Array.isArray(bd.o); // vùng đất thật: ô cho sẵn từng ký tự
+    const kyO = laVung ? (x, y) => bd.kyHieu[bd.o[y][x]] || ["co"] : null;
+    let suoi = [], nuaSuoi, kcSuoi;
+    if (laVung) {
+      // Khoảng cách tới tâm ô nước gần nhất (tối đa 4 ô), nội suy giữa các tâm ô: phần vẽ
+      // dùng để hạ lòng suối / hồ và tô cát ven bờ y như bản mẫu
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const k = kyO(x, y)[0]; if (k === "nuoc" || k === "bai_ca") { nuoc[chiSo(x, y)] = 1; LUOI.datChan(luoi, x, y, true); } else if (k === "cau") laCau[chiSo(x, y)] = 1; }
+      const XA = 4, kc = new Float32Array(W * H).fill(XA);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        if (nuoc[chiSo(x, y)]) { kc[chiSo(x, y)] = 0; continue; }
+        let m = XA;
+        for (let dy = -XA; dy <= XA; dy++) for (let dx = -XA; dx <= XA; dx++) { const nx = x + dx, ny = y + dy; if (trongBan(nx, ny) && nuoc[chiSo(nx, ny)]) m = Math.min(m, Math.hypot(dx, dy)); }
+        kc[chiSo(x, y)] = m;
       }
-      return m;
+      const kcO = (x, y) => kc[chiSo(Math.max(0, Math.min(W - 1, x)), Math.max(0, Math.min(H - 1, y)))];
+      nuaSuoi = 0.3;
+      kcSuoi = (x, z) => {
+        const fx = x - 0.5, fz = z - 0.5, x0 = Math.floor(fx), z0 = Math.floor(fz), tx = fx - x0, tz = fz - z0;
+        const a = kcO(x0, z0), b = kcO(x0 + 1, z0), c = kcO(x0, z0 + 1), d = kcO(x0 + 1, z0 + 1);
+        return (a * (1 - tx) + b * tx) * (1 - tz) + (c * (1 - tx) + d * tx) * tz;
+      };
+    } else {
+      suoi = bd.suoi.diem.map(([x, z]) => ({ x, z }));
+      nuaSuoi = bd.suoi.rong / 2;
+      kcSuoi = (x, z) => {
+        let m = Infinity;
+        for (let i = 0; i < suoi.length - 1; i++) {
+          const a = suoi[i], b = suoi[i + 1], abx = b.x - a.x, abz = b.z - a.z;
+          const t = Math.max(0, Math.min(1, ((x - a.x) * abx + (z - a.z) * abz) / (abx * abx + abz * abz)));
+          m = Math.min(m, Math.hypot(x - a.x - abx * t, z - a.z - abz * t));
+        }
+        return m;
+      };
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (kcSuoi(x + 0.5, y + 0.5) < nuaSuoi + 0.25) { nuoc[chiSo(x, y)] = 1; LUOI.datChan(luoi, x, y, true); }
     }
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (kcSuoi(x + 0.5, y + 0.5) < nuaSuoi + 0.25) { nuoc[chiSo(x, y)] = 1; LUOI.datChan(luoi, x, y, true); }
-    // Cầu: nằm ngang dòng suối ở đoạn gần nhất; các ô dưới mặt cầu đi được
-    const cau = (bd.cau || []).map(c => {
+    // Cầu: nằm ngang dòng suối ở đoạn gần nhất; các ô dưới mặt cầu đi được.
+    // Vùng đất: ô cầu đã cho sẵn ('='), chỉ lấy hướng dòng chảy 'doc' để vẽ
+    const cau = laVung ? (bd.cau || []).map(c => {
+      const doc = { x: c.doc[0], z: c.doc[1] };
+      return { x: c.x, z: c.z, doc, ngang: { x: doc.z, z: -doc.x }, goc: Math.atan2(doc.x, doc.z) };
+    }) : (bd.cau || []).map(c => {
       let gan = 0, kc = Infinity;
       for (let i = 0; i < suoi.length - 1; i++) { const mx = (suoi[i].x + suoi[i + 1].x) / 2, mz = (suoi[i].z + suoi[i + 1].z) / 2, d = Math.hypot(mx - c.x, mz - c.z); if (d < kc) { kc = d; gan = i; } }
       let dx = suoi[gan + 1].x - suoi[gan].x, dz = suoi[gan + 1].z - suoi[gan].z; const l = Math.hypot(dx, dz); dx /= l; dz /= l;
@@ -77,16 +109,19 @@
       }
       return { x: c.x, z: c.z, doc, ngang, goc: Math.atan2(dx, dz) };
     });
-    // Lều 2 x 2 ô, lửa trại, trang trí: chặn; quanh lều + ruộng: dành (không mọc cây / mỏ)
-    const leu = bd.leu, lx = Math.floor(leu.x), lz = Math.floor(leu.z);
-    for (let y = -1; y < 1; y++) for (let x = -1; x < 1; x++) LUOI.datChan(luoi, lx + x, lz + y, true);
+    // Lều 2 x 2 ô, lửa trại, trang trí: chặn; quanh lều + ruộng: dành (không mọc cây / mỏ).
+    // Vùng đất thật chưa có lều (bé tự dựng, TC_D02B2b) -> chưa có chỗ cất đồ
+    const leu = bd.leu || null, lx = leu && Math.floor(leu.x), lz = leu && Math.floor(leu.z);
     const danhVung = (cx, cz, r) => { for (let y = Math.floor(cz - r); y <= cz + r; y++) for (let x = Math.floor(cx - r); x <= cx + r; x++) if (trongBan(x, y) && Math.hypot(x + 0.5 - cx, y + 0.5 - cz) <= r) danh[chiSo(x, y)] = 1; };
-    danhVung(leu.x, leu.z, 3.5);
+    if (leu) {
+      for (let y = -1; y < 1; y++) for (let x = -1; x < 1; x++) LUOI.datChan(luoi, lx + x, lz + y, true);
+      danhVung(leu.x, leu.z, 3.5);
+    }
     if (bd.lua) { LUOI.datChan(luoi, Math.floor(bd.lua.x), Math.floor(bd.lua.z), true); danhVung(bd.lua.x, bd.lua.z, 1.5); }
     for (const r of bd.ruong || []) danhVung(r.x, r.z, Math.max(r.rong, r.dai) * 0.75);
     for (const t of bd.trangTri || []) if (!t.mo.startsWith("water")) { LUOI.datChan(luoi, Math.floor(t.x), Math.floor(t.z), true); danh[chiSo(Math.floor(t.x), Math.floor(t.z))] = 1; }
     // Chỗ cất đồ: ô trước cửa lều (TC_D03 thêm Nhà kho: về chỗ cất gần nhất)
-    const diemCat = [{ x: lx, y: lz + 1 }];
+    const diemCat = leu ? [{ x: lx, y: lz + 1 }] : [];
 
     // ---------------- Nguồn tài nguyên ----------------
     const nguon = [], gocCay = [], hen = [];
@@ -98,7 +133,7 @@
     function taoNguon(loai, ox, oy, co, trangThai) {
       const ch = CH.nguon[loai];
       const toiDa = co ? ch.truLuong[co] : 0;
-      const n = { id: ++soId, loai, taiNguyen: ch.taiNguyen, co: co || null, toiDa, con: toiDa, o: { x: ox, y: oy }, x: ox + 0.5, z: oy + 0.5,
+      const n = { id: ++soId, ma: chiSo(ox, oy), loai, taiNguyen: ch.taiNguyen, co: co || null, toiDa, con: toiDa, o: { x: ox, y: oy }, x: ox + 0.5, z: oy + 0.5,
         trangThai: trangThai || "song", giong: loai === "cay" ? Math.floor(ngauNhien() * CH.rung.soLoai) : 0, lech: ngauNhien() };
       nguon.push(n); nguonO.set(chiSo(ox, oy), n);
       if (n.trangThai === "song" && chanO(loai)) LUOI.datChan(luoi, ox, oy, true);
@@ -131,14 +166,20 @@
       if (!oCoTrong(ox, oz) || (!rungDay && !quanhTrong(ox, oz))) return null;
       return taoNguon("cay", ox, oz, co || chonCo(CH.rung.tiLeCo, ngauNhien()));
     }
-    for (const r of bd.rung || []) {
+    if (laVung) { // vùng đất thật: đúng ô, đúng cỡ như bản đồ (bãi cá nằm trên ô nước)
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const [loai, co] = kyO(x, y);
+        if (co && CH.nguon[loai]) taoNguon(loai, x, y, co);
+      }
+    }
+    for (const r of laVung ? [] : bd.rung || []) {
       let dat = 0;
       for (let thu = 0; thu < r.soCay * LAN_THU && dat < r.soCay; thu++) {
         const a = ngauNhien() * Math.PI * 2, d = Math.sqrt(ngauNhien()) * r.banKinh;
         if (trongCay(r.x + Math.cos(a) * d, r.z + Math.sin(a) * d, true)) dat++;
       }
     }
-    for (let i = 0, thu = 0; i < (bd.cayLe || 0) && thu < (bd.cayLe || 0) * LAN_THU * 2; thu++) {
+    for (let i = 0, thu = 0; leu && i < (bd.cayLe || 0) && thu < (bd.cayLe || 0) * LAN_THU * 2; thu++) {
       const x = 3 + ngauNhien() * (W - 6), z = 3 + ngauNhien() * (H - 6);
       if (Math.hypot(x - leu.x, z - leu.z) > 7 && trongCay(x, z, false)) i++;
     }
@@ -165,9 +206,13 @@
         if (!oCoTrong(x, y)) continue;
         if (loai === "cay") {
           ds.push({ x, y });
+          // gần rừng: có cây sống trong R ô (tra theo ô, không quét cả danh sách nguồn: bản đồ 128 x 128 có hàng nghìn cây)
           const R = CH.mocLai.ganRungO;
-          for (const n of nguon) if (n.loai === "cay" && n.trangThai === "song" && Math.max(Math.abs(n.o.x - x), Math.abs(n.o.y - y)) <= R) { gan.push({ x, y }); break; }
-        } else if (quanhTrong(x, y) && Math.hypot(x + 0.5 - leu.x, y + 0.5 - leu.z) >= CH.mocLai.cachLeuO) ds.push({ x, y });
+          tim: for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+            const m = trongBan(x + dx, y + dy) && nguonO.get(chiSo(x + dx, y + dy));
+            if (m && m.loai === "cay" && m.trangThai === "song") { gan.push({ x, y }); break tim; }
+          }
+        } else if (quanhTrong(x, y) && (!leu || Math.hypot(x + 0.5 - leu.x, y + 0.5 - leu.z) >= CH.mocLai.cachLeuO)) ds.push({ x, y });
       }
       const chon = gan.length ? gan : ds;
       return chon.length ? chon[Math.floor(ngauNhien() * chon.length)] : null;
@@ -221,9 +266,10 @@
       donVi.push(dv);
       return dv;
     }
-    function diToi(dv, o) {
+    function diToi(dv, o, ganNhat) {
+      if (!o) return false;
       const tu = LUOI.oCuaDiem(dv.x, dv.z);
-      const d = LUOI.timDuong(luoi, tu, o);
+      const d = LUOI.timDuong(luoi, tu, o, ganNhat);
       if (!d) return false;
       dv.duong = (LUOI.lamMuot(luoi, tu, d) || []).map(c => ({ x: c.x + 0.5, z: c.y + 0.5 }));
       return true;
@@ -253,11 +299,35 @@
       dv.trangThai = "dung"; dv.viec = null; dv.duong = []; dv.ranh = true;
       phat({ loai: "ranh", dv });
     }
-    // Lệnh của bé: đi tới ô (bỏ việc, giữ đồ đang mang)
+    // Lệnh của bé: đi tới ô (bỏ việc, giữ đồ đang mang). Vùng đất thật: không tới được thì đi
+    // tới chỗ gần nhất (chạm giữa rừng rậm -> tới bìa rừng), như Đế Chế; bản mẫu giữ như cũ.
     function lenhDi(dv, o) {
       dv.viec = null; dv.ranh = false; dv.trangThai = "di";
-      if (diToi(dv, o)) return true;
+      const tu = { x: dv.x, z: dv.z };
+      if (diToi(dv, o, laVung)) { phat({ loai: "lenh_di", dv, tu, den: o }); return true; }
       dv.trangThai = "dung"; return false;
+    }
+
+    // ---------------- Đặt móng (TC_D02B2a: lõi; bé xây thật từ TC_D02B2b) ----------------
+    // Ô kiểm hợp lệ ở dt_ban_do.js (oXayDuoc). Ở đây chỉ ghi: gốc cây trên móng tự xoá,
+    // mầm cây trên móng bỏ đi, ô móng thành chỗ dành (mầm / mỏ mới không mọc lên) + chặn đường.
+    function xoaGoc(x, y) {
+      const i = chiSo(x, y);
+      if (!coGoc[i]) return false;
+      coGoc[i] = 0;
+      const k = gocCay.findIndex(g => g.o.x === x && g.o.y === y);
+      const g = k >= 0 ? gocCay.splice(k, 1)[0] : null;
+      phat({ loai: "xoa_goc", g, o: { x, y } });
+      return true;
+    }
+    function datMong(x, y, rong, sau) {
+      for (let oy = y; oy < y + (sau || 1); oy++) for (let ox = x; ox < x + (rong || 1); ox++) {
+        if (!trongBan(ox, oy)) continue;
+        const i = chiSo(ox, oy), m = nguonO.get(i);
+        if (m && m.trangThai === "mam") { boNguon(m); phat({ loai: "bo_mam", n: m }); }
+        xoaGoc(ox, oy);
+        danh[i] = 1; LUOI.datChan(luoi, ox, oy, true);
+      }
     }
     // Lệnh của bé: làm ở nguồn n. Trả nguồn thật sự được giao (cây bìa thay cây giữa rừng) hoặc null
     function giaoViec(dv, n) {
@@ -271,7 +341,7 @@
     }
     const ganNguon = (dv, n) => Math.hypot(dv.x - n.x, dv.z - n.z) < CH.tamVoi;
     function choCatGanNhat(dv) {
-      let tot = diemCat[0], kc = Infinity;
+      let tot = diemCat[0] || null, kc = Infinity; // chưa có lều: không có chỗ cất
       for (const c of diemCat) { const d = Math.hypot(c.x + 0.5 - dv.x, c.y + 0.5 - dv.z); if (d < kc) { kc = d; tot = c; } }
       return tot;
     }
@@ -323,6 +393,7 @@
         }
         case "ve_kho": {
           const c = choCatGanNhat(dv);
+          if (!c) { nghi(dv); break; }
           if (Math.hypot(c.x + 0.5 - dv.x, c.y + 0.5 - dv.z) < CH.tamVoi) {
             const loai = dv.mang.loai, so = dv.mang.so;
             if (so) { kho[loai] += so; phat({ loai: "cat", dv, taiNguyen: loai, so }); }
@@ -342,7 +413,8 @@
     }
 
     return {
-      W, H, luoi, nuoc, laCau, kcSuoi, nuaSuoi, suoi, cau, diemCat, nguon, gocCay, hen, donVi, kho, CH,
+      W, H, luoi, nuoc, laCau, coGoc, danh, laVung, leu, chiSo, kcSuoi, nuaSuoi, suoi, cau, diemCat, nguon, gocCay, hen, donVi, kho, CH,
+      xoaGoc, datMong, nguonTheoMa: ma => nguonO.get(ma) || null,
       bayGio, get lechGio() { return lechGio; },
       tuaNhanh(ms) { lechGio += ms; xuLyHen(); },
       get chungLoai() { return chungLoai; }, datChungLoai(cl) { if (CH.sucMang[cl] != null) chungLoai = cl; }, sucMang,
@@ -354,4 +426,4 @@
 
   goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS };
 })(typeof window !== "undefined" ? window : globalThis);
-// 23/10/2026 17:50 - BƯỚC: TC_D02A
+// 26/10/2026 22:05 - BƯỚC: TC_D02B2a

@@ -24,5 +24,14 @@
     "tocDo": { "di": 1.5, "chay": 2.3, "chayKhiXaHon": 7 },
     "rung": { "tiLeCo": { "nho": 0.3, "vua": 0.45, "to": 0.25 }, "soLoai": 4 },
     "mocLai": { "ganRungO": 3, "cachLeuO": 6, "tiLeCoMoi": { "nho": 0.4, "vua": 0.4, "to": 0.2 } }
+  },
+  "_ghiChuBanDo": "Khối 'banDo' (TC_D02B2a, 26/10/2026, dac_ta_ban_do.md mục 2-3, 6-7): tầm nhìn tính bằng ô; Tiên tộc nhìn xa thêm 'themTien' ô (Pháp thuật); bé mới vào: quanh cổng thung lũng đã khám phá sẵn bán kính 'banKinhCong' ô; tối đa 'soBeToiDa' bé một vùng; máy bé gửi thu hoạch gộp + hỏi lại trạng thái mỗi 'chuKyGui' giây, lưu chỗ đã khám phá mỗi 'chuKyLuuKhamPha' giây.",
+  "banDo": {
+    "tamNhin": { "nong_dan": 4, "thu_linh": 6, "linh": 5, "leu": 3, "nha": 3, "thap_canh": 8 },
+    "themTien": 1,
+    "banKinhCong": 12,
+    "soBeToiDa": 8,
+    "chuKyGui": 10,
+    "chuKyLuuKhamPha": 5
   }
 }

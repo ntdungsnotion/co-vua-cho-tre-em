@@ -8,8 +8,8 @@
 //            - timDuong: A* 8 hướng, không cắt góc, đích bị chặn thì tới ô trống gần nhất
 //            - lamMuot: kéo thẳng đường (bỏ điểm thừa khi nhìn thấy nhau) để đi tự nhiên
 //            - oTrongGan: ô trống gần một ô (chỗ đứng chặt cây, đào mỏ)
-// BƯỚC: TC_D01C (mẫu thử 3D)
-// NGÀY: 23/10/2026
+// BƯỚC: TC_D01C (mẫu thử 3D); TC_D02B2a (timDuong ganNhat: lệnh đi tới chỗ gần nhất)
+// NGÀY: 23/10/2026; 26/10/2026
 // ================================================================
 (function (goc) {
   "use strict";
@@ -73,10 +73,12 @@
   // A* 8 hướng. Trả mảng ô [{x,y}] từ ô ĐẦU (không gồm) tới ô ĐÍCH (gồm);
   // [] nếu đang đứng ở đích; null nếu không tới được.
   // Đích bị chặn (cây, đá) thì đi tới ô trống gần đích nhất, ưu tiên phía mình đứng.
-  function timDuong(l, tu, den) {
+  // ganNhat (TC_D02B2a, lệnh đi của bé như Đế Chế): không tới được thì đi tới ô tới được
+  // gần đích nhất (chạm giữa rừng rậm -> đi tới bìa rừng) thay vì trả null.
+  function timDuong(l, tu, den, ganNhat) {
     if (!diDuoc(l, tu.x, tu.y)) { const t = oTrongGan(l, tu.x, tu.y); if (!t) return null; tu = t; }
     let dich = den;
-    if (!diDuoc(l, den.x, den.y)) { dich = oTrongGan(l, den.x, den.y, tu); if (!dich) return null; }
+    if (!diDuoc(l, den.x, den.y)) { dich = oTrongGan(l, den.x, den.y, tu); if (!dich) return ganNhat ? [] : null; }
     if (tu.x === dich.x && tu.y === dich.y) return [];
     const N = l.rong * l.cao, G = new Float64Array(N).fill(Infinity), cha = new Int32Array(N).fill(-1), dong = new Uint8Array(N);
     const h = (x, y) => { const dx = Math.abs(x - dich.x), dy = Math.abs(y - dich.y); return (dx + dy) + (CHEO - 2) * Math.min(dx, dy); };
@@ -97,9 +99,19 @@
         if (g < G[n]) { G[n] = g; cha[n] = c; q.push(n, g + h(nx, ny)); }
       }
     }
-    if (cha[e] < 0) return null;
+    let cuoi = e;
+    if (cha[e] < 0) {
+      if (!ganNhat) return null;
+      let kc = Math.hypot(tu.x - den.x, tu.y - den.y); cuoi = s;
+      for (let c = 0; c < N; c++) {
+        if (G[c] === Infinity) continue;
+        const cx = c % l.rong, d = Math.hypot(cx - den.x, (c - cx) / l.rong - den.y);
+        if (d < kc - 1e-9) { kc = d; cuoi = c; }
+      }
+      if (cuoi === s) return [];
+    }
     const duong = [];
-    for (let c = e; c !== s; c = cha[c]) duong.push({ x: c % l.rong, y: Math.floor(c / l.rong) });
+    for (let c = cuoi; c !== s; c = cha[c]) duong.push({ x: c % l.rong, y: Math.floor(c / l.rong) });
     return duong.reverse();
   }
 
@@ -130,4 +142,4 @@
 
   goc.KC_DT_LUOI = { taoLuoi, datChan, diDuoc, oCuaDiem, oTrongGan, timDuong, thayNhau, lamMuot };
 })(typeof window !== "undefined" ? window : globalThis);
-// 23/10/2026 15:48 - BƯỚC: TC_D01C
+// 26/10/2026 22:05 - BƯỚC: TC_D02B2a
