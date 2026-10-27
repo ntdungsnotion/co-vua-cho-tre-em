@@ -18,11 +18,11 @@
 //        demDaKham(), sang, daKham, phienBan }
 //   oXayDuoc(the, x, y) / oXayDuocVung(the, x, y, rong, sau) -> { duoc, lyDo, ma, oHong[] }
 //        the = { lang, suong?, coCongTrinh?(x, y), coDoiThu?(x, y), laLanhDiaDoiThu?(x, y) }
-//   viTriTuLenh(lang, lenh, bayGio) -> { x, z, huong, xong }
+//   viTriTuLenh(lang, lenh, bayGio, nho?) -> { x, z, huong, xong, chay? }
 //   locDonViThayDuoc(dsDonVi, cungPhe(chu), suong, viTri(dv)) -> đơn vị bé được thấy
 //   timBienKhamPha(lang, suong, x, z, tranh?, cachNhau?) -> ô mép vùng đen gần nhất | null
-// BƯỚC: TC_D02B2a; TC_D02B2b (timBienKhamPha)
-// NGÀY: 26/10/2026; 27/10/2026
+// BƯỚC: TC_D02B2a; TC_D02B2b (timBienKhamPha); TC_D02B3b (viTriTuLenh nhớ đường, báo chạy)
+// NGÀY: 26/10/2026; 27/10/2026; 27/10/2026 20:55
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI); tham số lang là lõi dt/dt_lang.js
 // ================================================================
 (function (goc) {
@@ -136,23 +136,32 @@
   // lenh = { tu: [x, z], den: [ô x, ô y], batDau: ms, vaiTro }. Cùng đường đi (A* + kéo thẳng
   // của dt_luoi.js) và cùng luật tốc độ với dt_lang.js: Thủ lĩnh chạy khi còn xa hơn
   // tocDo.chayKhiXaHon ô, gần thì đi bộ; nông dân luôn đi bộ.
-  function viTriTuLenh(lang, lenh, bayGio) {
+  // nho (TC_D02B3b, không bắt buộc): WeakMap lệnh -> đường đã tìm, để vẽ quân bạn mỗi khung không
+  // phải tìm đường lại. chay: Thủ lĩnh đang chạy (phần vẽ chọn động tác).
+  function viTriTuLenh(lang, lenh, bayGio, nho) {
     const LUOI = goc.KC_DT_LUOI, T = lang.CH.tocDo;
-    const [x0, z0] = lenh.tu;
-    const tu = LUOI.oCuaDiem(x0, z0), den = { x: lenh.den[0], y: lenh.den[1] };
-    const d = LUOI.timDuong(lang.luoi, tu, den, lang.laVung); // cùng cách lenhDi của dt_lang.js
-    const diem = [{ x: x0, z: z0 }, ...((d && LUOI.lamMuot(lang.luoi, tu, d)) || []).map(c => ({ x: c.x + 0.5, z: c.y + 0.5 }))];
-    let L = 0; for (let i = 1; i < diem.length; i++) L += Math.hypot(diem[i].x - diem[i - 1].x, diem[i].z - diem[i - 1].z);
+    let duong = nho && nho.get(lenh);
+    if (!duong) {
+      const [x0, z0] = lenh.tu;
+      const tu = LUOI.oCuaDiem(x0, z0), den = { x: lenh.den[0], y: lenh.den[1] };
+      const d = LUOI.timDuong(lang.luoi, tu, den, lang.laVung); // cùng cách lenhDi của dt_lang.js
+      const diem = [{ x: x0, z: z0 }, ...((d && LUOI.lamMuot(lang.luoi, tu, d)) || []).map(c => ({ x: c.x + 0.5, z: c.y + 0.5 }))];
+      let L = 0; for (let i = 1; i < diem.length; i++) L += Math.hypot(diem[i].x - diem[i - 1].x, diem[i].z - diem[i - 1].z);
+      duong = { diem, L };
+      if (nho) nho.set(lenh, duong);
+    }
+    const { diem, L } = duong;
     const t = Math.max(0, (bayGio - lenh.batDau) / 1000);
-    let s;
+    let s, chay = false;
     if (lenh.vaiTro === "thu_linh" && L > T.chayKhiXaHon) {
       const t1 = (L - T.chayKhiXaHon) / T.chay;
-      s = t <= t1 ? t * T.chay : (L - T.chayKhiXaHon) + (t - t1) * T.di;
+      chay = t <= t1;
+      s = chay ? t * T.chay : (L - T.chayKhiXaHon) + (t - t1) * T.di;
     } else s = t * T.di;
     if (s >= L || diem.length < 2) { const c = diem[diem.length - 1], b = diem[Math.max(0, diem.length - 2)]; return { x: c.x, z: c.z, huong: Math.atan2(c.x - b.x, c.z - b.z) || 0, xong: true }; }
     for (let i = 1; i < diem.length; i++) {
       const a = diem[i - 1], b = diem[i], k = Math.hypot(b.x - a.x, b.z - a.z);
-      if (s <= k) { const f = k ? s / k : 0; return { x: a.x + (b.x - a.x) * f, z: a.z + (b.z - a.z) * f, huong: Math.atan2(b.x - a.x, b.z - a.z), xong: false }; }
+      if (s <= k) { const f = k ? s / k : 0; return { x: a.x + (b.x - a.x) * f, z: a.z + (b.z - a.z) * f, huong: Math.atan2(b.x - a.x, b.z - a.z), xong: false, chay }; }
       s -= k;
     }
     const c = diem[diem.length - 1]; return { x: c.x, z: c.z, huong: 0, xong: true };
@@ -199,4 +208,4 @@
 
   goc.KC_DT_BAN_DO = { DEN, MO, SANG, tamNhin, taoSuongMu, oXayDuoc, oXayDuocVung, viTriTuLenh, locDonViThayDuoc, timBienKhamPha, LY_DO };
 })(typeof window !== "undefined" ? window : globalThis);
-// 27/10/2026 00:52 - BƯỚC: TC_D02B2b
+// 27/10/2026 20:55 - BƯỚC: TC_D02B3b

@@ -27,8 +27,10 @@
 //            het_kham_pha (nông dân tự khám phá: hết chỗ để mở)
 // BƯỚC: TC_D02A; TC_D02B2a (vùng đất 128 x 128, chưa lều, đặt móng, tìm chỗ mọc nhanh);
 //       TC_D02B2b (công trình + dựng lều, khám phá theo sương mù, nạp trữ lượng từ máy chủ);
-//       TC_D02B3a (bản đồ chung: lều của bạn khác không là chỗ cất đồ, ct.cuaMinh)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55
+//       TC_D02B3a (bản đồ chung: lều của bạn khác không là chỗ cất đồ, ct.cuaMinh);
+//       TC_D02B3b (datMocTheoMayChu: nguồn cạn KHÔNG tự mọc trên máy bé, máy chủ cho mọc lại tại
+//       chỗ -> mocLaiNguon(ma, con); nguonDaCan(); xongCongTrinh(ct) cho nhà của bạn dựng xong)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI)
 // ================================================================
 (function (goc) {
@@ -232,10 +234,14 @@
       return n;
     }
     // khongMoc: nạp trạng thái từ máy chủ (vào lại thung lũng) -> chỉ thành gốc / biến mất, không
-    // mọc mầm, không hẹn mỏ mới (mọc lại theo giờ máy chủ: TC_D02B3)
+    // mọc mầm, không hẹn mỏ mới. Bản đồ chung (mocMayChu, TC_D02B3b): luôn như vậy, máy chủ cho mọc lại.
+    let mocMayChu = false;
+    const daCan = new Map(); // vùng đất thật: mã ô -> { loai, co } của nguồn đã cạn (để mọc lại đúng chỗ)
     function canNguon(n, khongMoc) {
       n.con = 0; n.trangThai = "het";
       boNguon(n);
+      if (laVung) daCan.set(n.ma, { loai: n.loai, co: n.co });
+      if (mocMayChu) khongMoc = true;
       if (n.loai === "cay") {
         coGoc[chiSo(n.o.x, n.o.y)] = 1;
         gocCay.push({ x: n.x, z: n.z, o: n.o, giong: n.giong, co: n.co });
@@ -254,6 +260,21 @@
       if (!dangSong(n)) return false;
       if (con > 0) { n.con = Math.min(n.con, con); return true; }
       canNguon(n, true);
+      return true;
+    }
+    // Máy chủ báo nguồn đã cạn còn trữ lượng (mọc lại theo giờ máy chủ, hoặc máy chủ cắt bớt lần
+    // chặt cuối): dựng lại đúng ô, đúng cỡ. Có móng thì thôi hẳn; có người của mình đứng trên ô thì
+    // để lần hỏi sau (khỏi kẹt người trong cây). Trả true nếu đã mọc.
+    function mocLaiNguon(ma, con) {
+      const c = daCan.get(ma);
+      if (!c || nguonO.has(ma)) return false;
+      const x = ma % W, y = (ma - x) / W;
+      if (danh[ma]) { daCan.delete(ma); return false; }
+      if (c.loai !== "bai_ca" && donVi.some(d => Math.floor(d.x) === x && Math.floor(d.z) === y)) return false;
+      daCan.delete(ma);
+      xoaGoc(x, y);
+      const n = taoNguon(c.loai, x, y, c.co);
+      if (Number.isFinite(con) && con > 0) n.con = Math.min(n.toiDa, con);
       return true;
     }
     function xuLyHen() {
@@ -392,6 +413,14 @@
       if (ct.xong && ct.loai === "leu" && ct.cuaMinh !== false) datLeuCho(ct); // lều của bạn khác (bản đồ chung) không là chỗ cất đồ của mình
       phat({ loai: "cong_trinh", ct });
       return ct;
+    }
+    // Nhà dựng xong không qua người của mình (nhà của bạn, máy chủ báo xong: TC_D02B3b)
+    function xongCongTrinh(ct) {
+      if (ct.xong) return false;
+      ct.xong = true; ct.tienDo = 1;
+      if (ct.loai === "leu" && ct.cuaMinh !== false) datLeuCho(ct);
+      phat({ loai: "xay_xong", ct, dv: null });
+      return true;
     }
     // Lệnh dựng: tới ô sát móng gần nhất rồi làm. Trả false nếu móng bị vây kín, không có chỗ đứng.
     function lenhXay(dv, ct) {
@@ -539,7 +568,8 @@
       W, H, luoi, nuoc, laCau, coGoc, danh, laVung, chiSo, kcSuoi, nuaSuoi, suoi, cau, diemCat, nguon, gocCay, hen, donVi, kho, CH, congTrinh,
       get leu() { return leu; },
       xoaGoc, datMong, nguonTheoMa: ma => nguonO.get(ma) || null, capNhatNguon,
-      themCongTrinh, lenhXay, oQuanh, khamPhaTuDo,
+      mocLaiNguon, nguonDaCan: () => [...daCan.keys()], datMocTheoMayChu(bat) { mocMayChu = !!bat; },
+      themCongTrinh, xongCongTrinh, lenhXay, oQuanh, khamPhaTuDo,
       // Nối sương mù (TC_D02B2b): biet(x, y) ô đã khám phá; capNhat() soi lại sương; timBien(dv) -> ô để đi khám phá tiếp
       datBiet(fnBiet, fnCapNhat, fnTimBien) { biet = fnBiet || null; capNhatBiet = fnCapNhat || null; timKhamPha = fnTimBien || null; },
       bayGio, get lechGio() { return lechGio; },
@@ -553,4 +583,4 @@
 
   goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS };
 })(typeof window !== "undefined" ? window : globalThis);
-// 27/10/2026 18:55 - BƯỚC: TC_D02B3a
+// 27/10/2026 20:55 - BƯỚC: TC_D02B3b
