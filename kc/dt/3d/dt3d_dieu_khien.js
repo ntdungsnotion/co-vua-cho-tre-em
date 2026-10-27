@@ -9,14 +9,16 @@
 //   taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) -> { chon(hinh), dangChon() }
 //   ui: { baoGoiY(chu), baoChon(chu), lop (phần tử DOM phủ trên cảnh cho chữ nổi + "!"),
 //         (TC_D02B2b, đều không bắt buộc) thayNguon(n) -> false thì coi như chạm đất (nguồn trong
-//         vùng đen), loiDi(dv, ô) -> câu báo khi ra lệnh đi, loiChon(hinh) -> câu gợi ý khi chọn }
+//         vùng đen), loiDi(dv, ô) -> câu báo khi ra lệnh đi, loiChon(hinh) -> câu gợi ý khi chọn,
+//         (TC_D02B3b) loiBan(hinh) -> câu báo khi chạm người của bạn khác (dv.laBan: không chọn được) }
 //   datCheDoCham(fn(ô {x, y, px, pz}, "cham" | "re")): chế độ chạm riêng (soi đất, chọn chỗ dựng)
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), cam.khiCham / camera (dt3d_camera.js), taiNguyen.chon
 //           (dt3d_tai_nguyen.js), boNhanVat.dsHinh (dt3d_nhan_vat.js), diaHinh.matDat / doCaoDi,
 //           lang (lõi: giaoViec, lenhDi, nghe).
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (datCheDoCham: chế độ chạm riêng);
-//       TC_D02B2b (ô chạm kèm điểm chính xác, nguồn trong vùng đen, lời báo khám phá)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026
+//       TC_D02B2b (ô chạm kèm điểm chính xác, nguồn trong vùng đen, lời báo khám phá);
+//       TC_D02B3b (người của bạn khác không chọn được, hình đang ẩn không chạm được)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 20:55
 // ================================================================
 import * as THREE from "three";
 
@@ -65,9 +67,13 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     const r = canvas.getBoundingClientRect();
     diem.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     tia.setFromCamera(diem, cam.camera);
-    // 1) chạm nhân vật -> chọn
-    const trungNv = tia.intersectObjects(boNhanVat.dsHinh.map(h => h.trung), false)[0];
-    if (trungNv) { chon(trungNv.object.userData.hinh); return; }
+    // 1) chạm nhân vật -> chọn (người của bạn khác: chỉ xem, không ra lệnh; ẩn trong sương: bỏ qua)
+    const trungNv = tia.intersectObjects(boNhanVat.dsHinh.filter(h => h.vo.visible).map(h => h.trung), false)[0];
+    if (trungNv) {
+      const h = trungNv.object.userData.hinh;
+      if (h.dv.laBan) { ui.baoGoiY((ui.loiBan && ui.loiBan(h)) || "Đây là người của bạn khác."); return; }
+      chon(h); return;
+    }
     // 2) chạm nguồn tài nguyên
     let n = taiNguyen.chon(tia);
     if (n && ui.thayNguon && !ui.thayNguon(n)) n = null; // nguồn còn trong sương đen: bé chưa thấy
@@ -129,4 +135,4 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
 
   return { chon, dangChon: () => dangChon, datCheDoCham(fn) { cheDoRieng = fn || null; } };
 }
-// 27/10/2026 00:52 - BƯỚC: TC_D02B2b
+// 27/10/2026 20:55 - BƯỚC: TC_D02B3b

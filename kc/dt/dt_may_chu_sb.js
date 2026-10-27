@@ -11,10 +11,12 @@
 //   taoMayChuSupabase({ goiRpc(tenHam, thamSo) -> Promise<json>, goiRpcGiu?, ten, maPhien, vung, cauHinh })
 //     -> { vaoVung, layQuanh, guiLenh, guiThuHoach, xay, xayXong, luuKhamPha, gio } (như dt_may_chu.js)
 //   guiThuHoach trả thêm ds[].con (trữ lượng còn lại thật, để máy bé sửa khi bạn khác lấy trước).
+//   layQuanh (TC_D02B3b): donVi[].chungLoai (chủng loại chủ đơn vị: vẽ đúng hình bạn); nguồn cạn đã
+//     tới giờ mọc lại thì máy chủ bỏ khỏi nguon[] (= đầy lại theo bản đồ). Trang game hỏi mỗi chuKyGui giây.
 //   guiThuHoach(ten, ds, giu) / luuKhamPha(ten, chuoi, giu): giu = true lúc rời trang -> gọi goiRpcGiu
 //     (fetch keepalive: trình duyệt gửi nốt dù trang đã đóng).
-// BƯỚC: TC_D02B3a
-// NGÀY: 27/10/2026
+// BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ)
+// NGÀY: 27/10/2026; 27/10/2026 20:55
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
 // ================================================================
 (function (goc) {

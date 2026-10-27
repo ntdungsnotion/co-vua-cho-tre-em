@@ -13,8 +13,9 @@
 //              sảnh Đấu Trường
 // BƯỚC: TC_D02A (thay dt/dt_lang_3d.js của TC_D01C); TC_D02B2a (chế độ ?vung);
 //       TC_D02B2b (thung lũng tách sang dt3d_vung.js, trang game); TC_D02B3a (trang game dùng máy chủ
-//       Supabase dt/dt_may_chu_sb.js; kịch bản thử đặt sessionStorage kc_dt_may_chu_gia = "1" để dùng bản giả)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55
+//       Supabase dt/dt_may_chu_sb.js; kịch bản thử đặt sessionStorage kc_dt_may_chu_gia = "1" để dùng bản giả);
+//       TC_D02B3b (đưa capNhatKho cho thung lũng: kho bị trừ phần máy chủ cắt thì vẽ lại thanh)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55
 // PHỤ THUỘC: chung/nv_ve.js (KC_NV), dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), các phần dt/3d/*.js;
 //            thung lũng thêm dt/dt_ban_do.js, dt/dt_may_chu.js; trang game thêm chung/nv_ho_so.js,
 //            dt/dt_tien_do.js (phiên đăng nhập: sessionStorage của kc_auth.js)
@@ -126,7 +127,7 @@ if (VUNG) {
   let kho = null; try { localStorage.setItem("kc_dt_thu", "1"); kho = localStorage; } catch (e) { /* bị chặn: giữ trong bộ nhớ */ }
   const mayChu = GAME ? taoMayChuThat() : null; // trang thử ?vung: máy chủ giả trên máy
   try {
-    vung = await vaoThungLung({ ctx, cam, lang, banDo, cauHinh, diaHinh, boNv, dk, uiDk, be: { ...be, ten: be.ten || "khach" }, themNongDan, $, baoGoiY, kho, mayChu });
+    vung = await vaoThungLung({ ctx, cam, lang, banDo, cauHinh, diaHinh, boNv, dk, uiDk, be: { ...be, ten: be.ten || "khach" }, themNongDan, $, baoGoiY, kho, mayChu, capNhatKho: () => capNhatKho() });
   } catch (e) { chuTai.textContent = e.lyDo || "Chưa vào được thung lũng. Con tải lại trang nhé!"; throw e; }
   dvTl = vung.dvTl; hTl = vung.hTl;
 } else {
@@ -230,4 +231,4 @@ window.__dt3d.taiMs = Math.round(performance.now() - t0);
 $("d3Tai").hidden = true;
 if (vung) vung.batDau();
 else baoGoiY("Chạm vào nông dân 🧑‍🌾 rồi chạm cây, mỏ, bãi cá hoặc bụi trái cây để giao việc. Kéo để xem quanh làng, chụm hai ngón (hoặc lăn chuột) để phóng to.");
-// 27/10/2026 18:55 - BƯỚC: TC_D02B3a
+// 27/10/2026 20:55 - BƯỚC: TC_D02B3b
