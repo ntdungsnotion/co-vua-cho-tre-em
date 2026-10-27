@@ -29,8 +29,11 @@
 //       TC_D02B2b (công trình + dựng lều, khám phá theo sương mù, nạp trữ lượng từ máy chủ);
 //       TC_D02B3a (bản đồ chung: lều của bạn khác không là chỗ cất đồ, ct.cuaMinh);
 //       TC_D02B3b (datMocTheoMayChu: nguồn cạn KHÔNG tự mọc trên máy bé, máy chủ cho mọc lại tại
-//       chỗ -> mocLaiNguon(ma, con); nguonDaCan(); xongCongTrinh(ct) cho nhà của bạn dựng xong)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55
+//       chỗ -> mocLaiNguon(ma, con); nguonDaCan(); xongCongTrinh(ct) cho nhà của bạn dựng xong);
+//       TC_D02C (cổng: ô cổng không chặn lưới, người của mình không qua cổng bé khác -> choQua(chu) cho
+//       viTriTuLenh; lenhXay(dv, ct, hang) dựng cả đoạn tường lần lượt; boCongTrinh(ct) khi cổng đè tường;
+//       sự kiện bo_cong_trinh)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI)
 // ================================================================
 (function (goc) {
@@ -317,10 +320,19 @@
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && trongBan(x + dx, y + dy) && biet(x + dx, y + dy)) return true;
       return false;
     };
+    // Cổng (TC_D02C): ô cổng không chặn lưới; người của mình không đi qua cổng của bé khác
+    const congChu = new Map(), congKhac = new Set(); // chỉ số ô -> chủ cổng; ô cổng không phải của mình
+    const quaCongMinh = (x, y) => !congKhac.has(y * W + x);
+    // Đường đi cho đơn vị của bé "chu" (quân bạn tính từ lệnh: dt_ban_do.js viTriTuLenh); null = không có cổng nào
+    function choQua(chu) {
+      if (!congChu.size) return null;
+      return (x, y) => { const c = congChu.get(y * W + x); return c === undefined || c === chu; };
+    }
     function diToi(dv, o, ganNhat, theoSuong) {
       if (!o) return false;
       const tu = LUOI.oCuaDiem(dv.x, dv.z);
-      const d = LUOI.timDuong(luoi, tu, o, ganNhat, theoSuong && biet ? choPhep : null);
+      const sm = theoSuong && biet ? choPhep : null, cg = congKhac.size ? quaCongMinh : null;
+      const d = LUOI.timDuong(luoi, tu, o, ganNhat, sm && cg ? (x, y) => cg(x, y) && sm(x, y) : sm || cg);
       if (!d) return false;
       dv.duong = (LUOI.lamMuot(luoi, tu, d) || []).map(c => ({ x: c.x + 0.5, z: c.y + 0.5 }));
       return true;
@@ -358,7 +370,7 @@
     // Có sương mù: đi từng chặng qua ô đã biết, dv.dich nhớ chỗ bé chạm để đi tiếp.
     // tuDong: lệnh do chính lõi ra (tự khám phá), không tắt chế độ tự khám phá.
     function lenhDi(dv, o, tuDong) {
-      dv.viec = null; dv.xay = null; dv.ranh = false; dv.trangThai = "di";
+      dv.viec = null; dv.xay = null; dv.hangXay = []; dv.ranh = false; dv.trangThai = "di";
       if (!tuDong) dv.tuKhamPha = false;
       dv.dich = biet ? { x: o.x, y: o.y } : null;
       const tu = { x: dv.x, z: dv.z };
@@ -409,6 +421,7 @@
     function themCongTrinh(ct) {
       ct.tienDo = ct.xong ? 1 : (ct.tienDo || 0);
       datMong(ct.x, ct.y, ct.rong, ct.sau);
+      if (ct.loai === "cong") datCong(ct.x, ct.y, ct.rong, ct.sau, ct.chu, ct.cuaMinh !== false);
       congTrinh.push(ct);
       if (ct.xong && ct.loai === "leu" && ct.cuaMinh !== false) datLeuCho(ct); // lều của bạn khác (bản đồ chung) không là chỗ cất đồ của mình
       phat({ loai: "cong_trinh", ct });
@@ -422,14 +435,55 @@
       phat({ loai: "xay_xong", ct, dv: null });
       return true;
     }
+    // Bỏ công trình (TC_D02C: cổng đặt đè lên tường của bé -> bỏ các ô tường đó): trả ô, phát bo_cong_trinh
+    function boCongTrinh(ct) {
+      const k = congTrinh.indexOf(ct);
+      if (k < 0) return false;
+      congTrinh.splice(k, 1);
+      for (let oy = ct.y; oy < ct.y + ct.sau; oy++) for (let ox = ct.x; ox < ct.x + ct.rong; ox++) {
+        if (!trongBan(ox, oy)) continue;
+        const i = chiSo(ox, oy);
+        danh[i] = 0; congChu.delete(i); congKhac.delete(i);
+        if (!nguonO.has(i)) LUOI.datChan(luoi, ox, oy, false);
+      }
+      if (leu && leu.ct === ct) leu = null;
+      for (const dv of donVi) if (dv.xay === ct) { dv.xay = null; dv.trangThai = "dung"; }
+      phat({ loai: "bo_cong_trinh", ct });
+      return true;
+    }
+    // Ô cổng: vẫn là chỗ dành (không mọc cây, không xây đè) nhưng không chặn lưới; ghi chủ để chặn người khác
+    function datCong(x, y, rong, sau, chu, cuaMinh) {
+      for (let oy = y; oy < y + sau; oy++) for (let ox = x; ox < x + rong; ox++) {
+        if (!trongBan(ox, oy)) continue;
+        const i = chiSo(ox, oy);
+        LUOI.datChan(luoi, ox, oy, false);
+        congChu.set(i, chu == null ? "" : chu);
+        if (cuaMinh) congKhac.delete(i); else congKhac.add(i);
+      }
+    }
     // Lệnh dựng: tới ô sát móng gần nhất rồi làm. Trả false nếu móng bị vây kín, không có chỗ đứng.
-    function lenhXay(dv, ct) {
+    // hang (TC_D02C): các móng dựng tiếp sau móng này (đoạn tường): xong cái này thì tới cái chưa xong gần nhất.
+    function lenhXay(dv, ct, hang) {
       dv.viec = null; dv.dich = null; dv.tuKhamPha = false; dv.ranh = false;
+      dv.hangXay = (hang || []).filter(c => c !== ct);
       const o = oQuanh(ct, dv.x, dv.z), tu = { x: dv.x, z: dv.z };
       if (!o || !diToi(dv, o)) { dv.trangThai = "dung"; return false; }
       dv.xay = ct; dv.trangThai = "toi_xay";
       baoLenhDi(dv, tu);
       return true;
+    }
+    // Xong một móng: dựng tiếp móng chưa xong gần nhất trong hàng (bỏ móng không tới được). Trả true nếu còn việc.
+    function xayTiep(dv) {
+      const hang = (dv.hangXay || []).filter(c => !c.xong && congTrinh.includes(c));
+      while (hang.length) {
+        let k = 0, kc = Infinity;
+        hang.forEach((c, j) => { const d = kcToiMong(dv, c); if (d < kc) { kc = d; k = j; } });
+        const ct = hang.splice(k, 1)[0];
+        if (lenhXay(dv, ct, hang)) return true;
+        phat({ loai: "xay_ket", ct, dv });
+      }
+      dv.hangXay = [];
+      return false;
     }
 
     // ---------------- Đặt móng (TC_D02B2a: lõi; bé xây thật từ TC_D02B2b) ----------------
@@ -459,7 +513,7 @@
       if (!coKe(n)) n = nguonGanNhat(n.loai, n.x, n.z, CH.banKinhChonBia);
       if (!n) return null;
       if (dv.mang.so && dv.mang.loai !== n.taiNguyen) dv.mang = { loai: null, so: 0 }; // đổi loại tài nguyên thì bỏ đồ đang mang
-      dv.viec = n; dv.ranh = false; dv.trangThai = "toi_viec"; dv.dich = null; dv.xay = null; dv.tuKhamPha = false;
+      dv.viec = n; dv.ranh = false; dv.trangThai = "toi_viec"; dv.dich = null; dv.xay = null; dv.hangXay = []; dv.tuKhamPha = false;
       diToi(dv, n.o);
       phat({ loai: "giao_viec", dv, n });
       return n;
@@ -510,7 +564,7 @@
         case "toi_xay":
           if (!dv.xay || dv.xay.xong) { dv.xay = null; dv.trangThai = "dung"; }
           else if (kcToiMong(dv, dv.xay) <= CH.tamVoi) dv.trangThai = "xay";
-          else { const ct = dv.xay; dv.xay = null; dv.trangThai = "dung"; phat({ loai: "xay_ket", ct, dv }); }
+          else { const ct = dv.xay; dv.xay = null; dv.trangThai = "dung"; phat({ loai: "xay_ket", ct, dv }); if (dv.hangXay && dv.hangXay.length) xayTiep(dv); }
           break;
         case "xay": {
           const ct = dv.xay;
@@ -521,6 +575,7 @@
             ct.xong = true; dv.xay = null; dv.trangThai = "dung";
             if (ct.loai === "leu") datLeuCho(ct);
             phat({ loai: "xay_xong", ct, dv });
+            if (!dv.xay && dv.trangThai === "dung" && dv.hangXay && dv.hangXay.length) xayTiep(dv); // đoạn tường: sang móng kế
           }
           break;
         }
@@ -569,7 +624,8 @@
       get leu() { return leu; },
       xoaGoc, datMong, nguonTheoMa: ma => nguonO.get(ma) || null, capNhatNguon,
       mocLaiNguon, nguonDaCan: () => [...daCan.keys()], datMocTheoMayChu(bat) { mocMayChu = !!bat; },
-      themCongTrinh, xongCongTrinh, lenhXay, oQuanh, khamPhaTuDo,
+      themCongTrinh, xongCongTrinh, lenhXay, xayTiep, boCongTrinh, choQua, oQuanh, khamPhaTuDo,
+      datCong, laCongKhac: (x, y) => congKhac.has(chiSo(x, y)), chuCong: (x, y) => (congChu.has(chiSo(x, y)) ? congChu.get(chiSo(x, y)) : null),
       // Nối sương mù (TC_D02B2b): biet(x, y) ô đã khám phá; capNhat() soi lại sương; timBien(dv) -> ô để đi khám phá tiếp
       datBiet(fnBiet, fnCapNhat, fnTimBien) { biet = fnBiet || null; capNhatBiet = fnCapNhat || null; timKhamPha = fnTimBien || null; },
       bayGio, get lechGio() { return lechGio; },
@@ -583,4 +639,4 @@
 
   goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS };
 })(typeof window !== "undefined" ? window : globalThis);
-// 27/10/2026 20:55 - BƯỚC: TC_D02B3b
+// 28/10/2026 00:05 - BƯỚC: TC_D02C

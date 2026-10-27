@@ -18,13 +18,16 @@
 //     guiLenh(ten, idDonVi, lenh)  -> { ok, batDau, tu }
 //         lenh = { tu: [x, z], den: [ô x, ô y], viec?: mã nguồn đang làm, khamPha?: đang tự khám phá }
 //     guiThuHoach(ten, [{ma, so}]) -> { ok, ds[{ma, duoc}], kho }
-//     xay(ten, { loai, x, y, rong, sau }) -> { ok, id } | { ok: false, ma, lyDo }   (đặt móng)
+//     xay(ten, { loai, x, y, xoay? }) -> { ok, id, boTuong[], kho } | { ok: false, ma, lyDo }   (đặt móng)
+//     xayTuong(ten, [[x, y]...])   -> { ok, ds[{id, x, y}], kho } | { ok: false, ma, lyDo, o }   (TC_D02C)
 //     xayXong(ten, id)             -> { ok, donVi[] } (Lều trại: kèm nông dân đầu tiên) | { ok: false, lyDo }
 //     luuKhamPha(ten, chuoiBase64) -> { ok }
 //     gio()                        -> giờ máy chủ (ms)
 //   kho: giống localStorage (getItem / setItem); không có thì giữ trong bộ nhớ.
-// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc)
-// NGÀY: 26/10/2026; 27/10/2026
+//   TC_D02C: trừ giá khi đặt móng + giới hạn số mỗi bé; lãnh địa (tường + cổng đã xong khép kín):
+//   bé khác không xây trong đó, lệnh đi không vào đó; tháp canh / tường / cổng soi sương theo tầm nhìn riêng.
+// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C
+// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO)
 // ================================================================
 (function (goc) {
@@ -57,22 +60,42 @@
       const n = lang.nguonTheoMa(Number(ma));
       if (n) { n.con = Math.min(n.con, tt.nguon[ma].con); }
     }
-    for (const ct of tt.congTrinh) lang.datMong(ct.x, ct.y, ct.rong, ct.sau);
+    // Lãnh địa từng bé (TC_D02C): tường + cổng ĐÃ DỰNG XONG
+    const lanhDia = BD.taoBoLanhDia(vung.rong, vung.cao);
+    const datCt = ct => {
+      lang.datMong(ct.x, ct.y, ct.rong, ct.sau);
+      if (ct.loai === "cong") lang.datCong(ct.x, ct.y, ct.rong, ct.sau, ct.chu, true);
+      if (ct.xongLuc && BD.LA_RAO[ct.loai]) lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, true);
+    };
+    for (const ct of tt.congTrinh) datCt(ct);
 
-    const viTri = dv => dv.lenh ? BD.viTriTuLenh(lang, dv.lenh, gio()) : { x: dv.x, z: dv.z };
+    const viTri = dv => dv.lenh ? BD.viTriTuLenh(lang, dv.lenh, gio(), null, dv.chu) : { x: dv.x, z: dv.z };
     const khoCua = be => { const k = {}; for (const t in CH.lang.taiNguyen) k[t] = (be.kho && be.kho[t]) || 0; return k; };
     const cuaBe = ten => tt.donVi.filter(d => d.chu === ten);
     const cungPhe = ten => chu => chu === ten; // đồng minh: TC_D17B
+    const trongCt = (c, x, y) => x >= c.x && x < c.x + c.rong && y >= c.y && y < c.y + c.sau;
+    const laRaoCua = (ten, loai) => (x, y) => tt.congTrinh.some(c => c.chu === ten && (loai ? c.loai === loai : BD.LA_RAO[c.loai]) && trongCt(c, x, y));
+    // Tài nguyên còn thiếu cho giá x n (null = đủ)
+    const thieuGia = (be, gia, n) => { for (const t in gia || {}) if (((be.kho && be.kho[t]) || 0) < gia[t] * n) return t; return null; };
+    const truGia = (be, gia, n) => { be.kho = be.kho || {}; for (const t in gia || {}) be.kho[t] = (be.kho[t] || 0) - gia[t] * n; };
+    const loiThieu = t => ({ ok: false, ma: "thieu", lyDo: BD.LY_DO.thieu(CH.lang.taiNguyen[t].ten.toLowerCase()) });
 
-    // Sương mù của một bé, tính tại máy chủ: đã khám phá (lưu) + sáng (đơn vị + công trình của phe)
+    // Sương mù của một bé, tính tại máy chủ: đã khám phá (lưu) + sáng (đơn vị + công trình đã xong của phe)
     function suongCua(ten) {
       const s = BD.taoSuongMu(vung.rong, vung.cao), be = tt.be[ten];
       if (be && be.khamPha) s.nap(be.khamPha);
       const cl = be && be.chungLoai;
       const nguonSoi = cuaBe(ten).map(d => { const p = viTri(d); return { x: p.x, z: p.z, r: BD.tamNhin(CB, d.loai, cl) }; });
-      for (const ct of tt.congTrinh) if (ct.chu === ten) nguonSoi.push({ x: ct.x + ct.rong / 2, z: ct.y + ct.sau / 2, r: BD.tamNhin(CB, ct.loai === "leu" ? "leu" : "nha", cl) });
+      for (const ct of tt.congTrinh) if (ct.chu === ten && ct.xongLuc) nguonSoi.push({ x: ct.x + ct.rong / 2, z: ct.y + ct.sau / 2, r: BD.tamNhinCt(CB, ct.loai, cl) });
       s.soi(nguonSoi);
       return s;
+    }
+    // Điều kiện ô xây được của bé (mục 4): sương, đơn vị đối thủ, lãnh địa đối thủ; cổng được đè tường của bé
+    function theXay(ten, loai) {
+      const oDoiThu = new Set();
+      for (const d of tt.donVi) if (d.chu !== ten) { const p = viTri(d); oDoiThu.add(Math.floor(p.z) * vung.rong + Math.floor(p.x)); }
+      return { lang, suong: suongCua(ten), coDoiThu: (ox, oy) => oDoiThu.has(oy * vung.rong + ox),
+        laLanhDiaDoiThu: (ox, oy) => !!lanhDia.chuO(ox, oy, ten), deLen: loai === "cong" ? laRaoCua(ten, "tuong") : null };
     }
 
     const api = {
@@ -114,6 +137,8 @@
         if (!dv || dv.chu !== ten) return { ok: false, lyDo: "Đây không phải người của con." };
         const den = lenh && lenh.den, tu = lenh && lenh.tu;
         if (!Array.isArray(den) || !Array.isArray(tu) || !den.every(Number.isFinite) || !tu.every(Number.isFinite)) return { ok: false, lyDo: "Lệnh không đúng." };
+        // TC_D02C: không đi vào lãnh địa của bé khác (đường đi máy bé đã vòng qua tường; đây là chốt chặn)
+        if (lanhDia.chuO(Math.floor(den[0]), Math.floor(den[1]), ten)) return { ok: false, ma: "vao_lanh_dia", lyDo: "Đây là lãnh địa của bạn khác, không vào được." };
         // Máy chủ không tin chỗ đứng máy bé gửi: điểm xuất phát = vị trí hiện tại máy chủ tính
         const p = viTri(dv);
         const batDau = gio();
@@ -147,22 +172,61 @@
         return { ok: true, ds: ra, kho: khoCua(be) };
       },
 
+      // xoay (TC_D02C): cổng dọc 1 x 3. Trừ giá (cau_hinh congTrinh.*.gia) khỏi kho của bé; giới hạn số mỗi bé.
+      // Cổng đè lên tường của chính bé: các ô tường đó bị bỏ (kq.boTuong = id tường đã bỏ).
       async xay(ten, yeuCau) {
         ten = tenChuan(ten);
-        if (!tt.be[ten]) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        const be = tt.be[ten];
+        if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
         const { loai, x, y } = yeuCau, mau = CH.congTrinh && CH.congTrinh[loai];
-        const rong = mau ? mau.rong : yeuCau.rong || 1, sau = mau ? mau.sau : yeuCau.sau || 1; // cỡ theo cau_hinh, không tin máy bé
+        let rong = mau ? mau.rong : yeuCau.rong || 1, sau = mau ? mau.sau : yeuCau.sau || 1; // cỡ theo cau_hinh, không tin máy bé
+        if (yeuCau.xoay) [rong, sau] = [sau, rong];
+        if (loai === "tuong") return { ok: false, ma: "lenh", lyDo: "Lệnh không đúng." }; // tường: xayTuong
         if (loai === "leu" && tt.congTrinh.some(ct => ct.chu === ten && ct.loai === "leu")) return { ok: false, ma: "da_co", lyDo: "Con đã có Lều trại rồi." };
-        const s = suongCua(ten);
-        const oDoiThu = new Set();
-        for (const d of tt.donVi) if (d.chu !== ten) { const p = viTri(d); oDoiThu.add(Math.floor(p.z) * vung.rong + Math.floor(p.x)); }
-        const kq = BD.oXayDuocVung({ lang, suong: s, coDoiThu: (ox, oy) => oDoiThu.has(oy * vung.rong + ox) }, x, y, rong, sau);
+        if (mau && mau.gioiHan && tt.congTrinh.filter(ct => ct.chu === ten && ct.loai === loai).length >= mau.gioiHan) return { ok: false, ma: "gioi_han", lyDo: BD.LY_DO.gioi_han(mau.ten) };
+        const thieu = thieuGia(be, mau && mau.gia, 1);
+        if (thieu) return loiThieu(thieu);
+        const kq = BD.oXayDuocVung(theXay(ten, loai), x, y, rong, sau);
         if (!kq.duoc) return { ok: false, lyDo: kq.lyDo, ma: kq.ma };
+        const boTuong = [];
+        if (loai === "cong") tt.congTrinh = tt.congTrinh.filter(c => {
+          let de = false;
+          for (let oy = y; oy < y + sau && !de; oy++) for (let ox = x; ox < x + rong; ox++) if (trongCt(c, ox, oy)) { de = true; break; }
+          if (!de || c.chu !== ten || c.loai !== "tuong") return true;
+          boTuong.push(c.id);
+          if (c.xongLuc) lanhDia.dat(ten, c.x, c.y, c.rong, c.sau, false);
+          return false;
+        });
+        truGia(be, mau && mau.gia, 1);
         const ct = { id: ++tt.soId, chu: ten, loai, x, y, rong, sau, xayLuc: gio(), xongLuc: null };
         tt.congTrinh.push(ct);
-        lang.datMong(x, y, rong, sau);
+        datCt(ct);
         luu();
-        return { ok: true, id: ct.id };
+        return { ok: true, id: ct.id, boTuong, kho: khoCua(be) };
+      },
+
+      // Đoạn tường (TC_D02C): dsO = [[x, y], ...] tối đa doanToiDa ô; ô đã có tường / cổng của bé thì bỏ qua
+      // (nối góc); mọi ô còn lại phải xây được, không thì không xây ô nào. -> { ok, ds[{id, x, y}], kho }
+      async xayTuong(ten, dsO) {
+        ten = tenChuan(ten);
+        const be = tt.be[ten], mau = CH.congTrinh.tuong;
+        if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        if (!Array.isArray(dsO) || !dsO.length || dsO.length > mau.doanToiDa || !dsO.every(o => Array.isArray(o) && o.every(Number.isInteger))) return { ok: false, ma: "lenh", lyDo: "Lệnh không đúng." };
+        const raoMinh = laRaoCua(ten), daCo = new Set(), moi = [];
+        for (const [ox, oy] of dsO) { const k = oy * vung.rong + ox; if (!daCo.has(k) && !raoMinh(ox, oy)) moi.push([ox, oy]); daCo.add(k); }
+        if (!moi.length) return { ok: true, ds: [], kho: khoCua(be) };
+        const thieu = thieuGia(be, mau.gia, moi.length);
+        if (thieu) return loiThieu(thieu);
+        const the = theXay(ten, "tuong");
+        for (const [ox, oy] of moi) { const k = BD.oXayDuoc(the, ox, oy); if (!k.duoc) return { ok: false, ma: k.ma, lyDo: k.lyDo, o: [ox, oy] }; }
+        truGia(be, mau.gia, moi.length);
+        const ds = moi.map(([ox, oy]) => {
+          const ct = { id: ++tt.soId, chu: ten, loai: "tuong", x: ox, y: oy, rong: 1, sau: 1, xayLuc: gio(), xongLuc: null };
+          tt.congTrinh.push(ct); datCt(ct);
+          return { id: ct.id, x: ox, y: oy };
+        });
+        luu();
+        return { ok: true, ds, kho: khoCua(be) };
       },
 
       // Dựng xong (máy bé báo khi người đứng sát móng làm đủ giờ). Máy chủ không cho xong sớm
@@ -175,6 +239,7 @@
         const mau = (CH.congTrinh && CH.congTrinh[ct.loai]) || { giayXay: 0 };
         if (gio() - ct.xayLuc < mau.giayXay * 1000 - 500) return { ok: false, lyDo: "Chưa dựng xong đâu, con chờ thêm chút nhé." };
         ct.xongLuc = gio();
+        if (BD.LA_RAO[ct.loai]) lanhDia.dat(ten, ct.x, ct.y, ct.rong, ct.sau, true); // tường / cổng xong: tính lại lãnh địa
         const moi = [];
         if (ct.loai === "leu") {
           // ô quanh lều, gần cửa (phía nam) trước; mỗi người một ô
@@ -209,11 +274,11 @@
       // Chỉ trang thử + kiểm thử (bản Supabase không có): xoá hết để bé vào lại từ đầu (tải lại
       // trang sau khi gọi); đọc trạng thái thô
       async xoaHet() { tt = { phienBan: PHIEN_BAN, be: {}, donVi: [], congTrinh: [], nguon: {}, soId: 0 }; luu(); return { ok: true }; },
-      _trangThai: () => tt
+      _trangThai: () => tt, _lanhDia: lanhDia
     };
     return api;
   }
 
   goc.KC_DT_MAY_CHU = { taoMayChuGia };
 })(typeof window !== "undefined" ? window : globalThis);
-// 27/10/2026 00:52 - BƯỚC: TC_D02B2b
+// 28/10/2026 00:05 - BƯỚC: TC_D02C
