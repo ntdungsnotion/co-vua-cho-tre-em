@@ -27,7 +27,7 @@
   },
   "_ghiChuBanDo": "Khối 'banDo' (TC_D02B2a, 26/10/2026, dac_ta_ban_do.md mục 2-3, 6-7): tầm nhìn tính bằng ô; Tiên tộc nhìn xa thêm 'themTien' ô (Pháp thuật); bé mới vào: quanh cổng thung lũng đã khám phá sẵn bán kính 'banKinhCong' ô; tối đa 'soBeToiDa' bé một vùng; máy bé gửi thu hoạch gộp + hỏi lại trạng thái mỗi 'chuKyGui' giây, lưu chỗ đã khám phá mỗi 'chuKyLuuKhamPha' giây.",
   "banDo": {
-    "tamNhin": { "nong_dan": 4, "thu_linh": 6, "linh": 5, "leu": 6, "nha": 3, "thap_canh": 8 },
+    "tamNhin": { "nong_dan": 4, "thu_linh": 6, "linh": 5, "leu": 6, "nha": 3, "thap_canh": 8, "tuong": 1, "cong": 2 },
     "themTien": 1,
     "banKinhCong": 12,
     "soBeToiDa": 8,
@@ -35,8 +35,11 @@
     "chuKyLuuKhamPha": 5,
     "cachNhauKhamPha": 10
   },
-  "_ghiChuCongTrinh": "Khối 'congTrinh' (TC_D02B2b, 27/10/2026, dac_ta_cong_trinh.md mục 4.1): cỡ móng (ô), số giây dựng (người đứng sát móng làm), Lều trại miễn phí, dựng xong có 'nongDanDau' nông dân. banDo.cachNhauKhamPha (TC_D02B2b): các nông dân bấm '🔭 Đi khám phá' chọn mép vùng đen cách nhau ít nhất bấy nhiêu ô (mỗi người một hướng).",
+  "_ghiChuCongTrinh": "Khối 'congTrinh' (TC_D02B2b, 27/10/2026, dac_ta_cong_trinh.md mục 4.1): cỡ móng (ô), số giây dựng (người đứng sát móng làm), Lều trại miễn phí, dựng xong có 'nongDanDau' nông dân. banDo.cachNhauKhamPha (TC_D02B2b): các nông dân bấm '🔭 Đi khám phá' chọn mép vùng đen cách nhau ít nhất bấy nhiêu ô (mỗi người một hướng). TC_D02C (27/10/2026, dac_ta_cong_trinh.md mục 4.3, Đồ đá): 'gia' = tài nguyên trừ khi đặt móng (tường: mỗi ô); tường kéo thành đoạn thẳng tối đa 'doanToiDa' ô; cổng 3 x 1 (xoay được thành 1 x 3), đặt đè lên tường của chính bé được; 'gioiHan' = số tối đa mỗi bé (Đồ đá). Tường + cổng đã dựng xong khép kín = lãnh địa (dac_ta_ban_do.md mục 5).",
   "congTrinh": {
-    "leu": { "ten": "Lều trại", "rong": 2, "sau": 2, "giayXay": 20, "nongDanDau": 3 }
+    "leu": { "ten": "Lều trại", "rong": 2, "sau": 2, "giayXay": 20, "nongDanDau": 3 },
+    "tuong": { "ten": "Tường cọc gỗ", "rong": 1, "sau": 1, "giayXay": 3, "gia": { "go": 2 }, "doanToiDa": 20 },
+    "cong": { "ten": "Cổng", "rong": 3, "sau": 1, "giayXay": 15, "gia": { "go": 20 }, "gioiHan": 4 },
+    "thap_canh": { "ten": "Tháp canh", "rong": 2, "sau": 2, "giayXay": 30, "gia": { "go": 40 }, "gioiHan": 2 }
   }
 }

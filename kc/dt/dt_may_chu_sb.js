@@ -15,8 +15,10 @@
 //     tới giờ mọc lại thì máy chủ bỏ khỏi nguon[] (= đầy lại theo bản đồ). Trang game hỏi mỗi chuKyGui giây.
 //   guiThuHoach(ten, ds, giu) / luuKhamPha(ten, chuoi, giu): giu = true lúc rời trang -> gọi goiRpcGiu
 //     (fetch keepalive: trình duyệt gửi nốt dù trang đã đóng).
-// BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ)
-// NGÀY: 27/10/2026; 27/10/2026 20:55
+//   TC_D02C: xay(ten, { loai, x, y, xoay }) (cổng dọc), xayTuong(ten, [[x, y]...]) (đoạn tường); lỗi thiếu
+//     tài nguyên / đủ số nhà / lãnh địa bạn khác thành câu cho bé.
+// BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C
+// NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
 // ================================================================
 (function (goc) {
@@ -38,11 +40,16 @@
       da_xong: "Nhà này dựng xong rồi.",
       chua_xong: "Chưa dựng xong đâu, con chờ thêm chút nhé.",
       mat_na: "Mặt nạ không đúng.",
-      nhanh_qua: "Đi khám phá nhanh quá, máy chủ chưa ghi kịp."
+      nhanh_qua: "Đi khám phá nhanh quá, máy chủ chưa ghi kịp.",
+      vao_lanh_dia: "Đây là lãnh địa của bạn khác, không vào được."
     };
+    // Tên đưa vào câu lý do: loại nguồn (còn cây ở đây), tài nguyên thiếu (gỗ), loại nhà đã đủ (Tháp canh)
+    const tenTrongLyDo = kq => (kq.loaiNguon ? tenNguon(kq.loaiNguon)
+      : kq.thieu ? ((CH.lang.taiNguyen[kq.thieu] || {}).ten || "tài nguyên").toLowerCase()
+        : kq.loai ? ((CH.congTrinh || {})[kq.loai] || {}).ten : undefined);
     const loiCho = kq => {
       const ma = (kq && kq.ma) || "mang";
-      if (BD.LY_DO[ma]) return BD.LY_DO[ma](tenNguon(kq.loaiNguon));
+      if (BD.LY_DO[ma]) return BD.LY_DO[ma](tenTrongLyDo(kq));
       return LOI[ma] || LOI.mang;
     };
 
@@ -67,7 +74,8 @@
         return goi("kc_dt_gui_lenh", { p_id: idDonVi, p_lenh: { tu: lenh.tu, den: lenh.den, viec: Number.isInteger(lenh.viec) ? lenh.viec : null, khamPha: !!lenh.khamPha } });
       },
       async guiThuHoach(ten, ds, giu) { return goi("kc_dt_gui_thu_hoach", { p_ds: (ds || []).map(d => ({ ma: d.ma, so: d.so })) }, giu); },
-      async xay(ten, yeuCau) { return goi("kc_dt_xay", { p_loai: yeuCau.loai, p_x: Math.floor(yeuCau.x), p_y: Math.floor(yeuCau.y) }); },
+      async xay(ten, yeuCau) { return goi("kc_dt_xay", { p_loai: yeuCau.loai, p_x: Math.floor(yeuCau.x), p_y: Math.floor(yeuCau.y), p_xoay: !!yeuCau.xoay }); },
+      async xayTuong(ten, dsO) { return goi("kc_dt_xay_tuong", { p_o: (dsO || []).map(o => [Math.floor(o[0]), Math.floor(o[1])]) }); },
       async xayXong(ten, id) { return goi("kc_dt_xay_xong", { p_id: id }); },
       async luuKhamPha(ten, chuoi, giu) { return goi("kc_dt_luu_kham_pha", { p_mat_na: chuoi }, giu); }
     };
@@ -75,4 +83,4 @@
 
   goc.KC_DT_MAY_CHU_SB = { taoMayChuSupabase };
 })(typeof window !== "undefined" ? window : globalThis);
-// 27/10/2026 - BƯỚC: TC_D02B3a
+// 28/10/2026 00:05 - BƯỚC: TC_D02C
