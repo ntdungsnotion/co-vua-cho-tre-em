@@ -1,0 +1,76 @@
+// ================================================================
+// FILE: dt/dt_may_chu_sb.js
+// CHỨC NĂNG: LỚP MÁY CHỦ THẬT của bản đồ chung Đấu Trường Tri Thức: gọi RPC Supabase
+//            (repo_rieng SQL/supabase_tc_d02b3_ban_do.sql) với CÙNG GIAO DIỆN máy chủ giả
+//            dt/dt_may_chu.js (cùng tên hàm, tham số, dạng kết quả, đều trả Promise) -> phần vẽ +
+//            lõi không phải sửa. Máy chủ giữ luật (dac_ta_ban_do.md mục 4-8); lớp này chỉ:
+//            - gửi tên đăng nhập + mã phiên + mã vùng kèm mọi lời gọi
+//            - giữ "giờ máy chủ" (lệch giờ đo ở mỗi lời gọi) cho vị trí tính từ lệnh
+//            - đổi mã lỗi máy chủ thành câu cho bé (có dấu), lỗi mạng không làm vỡ trang
+// HÀM KHAI RA (goc.KC_DT_MAY_CHU_SB):
+//   taoMayChuSupabase({ goiRpc(tenHam, thamSo) -> Promise<json>, goiRpcGiu?, ten, maPhien, vung, cauHinh })
+//     -> { vaoVung, layQuanh, guiLenh, guiThuHoach, xay, xayXong, luuKhamPha, gio } (như dt_may_chu.js)
+//   guiThuHoach trả thêm ds[].con (trữ lượng còn lại thật, để máy bé sửa khi bạn khác lấy trước).
+//   guiThuHoach(ten, ds, giu) / luuKhamPha(ten, chuoi, giu): giu = true lúc rời trang -> gọi goiRpcGiu
+//     (fetch keepalive: trình duyệt gửi nốt dù trang đã đóng).
+// BƯỚC: TC_D02B3a
+// NGÀY: 27/10/2026
+// PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
+// ================================================================
+(function (goc) {
+  "use strict";
+
+  function taoMayChuSupabase(opt) {
+    const BD = goc.KC_DT_BAN_DO, CH = opt.cauHinh;
+    const tenNguon = loai => ((CH.lang.nguon[loai] || {}).ten || "tài nguyên").toLowerCase();
+    const LOI = {
+      mang: "Không kết nối được máy chủ, con thử lại nhé.",
+      dang_nhap: "Con đăng nhập lại rồi vào thung lũng nhé.",
+      vung: "Thung lũng này chưa mở, con quay lại sau nhé.",
+      chua_vao: "Con chưa vào thung lũng.",
+      khong_phai_nguoi: "Đây không phải người của con.",
+      khong_phai_nha: "Đây không phải nhà của con.",
+      lenh: "Lệnh không đúng.",
+      loai: "Chưa xây được loại nhà này.",
+      da_co: "Con đã có Lều trại rồi.",
+      da_xong: "Nhà này dựng xong rồi.",
+      chua_xong: "Chưa dựng xong đâu, con chờ thêm chút nhé.",
+      mat_na: "Mặt nạ không đúng.",
+      nhanh_qua: "Đi khám phá nhanh quá, máy chủ chưa ghi kịp."
+    };
+    const loiCho = kq => {
+      const ma = (kq && kq.ma) || "mang";
+      if (BD.LY_DO[ma]) return BD.LY_DO[ma](tenNguon(kq.loaiNguon));
+      return LOI[ma] || LOI.mang;
+    };
+
+    let lech = 0; // giờ máy chủ - giờ máy bé (ms)
+    const gio = () => Date.now() + lech;
+    // giu = true: lúc rời trang, gửi kiểu "giữ kết nối" (opt.goiRpcGiu, fetch keepalive) để không mất phần cuối
+    async function goi(ham, thamSo, giu) {
+      const t0 = Date.now(), goiRpc = giu && opt.goiRpcGiu ? opt.goiRpcGiu : opt.goiRpc;
+      let kq;
+      try { kq = await goiRpc(ham, Object.assign({ p_ten: opt.ten, p_ma_phien: opt.maPhien, p_ma_vung: opt.vung.ma }, thamSo)); }
+      catch (e) { kq = null; }
+      if (kq && Number.isFinite(kq.gio)) lech = kq.gio - (t0 + Date.now()) / 2; // giữa lúc gửi và lúc nhận
+      if (!kq || kq.thanhCong !== true) return { ok: false, ma: (kq && kq.ma) || "mang", lyDo: loiCho(kq) };
+      return Object.assign({ ok: true }, kq);
+    }
+
+    return {
+      gio,
+      async vaoVung(ten, chungLoai) { return goi("kc_dt_vao_vung", { p_chung_loai: chungLoai || null }); },
+      async layQuanh() { return goi("kc_dt_lay_quanh", {}); },
+      async guiLenh(ten, idDonVi, lenh) {
+        return goi("kc_dt_gui_lenh", { p_id: idDonVi, p_lenh: { tu: lenh.tu, den: lenh.den, viec: Number.isInteger(lenh.viec) ? lenh.viec : null, khamPha: !!lenh.khamPha } });
+      },
+      async guiThuHoach(ten, ds, giu) { return goi("kc_dt_gui_thu_hoach", { p_ds: (ds || []).map(d => ({ ma: d.ma, so: d.so })) }, giu); },
+      async xay(ten, yeuCau) { return goi("kc_dt_xay", { p_loai: yeuCau.loai, p_x: Math.floor(yeuCau.x), p_y: Math.floor(yeuCau.y) }); },
+      async xayXong(ten, id) { return goi("kc_dt_xay_xong", { p_id: id }); },
+      async luuKhamPha(ten, chuoi, giu) { return goi("kc_dt_luu_kham_pha", { p_mat_na: chuoi }, giu); }
+    };
+  }
+
+  goc.KC_DT_MAY_CHU_SB = { taoMayChuSupabase };
+})(typeof window !== "undefined" ? window : globalThis);
+// 27/10/2026 - BƯỚC: TC_D02B3a

@@ -20,8 +20,10 @@
 //             be: { ten, hoSo, tenThuLinh }, themNongDan(x, z) -> dv, $, baoGoiY, kho (localStorage | null) }
 //     vung = { dvTl, hTl, suong, veSuong, mayChu, vao, batDau() (sau khung đầu), moc (kịch bản thử) }
 //   Không vào được (thung lũng đầy...): ném lỗi, err.lyDo là câu cho bé.
-// BƯỚC: TC_D02B2b (tách từ chế độ ?vung của dt3d_thu.js, TC_D02B2a)
-// NGÀY: 27/10/2026
+//     the.mayChu (TC_D02B3a): máy chủ thật dt/dt_may_chu_sb.js (trang game); không có thì máy chủ giả
+// BƯỚC: TC_D02B2b (tách từ chế độ ?vung của dt3d_thu.js, TC_D02B2a); TC_D02B3a (máy chủ Supabase, sửa
+//       trữ lượng theo số máy chủ trả, lều của bạn khác không là chỗ cất đồ)
+// NGÀY: 27/10/2026; 27/10/2026 18:55
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_may_chu.js (KC_DT_MAY_CHU), dt3d_suong_mu.js, dt3d_o_xay.js
 // ================================================================
 import { taoVeSuong } from "./dt3d_suong_mu.js";
@@ -37,7 +39,7 @@ export async function vaoThungLung(the) {
   const R = CT.leu.rong, S = CT.leu.sau;
 
   // ---------------- Vào vùng: trạng thái chung từ máy chủ ----------------
-  const mayChu = MC.taoMayChuGia({ vung: banDo, cauHinh, kho: the.kho });
+  const mayChu = the.mayChu || MC.taoMayChuGia({ vung: banDo, cauHinh, kho: the.kho });
   const vao = await mayChu.vaoVung(ten, be.hoSo.chungLoai);
   if (!vao.ok) throw Object.assign(new Error(vao.lyDo), { lyDo: vao.lyDo });
   const quanh = await mayChu.layQuanh(ten);
@@ -60,7 +62,7 @@ export async function vaoThungLung(the) {
   // ---------------- Công trình ----------------
   let leuBe = null;
   for (const c of quanh.congTrinh || []) {
-    const ct = lang.themCongTrinh({ id: c.id, chu: c.chu, loai: c.loai, x: c.x, y: c.y, rong: c.rong, sau: c.sau, xong: !!c.xongLuc, giayXay: (CT[c.loai] || CT.leu).giayXay });
+    const ct = lang.themCongTrinh({ id: c.id, chu: c.chu, cuaMinh: c.chu === tenChuan, loai: c.loai, x: c.x, y: c.y, rong: c.rong, sau: c.sau, xong: !!c.xongLuc, giayXay: (CT[c.loai] || CT.leu).giayXay });
     if (c.chu === tenChuan && c.loai === "leu") leuBe = ct;
   }
 
@@ -93,11 +95,12 @@ export async function vaoThungLung(the) {
   // ---------------- Gửi máy chủ ----------------
   const gui = (dv, lenh) => { if (!dangNap && dv.idMayChu) mayChu.guiLenh(ten, dv.idMayChu, lenh); };
   let gom = {};
-  const guiThuHoach = () => {
+  const guiThuHoach = giu => {
     const ds = Object.keys(gom).map(ma => ({ ma: Number(ma), so: gom[ma] }));
     if (!ds.length) return;
     gom = {};
-    mayChu.guiThuHoach(ten, ds); // TC_D02B3: máy chủ thật trả số được lấy, sửa lại trữ lượng nếu bạn khác lấy trước
+    // máy chủ thật trả trữ lượng còn lại: bạn khác lấy trước thì cây / mỏ trên máy mình vơi theo
+    mayChu.guiThuHoach(ten, ds, giu).then(kq => { if (kq && kq.ok) for (const d of kq.ds) if (Number.isFinite(d.con)) lang.capNhatNguon(d.ma, d.con); });
   };
   lang.nghe(su => {
     switch (su.loai) {
@@ -213,12 +216,12 @@ export async function vaoThungLung(the) {
     const pt = Math.round(1000 * suong.demDaKham() / tongO) / 10;
     if (pt !== ptCu) { ptCu = pt; chuPt.textContent = "🗺️ Đã khám phá " + pt.toLocaleString("vi-VN") + "%"; }
   };
-  const luuKhamPha = () => {
+  const luuKhamPha = giu => {
     if (suong.phienBan === daLuu) return;
     daLuu = suong.phienBan;
-    mayChu.luuKhamPha(ten, suong.xuat());
+    mayChu.luuKhamPha(ten, suong.xuat(), giu);
   };
-  const roiTrang = () => { luuKhamPha(); guiThuHoach(); };
+  const roiTrang = () => { luuKhamPha(true); guiThuHoach(true); }; // rời trang: gửi kiểu giữ kết nối
   ctx.moiKhung(dt => {
     if ((demSoi += dt) >= 0.2) { demSoi = 0; soiLai(); capNhatPt(); }
     if ((demLuu += dt) >= CB.chuKyLuuKhamPha) { demLuu = 0; luuKhamPha(); }
@@ -262,4 +265,4 @@ export async function vaoThungLung(the) {
     }
   };
 }
-// 27/10/2026 00:52 - BƯỚC: TC_D02B2b
+// 27/10/2026 18:55 - BƯỚC: TC_D02B3a

@@ -14,13 +14,15 @@
                   (dautruongtrithuc.html) là vào đây. Thung Lũng Khởi Đầu 128 x 128 có sương mù:
                   lần đầu Thủ lĩnh ở cổng thung lũng, bé chạm chỗ đất xanh để dựng Lều trại, dựng
                   xong có nông dân đi làm; chạm chỗ tối hoặc bấm "🔭 Đi khám phá" để nông dân mở
-                  đất mới. Lưu trên máy (máy chủ giả, TC_D02B3 chuyển lên Supabase).
-                  Cần đăng nhập + đã tạo Thủ lĩnh (chưa thì tự về sảnh). Không có nút thử
-                  (trang thử: dt_thu_3d.html?vung).
-       BƯỚC: TC_D02B2b
-       NGÀY: 27/10/2026
-       PHỤ THUỘC: thu_vien/three (Three.js r170, MIT), chung/nv_ve.js, chung/nv_ho_so.js,
+                  đất mới. Làng lưu trên máy chủ Supabase (TC_D02B3a: bản đồ chung nhiều bé, đổi máy
+                  vẫn còn). Cần đăng nhập + đã tạo Thủ lĩnh (chưa thì tự về sảnh). Không có nút thử
+                  (trang thử: dt_thu_3d.html?vung, máy chủ giả trên máy).
+       BƯỚC: TC_D02B2b; TC_D02B3a (máy chủ Supabase)
+       NGÀY: 27/10/2026; 27/10/2026 18:55
+       PHỤ THUỘC: supabase-js@2 (CDN, như cả app), kc_config.js, kc_api.js,
+                  thu_vien/three (Three.js r170, MIT), chung/nv_ve.js, chung/nv_ho_so.js,
                   dt/dt_tien_do.js, dt/dt_luoi.js, dt/dt_lang.js, dt/dt_ban_do.js, dt/dt_may_chu.js,
+                  dt/dt_may_chu_sb.js,
                   dt/3d/dt3d.css, dt/3d/*.js (khởi động: dt/3d/dt3d_thu.js chế độ game),
                   dt/mo_hinh/*.glb (KayKit, CC0), dt/du_lieu/vung_dat.json, dt/du_lieu/cau_hinh.json;
                   phiên đăng nhập (sessionStorage) do kc_auth.js của sảnh ghi
@@ -79,6 +81,10 @@
   <script src="dt/dt_lang.js"></script>
   <script src="dt/dt_ban_do.js"></script>
   <script src="dt/dt_may_chu.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="kc_config.js"></script>
+  <script src="kc_api.js"></script>
+  <script src="dt/dt_may_chu_sb.js"></script>
   <script type="module" src="dt/3d/dt3d_thu.js"></script>
 </body>
 </html>
