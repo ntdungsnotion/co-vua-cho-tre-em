@@ -67,7 +67,12 @@ function taoMayChuThat() {
   let phien = null, gia = false;
   try { phien = JSON.parse(sessionStorage.getItem("coVuaTaiKhoanDangNhap") || "null"); gia = sessionStorage.getItem("kc_dt_may_chu_gia") === "1"; } catch (e) { /* bị chặn */ }
   if (gia) return null;
-  return window.KC_DT_MAY_CHU_SB.taoMayChuSupabase({ goiRpc: window.kcGoiRpc, ten: phien && phien.tenDangNhap, maPhien: phien && phien.maPhien, vung: banDo, cauHinh });
+  // Lúc rời trang: fetch keepalive thẳng tới RPC (supabase-js không gửi được khi trang đang đóng)
+  const goiRpcGiu = (ham, thamSo) => fetch(window.KC_CONFIG_SUPABASE_URL + "/rest/v1/rpc/" + ham, {
+    method: "POST", keepalive: true, body: JSON.stringify(thamSo),
+    headers: { "Content-Type": "application/json", apikey: window.KC_CONFIG_SUPABASE_ANON_KEY }
+  }).then(r => r.json()).catch(() => null);
+  return window.KC_DT_MAY_CHU_SB.taoMayChuSupabase({ goiRpc: window.kcGoiRpc, goiRpcGiu, ten: phien && phien.tenDangNhap, maPhien: phien && phien.maPhien, vung: banDo, cauHinh });
 }
 const be = GAME ? docBeDangNhap() : docHoSoBe();
 if (!be) { location.replace("dautruongtrithuc.html"); await new Promise(() => {}); } // chưa đăng nhập / chưa tạo Thủ lĩnh: về sảnh

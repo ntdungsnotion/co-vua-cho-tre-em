@@ -95,12 +95,12 @@ export async function vaoThungLung(the) {
   // ---------------- Gửi máy chủ ----------------
   const gui = (dv, lenh) => { if (!dangNap && dv.idMayChu) mayChu.guiLenh(ten, dv.idMayChu, lenh); };
   let gom = {};
-  const guiThuHoach = () => {
+  const guiThuHoach = giu => {
     const ds = Object.keys(gom).map(ma => ({ ma: Number(ma), so: gom[ma] }));
     if (!ds.length) return;
     gom = {};
     // máy chủ thật trả trữ lượng còn lại: bạn khác lấy trước thì cây / mỏ trên máy mình vơi theo
-    mayChu.guiThuHoach(ten, ds).then(kq => { if (kq && kq.ok) for (const d of kq.ds) if (Number.isFinite(d.con)) lang.capNhatNguon(d.ma, d.con); });
+    mayChu.guiThuHoach(ten, ds, giu).then(kq => { if (kq && kq.ok) for (const d of kq.ds) if (Number.isFinite(d.con)) lang.capNhatNguon(d.ma, d.con); });
   };
   lang.nghe(su => {
     switch (su.loai) {
@@ -216,12 +216,12 @@ export async function vaoThungLung(the) {
     const pt = Math.round(1000 * suong.demDaKham() / tongO) / 10;
     if (pt !== ptCu) { ptCu = pt; chuPt.textContent = "🗺️ Đã khám phá " + pt.toLocaleString("vi-VN") + "%"; }
   };
-  const luuKhamPha = () => {
+  const luuKhamPha = giu => {
     if (suong.phienBan === daLuu) return;
     daLuu = suong.phienBan;
-    mayChu.luuKhamPha(ten, suong.xuat());
+    mayChu.luuKhamPha(ten, suong.xuat(), giu);
   };
-  const roiTrang = () => { luuKhamPha(); guiThuHoach(); };
+  const roiTrang = () => { luuKhamPha(true); guiThuHoach(true); }; // rời trang: gửi kiểu giữ kết nối
   ctx.moiKhung(dt => {
     if ((demSoi += dt) >= 0.2) { demSoi = 0; soiLai(); capNhatPt(); }
     if ((demLuu += dt) >= CB.chuKyLuuKhamPha) { demLuu = 0; luuKhamPha(); }
