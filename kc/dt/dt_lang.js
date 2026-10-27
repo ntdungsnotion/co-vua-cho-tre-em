@@ -26,8 +26,9 @@
 //            cong_trinh (thêm móng / công trình), xay_xong, xay_ket (không tới được móng),
 //            het_kham_pha (nông dân tự khám phá: hết chỗ để mở)
 // BƯỚC: TC_D02A; TC_D02B2a (vùng đất 128 x 128, chưa lều, đặt móng, tìm chỗ mọc nhanh);
-//       TC_D02B2b (công trình + dựng lều, khám phá theo sương mù, nạp trữ lượng từ máy chủ)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026
+//       TC_D02B2b (công trình + dựng lều, khám phá theo sương mù, nạp trữ lượng từ máy chủ);
+//       TC_D02B3a (bản đồ chung: lều của bạn khác không là chỗ cất đồ, ct.cuaMinh)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI)
 // ================================================================
 (function (goc) {
@@ -388,7 +389,7 @@
       ct.tienDo = ct.xong ? 1 : (ct.tienDo || 0);
       datMong(ct.x, ct.y, ct.rong, ct.sau);
       congTrinh.push(ct);
-      if (ct.xong && ct.loai === "leu") datLeuCho(ct);
+      if (ct.xong && ct.loai === "leu" && ct.cuaMinh !== false) datLeuCho(ct); // lều của bạn khác (bản đồ chung) không là chỗ cất đồ của mình
       phat({ loai: "cong_trinh", ct });
       return ct;
     }
@@ -552,4 +553,4 @@
 
   goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS };
 })(typeof window !== "undefined" ? window : globalThis);
-// 27/10/2026 00:52 - BƯỚC: TC_D02B2b
+// 27/10/2026 18:55 - BƯỚC: TC_D02B3a
