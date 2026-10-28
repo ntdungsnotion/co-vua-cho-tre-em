@@ -42,8 +42,13 @@
 //   - sinhNongDan(ten) -> { ok, hang{so, batDau}, kho, danSo, choO } | { ok: false, ma: chua_leu | hang_day | cho_o | thieu }:
 //     xếp hàng ở Lều trại, trả giá lúc xếp; tinhSinh(bé) ra từng người mỗi congTrinh.leu.sinh.giay giây theo giờ máy
 //     chủ (cả khi bé vắng mặt; vang.sinh = số người ra lúc vắng). vaoVung + layQuanh trả hang (null = không có ai chờ).
-// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1
-// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10
+//   TC_D03B2 - RUỘNG (SQL làm y hệt): ruộng xong (hoanThanh) có trongLuc / con (sanLuong theo cấp) / gatLuc; chín sau
+//     chinGiay giây giờ máy chủ. Lệnh viec < 0 = gặt ruộng id -viec: guiThuHoach nhận khi chín, gặt hết -> gatLuc (bãi);
+//     tinhVang gặt bù khi vắng mặt (chờ chín, chuyến về chỗ cất gần nhất như hái quả; vang.gat = số ruộng gặt hết);
+//     donRuong: bãi quá coSauGiay giây thành cỏ (bỏ ruộng); xay ruộng: tâm cách tâm Lều trại ≤ cachLeuToiDa ô (xa_leu);
+//     trongLai(ten, id) -> { ok, id, trongLuc, con, kho } | { ok: false, ma: het_bai | chua_gat | thieu }.
+// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2
+// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:30
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO)
 // ================================================================
 (function (goc) {
@@ -78,9 +83,12 @@
     }
     // Lãnh địa từng bé (TC_D02C): tường + cổng ĐÃ DỰNG XONG
     const lanhDia = BD.taoBoLanhDia(vung.rong, vung.cao);
+    const LUOI = goc.KC_DT_LUOI;
+    const oCua = (ct, f) => { for (let oy = ct.y; oy < ct.y + ct.sau; oy++) for (let ox = ct.x; ox < ct.x + ct.rong; ox++) if (ox >= 0 && oy >= 0 && ox < vung.rong && oy < vung.cao) f(ox, oy); };
     const datCt = ct => {
       lang.datMong(ct.x, ct.y, ct.rong, ct.sau);
       if (ct.loai === "cong") lang.datCong(ct.x, ct.y, ct.rong, ct.sau, ct.chu, true);
+      if (ct.loai === "ruong") oCua(ct, (ox, oy) => LUOI.datChan(lang.luoi, ox, oy, false)); // TC_D03B2: ô ruộng đi được
       if (ct.xongLuc && BD.LA_RAO[ct.loai]) lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, true);
     };
     for (const ct of tt.congTrinh) datCt(ct);
@@ -132,6 +140,7 @@
     function hoanThanh(ct, luc) {
       ct.xongLuc = luc; ct.tienDo = 1;
       if (BD.LA_RAO[ct.loai]) lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, true);
+      if (ct.loai === "ruong") { ct.trongLuc = luc; ct.con = LANG.sanLuongRuong(CH, ct.cap); ct.gatLuc = null; } // TC_D03B2: xong là trồng
       if (ct.loai !== "leu") return;
       const cho = choQuanh(ct); // mỗi người một ô
       for (let i = 0; i < (mauCt("leu").nongDanDau || 0); i++) {
@@ -210,6 +219,19 @@
       d = Math.max(0.5, d);
       return sm / (2 * d * VM.heSoDuong / TOC.di + sm * CH.lang.nguon[n.loai].nhipLam) / 1000;
     }
+    // ---------------- TC_D03B2: ruộng (công trình có thêm trongLuc, con, gatLuc) ----------------
+    const MR = LANG.mauRuong(CH);
+    const ruongCua = (ten, id) => tt.congTrinh.find(c => c.id === id && c.chu === ten && c.loai === "ruong" && c.xongLuc) || null;
+    const chinLuc = ct => ct.trongLuc + MR.chinGiay * 1000;
+    const tamRuong = ct => ({ x: ct.x + ct.rong / 2, z: ct.y + ct.sau / 2, taiNguyen: CH.lang.nguon.ruong.taiNguyen, loai: "ruong" });
+    // Bãi gặt hết bỏ quá coSauGiay giây thành cỏ: bỏ ruộng, trả ô (SQL: kc_dt_don_ruong)
+    function donRuong(ten, bay) {
+      tt.congTrinh = tt.congTrinh.filter(c => {
+        if (c.chu !== ten || c.loai !== "ruong" || c.gatLuc == null || LANG.giaiDoanRuong(CH, c, bay) !== "co") return true;
+        oCua(c, (ox, oy) => { lang.danh[oy * vung.rong + ox] = 0; LUOI.datChan(lang.luoi, ox, oy, false); });
+        return false;
+      });
+    }
     // Tính bù việc nông dân lúc bé vắng mặt (SQL: kc_dt_tinh_vang)
     function tinhVang(ten, bay, bao) {
       const be = tt.be[ten];
@@ -221,6 +243,22 @@
       for (const d of cuaBe(ten)) {
         const l = d.lenh;
         if (d.loai !== "nong_dan" || !l || l.viec == null || l.xay != null) continue;
+        if (l.viec < 0) { // TC_D03B2: gặt ruộng: chờ lúa chín, gánh về chỗ cất gần nhất; gặt hết thì thành bãi (không tự trồng lại)
+          const ct = ruongCua(ten, -l.viec);
+          if (!ct || ct.gatLuc != null) continue;
+          const nr = tamRuong(ct), tn = nr.taiNguyen, cho = sucChua(ten, tn) - (be.kho[tn] || 0);
+          const t = Math.max(tu, toiLuc(l), leu.xongLuc, chinLuc(ct));
+          if (t >= bay) continue;
+          if (cho <= 0) { bao.day[tn] = true; continue; }
+          const v = nhipThu(nr, ten, be.chungLoai), lay = v > 0 ? Math.min(Math.floor(v * (bay - t)), ct.con, cho) : 0;
+          if (lay <= 0) continue;
+          ct.con -= lay;
+          be.kho[tn] = (be.kho[tn] || 0) + lay;
+          bao.thu[tn] = (bao.thu[tn] || 0) + lay;
+          if (ct.con <= 0) { ct.gatLuc = Math.round(t + lay / v); bao.gat = (bao.gat || 0) + 1; }
+          if (lay === cho) bao.day[tn] = true;
+          continue;
+        }
         let n = lang.nguonTheoMa(l.viec), doi = false, t = Math.max(tu, toiLuc(l), leu.xongLuc);
         while (n && lang.dangSong(n) && t < bay) {
           const tn = n.taiNguyen, cho = sucChua(ten, tn) - (be.kho[tn] || 0);
@@ -250,10 +288,12 @@
       const bao = vang ? (be.baoVang = be.baoVang || { tu: be.songLuc || be.vaoLuc, thu: {}, xong: [], day: {} }) : null;
       const xong = tinhXay(ten, bay);
       const sinh = tinhSinh(ten, bay); // TC_D03B1: sau xây (Nhà ở vừa xong thì có chỗ)
+      donRuong(ten, bay); // TC_D03B2
       if (!bao) return;
       for (const c of xong) bao.xong.push(c.loai);
       if (sinh) bao.sinh = (bao.sinh || 0) + sinh;
       tinhVang(ten, bay, bao);
+      donRuong(ten, bay); // ruộng gặt hết lúc vắng mặt mà đã quá hạn bãi
     }
     const songLai = (ten, bay) => { tinhBu(ten, bay, true); tt.be[ten].songLuc = bay; };
 
@@ -272,7 +312,8 @@
       const oDoiThu = new Set();
       for (const d of tt.donVi) if (d.chu !== ten) { const p = viTri(d); oDoiThu.add(Math.floor(p.z) * vung.rong + Math.floor(p.x)); }
       return { lang, suong: suongCua(ten), coDoiThu: (ox, oy) => oDoiThu.has(oy * vung.rong + ox),
-        laLanhDiaDoiThu: (ox, oy) => !!lanhDia.chuO(ox, oy, ten), deLen: loai === "cong" ? laRaoCua(ten, "tuong") : null };
+        laLanhDiaDoiThu: (ox, oy) => !!lanhDia.chuO(ox, oy, ten), deLen: loai === "cong" ? laRaoCua(ten, "tuong") : null,
+        ganLeu: loai === "ruong" ? BD.kiemGanLeu(leuXongCua(ten), MR.cachLeuToiDa) : null }; // TC_D03B2
     }
 
     const api = {
@@ -298,7 +339,7 @@
         const b = be.baoVang;
         delete be.baoVang;
         luu();
-        const vang = b ? { giay: Math.round((bay - b.tu) / 1000), thu: b.thu, xong: b.xong, day: Object.keys(b.day), sinh: b.sinh || 0 } : null;
+        const vang = b ? { giay: Math.round((bay - b.tu) / 1000), thu: b.thu, xong: b.xong, day: Object.keys(b.day), sinh: b.sinh || 0, gat: b.gat || 0 } : null;
         const cong = vung.cong.find(c => c.so === be.cong);
         return { ok: true, maVung: vung.ma, banSao: 1, cong: { so: cong.so, x: cong.x, z: cong.z }, lanDau, khamPha: be.khamPha,
           donVi: cuaBe(ten).map(d => ({ id: d.id, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })), kho: khoCua(be), vang, gio: bay, hang: hangCua(be) };
@@ -341,6 +382,25 @@
         return { ok: true, hang: hangCua(be), kho: khoCua(be), danSo: danSo(ten), choO: toiDa, gio: bay };
       },
 
+      // TC_D03B2: trồng lại trên bãi đã gặt (chưa thành cỏ), trả congTrinh.ruong.ruong.giaTrongLai
+      // -> { ok, id, trongLuc, con, kho } | { ok: false, ma: het_bai | chua_gat | thieu }
+      async trongLai(ten, id) {
+        ten = tenChuan(ten);
+        const be = tt.be[ten];
+        if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        const bay = gio();
+        songLai(ten, bay); // bãi quá hạn thì đã thành cỏ
+        const ct = tt.congTrinh.find(c => c.id === id && c.chu === ten && c.loai === "ruong");
+        if (!ct) return { ok: false, ma: "het_bai", lyDo: BD.LY_DO.het_bai() };
+        if (!ct.xongLuc || ct.gatLuc == null) return { ok: false, ma: "chua_gat", lyDo: BD.LY_DO.chua_gat() };
+        const thieu = thieuGia(be, MR.giaTrongLai, 1);
+        if (thieu) return loiThieu(thieu);
+        truGia(be, MR.giaTrongLai, 1);
+        ct.trongLuc = bay; ct.con = LANG.sanLuongRuong(CH, ct.cap); ct.gatLuc = null;
+        luu();
+        return { ok: true, id: ct.id, trongLuc: bay, con: ct.con, kho: khoCua(be), gio: bay };
+      },
+
       async guiLenh(ten, idDonVi, lenh) {
         ten = tenChuan(ten);
         const dv = tt.donVi.find(d => d.id === idDonVi);
@@ -380,6 +440,18 @@
         const ra = [];
         be.kho = be.kho || {};
         for (const { ma, so } of ds || []) {
+          if (ma < 0) { // TC_D03B2: ruộng của chính bé, chỉ khi chín (cho sớm xay.treGiay giây: giờ máy bé lệch); gặt hết thì thành bãi
+            const ct = ruongCua(ten, -ma);
+            if (!ct || ct.gatLuc != null || bay + CH.xay.treGiay * 1000 < chinLuc(ct) || !(so > 0)) { ra.push({ ma, duoc: 0 }); continue; }
+            const tn = CH.lang.nguon.ruong.taiNguyen;
+            const toiDa = Math.floor(soNd * giay / CH.lang.nguon.ruong.nhipLam), cho = Math.max(0, sucChua(ten, tn) - (be.kho[tn] || 0));
+            const duoc = Math.max(0, Math.min(Math.floor(so), ct.con, toiDa, cho));
+            ct.con -= duoc;
+            if (ct.con <= 0) ct.gatLuc = bay;
+            be.kho[tn] = (be.kho[tn] || 0) + duoc;
+            ra.push({ ma, duoc, con: ct.con });
+            continue;
+          }
           const n = lang.nguonTheoMa(ma);
           if (!n || !lang.dangSong(n) || !(so > 0)) { ra.push({ ma, duoc: 0 }); continue; }
           // tốc độ tối đa: mọi nông dân của bé cùng làm nguồn loại này trong suốt khoảng giờ đó
@@ -500,4 +572,4 @@
 
   goc.KC_DT_MAY_CHU = { taoMayChuGia };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 15:10 - BƯỚC: TC_D03B1
+// 28/10/2026 19:30 - BƯỚC: TC_D03B2

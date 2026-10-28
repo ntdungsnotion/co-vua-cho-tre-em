@@ -38,6 +38,11 @@
 //              một loại, nông dân về chỗ cất gần nhất đúng loại); chạm Lều trại (cả khi chưa chọn ai) -> nút "🧑‍🌾 Sinh
 //              nông dân" (chỉ nhà chính sinh nông dân; giá + giây ở cau_hinh congTrinh.leu.sinh), ô "👥 dân số/chỗ ở";
 //              máy chủ ra người theo giờ máy chủ, tới giờ thì hỏi lại ngay để nhận người mới (đứng chờ việc, dấu "!").
+//            - (TC_D03B2) menu Xây thêm 🌾 Ruộng (3 x 3, cách Lều trại ≤ cachLeuToiDa ô: chỗ xa soi đỏ); chọn nông dân rồi chạm
+//              ruộng = ra gặt (lúa chưa chín thì đứng chờ); chạm ruộng khi chưa chọn nông dân = xem ruộng (giây còn lại tới
+//              chín / thành cỏ, lúa còn, số người gặt) + nút "🌱 Trồng lại" khi là bãi đã gặt; người vừa gặt ruộng đó
+//              đang rảnh thì tự ra lại. Giờ ruộng máy chủ trả đổi sang đồng hồ của lõi (gioLoi); hỏi lại máy chủ thì
+//              lúa của ruộng mình theo máy chủ (lang.dongBoRuong). Lời báo vắng mặt có số ruộng gặt xong.
 // HÀM KHAI RA:
 //   vaoThungLung(the) -> Promise<vung>   (gọi sau khi đã dựng lõi + các phần vẽ, trước khung đầu)
 //     the = { ctx, cam, lang, banDo, cauHinh, diaHinh, boNv, dk, uiDk (ui đã đưa cho dk: thêm móc),
@@ -51,8 +56,8 @@
 //       trữ lượng theo số máy chủ trả, lều của bạn khác không là chỗ cất đồ); TC_D02B3b (hỏi lại máy
 //       chủ: thấy bạn đi lại, nhà của bạn, mọc lại theo giờ máy chủ, trừ kho phần máy chủ cắt);
 //       TC_D02C (menu Xây: tường, cổng, tháp canh; lãnh địa); TC_D03A (nông dân xây, tiến độ máy chủ, vắng mặt, sức chứa);
-//       TC_D03B1 (4 kho, nhà ở, dân số, Lều sinh nông dân)
-// NGÀY: 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 12:17; 28/10/2026 15:30
+//       TC_D03B1 (4 kho, nhà ở, dân số, Lều sinh nông dân); TC_D03B2 (ruộng)
+// NGÀY: 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 12:17; 28/10/2026 15:30; 28/10/2026 19:30
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_may_chu.js (KC_DT_MAY_CHU), dt3d_suong_mu.js, dt3d_o_xay.js
 // ================================================================
 import { taoVeSuong } from "./dt3d_suong_mu.js";
@@ -61,8 +66,8 @@ import { taoSoiDat, taoVeLanhDia } from "./dt3d_o_xay.js";
 const BD = window.KC_DT_BAN_DO, MC = window.KC_DT_MAY_CHU, NV = window.KC_NV, KC_LANG = window.KC_DT_LANG;
 const VIEC_DAU = ["cay", "cay", "bui_trai_cay"]; // nông dân vừa ra: 2 người chặt cây, 1 người hái trái cây
 // Menu "🔨 Xây" (TC_D02C): thứ tự nút, biểu tượng. TC_D03B1: 4 kho riêng + Nhà ở
-const MENU_XAY = [["tuong", "🧱"], ["cong", "🚪"], ["thap_canh", "🗼"], ["nha_o", "🏠"],
-  ["kho_go", "📦🪵"], ["kho_da", "📦🪨"], ["kho_vang", "📦🪙"], ["vua_luong_thuc", "🌾"]];
+const MENU_XAY = [["tuong", "🧱"], ["cong", "🚪"], ["thap_canh", "🗼"], ["nha_o", "🏠"], ["ruong", "🌾"],
+  ["kho_go", "📦🪵"], ["kho_da", "📦🪨"], ["kho_vang", "📦🪙"], ["vua_luong_thuc", "📦🍖"]]; // TC_D03B2: + Ruộng
 const LA_KHO = { kho_go: "go", kho_da: "da", kho_vang: "vang", vua_luong_thuc: "luong_thuc" }; // kho -> loại tài nguyên chứa
 
 export async function vaoThungLung(the) {
@@ -130,9 +135,13 @@ export async function vaoThungLung(the) {
   // ---------------- Công trình ----------------
   let leuBe = null;
   const ctBan = new Map(); // nhà của bạn: id máy chủ -> công trình lõi (TC_D02B3b)
+  // TC_D03B2: giờ ruộng máy chủ trả (giờ máy chủ) -> đồng hồ của lõi (máy bé lệch giờ vẫn chín đúng lúc)
+  const gioLoi = t => (t == null ? null : t - (mayChu.gio() - lang.bayGio()));
+  const ruongMc = c => ({ trongLuc: gioLoi(c.trongLuc), gatLuc: gioLoi(c.gatLuc), con: c.con });
   function nhanCongTrinh(c) {
-    const ct = lang.themCongTrinh({ id: c.id, chu: c.chu, cuaMinh: c.chu === tenChuan, loai: c.loai, x: c.x, y: c.y, rong: c.rong, sau: c.sau, xong: !!c.xongLuc,
-      giayXay: (CT[c.loai] || CT.leu).giayXay, cap: c.cap || 1, tienDo: Number.isFinite(c.tienDo) ? c.tienDo : 0, xayLuc: c.xayLuc }); // TC_D03A: tiến độ máy chủ giữ
+    const ct = lang.themCongTrinh(Object.assign({ id: c.id, chu: c.chu, cuaMinh: c.chu === tenChuan, loai: c.loai, x: c.x, y: c.y, rong: c.rong, sau: c.sau, xong: !!c.xongLuc,
+      giayXay: (CT[c.loai] || CT.leu).giayXay, cap: c.cap || 1, tienDo: Number.isFinite(c.tienDo) ? c.tienDo : 0, xayLuc: c.xayLuc }, // TC_D03A: tiến độ máy chủ giữ
+      c.loai === "ruong" && Number.isFinite(c.trongLuc) ? ruongMc(c) : {})); // TC_D03B2: lúa theo máy chủ
     if (c.chu !== tenChuan) ctBan.set(c.id, ct);
     else if (c.loai === "leu") leuBe = ct;
     return ct;
@@ -142,12 +151,18 @@ export async function vaoThungLung(the) {
   function dongBoCongTrinh(ds) {
     const con = new Set();
     for (const c of ds || []) {
-      if (c.chu === tenChuan) continue; // nhà của mình: máy này tự giữ
+      if (c.chu === tenChuan) { // nhà của mình: máy này tự giữ; TC_D03B2: lúa của ruộng theo máy chủ (trồng muộn hơn / đã gặt hết / máy khác trồng lại)
+        if (c.loai === "ruong" && Number.isFinite(c.trongLuc)) lang.dongBoRuong(c.id, ruongMc(c));
+        continue;
+      }
       con.add(c.id);
       const ct = ctBan.get(c.id);
       if (!ct) nhanCongTrinh(c);
-      else if (c.xongLuc) lang.xongCongTrinh(ct);
-      else if (Number.isFinite(c.tienDo)) ct.tienDo = c.tienDo; // TC_D03A: nhà bạn lớn theo tiến độ máy chủ
+      else {
+        if (c.xongLuc) lang.xongCongTrinh(ct);
+        else if (Number.isFinite(c.tienDo)) ct.tienDo = c.tienDo; // TC_D03A: nhà bạn lớn theo tiến độ máy chủ
+        if (c.loai === "ruong" && Number.isFinite(c.trongLuc)) Object.assign(ct, ruongMc(c)); // TC_D03B2: ruộng bạn chín / gặt theo máy chủ
+      }
     }
     // Máy chủ trả mọi nhà ở vùng đã khám phá (chỉ thêm, không bớt): nhà bạn đã thấy mà nay không còn
     // là đã bị bỏ (TC_D02C: bạn đặt cổng đè lên tường)
@@ -179,7 +194,7 @@ export async function vaoThungLung(the) {
     const n = l && l.viec != null ? lang.nguonTheoMa(l.viec) : null;
     const ctXay = l && Number.isInteger(l.xay) ? ctMinh(l.xay) : null;
     if (ctXay) lang.lenhXay(dv, ctXay, (l.hang || []).map(ctMinh).filter(Boolean)); // TC_D03A: đang xây thì xây tiếp
-    else if (n && lang.dangSong(n)) lang.giaoViec(dv, n);
+    else if (n && (lang.dangSong(n) || lang.choRuong(n))) lang.giaoViec(dv, n); // TC_D03B2: ruộng đang lớn: ra đứng chờ
     else if (l && l.khamPha) { if (!coTuKham || !lang.khamPhaTuDo(dv)) dv.ranh = true; }
     else if (l && !p.xong) lang.lenhDi(dv, { x: l.den[0], y: l.den[1] });
     else if (l && l.viec != null) dv.ranh = true; // nguồn đang làm đã hết: đứng chờ việc
@@ -235,7 +250,7 @@ export async function vaoThungLung(the) {
   // Phần máy chủ cắt bớt (bạn lấy trước / nhanh quá tốc độ): trừ dần khỏi kho trên máy (đồ còn đang
   // vác thì trừ khi về kho) -> kho trên máy luôn khớp máy chủ, không phải chờ tải lại
   const no = {};
-  const taiNguyenO = ma => { const x = ma % W, k = banDo.kyHieu[banDo.o[(ma - x) / W][x]], ng = k && lang.CH.nguon[k[0]]; return ng ? ng.taiNguyen : null; };
+  const taiNguyenO = ma => { if (ma < 0) return lang.CH.nguon.ruong.taiNguyen; const x = ma % W, k = banDo.kyHieu[banDo.o[(ma - x) / W][x]], ng = k && lang.CH.nguon[k[0]]; return ng ? ng.taiNguyen : null; };
   function truNo() {
     let doi = false;
     for (const k in no) { const t = Math.min(no[k], lang.kho[k] || 0); if (t > 0) { lang.kho[k] -= t; no[k] -= t; doi = true; } }
@@ -320,7 +335,9 @@ export async function vaoThungLung(the) {
   // từ chỗ vừa xây.
   // Điều kiện ô xây được trên máy bé: sương, người của bạn đang đứng (đang thấy), lãnh địa bạn, cổng đè tường mình
   const coBanDung = (x, y) => { for (const b of ban.values()) if (b.h.vo.visible && Math.floor(b.dv.x) === x && Math.floor(b.dv.z) === y) return true; return false; };
-  const theXay = loai => ({ lang, suong, coDoiThu: coBanDung, laLanhDiaDoiThu: (x, y) => !!lanhDia.chuO(x, y, tenChuan), deLen: loai === "cong" ? laTuongMinh : null });
+  const MR = CT.ruong.ruong; // TC_D03B2
+  const theXay = loai => ({ lang, suong, coDoiThu: coBanDung, laLanhDiaDoiThu: (x, y) => !!lanhDia.chuO(x, y, tenChuan), deLen: loai === "cong" ? laTuongMinh : null,
+    ganLeu: loai === "ruong" ? BD.kiemGanLeu(leuBe && leuBe.xong ? leuBe : null, MR.cachLeuToiDa) : null }); // TC_D03B2: ruộng gần Lều trại
   const soiDat = taoSoiDat(ctx, the.diaHinh, (x, y, r, s) => BD.oXayDuocVung(theXay(cheDo), x, y, r, s));
   let cheDo = null, choXem = null, dangGui = false, menuMo = false, dauTuong = null;
   const TN = lang.CH.taiNguyen;
@@ -344,7 +361,8 @@ export async function vaoThungLung(the) {
   }
   // Chỗ xây được gần Thủ lĩnh nhất: hiện sẵn ô xanh để bé thấy ngay "chỗ xanh" là gì
   function choGoiY(loai) {
-    const m = CT[loai], cx = Math.floor(dvTl.x - m.rong / 2 + 0.5), cy = Math.floor(dvTl.z - m.sau / 2 + 0.5), the2 = theXay(loai);
+    const m = CT[loai], the2 = theXay(loai), goc = loai === "ruong" && leuBe ? { x: leuBe.x + R / 2, z: leuBe.y + S / 2 } : dvTl; // TC_D03B2: ruộng quanh Lều
+    const cx = Math.floor(goc.x - m.rong / 2 + 0.5), cy = Math.floor(goc.z - m.sau / 2 + 0.5);
     for (let r = 2; r <= 10; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
       if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
       if (BD.oXayDuocVung(the2, cx + dx, cy + dy, m.rong, m.sau).duoc) return { x: cx + dx, y: cy + dy, rong: m.rong, sau: m.sau, xoay: false };
@@ -474,6 +492,18 @@ export async function vaoThungLung(the) {
       moLeu(true); return true;
     }
     if (leuMo) moLeu(false);
+    // TC_D03B2: chạm ruộng của mình: đang chọn nông dân -> ra gặt (lúa chưa chín thì đứng chờ trên ruộng);
+    // không -> xem ruộng (bãi đã gặt: nút trồng lại)
+    const nr = lang.ruongTaiO(o.x, o.y);
+    if (nr) {
+      if (h && !h.dv.laBan && h.vaiTro === "nong_dan" && nr.trangThai !== "het") {
+        if (lang.giaoViec(h.dv, nr)) { moRuong(null); baoGoiY("🌾 " + h.dv.ten + " · Ruộng · " + loiLua(nr) + "."); }
+        else baoGoiY("❌ Chưa có lối tới ruộng.");
+        return true;
+      }
+      moRuong(nr); return true;
+    }
+    if (ruongMo) moRuong(null);
     if (!h) return false;
     const ct = lang.congTrinh.find(c => c.cuaMinh !== false && !c.xong && o.x >= c.x && o.x < c.x + c.rong && o.y >= c.y && o.y < c.y + c.sau);
     if (!ct || h.dv.laBan) return false;
@@ -540,6 +570,7 @@ export async function vaoThungLung(the) {
     else if (ct.loai === "tuong" && !(dv.hangXay || []).length && !dv.xay) baoGoiY("🧱 " + dv.ten + " dựng xong đoạn tường!");
     else if (LA_KHO[ct.loai]) { const t = LA_KHO[ct.loai]; baoGoiY("📦 " + CT[ct.loai].ten + " hoàn thành · sức chứa " + TN[t].ten + " " + lang.sucChua(t) + " " + TN[t].bieuTuong + "."); } // TC_D03B1
     else if (ct.loai === "nha_o") baoGoiY("🏠 Nhà ở hoàn thành · chỗ ở " + lang.danSo() + "/" + lang.choO() + ".");
+    else if (ct.loai === "ruong") baoGoiY("🌾 Ruộng hoàn thành · chín sau " + MR.chinGiay + " giây · " + KC_LANG.sanLuongRuong(cauHinh, ct.cap) + " " + TN.luong_thuc.bieuTuong + "/vụ."); // TC_D03B2
     capNhatNut();
   }
   // Móng của mình chưa xong mà không ai đang dựng (tải lại trang, người xây bị gọi đi việc khác)
@@ -571,9 +602,57 @@ export async function vaoThungLung(the) {
     + " · 🧑‍🌾 " + giaChu(SINH.gia, 1) + " / " + SINH.giay + " giây.";
   function moLeu(mo) {
     leuMo = !!mo;
-    if (leuMo) { menuMo = false; baoGoiY(loiLeu()); }
+    if (leuMo) { menuMo = false; ruongMo = null; baoGoiY(loiLeu()); }
     capNhatNut();
   }
+
+  // ---------------- Ruộng (TC_D03B2) ----------------
+  // Chạm ruộng của mình (không chọn nông dân): dòng báo giai đoạn bằng số + nút "🌱 Trồng lại" khi là bãi đã gặt.
+  // Người vừa gặt ruộng thành bãi (dv.ruongCu) đang rảnh thì trồng lại xong tự ra ruộng lại.
+  let ruongMo = null;
+  const giayChu = g => (g >= 60 ? Math.floor(g / 60) + " phút " + (g % 60) + " giây" : g + " giây");
+  const conGiay = luc => Math.max(0, Math.ceil((luc - lang.bayGio()) / 1000));
+  function loiLua(n) {
+    const ct = n.ct, bt = TN.luong_thuc.bieuTuong;
+    if (ct.gatLuc != null) return "đã gặt · thành cỏ sau " + giayChu(conGiay(ct.gatLuc + MR.coSauGiay * 1000));
+    if (n.trangThai === "mam") return "chín sau " + giayChu(conGiay(ct.trongLuc + MR.chinGiay * 1000)) + " · " + n.con + " " + bt;
+    return "chín · còn " + n.con + "/" + n.toiDa + " " + bt;
+  }
+  const loiRuong = n => "🌾 Ruộng · " + loiLua(n) + " · 🧑‍🌾 " + lang.donVi.filter(d => d.viec === n).length
+    + (n.ct.gatLuc != null ? " · 🌱 " + giaChu(MR.giaTrongLai, 1) : "") + ".";
+  function moRuong(n) {
+    ruongMo = n || null;
+    if (ruongMo) { menuMo = false; leuMo = false; baoGoiY(loiRuong(ruongMo)); }
+    capNhatNut();
+  }
+  async function trongLai() {
+    const n = ruongMo;
+    if (!n || dangGui) return { ok: false, lyDo: "đang gửi" };
+    const t = thieuGia(MR.giaTrongLai, 1);
+    if (t) { baoGoiY("❌ Thiếu " + TN[t].ten + " (" + (lang.kho[t] || 0) + "/" + MR.giaTrongLai[t] + " " + TN[t].bieuTuong + ")."); return { ok: false, ma: "thieu" }; }
+    dangGui = true;
+    const kq = await mayChu.trongLai(ten, n.ct.id);
+    dangGui = false;
+    if (!kq.ok) { baoGoiY("❌ " + kq.lyDo); return kq; }
+    truKho(MR.giaTrongLai, 1);
+    lang.trongLaiRuong(n.ct, gioLoi(kq.trongLuc));
+    for (const d of dsNd) if (d.ruongCu === n && !d.xay && (d.ranh || !d.viec)) lang.giaoViec(d, n);
+    baoGoiY("🌱 Ruộng trồng lại · chín sau " + MR.chinGiay + " giây · " + n.con + " " + TN.luong_thuc.bieuTuong + ".");
+    capNhatNut();
+    return kq;
+  }
+  lang.nghe(su => {
+    if (su.loai !== "ruong" || dangNap || !su.ct || su.ct.cuaMinh === false) return;
+    if (su.ct.giaiDoan === "chin" && su.n.trangThai === "song") baoGoiY("🌾 Ruộng chín · " + su.n.con + " " + TN.luong_thuc.bieuTuong + ".");
+    else if (su.ct.giaiDoan === "bai") {
+      for (const d of dsNd) if (d.viec === su.n) d.ruongCu = su.n;
+      baoGoiY("🌾 Ruộng gặt xong · 🌱 trồng lại " + giaChu(MR.giaTrongLai, 1) + " trong " + giayChu(MR.coSauGiay) + ".");
+    }
+  });
+  const nutTrong = document.createElement("button");
+  nutTrong.className = "d3Nut d3Khung"; nutTrong.type = "button"; nutTrong.id = "d3TrongLai"; nutTrong.hidden = true;
+  nutTrong.addEventListener("click", () => trongLai());
+  $("d3SoiDat").parentNode.insertBefore(nutTrong, $("d3SoiDat"));
   async function sinhNd() {
     if (dangGui) return { ok: false, lyDo: "đang gửi" };
     const t = thieuGia(SINH.gia, 1);
@@ -627,6 +706,7 @@ export async function vaoThungLung(the) {
       : loai === "cong" ? "🚪 Chạm lên tường của con (hoặc chỗ trống) để đặt Cổng 3 ô. Người của con đi qua cổng được, bạn khác thì không."
         : loai === "thap_canh" ? "🗼 Ô vuông XANH là chỗ xây được Tháp canh: chạm vào đó để xây. Từ tháp nhìn xa " + BD.tamNhinCt(CB, "thap_canh", lang.chungLoai) + " ô."
           : kho ? "📦 " + m.ten + " · " + giaChu(m.gia, 1) + " · +" + KC_LANG.sucChuaCt(cauHinh, loai, 1, lang.chungLoai, kho) + " " + TN[kho].bieuTuong + " sức chứa."
+            : loai === "ruong" ? "🌾 Ruộng · " + giaChu(m.gia, 1) + " · " + KC_LANG.sanLuongRuong(cauHinh, 1) + " " + TN.luong_thuc.bieuTuong + "/vụ · chín sau " + MR.chinGiay + " giây · cách Lều trại ≤ " + MR.cachLeuToiDa + " ô." // TC_D03B2
             : "🏠 " + m.ten + " · " + giaChu(m.gia, 1) + " · +" + (m.choO || 0) + " chỗ ở (👥 " + lang.danSo() + "/" + lang.choO() + ").");
   }
   function capNhatNut() {
@@ -662,6 +742,11 @@ export async function vaoThungLung(the) {
       if (chipDan.textContent !== c) { chipDan.textContent = c; chipDan.setAttribute("aria-label", "Dân số " + lang.danSo() + " trên " + lang.choO() + " chỗ ở" + (hang ? ", " + hang.so + " người đang chờ sinh" : "")); }
     }
     if (!xongLeu || cheDo || menuMo) leuMo = false;
+    // TC_D03B2: ruộng đang xem đã thành cỏ (mất) / đang xây / mở menu thì đóng; bãi thì có nút trồng lại
+    if (ruongMo && (cheDo || menuMo || leuMo || !lang.ruong().includes(ruongMo))) ruongMo = null;
+    const coBai = !!ruongMo && ruongMo.ct.gatLuc != null;
+    nutTrong.hidden = !coBai;
+    if (coBai) datNut(nutTrong, "🌱<span class=\"d3Chu\"> Trồng lại</span> " + giaChu(MR.giaTrongLai, 1), "Trồng lại ruộng, giá " + giaChu(MR.giaTrongLai, 1));
     nutSinh.hidden = !leuMo;
     if (leuMo) datNut(nutSinh, "🧑‍🌾<span class=\"d3Chu\"> Sinh nông dân</span> " + giaChu(SINH.gia, 1) + (hang ? " · ⏳" + hang.so : ""),
       "Sinh nông dân, giá " + giaChu(SINH.gia, 1) + (hang ? ", đang chờ " + hang.so : ""));
@@ -729,7 +814,11 @@ export async function vaoThungLung(the) {
     if ((demLuu += dt) >= CB.chuKyLuuKhamPha) { demLuu = 0; luuKhamPha(); }
     if ((demGui += dt) >= CB.chuKyGui) { demGui = 0; chuKy(); }
     veBan();
-    if ((demNut += dt) >= 0.5) { demNut = 0; capNhatNut(); if (leuMo && $("d3GoiY").textContent.startsWith("🏕️ Lều trại")) baoGoiY(loiLeu()); } // đếm giây sinh; không đè lời báo khác
+    if ((demNut += dt) >= 0.5) {
+      demNut = 0; capNhatNut();
+      if (leuMo && $("d3GoiY").textContent.startsWith("🏕️ Lều trại")) baoGoiY(loiLeu()); // đếm giây sinh; không đè lời báo khác
+      if (ruongMo && $("d3GoiY").textContent.startsWith("🌾 Ruộng ·")) baoGoiY(loiRuong(ruongMo)); // TC_D03B2: đếm giây chín / thành cỏ
+    }
     // TC_D03B1: tới giờ người đầu hàng ra (giờ máy chủ) -> hỏi lại máy chủ ngay để nhận nông dân mới
     if (hang && !dangHoi && hoiSinh !== hang.batDau && mayChu.gio() >= hang.batDau + SINH.giay * 1000) { hoiSinh = hang.batDau; chuKy(); }
     if (leuBe && !leuBe.xong && dvTl.trangThai === "xay" && (demXay += dt) >= 0.25) { demXay = 0; baoGoiY("🔨 " + dvTl.ten + " đang dựng Lều trại… " + Math.round(leuBe.tienDo * 100) + "%"); }
@@ -756,8 +845,9 @@ export async function vaoThungLung(the) {
     const xong = Object.keys(dem).map(l => (l === "tuong" ? dem[l] + " ô " : dem[l] > 1 ? dem[l] + " " : "") + ((CT[l] || {}).ten || l));
     const day = (v.day || []).filter(t => TN[t]).map(t => "Kho " + TN[t].ten + " đầy");
     const sinh = v.sinh > 0 ? "+" + v.sinh + " nông dân" : ""; // TC_D03B1: hàng sinh ở lều chạy cả lúc vắng
-    if (!thu.length && !xong.length && !day.length && !sinh) return null;
-    return "⏳ Khi vắng mặt (" + tg + "): " + [thu.join(" · "), sinh, xong.length ? "hoàn thành " + xong.join(", ") : "", day.join(", ")].filter(Boolean).join(" · ") + ".";
+    const gat = v.gat > 0 ? v.gat + " Ruộng gặt xong" : ""; // TC_D03B2
+    if (!thu.length && !xong.length && !day.length && !sinh && !gat) return null;
+    return "⏳ Khi vắng mặt (" + tg + "): " + [thu.join(" · "), sinh, xong.length ? "hoàn thành " + xong.join(", ") : "", gat, day.join(", ")].filter(Boolean).join(" · ") + ".";
   }
   function batDau() {
     dk.chon(hTl);
@@ -803,8 +893,12 @@ export async function vaoThungLung(the) {
       choBaoXong: () => choBaoXong.size, dauTuong: () => dauTuong, xoayCong, luiMotBuoc,
       // TC_D03B1: dân số, hàng sinh, mở Lều + bấm sinh như bé, chỗ cất của nông dân (kho riêng)
       danSo: () => lang.danSo(), choO: () => lang.choO(), hang: () => hang, leuMo: () => leuMo, moLeu, sinhNd,
-      chamLeu: () => !!leuBe && uiDk.chamO(null, { x: leuBe.x, y: leuBe.y })
+      chamLeu: () => !!leuBe && uiDk.chamO(null, { x: leuBe.x, y: leuBe.y }),
+      // TC_D03B2: ruộng của mình (giai đoạn, lúa còn, số người gặt), chạm ruộng như bé (iNd: nông dân thứ mấy, null: chưa chọn ai), trồng lại
+      ruong: () => lang.ruong().map(n => ({ id: n.ct.id, x: n.ct.x, y: n.ct.y, gd: n.ct.giaiDoan, con: n.con, toiDa: n.toiDa, nguoi: lang.donVi.filter(d => d.viec === n).length })),
+      chamRuong: (iNd, x, y) => { const d = iNd == null ? null : dsNd[iNd]; return uiDk.chamO(d ? { dv: d, vaiTro: d.vaiTro } : null, { x, y }); },
+      ruongMo: () => ruongMo && ruongMo.ct.id, trongLai
     }
   };
 }
-// 28/10/2026 15:30 - BƯỚC: TC_D03B1 (4 kho, nhà ở, dân số, Lều sinh nông dân)
+// 28/10/2026 19:30 - BƯỚC: TC_D03B2 (ruộng: xây, gặt, xem, trồng lại)
