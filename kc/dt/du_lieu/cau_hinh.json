@@ -24,8 +24,10 @@
     "tocDo": { "di": 1.5, "chay": 2.3, "chayKhiXaHon": 7 },
     "rung": { "tiLeCo": { "nho": 0.3, "vua": 0.45, "to": 0.25 }, "soLoai": 4 },
     "mocLai": { "ganRungO": 3, "cachLeuO": 6, "tiLeCoMoi": { "nho": 0.4, "vua": 0.4, "to": 0.2 } },
-    "vangMat": { "sauGiay": 30, "tinhLaiGiay": 60, "heSoDuong": 1.3 }
+    "vangMat": { "sauGiay": 30, "tinhLaiGiay": 60, "heSoDuong": 1.3 },
+    "khamPhaTuDo": { "mo": false }
   },
+  "_ghiChuKhamPha": "Khối 'lang.khamPhaTuDo' (TC_D03A, người dùng 28/10/2026: 'tự động dò đường, sau này dành cho quân do thám và phải tốn phí lương thực và phải nâng cấp mới có tự động, lên đời 2 mới có tính năng này'): mo = false -> Đồ đá KHÔNG có nút '🔭 Đi khám phá' (bé chọn người rồi chạm chỗ tối để khám phá bằng tay). Code tự dò vẫn giữ (dt_lang.js khamPhaTuDo) để mở cho quân do thám từ Đồ đồng.",
   "_ghiChuVangMat": "Khối 'lang.vangMat' (TC_D03A, 28/10/2026): bé không liên lạc máy chủ quá 'sauGiay' giây = vắng mặt -> máy chủ tính bù việc của nông dân (chặt / đào / hái theo số chuyến đi về lều, xây theo số người), không giới hạn số giờ; kho đầy / nguồn cạn hết nguồn sát bên thì dừng. 'tinhLaiGiay': bé khác đang chơi thì máy chủ tính bù cho bé vắng mặt tối đa mỗi bấy nhiêu giây (nguồn chung vơi đúng, nhà xong đúng giờ). 'heSoDuong': quãng đi thật dài hơn đường thẳng bấy nhiêu lần. SỨC CHỨA: congTrinh.*.sucChua = số tối đa MỖI loại tài nguyên công trình đó chứa (Lều trại 300; kho riêng từng loại: TC_D03B); kho đầy thì nông dân đứng chờ, phần đang vác giữ trên tay.",
   "_ghiChuXay": "Khối 'xay' (TC_D03A, 28/10/2026, dac_ta_cong_trinh.md mục 1): chỉ nông dân xây (Thủ lĩnh chỉ dựng Lều trại đầu tiên). n người cùng xây: thời gian = giayXay x heSoCap.thoiGian[cấp - 1] x (heSoNguoi + 1) / (n + heSoNguoi) -> 1 người 100 %, 2 người 75 %, 4 người 50 %. Điều người đi thì công trình dừng ở % đang có, điều người tới thì xây tiếp. Máy chủ chấp nhận báo xong sớm tối đa 'treGiay' giây (giờ máy bé lệch).",
   "xay": { "heSoNguoi": 2, "heSoCap": { "thoiGian": [1, 1.5, 2], "gia": [1, 1.5, 2.5] }, "treGiay": 2 },

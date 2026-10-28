@@ -32,6 +32,8 @@
 //              trang để lấy phần máy chủ đã tính bù. Lời báo mới theo giọng chuyên nghiệp (Ke_Hoach_Dau_Truong mục 11).
 //              Góp ý người dùng thử: đang chọn chỗ xây thì chuột phải / Esc (máy tính), giữ ngón ~0,7 giây (điện
 //              thoại) = bỏ chỗ đầu đoạn tường, lần nữa = thôi xây; cổng có nút "🔄 Xoay cổng" (phím R) đổi ngang / dọc.
+//              Nút "🔭 Đi khám phá" chỉ hiện khi cau_hinh lang.khamPhaTuDo.mo (người dùng: tự dò đường dành cho
+//              quân do thám, tốn lương thực, phải nâng cấp, từ Đồ đồng); Đồ đá khám phá bằng tay.
 // HÀM KHAI RA:
 //   vaoThungLung(the) -> Promise<vung>   (gọi sau khi đã dựng lõi + các phần vẽ, trước khung đầu)
 //     the = { ctx, cam, lang, banDo, cauHinh, diaHinh, boNv, dk, uiDk (ui đã đưa cho dk: thêm móc),
@@ -158,6 +160,8 @@ export async function vaoThungLung(the) {
   if (!(leuBe && !leuBe.xong) && !pTl.xong) lang.lenhDi(dvTl, { x: dvMcTl.lenh.den[0], y: dvMcTl.lenh.den[1] }); // đang đi dở: đi tiếp
 
   const dsNd = [];
+  // TC_D03A (người dùng): tự dò đường dành cho quân do thám từ Đồ đồng; Đồ đá chỉ khám phá bằng tay
+  const coTuKham = !!(cauHinh.lang.khamPhaTuDo && cauHinh.lang.khamPhaTuDo.mo);
   const ctMinh = id => lang.congTrinh.find(c => c.id === id && c.cuaMinh !== false && !c.xong) || null;
   function nhanNongDan(d) {
     const cu = dsNd.find(x => x.idMayChu === d.id);
@@ -169,7 +173,7 @@ export async function vaoThungLung(the) {
     const ctXay = l && Number.isInteger(l.xay) ? ctMinh(l.xay) : null;
     if (ctXay) lang.lenhXay(dv, ctXay, (l.hang || []).map(ctMinh).filter(Boolean)); // TC_D03A: đang xây thì xây tiếp
     else if (n && lang.dangSong(n)) lang.giaoViec(dv, n);
-    else if (l && l.khamPha) { if (!lang.khamPhaTuDo(dv)) dv.ranh = true; }
+    else if (l && l.khamPha) { if (!coTuKham || !lang.khamPhaTuDo(dv)) dv.ranh = true; }
     else if (l && !p.xong) lang.lenhDi(dv, { x: l.den[0], y: l.den[1] });
     else if (l && l.viec != null) dv.ranh = true; // nguồn đang làm đã hết: đứng chờ việc
     else if (!l || (l.xay == null && !l.khamPha)) dv.ranh = true; // TC_D03A: không có việc (xây xong lúc vắng mặt...): dấu "!"
@@ -527,7 +531,7 @@ export async function vaoThungLung(the) {
       if (n) lang.giaoViec(dv, n); else dv.ranh = true;
     });
     capNhatNut();
-    baoGoiY("🎉 Lều trại dựng xong! " + kq.donVi.length + " nông dân đã tới và đi làm ngay. Chạm nông dân 🧑‍🌾 rồi chạm chỗ tối để đi khám phá, hoặc bấm 🔭.");
+    baoGoiY("🎉 Lều trại dựng xong! " + kq.donVi.length + " nông dân đã tới và đi làm ngay. Chạm nông dân 🧑‍🌾 rồi chạm chỗ tối để đi khám phá" + (coTuKham ? ", hoặc bấm 🔭." : "."));
   }
 
   // ---------------- Nút ----------------
@@ -588,7 +592,7 @@ export async function vaoThungLung(the) {
     const soDo = hienMenu ? dangDo().length : 0;
     nutXay.tiep.hidden = !soDo;
     if (soDo) datNut(nutXay.tiep, "🔨<span class=\"d3Chu\"> Dựng tiếp</span> " + soDo, "Dựng tiếp " + soDo + " chỗ xây dở");
-    $("d3KhamPhaNut").hidden = !dsNd.length;
+    $("d3KhamPhaNut").hidden = !coTuKham || !dsNd.length;
     const ve = leuBe ? "🏕️<span class=\"d3Chu\"> Về lều</span>" : "👑<span class=\"d3Chu\"> Về Thủ lĩnh</span>";
     if ($("d3VeLang").innerHTML !== ve) { $("d3VeLang").innerHTML = ve; $("d3VeLang").setAttribute("aria-label", leuBe ? "Về lều" : "Về chỗ Thủ lĩnh"); }
   }
@@ -611,6 +615,7 @@ export async function vaoThungLung(the) {
   });
   $("d3VeLang").addEventListener("click", () => (leuBe ? cam.nhinVe(leuBe.x + R / 2, leuBe.y + S / 2 + 2) : cam.nhinVe(dvTl.x, dvTl.z)));
   $("d3KhamPhaNut").addEventListener("click", () => {
+    if (!coTuKham) return;
     if (!dsNd.length) { baoGoiY("Dựng Lều trại xong mới có nông dân đi khám phá con nhé."); return; }
     const chon = dk.dangChon();
     const ds = chon && chon.vaiTro === "nong_dan" ? [chon.dv] : dsNd.filter(d => !d.tuKhamPha && (d.ranh || (d.trangThai === "dung" && !d.viec)));
@@ -679,7 +684,7 @@ export async function vaoThungLung(the) {
     const vang = loiVang(vao.vang);
     if (leuBe && leuBe.xong) {
       cam.nhinVe(leuBe.x + R / 2, leuBe.y + S / 2 + 2);
-      baoGoiY(vang || "Nông dân vẫn đang làm việc. Bấm 🔭 để cho nông dân rảnh đi khám phá.");
+      baoGoiY(vang || "Nông dân vẫn đang làm việc. Chọn người rồi chạm chỗ tối để khám phá.");
     } else if (leuBe) {
       cam.nhinVe(leuBe.x + R / 2, leuBe.y + S / 2);
       baoGoiY("👑 " + dvTl.ten + " đang dựng tiếp Lều trại…");
