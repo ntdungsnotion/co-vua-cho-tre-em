@@ -43,7 +43,7 @@
 //       trữ lượng theo số máy chủ trả, lều của bạn khác không là chỗ cất đồ); TC_D02B3b (hỏi lại máy
 //       chủ: thấy bạn đi lại, nhà của bạn, mọc lại theo giờ máy chủ, trừ kho phần máy chủ cắt);
 //       TC_D02C (menu Xây: tường, cổng, tháp canh; lãnh địa); TC_D03A (nông dân xây, tiến độ máy chủ, vắng mặt, sức chứa)
-// NGÀY: 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 14:00
+// NGÀY: 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_may_chu.js (KC_DT_MAY_CHU), dt3d_suong_mu.js, dt3d_o_xay.js
 // ================================================================
 import { taoVeSuong } from "./dt3d_suong_mu.js";
@@ -661,4 +661,4 @@ export async function vaoThungLung(the) {
     }
   };
 }
-// 28/10/2026 14:00 - BƯỚC: TC_D03A
+// 28/10/2026 10:50 - BƯỚC: TC_D03A

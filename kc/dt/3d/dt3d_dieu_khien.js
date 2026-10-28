@@ -19,7 +19,7 @@
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (datCheDoCham: chế độ chạm riêng);
 //       TC_D02B2b (ô chạm kèm điểm chính xác, nguồn trong vùng đen, lời báo khám phá);
 //       TC_D02B3b (người của bạn khác không chọn được, hình đang ẩn không chạm được); TC_D03A (móc chamO)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 14:00
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 10:50
 // ================================================================
 import * as THREE from "three";
 
@@ -137,4 +137,4 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
 
   return { chon, dangChon: () => dangChon, datCheDoCham(fn) { cheDoRieng = fn || null; } };
 }
-// 28/10/2026 14:00 - BƯỚC: TC_D03A
+// 28/10/2026 10:50 - BƯỚC: TC_D03A

@@ -37,7 +37,7 @@
 //     chung vơi đúng). vaoVung trả vang = { giay, thu{tài nguyên: số}, xong[loại], day{tài nguyên} }.
 //   - guiThuHoach: kho mỗi loại không quá sức chứa (congTrinh.*.sucChua của công trình đã xong).
 // BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A
-// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 11:30
+// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO)
 // ================================================================
 (function (goc) {
@@ -437,4 +437,4 @@
 
   goc.KC_DT_MAY_CHU = { taoMayChuGia };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 11:30 - BƯỚC: TC_D03A
+// 28/10/2026 10:50 - BƯỚC: TC_D03A

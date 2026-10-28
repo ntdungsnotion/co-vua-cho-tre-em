@@ -20,7 +20,7 @@
 //   TC_D03A: guiLenh gửi thêm xay (id công trình đang tới xây) + hang (móng xây tiếp); vaoVung trả vang (lời báo
 //     vắng mặt), layQuanh: congTrinh[].tienDo (tiến độ máy chủ giữ).
 // BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A
-// NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 13:30
+// NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
 // ================================================================
 (function (goc) {
@@ -86,4 +86,4 @@
 
   goc.KC_DT_MAY_CHU_SB = { taoMayChuSupabase };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 13:30 - BƯỚC: TC_D03A
+// 28/10/2026 10:50 - BƯỚC: TC_D03A

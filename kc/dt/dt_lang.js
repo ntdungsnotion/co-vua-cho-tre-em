@@ -42,7 +42,7 @@
 //       viTriTuLenh; lenhXay(dv, ct, hang) dựng cả đoạn tường lần lượt; boCongTrinh(ct) khi cổng đè tường;
 //       sự kiện bo_cong_trinh); TC_D03A (xây theo số người, chỉ nông dân xây, sức chứa kho, "cat" kèm
 //       nguồn, lenh_di kèm công trình đang xây; tocDoXay dùng chung với máy chủ giả)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 11:00
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI)
 // ================================================================
 (function (goc) {
@@ -700,4 +700,4 @@
 
   goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS, tocDoXay, duocXay };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 11:00 - BƯỚC: TC_D03A
+// 28/10/2026 10:50 - BƯỚC: TC_D03A
