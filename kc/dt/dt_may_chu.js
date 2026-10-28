@@ -45,7 +45,7 @@
 //   TC_D03B2 - RUỘNG (SQL làm y hệt): ruộng xong (hoanThanh) có trongLuc / con (sanLuong theo cấp) / gatLuc; chín sau
 //     chinGiay giây giờ máy chủ. Lệnh viec < 0 = gặt ruộng id -viec: guiThuHoach nhận khi chín, gặt hết -> gatLuc (bãi);
 //     tinhVang gặt bù khi vắng mặt (chờ chín, chuyến về chỗ cất gần nhất như hái quả; vang.gat = số ruộng gặt hết);
-//     donRuong: bãi quá coSauGiay giây thành cỏ (bỏ ruộng); xay ruộng: tâm cách tâm Lều trại ≤ cachLeuToiDa ô (xa_leu);
+//     donRuong: bãi quá coSauGiay giây thành cỏ (bỏ ruộng); ruộng xây ở bất kỳ chỗ nào hợp lệ như mọi công trình;
 //     trongLai(ten, id) -> { ok, id, trongLuc, con, kho } | { ok: false, ma: het_bai | chua_gat | thieu }.
 // BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2
 // NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05
@@ -312,8 +312,7 @@
       const oDoiThu = new Set();
       for (const d of tt.donVi) if (d.chu !== ten) { const p = viTri(d); oDoiThu.add(Math.floor(p.z) * vung.rong + Math.floor(p.x)); }
       return { lang, suong: suongCua(ten), coDoiThu: (ox, oy) => oDoiThu.has(oy * vung.rong + ox),
-        laLanhDiaDoiThu: (ox, oy) => !!lanhDia.chuO(ox, oy, ten), deLen: loai === "cong" ? laRaoCua(ten, "tuong") : null,
-        ganLeu: loai === "ruong" ? BD.kiemGanLeu(leuXongCua(ten), MR.cachLeuToiDa) : null }; // TC_D03B2
+        laLanhDiaDoiThu: (ox, oy) => !!lanhDia.chuO(ox, oy, ten), deLen: loai === "cong" ? laRaoCua(ten, "tuong") : null };
     }
 
     const api = {

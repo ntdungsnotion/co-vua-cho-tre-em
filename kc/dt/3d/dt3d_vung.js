@@ -38,7 +38,7 @@
 //              một loại, nông dân về chỗ cất gần nhất đúng loại); chạm Lều trại (cả khi chưa chọn ai) -> nút "🧑‍🌾 Sinh
 //              nông dân" (chỉ nhà chính sinh nông dân; giá + giây ở cau_hinh congTrinh.leu.sinh), ô "👥 dân số/chỗ ở";
 //              máy chủ ra người theo giờ máy chủ, tới giờ thì hỏi lại ngay để nhận người mới (đứng chờ việc, dấu "!").
-//            - (TC_D03B2) menu Xây thêm 🌾 Ruộng (3 x 3, cách Lều trại ≤ cachLeuToiDa ô: chỗ xa soi đỏ); chọn nông dân rồi chạm
+//            - (TC_D03B2) menu Xây thêm 🌾 Ruộng (3 x 3, đặt ở bất kỳ chỗ nào hợp lệ; ô xanh gợi ý quanh Lều); chọn nông dân rồi chạm
 //              ruộng = ra gặt (lúa chưa chín thì đứng chờ); chạm ruộng khi chưa chọn nông dân = xem ruộng (giây còn lại tới
 //              chín / thành cỏ, lúa còn, số người gặt) + nút "🌱 Trồng lại" khi là bãi đã gặt; người vừa gặt ruộng đó
 //              đang rảnh thì tự ra lại. Giờ ruộng máy chủ trả đổi sang đồng hồ của lõi (gioLoi); hỏi lại máy chủ thì
@@ -336,8 +336,7 @@ export async function vaoThungLung(the) {
   // Điều kiện ô xây được trên máy bé: sương, người của bạn đang đứng (đang thấy), lãnh địa bạn, cổng đè tường mình
   const coBanDung = (x, y) => { for (const b of ban.values()) if (b.h.vo.visible && Math.floor(b.dv.x) === x && Math.floor(b.dv.z) === y) return true; return false; };
   const MR = CT.ruong.ruong; // TC_D03B2
-  const theXay = loai => ({ lang, suong, coDoiThu: coBanDung, laLanhDiaDoiThu: (x, y) => !!lanhDia.chuO(x, y, tenChuan), deLen: loai === "cong" ? laTuongMinh : null,
-    ganLeu: loai === "ruong" ? BD.kiemGanLeu(leuBe && leuBe.xong ? leuBe : null, MR.cachLeuToiDa) : null }); // TC_D03B2: ruộng gần Lều trại
+  const theXay = loai => ({ lang, suong, coDoiThu: coBanDung, laLanhDiaDoiThu: (x, y) => !!lanhDia.chuO(x, y, tenChuan), deLen: loai === "cong" ? laTuongMinh : null });
   const soiDat = taoSoiDat(ctx, the.diaHinh, (x, y, r, s) => BD.oXayDuocVung(theXay(cheDo), x, y, r, s));
   let cheDo = null, choXem = null, dangGui = false, menuMo = false, dauTuong = null;
   const TN = lang.CH.taiNguyen;
@@ -706,7 +705,7 @@ export async function vaoThungLung(the) {
       : loai === "cong" ? "🚪 Chạm lên tường của con (hoặc chỗ trống) để đặt Cổng 3 ô. Người của con đi qua cổng được, bạn khác thì không."
         : loai === "thap_canh" ? "🗼 Ô vuông XANH là chỗ xây được Tháp canh: chạm vào đó để xây. Từ tháp nhìn xa " + BD.tamNhinCt(CB, "thap_canh", lang.chungLoai) + " ô."
           : kho ? "📦 " + m.ten + " · " + giaChu(m.gia, 1) + " · +" + KC_LANG.sucChuaCt(cauHinh, loai, 1, lang.chungLoai, kho) + " " + TN[kho].bieuTuong + " sức chứa."
-            : loai === "ruong" ? "🌾 Ruộng · " + giaChu(m.gia, 1) + " · " + KC_LANG.sanLuongRuong(cauHinh, 1) + " " + TN.luong_thuc.bieuTuong + "/vụ · chín sau " + MR.chinGiay + " giây · cách Lều trại ≤ " + MR.cachLeuToiDa + " ô." // TC_D03B2
+            : loai === "ruong" ? "🌾 Ruộng · " + giaChu(m.gia, 1) + " · " + KC_LANG.sanLuongRuong(cauHinh, 1) + " " + TN.luong_thuc.bieuTuong + "/vụ · chín sau " + MR.chinGiay + " giây." // TC_D03B2
             : "🏠 " + m.ten + " · " + giaChu(m.gia, 1) + " · +" + (m.choO || 0) + " chỗ ở (👥 " + lang.danSo() + "/" + lang.choO() + ").");
   }
   function capNhatNut() {

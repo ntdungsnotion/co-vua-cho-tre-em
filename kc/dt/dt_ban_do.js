@@ -26,10 +26,9 @@
 //   taoBoLanhDia(W, H) -> { dat(chu, x, y, rong, sau, co), cua(chu), chuO(x, y, tru), soO(chu) };
 //   doanTuong(ôA, ôB, toiDa) -> [ô] thẳng ngang / dọc; choCong(x, y, rong, sau, laTuongMinh) -> { x, y, rong, sau, xoay }
 //   the.deLen?(x, y) của oXayDuoc: ô có công trình mà vẫn xây đè được (cổng đè tường của chính bé)
-//   (TC_D03B2) the.ganLeu?(x, y, rong, sau) của oXayDuocVung (ruộng gần Lều trại): kiemGanLeu(leu, toiDa); LY_DO xa_leu,
-//   chua_gat, het_bai
+//   (TC_D03B2) LY_DO chua_gat, het_bai (trồng lại ruộng)
 // BƯỚC: TC_D02B2a; TC_D02B2b (timBienKhamPha); TC_D02B3b (viTriTuLenh nhớ đường, báo chạy);
-//       TC_D02C (lãnh địa, đoạn tường, chỗ cổng, tầm nhìn công trình, viTriTuLenh theo chủ qua cổng); TC_D03B2 (ruộng gần lều)
+//       TC_D02C (lãnh địa, đoạn tường, chỗ cổng, tầm nhìn công trình, viTriTuLenh theo chủ qua cổng); TC_D03B2 (câu trồng lại ruộng)
 // NGÀY: 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 19:05
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI); tham số lang là lõi dt/dt_lang.js
 // ================================================================
@@ -195,20 +194,10 @@
     cho_o: (co, toiDa) => "Thiếu chỗ ở (" + (co != null ? co : "?") + "/" + (toiDa != null ? toiDa : "?") + ").",
     hang_day: n => "Hàng chờ đã đủ " + (n || "") + " người.",
     chua_leu: () => "Chưa có Lều trại.",
-    // TC_D03B2: ruộng phải gần Lều trại; trồng lại trên bãi đã gặt
-    xa_leu: (kc, toiDa) => "Cách Lều trại " + (kc != null ? kc : "?") + " ô (tối đa " + (toiDa != null ? toiDa : "?") + " ô).",
+    // TC_D03B2: trồng lại ruộng trên bãi đã gặt
     chua_gat: () => "Ruộng chưa gặt xong.",
     het_bai: () => "Bãi đã thành cỏ."
   };
-  // TC_D03B2: kiểm "gần Lều trại" cho oXayDuocVung (the.ganLeu): tâm móng cách tâm lều không quá toiDa ô.
-  // leu = công trình Lều trại đã xong của bé (null: chưa có). Máy bé + máy chủ giả dùng chung; SQL y hệt.
-  function kiemGanLeu(leu, toiDa) {
-    return (x, y, rong, sau) => {
-      if (!leu) return { ma: "chua_leu", lyDo: LY_DO.chua_leu() };
-      const kc = Math.hypot(x + rong / 2 - (leu.x + leu.rong / 2), y + sau / 2 - (leu.y + leu.sau / 2));
-      return kc > toiDa ? { ma: "xa_leu", kc: Math.round(kc), toiDa, lyDo: LY_DO.xa_leu(Math.round(kc), toiDa) } : null;
-    };
-  }
   function oXayDuoc(the, x, y) {
     const l = the.lang;
     const khong = (ma, ten) => ({ duoc: false, ma, lyDo: LY_DO[ma](ten) });
@@ -232,8 +221,6 @@
       const k = oXayDuoc(the, ox, oy);
       if (!k.duoc) { oHong.push({ x: ox, y: oy }); if (!dau) dau = k; }
     }
-    const xa = !dau && the.ganLeu ? the.ganLeu(x, y, rong, sau) : null; // TC_D03B2: ruộng gần Lều trại
-    if (xa) { dau = xa; for (let oy = y; oy < y + sau; oy++) for (let ox = x; ox < x + rong; ox++) oHong.push({ x: ox, y: oy }); }
     return dau ? { duoc: false, ma: dau.ma, lyDo: dau.lyDo, oHong } : { duoc: true, ma: "duoc", lyDo: "", oHong };
   }
 
@@ -313,6 +300,6 @@
   }
 
   goc.KC_DT_BAN_DO = { DEN, MO, SANG, tamNhin, tamNhinCt, taoSuongMu, oXayDuoc, oXayDuocVung, viTriTuLenh, locDonViThayDuoc, timBienKhamPha, LY_DO,
-    LA_RAO, tinhLanhDia, taoBoLanhDia, doanTuong, choCong, kiemGanLeu };
+    LA_RAO, tinhLanhDia, taoBoLanhDia, doanTuong, choCong };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 19:05 - BƯỚC: TC_D03B2 (ruộng gần Lều trại: kiemGanLeu, LY_DO xa_leu / chua_gat / het_bai)
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2 (LY_DO chua_gat / het_bai)
