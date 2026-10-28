@@ -18,7 +18,7 @@
 //           lang (lõi: congTrinh, sự kiện cong_trinh / xay_xong / bo_cong_trinh).
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (chưa có lều); TC_D02B2b (bé dựng lều);
 //       TC_D02C (tường, cổng, tháp canh); TC_D03B1 (4 kho, nhà ở); TC_D03B2 (ruộng)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 28/10/2026; 28/10/2026 15:30; 28/10/2026 19:30
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 28/10/2026; 28/10/2026 15:30; 28/10/2026 19:05
 // ================================================================
 import * as THREE from "three";
 import { bam } from "./dt3d_canh.js";
@@ -298,4 +298,4 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
   }
   return { leu, lua, hinhCt: id => dsCt.get(id) || null };
 }
-// 28/10/2026 19:30 - BƯỚC: TC_D03B2
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2

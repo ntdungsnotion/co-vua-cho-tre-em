@@ -48,7 +48,7 @@
 //     donRuong: bãi quá coSauGiay giây thành cỏ (bỏ ruộng); xay ruộng: tâm cách tâm Lều trại ≤ cachLeuToiDa ô (xa_leu);
 //     trongLai(ten, id) -> { ok, id, trongLuc, con, kho } | { ok: false, ma: het_bai | chua_gat | thieu }.
 // BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2
-// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:30
+// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO)
 // ================================================================
 (function (goc) {
@@ -572,4 +572,4 @@
 
   goc.KC_DT_MAY_CHU = { taoMayChuGia };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 19:30 - BƯỚC: TC_D03B2
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2

@@ -49,7 +49,7 @@
 //       chinGiay giây giờ thật, nông dân giao vào lúc lúa đang lớn thì đứng chờ trên ruộng, chín thì gặt + gánh về chỗ cất
 //       như hái quả; gặt hết thành bãi (ct.gatLuc), quá coSauGiay giây thành cỏ (mất ruộng); sự kiện "ruong" khi đổi giai
 //       đoạn; giaiDoanRuong / sanLuongRuong dùng chung với máy chủ giả)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:30
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI)
 // ================================================================
 (function (goc) {
@@ -844,4 +844,4 @@
 
   goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS, tocDoXay, duocXay, sucChuaCt, nhanCat, choOCt, chiemCho, mauRuong, giaiDoanRuong, sanLuongRuong };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 19:30 - BƯỚC: TC_D03B2
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2

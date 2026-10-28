@@ -16,7 +16,7 @@
 //           diaHinh.doCaoDi (dt3d_dia_hinh.js), NV = window.KC_NV (bảng màu chung).
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C + đồ mang); TC_D02B2b (dựng nhà, reo mừng);
 //       TC_D03B2 (gặt ruộng: cúi gặt; lúa chưa chín thì đứng chờ)
-// NGÀY: 23/10/2026; 27/10/2026; 28/10/2026 19:30
+// NGÀY: 23/10/2026; 27/10/2026; 28/10/2026 19:05
 // ================================================================
 import * as THREE from "three";
 import { clone as nhanBanXuong } from "../../thu_vien/three/utils/SkeletonUtils.js";
@@ -249,4 +249,4 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam } = {}) 
     dien(h, ds, khiDoi, khiXong) { hienVuKhi(h, "1H_Axe"); if (h.vuKhi["1H_Axe"]) h.vuKhi["1H_Axe"].visible = true; h.dien = { ds, i: 0, t: 0, khiDoi, khiXong }; }
   };
 }
-// 28/10/2026 19:30 - BƯỚC: TC_D03B2
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2

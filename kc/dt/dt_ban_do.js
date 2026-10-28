@@ -26,9 +26,11 @@
 //   taoBoLanhDia(W, H) -> { dat(chu, x, y, rong, sau, co), cua(chu), chuO(x, y, tru), soO(chu) };
 //   doanTuong(ôA, ôB, toiDa) -> [ô] thẳng ngang / dọc; choCong(x, y, rong, sau, laTuongMinh) -> { x, y, rong, sau, xoay }
 //   the.deLen?(x, y) của oXayDuoc: ô có công trình mà vẫn xây đè được (cổng đè tường của chính bé)
+//   (TC_D03B2) the.ganLeu?(x, y, rong, sau) của oXayDuocVung (ruộng gần Lều trại): kiemGanLeu(leu, toiDa); LY_DO xa_leu,
+//   chua_gat, het_bai
 // BƯỚC: TC_D02B2a; TC_D02B2b (timBienKhamPha); TC_D02B3b (viTriTuLenh nhớ đường, báo chạy);
-//       TC_D02C (lãnh địa, đoạn tường, chỗ cổng, tầm nhìn công trình, viTriTuLenh theo chủ qua cổng)
-// NGÀY: 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05
+//       TC_D02C (lãnh địa, đoạn tường, chỗ cổng, tầm nhìn công trình, viTriTuLenh theo chủ qua cổng); TC_D03B2 (ruộng gần lều)
+// NGÀY: 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 19:05
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI); tham số lang là lõi dt/dt_lang.js
 // ================================================================
 (function (goc) {
@@ -313,4 +315,4 @@
   goc.KC_DT_BAN_DO = { DEN, MO, SANG, tamNhin, tamNhinCt, taoSuongMu, oXayDuoc, oXayDuocVung, viTriTuLenh, locDonViThayDuoc, timBienKhamPha, LY_DO,
     LA_RAO, tinhLanhDia, taoBoLanhDia, doanTuong, choCong, kiemGanLeu };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 19:30 - BƯỚC: TC_D03B2 (ruộng gần Lều trại: kiemGanLeu, LY_DO xa_leu / chua_gat / het_bai)
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2 (ruộng gần Lều trại: kiemGanLeu, LY_DO xa_leu / chua_gat / het_bai)
