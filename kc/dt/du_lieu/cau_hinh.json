@@ -58,8 +58,11 @@
     "tuong": { "ten": "Tường cọc gỗ", "rong": 1, "sau": 1, "giayXay": 3, "gia": { "go": 2 }, "doanToiDa": 20 },
     "cong": { "ten": "Cổng", "rong": 3, "sau": 1, "giayXay": 15, "gia": { "go": 20 }, "gioiHan": 4 },
     "thap_canh": { "ten": "Tháp canh", "rong": 2, "sau": 2, "giayXay": 30, "gia": { "go": 40 }, "gioiHan": 2 },
+    "choi_hai_luom": { "ten": "Chòi hái lượm", "rong": 2, "sau": 2, "giayXay": 30, "gia": { "go": 50 }, "cat": ["luong_thuc"] },
+    "choi_mo": { "ten": "Chòi mỏ", "rong": 2, "sau": 2, "giayXay": 30, "gia": { "go": 50 }, "cat": ["da", "vang", "sat"] },
     "ruong": { "ten": "Ruộng", "rong": 3, "sau": 3, "giayXay": 15, "gia": { "go": 60 },
       "ruong": { "chinGiay": 30, "sanLuong": [200, 260, 340], "coSauGiay": 300, "giaTrongLai": { "go": 30 } } }
   },
-  "_ghiChuRuong": "Khối 'congTrinh.ruong.ruong' (TC_D03B2, người dùng 28/10/2026, dac_ta_lang.md mục 13): ruộng xây xong là trồng; lúa chín sau 'chinGiay' giây theo GIỜ MÁY CHỦ (cả khi bé tắt game); chín thì nông dân ra gặt như một nguồn Lương thực (lang.nguon.ruong: nhipLam, mã nguồn = -id công trình), 'sanLuong'[cấp - 1] Lương thực mỗi vụ; gặt hết thì thành bãi: trồng lại tốn 'giaTrongLai', để quá 'coSauGiay' giây thì bãi thành cỏ (mất ruộng). Ô ruộng đi được (nông dân đứng trên ruộng gặt). Ruộng (như mọi công trình) xây được ở bất kỳ chỗ nào hợp lệ trên bản đồ (người dùng 28/10/2026)."
+  "_ghiChuRuong": "Khối 'congTrinh.ruong.ruong' (TC_D03B2, người dùng 28/10/2026, dac_ta_lang.md mục 13): ruộng xây xong là trồng; lúa chín sau 'chinGiay' giây theo GIỜ MÁY CHỦ (cả khi bé tắt game); chín thì nông dân ra gặt như một nguồn Lương thực (lang.nguon.ruong: nhipLam, mã nguồn = -id công trình), 'sanLuong'[cấp - 1] Lương thực mỗi vụ; gặt hết thì thành bãi: trồng lại tốn 'giaTrongLai', để quá 'coSauGiay' giây thì bãi thành cỏ (mất ruộng). Ô ruộng đi được (nông dân đứng trên ruộng gặt). Ruộng (như mọi công trình) xây được ở bất kỳ chỗ nào hợp lệ trên bản đồ (người dùng 28/10/2026).",
+  "_ghiChuChoi": "TC_D03C (người dùng 28/10/2026: 'làm Chòi hái lượm; chòi vàng, đá, sắt (3 tài nguyên chung 1 chòi)'): congTrinh.*.cat = các loại tài nguyên công trình đó NHẬN CẤT nhưng KHÔNG thêm sức chứa (không có sucChua): chòi chỉ là chỗ cất sát chỗ làm cho nông dân đi ít hơn; đồ cất vẫn tính vào sức chứa Lều + kho. Chòi hái lượm: Lương thực (trái cây, cá, ruộng); Chòi mỏ: Đá, Vàng, Sắt."
 }

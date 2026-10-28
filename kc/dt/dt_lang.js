@@ -49,7 +49,8 @@
 //       chinGiay giây giờ thật, nông dân giao vào lúc lúa đang lớn thì đứng chờ trên ruộng, chín thì gặt + gánh về chỗ cất
 //       như hái quả; gặt hết thành bãi (ct.gatLuc), quá coSauGiay giây thành cỏ (mất ruộng); sự kiện "ruong" khi đổi giai
 //       đoạn; giaiDoanRuong / sanLuongRuong dùng chung với máy chủ giả)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05
+//       TC_D03C (Chòi hái lượm / Chòi mỏ: nhanCat nhận congTrinh.*.cat = chỗ cất không thêm sức chứa)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 28/10/2026 23:35
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI)
 // ================================================================
 (function (goc) {
@@ -91,9 +92,11 @@
     const hsCl = (chFull.kho && chFull.kho.heSoChungLoai && chFull.kho.heSoChungLoai[chungLoai]) || 1;
     return Math.floor(goc0 * hsCap * hsCl);
   }
-  // Công trình loại này nhận cất tài nguyên t (Lều trại: mọi loại; kho riêng: đúng loại của kho)
+  // Công trình loại này nhận cất tài nguyên t (Lều trại: mọi loại; kho riêng: đúng loại của kho;
+  // TC_D03C: chòi theo danh sách congTrinh.*.cat, không thêm sức chứa)
   function nhanCat(chFull, loai, t) {
     const m = chFull && chFull.congTrinh && chFull.congTrinh[loai], v = m && m.sucChua;
+    if (m && Array.isArray(m.cat) && t != null && m.cat.includes(t)) return true;
     return v != null && (typeof v === "number" || (t != null && v[t] > 0));
   }
   // Chỗ ở công trình loại này cho (Lều trại 5, Nhà ở 3); loại đơn vị chiếm chỗ ở (danSo.tinh: nông dân, lính sau)
