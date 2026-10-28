@@ -10,13 +10,15 @@
 //            xoay theo móng), Tháp canh (4 chân, sàn, lan can, mái rơm); cổng đè tường thì bỏ hình tường.
 //            TC_D03B1: Kho gỗ / Kho đá / Kho vàng (lán gỗ mái rơm + đống gỗ / đá / vàng trước cửa), Vựa lương
 //            thực (vựa sàn cao trên cột + bao thóc), Nhà ở (nhà tròn vách đất mái rơm nón).
+//            TC_D03B2: Ruộng bé xây (đất luống cày + hàng lúa): lúa xanh lớn dần theo giờ thật, chín vàng, vơi dần khi
+//            gặt (ruộng của mình), bãi đã gặt còn gốc rạ thấp; ruộng của bạn theo giờ máy chủ trả (lang.ruongGiaiDoan).
 // HÀM KHAI RA:
 //   taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang?) -> { leu, lua, hinhCt(id) }
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh (dt3d_mo_hinh.js), diaHinh.doCao (dt3d_dia_hinh.js),
 //           lang (lõi: congTrinh, sự kiện cong_trinh / xay_xong / bo_cong_trinh).
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (chưa có lều); TC_D02B2b (bé dựng lều);
-//       TC_D02C (tường, cổng, tháp canh); TC_D03B1 (4 kho, nhà ở)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 28/10/2026; 28/10/2026 15:30
+//       TC_D02C (tường, cổng, tháp canh); TC_D03B1 (4 kho, nhà ở); TC_D03B2 (ruộng)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 28/10/2026; 28/10/2026 15:30; 28/10/2026 19:05
 // ================================================================
 import * as THREE from "three";
 import { bam } from "./dt3d_canh.js";
@@ -137,6 +139,44 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     return g;
   }
   const LA_KHO = { kho_go: 1, kho_da: 1, kho_vang: 1, vua_luong_thuc: 1 };
+  // TC_D03B2 - Ruộng: đất luống cày (một ảnh dùng chung) + hàng lúa (InstancedMesh, mỗi ruộng một vật liệu để đổi màu):
+  // lúa xanh lớn dần -> chín vàng -> vơi dần theo lượng còn (ruộng của mình) -> gốc rạ thấp khi là bãi đã gặt
+  let anhRuong = null;
+  const hinhLua = new THREE.ConeGeometry(0.05, 0.55, 4).translate(0, 0.275, 0);
+  const MAU_LUA = { mam: new THREE.Color("#6dbb3c"), chin: new THREE.Color("#e8c040"), bai: new THREE.Color("#e2cd86") };
+  function taoRuong(ct) {
+    const g = new THREE.Group();
+    if (!anhRuong) {
+      const cv = document.createElement("canvas"); cv.width = 128; cv.height = 128; const c2 = cv.getContext("2d");
+      c2.fillStyle = "#8a6038"; c2.fillRect(0, 0, 128, 128);
+      for (let i = 0; i < 8; i++) { c2.fillStyle = "#6e4a2a"; c2.fillRect(0, i * 16 + 9, 128, 5); c2.fillStyle = "#a57a4c"; c2.fillRect(0, i * 16 + 3, 128, 3); }
+      c2.strokeStyle = "#5b3d22"; c2.lineWidth = 6; c2.strokeRect(0, 0, 128, 128);
+      anhRuong = new THREE.CanvasTexture(cv); anhRuong.colorSpace = THREE.SRGBColorSpace;
+    }
+    const dat = new THREE.Mesh(new THREE.PlaneGeometry(ct.rong * 0.96, ct.sau * 0.96).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ map: anhRuong }));
+    dat.position.y = 0.1; dat.receiveShadow = !nhe; g.add(dat);
+    const hang = ct.sau * 2, moiHang = ct.rong * 3, lua = new THREE.InstancedMesh(hinhLua, new THREE.MeshLambertMaterial({ color: MAU_LUA.mam }), hang * moiHang);
+    const m4 = new THREE.Matrix4();
+    let k = 0;
+    for (let i = 0; i < hang; i++) for (let j = 0; j < moiHang; j++) {
+      const x = (j + 0.5) / moiHang * ct.rong * 0.9 - ct.rong * 0.45 + (bam(ct.id * 7 + k, 3) - 0.5) * 0.08, z = (i + 0.5) / hang * ct.sau * 0.9 - ct.sau * 0.45;
+      lua.setMatrixAt(k++, m4.makeTranslation(x, 0.1, z).multiply(new THREE.Matrix4().makeRotationY(bam(k, 5) * 3)));
+    }
+    lua.castShadow = !nhe; lua.visible = false;
+    g.add(lua);
+    g.userData.lua = lua;
+    return g;
+  }
+  function veRuong(h) {
+    const lua = h.nha.userData.lua;
+    if (!h.ct.xong) { lua.visible = false; return; }
+    const { gd, f } = lang.ruongGiaiDoan(h.ct), n = lang.nguonTheoMa(-h.ct.id);
+    lua.visible = true;
+    lua.material.color.copy(gd === "mam" ? MAU_LUA.mam : gd === "chin" ? MAU_LUA.chin : MAU_LUA.bai);
+    lua.scale.y = gd === "mam" ? 0.25 + 0.75 * f : gd === "chin" ? 1 : 0.32;
+    const tong = lua.instanceMatrix.count; // chín: vơi dần theo lượng còn (ruộng của mình)
+    lua.count = gd === "chin" && n && n.toiDa ? Math.max(1, Math.ceil(tong * n.con / n.toiDa)) : tong;
+  }
   // Tường cọc gỗ (TC_D02C): MỘT InstancedMesh cho mọi ô tường (mỗi ô 5 cọc nhọn cụm chữ thập) -> vài
   // trăm ô tường vẫn chỉ 1 lệnh vẽ. Ô đang dựng: cọc mọc dần theo tiến độ.
   const dsTuong = new Map(); // id -> ct
@@ -180,17 +220,18 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     }
     nhom.add(mong);
     const nha = ct.loai === "cong" ? taoCong(ct) : ct.loai === "thap_canh" ? taoThap(ct) : LA_KHO[ct.loai] ? taoKho(ct)
-      : ct.loai === "nha_o" ? taoNhaO(ct) : taoLeu(TI_LEU * Math.min(ct.rong, ct.sau) / 2); // TC_D03B1: kho + nhà ở
+      : ct.loai === "nha_o" ? taoNhaO(ct) : ct.loai === "ruong" ? taoRuong(ct) : taoLeu(TI_LEU * Math.min(ct.rong, ct.sau) / 2); // TC_D03B1: kho + nhà ở; TC_D03B2: ruộng
     nha.position.y = -0.05; nhom.add(nha);
     ctx.canh.add(nhom);
-    const h = { ct, nhom, nha, mong, nay: 0 };
+    const h = { ct, nhom, nha, mong, nay: 0, laRuong: ct.loai === "ruong" };
     dsCt.set(ct.id, h);
     datTienDo(h);
   }
   function datTienDo(h) {
     const p = h.ct.xong ? 1 : h.ct.tienDo;
     h.nha.visible = p > 0.02;
-    h.nha.scale.set(0.75 + 0.25 * p, Math.max(0.02, p), 0.75 + 0.25 * p);
+    if (h.laRuong) { h.nha.scale.set(0.75 + 0.25 * p, 1, 0.75 + 0.25 * p); veRuong(h); } // ruộng phẳng: không kéo cao theo tiến độ
+    else h.nha.scale.set(0.75 + 0.25 * p, Math.max(0.02, p), 0.75 + 0.25 * p);
     h.mong.visible = !h.ct.xong;
   }
   if (lang) {
@@ -203,11 +244,15 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
         const h = dsCt.get(su.ct.id); if (h) { ctx.canh.remove(h.nhom); dsCt.delete(su.ct.id); }
       }
     });
+    let demRuong = 0;
     ctx.moiKhung(dt => {
       if (tuongDoi) veTuong();
+      const veLaiRuong = (demRuong += dt) >= 0.25;
+      if (veLaiRuong) demRuong = 0;
       for (const h of dsCt.values()) {
         if (!h.ct.xong) datTienDo(h);
-        else if (h.nay > 0) { h.nay = Math.max(0, h.nay - dt); const k = 1 + Math.sin((0.5 - h.nay) / 0.5 * Math.PI) * 0.12; h.nha.scale.set(k, k, k); }
+        else if (h.nay > 0) { h.nay = Math.max(0, h.nay - dt); const k = 1 + Math.sin((0.5 - h.nay) / 0.5 * Math.PI) * 0.12; h.nha.scale.set(k, h.laRuong ? 1 : k, k); }
+        else if (h.laRuong && veLaiRuong) veRuong(h); // TC_D03B2: lúa lớn / chín / vơi / bãi theo giờ thật
       }
     });
   }
@@ -253,4 +298,4 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
   }
   return { leu, lua, hinhCt: id => dsCt.get(id) || null };
 }
-// 28/10/2026 15:30 - BƯỚC: TC_D03B1
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2

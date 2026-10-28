@@ -21,8 +21,10 @@
 //     vắng mặt), layQuanh: congTrinh[].tienDo (tiến độ máy chủ giữ).
 //   TC_D03B1: sinhNongDan(ten) (xếp hàng sinh nông dân ở Lều trại); vaoVung / layQuanh trả hang, vang.sinh;
 //     lỗi chỗ ở / hàng chờ đầy thành câu có số.
-// BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1
-// NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10
+//   TC_D03B2: trongLai(ten, id) (trồng lại ruộng trên bãi đã gặt); layQuanh congTrinh[] của
+//     ruộng có trongLuc / con / gatLuc; vaoVung vang.gat (số ruộng gặt hết lúc vắng mặt).
+// BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2
+// NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
 // ================================================================
 (function (goc) {
@@ -85,10 +87,11 @@
       async xayTuong(ten, dsO) { return goi("kc_dt_xay_tuong", { p_o: (dsO || []).map(o => [Math.floor(o[0]), Math.floor(o[1])]) }); },
       async xayXong(ten, id) { return goi("kc_dt_xay_xong", { p_id: id }); },
       async sinhNongDan() { return goi("kc_dt_sinh_nong_dan", {}); }, // TC_D03B1
+      async trongLai(ten, id) { return goi("kc_dt_trong_lai", { p_id: id }); }, // TC_D03B2
       async luuKhamPha(ten, chuoi, giu) { return goi("kc_dt_luu_kham_pha", { p_mat_na: chuoi }, giu); }
     };
   }
 
   goc.KC_DT_MAY_CHU_SB = { taoMayChuSupabase };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 15:10 - BƯỚC: TC_D03B1
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2
