@@ -8,8 +8,8 @@
 //   taoCamera(ctx, vungVe, { rong, cao }) -> { camera, huong, dich, nhinVe(x, z),
 //        chieu(x, y, z) -> { x, y } điểm màn hình, khiCham(fn(e)), datZoom(z), coKhung() }
 // LUẬT NỐI: chỉ dùng ctx của dt3d_canh.js (datNangTheo, renderer).
-// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C)
-// NGÀY: 23/10/2026
+// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D03A (chuột phải / giữa không tính là chạm)
+// NGÀY: 23/10/2026; 28/10/2026 12:17
 // ================================================================
 import * as THREE from "three";
 
@@ -53,6 +53,7 @@ export function taoCamera(ctx, vungVe, { rong: W, cao: H }) {
   let keo = null, chumDau = null;
   canvas.style.touchAction = "none";
   canvas.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" && e.button !== 0) return; // TC_D03A: chuột phải / giữa không phải chạm (chuột phải = thôi xây)
     try { canvas.setPointerCapture(e.pointerId); } catch (loi) { /* sự kiện giả (kịch bản thử) không bắt được */ }
     ngon.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (ngon.size === 1) keo = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t: performance.now(), di: false };
@@ -95,4 +96,4 @@ export function taoCamera(ctx, vungVe, { rong: W, cao: H }) {
   new ResizeObserver(() => coKhung()).observe(vungVe);
   return api;
 }
-// 23/10/2026 18:00 - BƯỚC: TC_D02A
+// 28/10/2026 12:17 - BƯỚC: TC_D03A
