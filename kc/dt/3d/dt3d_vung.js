@@ -282,7 +282,7 @@ export async function vaoThungLung(the) {
         truNo(); break;
       case "kho_day": {
         const t = su.taiNguyen, tn = lang.CH.taiNguyen[t];
-        if (!daBaoDay[t]) baoGoiY("📦 Kho " + tn.ten + " đầy (" + lang.kho[t] + "/" + lang.sucChua(t) + " " + tn.bieuTuong + "). Nông dân dừng ở lều, giữ phần đang vác.");
+        if (!daBaoDay[t]) baoGoiY("📦 Kho " + tn.ten + " đầy (" + lang.kho[t] + "/" + lang.sucChua(t) + " " + tn.bieuTuong + ").");
         daBaoDay[t] = true; break;
       }
       case "lenh_di": gui(su.dv, { tu: [su.tu.x, su.tu.z], den: [su.den.x, su.den.y], khamPha: su.khamPha, xay: su.xay, hang: su.hang }); break;
@@ -352,7 +352,7 @@ export async function vaoThungLung(the) {
       if (kieu === "re") return;
       if (!k.duoc) { baoGoiY("❌ " + k.lyDo); return; }
       dauTuong = { x: o.x, y: o.y }; choXem = null;
-      baoGoiY("🧱 Giờ chạm chỗ CUỐI của đoạn tường (thẳng ngang hoặc dọc, tối đa " + CT.tuong.doanToiDa + " ô), chạm 2 lần để xây. " + (laMay ? "Chuột phải" : "Giữ ngón 1 giây") + ": bỏ chỗ đầu.");
+      baoGoiY("🧱 Giờ chạm chỗ CUỐI của đoạn tường (thẳng ngang hoặc dọc, tối đa " + CT.tuong.doanToiDa + " ô), chạm 2 lần để xây.");
       return;
     }
     const ds = BD.doanTuong(dauTuong, o, CT.tuong.doanToiDa), kq = kiemDoan(ds), cuoi = ds[ds.length - 1];
@@ -393,18 +393,17 @@ export async function vaoThungLung(the) {
     if (cheDo !== "cong") return;
     xoayTay = !(choXem ? choXem.xoay : xoayTay);
     if (oCongXem) chamCho(oCongXem, "re");
-    baoGoiY("🔄 Cổng " + (xoayTay ? "dọc (1 × 3)" : "ngang (3 × 1)") + ". Chạm chỗ đặt cổng.");
+    baoGoiY("🔄 Cổng " + (xoayTay ? "dọc (1 × 3)" : "ngang (3 × 1)") + ".");
     capNhatNut();
   }
   // TC_D03A (góp ý người dùng): đang chọn chỗ xây thì lùi một bước: đoạn tường đã có chỗ đầu -> bỏ chỗ đầu; còn lại
   // -> thôi xây. Máy tính: chuột phải. Điện thoại: giữ ngón ~0,7 giây (chạm nhanh vẫn là chạm; kéo / 2 ngón thì không tính).
   const laMay = typeof matchMedia === "function" && matchMedia("(hover: hover) and (pointer: fine)").matches;
-  const cachLui = laMay ? "chuột phải" : "giữ ngón 1 giây";
   function luiMotBuoc() {
     if (!cheDo) return false;
     if (cheDo === "tuong" && dauTuong) {
       dauTuong = null; choXem = null; soiDat.an();
-      baoGoiY("↩️ Đã bỏ chỗ đầu đoạn tường. Chạm chỗ đầu mới, " + cachLui + " lần nữa để thôi xây.");
+      baoGoiY("↩️ Đã bỏ chỗ đầu đoạn tường.");
       return true;
     }
     batCheDo(null);
@@ -447,16 +446,16 @@ export async function vaoThungLung(the) {
     dv.hangXay = hang;
     return lang.xayTiep(dv) ? dv : null;
   }
-  const loiGiao = (dv, ten2) => (dv ? (dv === dvTl ? "👑 " : "🧑‍🌾 ") + dv.ten + " đang tới xây " + ten2 + ". Chọn thêm nông dân rồi chạm móng để xây nhanh hơn."
-    : !dsNd.length ? "Chưa có nông dân để xây." : "Chưa có lối tới chỗ xây: cần chặt bớt cây quanh đó.");
+  const loiGiao = (dv, ten2) => (dv ? (dv === dvTl ? "👑 " : "🧑‍🌾 ") + dv.ten + " đang tới xây " + ten2 + "."
+    : !dsNd.length ? "❌ Chưa có nông dân để xây." : "❌ Chưa có lối tới chỗ xây.");
   // Chọn nông dân rồi chạm móng đang xây của mình: vào xây cùng (TC_D03A). Trả true nếu đã xử lý cú chạm.
   uiDk.chamO = (h, o) => {
     const ct = lang.congTrinh.find(c => c.cuaMinh !== false && !c.xong && o.x >= c.x && o.x < c.x + c.rong && o.y >= c.y && o.y < c.y + c.sau);
     if (!ct || h.dv.laBan) return false;
-    if (!lang.duocXay(h.dv.vaiTro, ct.loai)) { baoGoiY("👑 Thủ lĩnh không xây công trình, chỉ nông dân xây."); return true; }
+    if (!lang.duocXay(h.dv.vaiTro, ct.loai)) { baoGoiY("❌ Thủ lĩnh không xây công trình."); return true; }
     const n = lang.donVi.filter(d => d.xay === ct).length + (h.dv.xay === ct ? 0 : 1);
     const dangDoMinh = [h.dv.xay, ...(h.dv.hangXay || [])].filter(c => c && c !== ct && !c.xong); // xong chỗ này thì quay lại phần đang dở
-    baoGoiY(lang.lenhXay(h.dv, ct, dangDoMinh) ? "🔨 " + h.dv.ten + " vào xây " + (CT[ct.loai] || {}).ten + " (" + Math.round(ct.tienDo * 100) + " %, " + n + " người)." : "Chưa có lối tới móng này.");
+    baoGoiY(lang.lenhXay(h.dv, ct, dangDoMinh) ? "🔨 " + h.dv.ten + " vào xây " + (CT[ct.loai] || {}).ten + " (" + Math.round(ct.tienDo * 100) + " %, " + n + " người)." : "❌ Chưa có lối tới móng này.");
     capNhatNut();
     return true;
   };
@@ -531,7 +530,7 @@ export async function vaoThungLung(the) {
       if (n) lang.giaoViec(dv, n); else dv.ranh = true;
     });
     capNhatNut();
-    baoGoiY("🎉 Lều trại dựng xong! " + kq.donVi.length + " nông dân đã tới và đi làm ngay. Chạm nông dân 🧑‍🌾 rồi chạm chỗ tối để đi khám phá" + (coTuKham ? ", hoặc bấm 🔭." : "."));
+    baoGoiY("🏕️ Lều trại dựng xong: +" + kq.donVi.length + " nông dân.");
   }
 
   // ---------------- Nút ----------------
@@ -559,8 +558,8 @@ export async function vaoThungLung(the) {
     const thieu = loiThieu(m.gia, 1);
     if (thieu) { baoGoiY(thieu); return; }
     batCheDo(loai);
-    baoGoiY(loai === "tuong" ? "🧱 Chạm chỗ ĐẦU của đoạn tường. Rào kín quanh làng (chừa chỗ đặt Cổng) thì thành lãnh địa. " + (laMay ? "Chuột phải" : "Giữ ngón 1 giây") + " hoặc ✋: thôi xây."
-      : loai === "cong" ? "🚪 Chạm lên tường (hoặc chỗ trống) để đặt Cổng 3 ô; tự theo hướng tường, bấm 🔄 Xoay cổng" + (laMay ? " / phím R" : "") + " để đổi ngang / dọc. Chỉ người của mình đi qua cổng."
+    baoGoiY(loai === "tuong" ? "🧱 Chạm chỗ ĐẦU của đoạn tường. Rào kín quanh làng (chừa chỗ đặt Cổng) thì thành lãnh địa của con!"
+      : loai === "cong" ? "🚪 Chạm lên tường của con (hoặc chỗ trống) để đặt Cổng 3 ô. Người của con đi qua cổng được, bạn khác thì không."
         : "🗼 Ô vuông XANH là chỗ xây được Tháp canh: chạm vào đó để xây. Từ tháp nhìn xa " + BD.tamNhinCt(CB, "thap_canh", lang.chungLoai) + " ô.");
   }
   function capNhatNut() {
@@ -684,7 +683,7 @@ export async function vaoThungLung(the) {
     const vang = loiVang(vao.vang);
     if (leuBe && leuBe.xong) {
       cam.nhinVe(leuBe.x + R / 2, leuBe.y + S / 2 + 2);
-      baoGoiY(vang || "Nông dân vẫn đang làm việc. Chọn người rồi chạm chỗ tối để khám phá.");
+      baoGoiY(vang || "");
     } else if (leuBe) {
       cam.nhinVe(leuBe.x + R / 2, leuBe.y + S / 2);
       baoGoiY("👑 " + dvTl.ten + " đang dựng tiếp Lều trại…");
