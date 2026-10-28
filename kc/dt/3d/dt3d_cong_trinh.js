@@ -12,13 +12,14 @@
 //            thực (vựa sàn cao trên cột + bao thóc), Nhà ở (nhà tròn vách đất mái rơm nón).
 //            TC_D03B2: Ruộng bé xây (đất luống cày + hàng lúa): lúa xanh lớn dần theo giờ thật, chín vàng, vơi dần khi
 //            gặt (ruộng của mình), bãi đã gặt còn gốc rạ thấp; ruộng của bạn theo giờ máy chủ trả (lang.ruongGiaiDoan).
+//            TC_D03C: Chòi hái lượm (giỏ trái cây + xiên cá), Chòi mỏ (đống đá + vàng, cuốc chim): 4 cọc, mái lá, không vách.
 // HÀM KHAI RA:
 //   taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang?) -> { leu, lua, hinhCt(id) }
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh (dt3d_mo_hinh.js), diaHinh.doCao (dt3d_dia_hinh.js),
 //           lang (lõi: congTrinh, sự kiện cong_trinh / xay_xong / bo_cong_trinh).
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (chưa có lều); TC_D02B2b (bé dựng lều);
-//       TC_D02C (tường, cổng, tháp canh); TC_D03B1 (4 kho, nhà ở); TC_D03B2 (ruộng)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 28/10/2026; 28/10/2026 15:30; 28/10/2026 19:05
+//       TC_D02C (tường, cổng, tháp canh); TC_D03B1 (4 kho, nhà ở); TC_D03B2 (ruộng); TC_D03C (chòi)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 28/10/2026; 28/10/2026 15:30; 28/10/2026 19:05; 28/10/2026 23:40
 // ================================================================
 import * as THREE from "three";
 import { bam } from "./dt3d_canh.js";
@@ -139,6 +140,32 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     return g;
   }
   const LA_KHO = { kho_go: 1, kho_da: 1, kho_vang: 1, vua_luong_thuc: 1 };
+  // TC_D03C - Chòi (Chòi hái lượm / Chòi mỏ): 4 cọc, mái lá 2 mái, không vách (chỗ cất, không phải kho); dưới mái
+  // hái lượm: giỏ trái cây đỏ + xiên cá dựng cọc; mỏ: đống đá xám + vài cục vàng + cuốc chim dựng cọc
+  const vlLa = new THREE.MeshLambertMaterial({ color: "#7d9a3a" }), vlQua = new THREE.MeshLambertMaterial({ color: "#d8423a" });
+  const vlGio = new THREE.MeshLambertMaterial({ color: "#b07a3c" }), vlSat = new THREE.MeshLambertMaterial({ color: "#5c6068" });
+  function taoChoi(ct) {
+    const g = new THREE.Group(), r = ct.rong * 0.7, s = ct.sau * 0.6, C = 1.15;
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) g.add(cot(0.06, 0.08, C, vlCoc, sx * r / 2, C / 2, sz * s / 2));
+    g.add(hop(r, 0.08, 0.08, vlCoc, 0, C, -s / 2), hop(r, 0.08, 0.08, vlCoc, 0, C, s / 2));
+    const mai = maiHai(r * 1.2, s * 1.35, 0.6, C); mai.material = vlLa; g.add(mai);
+    if (ct.loai === "choi_hai_luom") {
+      const gio = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.18, 0.24, 9), vlGio); gio.position.set(-0.15, 0.12, 0.05); gio.castShadow = !nhe; g.add(gio);
+      for (let i = 0; i < 6; i++) { const q = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 5), vlQua); q.position.set(-0.15 + (bam(i, 11) - 0.5) * 0.3, 0.27 + (i > 3 ? 0.07 : 0), 0.05 + (bam(i, 12) - 0.5) * 0.3); g.add(q); }
+      const gio2 = gio.clone(); gio2.position.set(0.3, 0.12, -0.15); g.add(gio2);
+      const xien = cot(0.025, 0.025, 1.3, vlCoc, r / 2 - 0.12, 0.65, s / 2 + 0.1); xien.rotation.z = 0.12; g.add(xien);
+      const mui = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.18, 5), vlSat); mui.position.set(r / 2 - 0.04, 1.36, s / 2 + 0.1); mui.rotation.z = 0.12; g.add(mui);
+    } else {
+      for (let i = 0; i < 7; i++) {
+        const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.12 + bam(i, 13) * 0.07), i % 3 === 2 ? vlVang : vlDa);
+        m.position.set(-0.3 + (i % 4) * 0.2, 0.12 + (i > 3 ? 0.17 : 0), (bam(i, 14) - 0.5) * 0.35); m.castShadow = !nhe; g.add(m);
+      }
+      const can = cot(0.03, 0.03, 1.1, vlCoc, r / 2 - 0.1, 0.55, s / 2 + 0.08); can.rotation.z = -0.15; g.add(can);
+      const luoi = hop(0.5, 0.06, 0.06, vlSat, r / 2 - 0.18, 1.08, s / 2 + 0.08); luoi.rotation.z = 0.25; g.add(luoi); // lưỡi cuốc chim
+    }
+    g.rotation.y = gocCua;
+    return g;
+  }
   // TC_D03B2 - Ruộng: đất luống cày (một ảnh dùng chung) + hàng lúa (InstancedMesh, mỗi ruộng một vật liệu để đổi màu):
   // lúa xanh lớn dần -> chín vàng -> vơi dần theo lượng còn (ruộng của mình) -> gốc rạ thấp khi là bãi đã gặt
   let anhRuong = null;
@@ -220,7 +247,8 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     }
     nhom.add(mong);
     const nha = ct.loai === "cong" ? taoCong(ct) : ct.loai === "thap_canh" ? taoThap(ct) : LA_KHO[ct.loai] ? taoKho(ct)
-      : ct.loai === "nha_o" ? taoNhaO(ct) : ct.loai === "ruong" ? taoRuong(ct) : taoLeu(TI_LEU * Math.min(ct.rong, ct.sau) / 2); // TC_D03B1: kho + nhà ở; TC_D03B2: ruộng
+      : ct.loai === "nha_o" ? taoNhaO(ct) : ct.loai === "ruong" ? taoRuong(ct) : /^choi_/.test(ct.loai) ? taoChoi(ct)
+      : taoLeu(TI_LEU * Math.min(ct.rong, ct.sau) / 2); // TC_D03B1: kho + nhà ở; TC_D03B2: ruộng; TC_D03C: chòi
     nha.position.y = -0.05; nhom.add(nha);
     ctx.canh.add(nhom);
     const h = { ct, nhom, nha, mong, nay: 0, laRuong: ct.loai === "ruong" };

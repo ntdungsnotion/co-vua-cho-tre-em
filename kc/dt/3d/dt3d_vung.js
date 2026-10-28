@@ -56,8 +56,8 @@
 //       trữ lượng theo số máy chủ trả, lều của bạn khác không là chỗ cất đồ); TC_D02B3b (hỏi lại máy
 //       chủ: thấy bạn đi lại, nhà của bạn, mọc lại theo giờ máy chủ, trừ kho phần máy chủ cắt);
 //       TC_D02C (menu Xây: tường, cổng, tháp canh; lãnh địa); TC_D03A (nông dân xây, tiến độ máy chủ, vắng mặt, sức chứa);
-//       TC_D03B1 (4 kho, nhà ở, dân số, Lều sinh nông dân); TC_D03B2 (ruộng)
-// NGÀY: 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 12:17; 28/10/2026 15:30; 28/10/2026 19:05
+//       TC_D03B1 (4 kho, nhà ở, dân số, Lều sinh nông dân); TC_D03B2 (ruộng); TC_D03C (Chòi hái lượm, Chòi mỏ)
+// NGÀY: 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 12:17; 28/10/2026 15:30; 28/10/2026 19:05; 28/10/2026 23:35
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_may_chu.js (KC_DT_MAY_CHU), dt3d_suong_mu.js, dt3d_o_xay.js
 // ================================================================
 import { taoVeSuong } from "./dt3d_suong_mu.js";
@@ -67,8 +67,10 @@ const BD = window.KC_DT_BAN_DO, MC = window.KC_DT_MAY_CHU, NV = window.KC_NV, KC
 const VIEC_DAU = ["cay", "cay", "bui_trai_cay"]; // nông dân vừa ra: 2 người chặt cây, 1 người hái trái cây
 // Menu "🔨 Xây" (TC_D02C): thứ tự nút, biểu tượng. TC_D03B1: 4 kho riêng + Nhà ở
 const MENU_XAY = [["tuong", "🧱"], ["cong", "🚪"], ["thap_canh", "🗼"], ["nha_o", "🏠"], ["ruong", "🌾"],
-  ["kho_go", "📦🪵"], ["kho_da", "📦🪨"], ["kho_vang", "📦🪙"], ["vua_luong_thuc", "📦🍖"]]; // TC_D03B2: + Ruộng
+  ["kho_go", "📦🪵"], ["kho_da", "📦🪨"], ["kho_vang", "📦🪙"], ["vua_luong_thuc", "📦🍖"],
+  ["choi_hai_luom", "🧺"], ["choi_mo", "⛏️"]]; // TC_D03B2: + Ruộng; TC_D03C: + 2 chòi
 const LA_KHO = { kho_go: "go", kho_da: "da", kho_vang: "vang", vua_luong_thuc: "luong_thuc" }; // kho -> loại tài nguyên chứa
+const LA_CHOI = { choi_hai_luom: "🧺", choi_mo: "⛏️" }; // TC_D03C: chòi = chỗ cất (congTrinh.*.cat), không thêm sức chứa
 
 export async function vaoThungLung(the) {
   const { ctx, cam, lang, banDo, cauHinh, boNv, dk, uiDk, be, $, baoGoiY, themNongDan } = the;
@@ -342,6 +344,7 @@ export async function vaoThungLung(the) {
   const TN = lang.CH.taiNguyen;
   const thieuGia = (gia, n) => { for (const t in gia || {}) if ((lang.kho[t] || 0) < gia[t] * n) return t; return null; };
   const giaChu = (gia, n) => Object.keys(gia || {}).map(t => gia[t] * n + " " + TN[t].bieuTuong).join(" + ") || "miễn phí";
+  const catChu = loai => (CT[loai].cat || []).filter(t => TN[t]).map(t => TN[t].bieuTuong).join(" "); // TC_D03C: loại chòi nhận cất
   const loiThieu = (gia, n) => { const t = thieuGia(gia, n); return t ? "❌ " + BD.LY_DO.thieu(TN[t].ten.toLowerCase()) + " (cần " + giaChu(gia, n) + ")" : null; };
   function truKho(gia, n) { for (const t in gia || {}) lang.kho[t] = Math.max(0, (lang.kho[t] || 0) - gia[t] * n); if (the.capNhatKho) the.capNhatKho(); }
   const cuaMinh = loai => lang.congTrinh.filter(c => c.cuaMinh !== false && c.loai === loai);
@@ -570,6 +573,7 @@ export async function vaoThungLung(the) {
     else if (LA_KHO[ct.loai]) { const t = LA_KHO[ct.loai]; baoGoiY("📦 " + CT[ct.loai].ten + " hoàn thành · sức chứa " + TN[t].ten + " " + lang.sucChua(t) + " " + TN[t].bieuTuong + "."); } // TC_D03B1
     else if (ct.loai === "nha_o") baoGoiY("🏠 Nhà ở hoàn thành · chỗ ở " + lang.danSo() + "/" + lang.choO() + ".");
     else if (ct.loai === "ruong") baoGoiY("🌾 Ruộng hoàn thành · chín sau " + MR.chinGiay + " giây · " + KC_LANG.sanLuongRuong(cauHinh, ct.cap) + " " + TN.luong_thuc.bieuTuong + "/vụ."); // TC_D03B2
+    else if (LA_CHOI[ct.loai]) baoGoiY(LA_CHOI[ct.loai] + " " + CT[ct.loai].ten + " hoàn thành · cất " + catChu(ct.loai) + "."); // TC_D03C
     capNhatNut();
   }
   // Móng của mình chưa xong mà không ai đang dựng (tải lại trang, người xây bị gọi đi việc khác)
@@ -706,6 +710,7 @@ export async function vaoThungLung(the) {
         : loai === "thap_canh" ? "🗼 Ô vuông XANH là chỗ xây được Tháp canh: chạm vào đó để xây. Từ tháp nhìn xa " + BD.tamNhinCt(CB, "thap_canh", lang.chungLoai) + " ô."
           : kho ? "📦 " + m.ten + " · " + giaChu(m.gia, 1) + " · +" + KC_LANG.sucChuaCt(cauHinh, loai, 1, lang.chungLoai, kho) + " " + TN[kho].bieuTuong + " sức chứa."
             : loai === "ruong" ? "🌾 Ruộng · " + giaChu(m.gia, 1) + " · " + KC_LANG.sanLuongRuong(cauHinh, 1) + " " + TN.luong_thuc.bieuTuong + "/vụ · chín sau " + MR.chinGiay + " giây." // TC_D03B2
+            : LA_CHOI[loai] ? LA_CHOI[loai] + " " + m.ten + " · " + giaChu(m.gia, 1) + " · cất " + catChu(loai) + "." // TC_D03C
             : "🏠 " + m.ten + " · " + giaChu(m.gia, 1) + " · +" + (m.choO || 0) + " chỗ ở (👥 " + lang.danSo() + "/" + lang.choO() + ").");
   }
   function capNhatNut() {
