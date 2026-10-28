@@ -188,7 +188,11 @@
     doi_thu: () => "Có người của bạn khác đang đứng đây.",
     lanh_dia: () => "Đây là lãnh địa của bạn khác, con xây chỗ khác nhé.",
     thieu: ten => "Chưa đủ " + (ten || "tài nguyên") + " để xây. Con cho nông dân lấy thêm nhé!",
-    gioi_han: ten => "Con đã có đủ " + (ten || "loại nhà này") + " rồi."
+    gioi_han: ten => "Con đã có đủ " + (ten || "loại nhà này") + " rồi.",
+    // TC_D03B1: sinh nông dân ở Lều trại (giọng chuyên nghiệp: chỉ lý do + số)
+    cho_o: (co, toiDa) => "Thiếu chỗ ở (" + (co != null ? co : "?") + "/" + (toiDa != null ? toiDa : "?") + ").",
+    hang_day: n => "Hàng chờ đã đủ " + (n || "") + " người.",
+    chua_leu: () => "Chưa có Lều trại."
   };
   function oXayDuoc(the, x, y) {
     const l = the.lang;
@@ -294,4 +298,4 @@
   goc.KC_DT_BAN_DO = { DEN, MO, SANG, tamNhin, tamNhinCt, taoSuongMu, oXayDuoc, oXayDuocVung, viTriTuLenh, locDonViThayDuoc, timBienKhamPha, LY_DO,
     LA_RAO, tinhLanhDia, taoBoLanhDia, doanTuong, choCong };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 00:05 - BƯỚC: TC_D02C
+// 28/10/2026 15:10 - BƯỚC: TC_D03B1 (LY_DO cho_o, hang_day, chua_leu)

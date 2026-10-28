@@ -30,7 +30,11 @@
   "_ghiChuKhamPha": "Khối 'lang.khamPhaTuDo' (TC_D03A, người dùng 28/10/2026: 'tự động dò đường, sau này dành cho quân do thám và phải tốn phí lương thực và phải nâng cấp mới có tự động, lên đời 2 mới có tính năng này'): mo = false -> Đồ đá KHÔNG có nút '🔭 Đi khám phá' (bé chọn người rồi chạm chỗ tối để khám phá bằng tay). Code tự dò vẫn giữ (dt_lang.js khamPhaTuDo) để mở cho quân do thám từ Đồ đồng.",
   "_ghiChuVangMat": "Khối 'lang.vangMat' (TC_D03A, 28/10/2026): bé không liên lạc máy chủ quá 'sauGiay' giây = vắng mặt -> máy chủ tính bù việc của nông dân (chặt / đào / hái theo số chuyến đi về lều, xây theo số người), không giới hạn số giờ; kho đầy / nguồn cạn hết nguồn sát bên thì dừng. 'tinhLaiGiay': bé khác đang chơi thì máy chủ tính bù cho bé vắng mặt tối đa mỗi bấy nhiêu giây (nguồn chung vơi đúng, nhà xong đúng giờ). 'heSoDuong': quãng đi thật dài hơn đường thẳng bấy nhiêu lần. SỨC CHỨA: congTrinh.*.sucChua = số tối đa MỖI loại tài nguyên công trình đó chứa (Lều trại 300; kho riêng từng loại: TC_D03B); kho đầy thì nông dân đứng chờ, phần đang vác giữ trên tay.",
   "_ghiChuXay": "Khối 'xay' (TC_D03A, 28/10/2026, dac_ta_cong_trinh.md mục 1): chỉ nông dân xây (Thủ lĩnh chỉ dựng Lều trại đầu tiên). n người cùng xây: thời gian = giayXay x heSoCap.thoiGian[cấp - 1] x (heSoNguoi + 1) / (n + heSoNguoi) -> 1 người 100 %, 2 người 75 %, 4 người 50 %. Điều người đi thì công trình dừng ở % đang có, điều người tới thì xây tiếp. Máy chủ chấp nhận báo xong sớm tối đa 'treGiay' giây (giờ máy bé lệch).",
-  "xay": { "heSoNguoi": 2, "heSoCap": { "thoiGian": [1, 1.5, 2], "gia": [1, 1.5, 2.5] }, "treGiay": 2 },
+  "xay": { "heSoNguoi": 2, "heSoCap": { "thoiGian": [1, 1.5, 2], "gia": [1, 1.5, 2.5], "sucChua": [1, 2, 4] }, "treGiay": 2 },
+  "_ghiChuKho": "Khối 'kho' (TC_D03B1, người dùng 28/10/2026: 'nhà kho cấp 1 50 gỗ, 30 đá. sức chứa 500 (cài đặt sau và phụ thuộc cấp công trình, chủng tộc)'): sức chứa một công trình = congTrinh.*.sucChua (số = mọi loại; { loại: số } = chỉ loại đó) x xay.heSoCap.sucChua[cấp - 1] x kho.heSoChungLoai[chủng loại]. Mỗi kho riêng chứa một loại và là chỗ cất của loại đó: nông dân mang đồ về chỗ cất gần nhất đúng loại (Lều trại cất mọi loại). 'gia' của mọi công trình nhận đủ các loại tài nguyên (go, da, vang, sat, luong_thuc).",
+  "kho": { "heSoChungLoai": { "nhan": 1, "quy": 1, "tien": 1 } },
+  "_ghiChuDanSo": "Khối 'danSo' (TC_D03B1, người dùng 28/10/2026: 'số lượng nông dân và quân phụ thuộc số lượng nhà ở, nhà chính được 5, xây thêm nhà ở, mỗi nhà được 3 nông dân hoặc lính (3 nhân vật) số lượng tướng chiêu mộ không tính vào hạn mức này'; 'chỉ vào nhà chính mới sinh được nông dân'): chỗ ở = tổng congTrinh.*.choO của công trình đã xong (Lều trại 5, Nhà ở 3); 'tinh' = loại đơn vị chiếm chỗ ở (lính thêm sau; Thủ lĩnh / tướng không tính). Sinh nông dân: chỉ ở Lều trại (nhà chính), congTrinh.leu.sinh: giá, số giây mỗi người, hàng chờ tối đa; trả giá lúc xếp hàng, chạy cả khi bé vắng mặt.",
+  "danSo": { "tinh": ["nong_dan"] },
   "_ghiChuBanDo": "Khối 'banDo' (TC_D02B2a, 26/10/2026, dac_ta_ban_do.md mục 2-3, 6-7): tầm nhìn tính bằng ô; Tiên tộc nhìn xa thêm 'themTien' ô (Pháp thuật); bé mới vào: quanh cổng thung lũng đã khám phá sẵn bán kính 'banKinhCong' ô; tối đa 'soBeToiDa' bé một vùng; máy bé gửi thu hoạch gộp + hỏi lại trạng thái mỗi 'chuKyGui' giây, lưu chỗ đã khám phá mỗi 'chuKyLuuKhamPha' giây.",
   "banDo": {
     "tamNhin": { "nong_dan": 4, "thu_linh": 6, "linh": 5, "leu": 6, "nha": 3, "thap_canh": 8, "tuong": 1, "cong": 2 },
@@ -43,7 +47,13 @@
   },
   "_ghiChuCongTrinh": "Khối 'congTrinh' (TC_D02B2b, 27/10/2026, dac_ta_cong_trinh.md mục 4.1): cỡ móng (ô), số giây dựng (người đứng sát móng làm), Lều trại miễn phí, dựng xong có 'nongDanDau' nông dân. banDo.cachNhauKhamPha (TC_D02B2b): các nông dân bấm '🔭 Đi khám phá' chọn mép vùng đen cách nhau ít nhất bấy nhiêu ô (mỗi người một hướng). TC_D02C (27/10/2026, dac_ta_cong_trinh.md mục 4.3, Đồ đá): 'gia' = tài nguyên trừ khi đặt móng (tường: mỗi ô); tường kéo thành đoạn thẳng tối đa 'doanToiDa' ô; cổng 3 x 1 (xoay được thành 1 x 3), đặt đè lên tường của chính bé được; 'gioiHan' = số tối đa mỗi bé (Đồ đá). Tường + cổng đã dựng xong khép kín = lãnh địa (dac_ta_ban_do.md mục 5).",
   "congTrinh": {
-    "leu": { "ten": "Lều trại", "rong": 2, "sau": 2, "giayXay": 20, "nongDanDau": 3, "sucChua": 300 },
+    "leu": { "ten": "Lều trại", "rong": 2, "sau": 2, "giayXay": 20, "nongDanDau": 3, "sucChua": 300, "choO": 5,
+      "sinh": { "gia": { "luong_thuc": 25 }, "giay": 15, "hangToiDa": 5 } },
+    "kho_go": { "ten": "Kho gỗ", "rong": 2, "sau": 2, "giayXay": 30, "gia": { "go": 50, "da": 30 }, "sucChua": { "go": 500 } },
+    "kho_da": { "ten": "Kho đá", "rong": 2, "sau": 2, "giayXay": 30, "gia": { "go": 50, "da": 30 }, "sucChua": { "da": 500 } },
+    "kho_vang": { "ten": "Kho vàng", "rong": 2, "sau": 2, "giayXay": 30, "gia": { "go": 50, "da": 30 }, "sucChua": { "vang": 500 } },
+    "vua_luong_thuc": { "ten": "Vựa lương thực", "rong": 2, "sau": 2, "giayXay": 30, "gia": { "go": 50, "da": 30 }, "sucChua": { "luong_thuc": 500 } },
+    "nha_o": { "ten": "Nhà ở", "rong": 2, "sau": 2, "giayXay": 25, "gia": { "go": 30 }, "choO": 3 },
     "tuong": { "ten": "Tường cọc gỗ", "rong": 1, "sau": 1, "giayXay": 3, "gia": { "go": 2 }, "doanToiDa": 20 },
     "cong": { "ten": "Cổng", "rong": 3, "sau": 1, "giayXay": 15, "gia": { "go": 20 }, "gioiHan": 4 },
     "thap_canh": { "ten": "Tháp canh", "rong": 2, "sau": 2, "giayXay": 30, "gia": { "go": 40 }, "gioiHan": 2 }

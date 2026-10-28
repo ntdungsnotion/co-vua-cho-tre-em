@@ -8,13 +8,15 @@
 //            ct.tienDo, xong thì nảy nhẹ một cái.
 //            TC_D02C: Tường cọc gỗ (mọi ô tường chung một InstancedMesh), Cổng (2 cột, xà, cánh hé mở,
 //            xoay theo móng), Tháp canh (4 chân, sàn, lan can, mái rơm); cổng đè tường thì bỏ hình tường.
+//            TC_D03B1: Kho gỗ / Kho đá / Kho vàng (lán gỗ mái rơm + đống gỗ / đá / vàng trước cửa), Vựa lương
+//            thực (vựa sàn cao trên cột + bao thóc), Nhà ở (nhà tròn vách đất mái rơm nón).
 // HÀM KHAI RA:
 //   taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang?) -> { leu, lua, hinhCt(id) }
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh (dt3d_mo_hinh.js), diaHinh.doCao (dt3d_dia_hinh.js),
 //           lang (lõi: congTrinh, sự kiện cong_trinh / xay_xong / bo_cong_trinh).
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (chưa có lều); TC_D02B2b (bé dựng lều);
-//       TC_D02C (tường, cổng, tháp canh)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 28/10/2026
+//       TC_D02C (tường, cổng, tháp canh); TC_D03B1 (4 kho, nhà ở)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 28/10/2026; 28/10/2026 15:30
 // ================================================================
 import * as THREE from "three";
 import { bam } from "./dt3d_canh.js";
@@ -90,6 +92,51 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     for (let i = 0; i < 3; i++) g.add(hop(a * 1.4, 0.05, 0.05, vlCoc, 0, 0.5 + i * 0.6, a)); // thang
     return g;
   }
+  // TC_D03B1 - Kho riêng (Kho gỗ / đá / vàng: lán gỗ mái rơm 2 mái + đống hàng trước cửa nói rõ kho chứa gì;
+  // Vựa lương thực: vựa sàn cao trên cột, mái rơm, bao thóc dưới sàn) + Nhà ở (nhà tròn vách đất, mái rơm nón)
+  const vlDa = new THREE.MeshLambertMaterial({ color: "#8f8f96" }), vlVang = new THREE.MeshLambertMaterial({ color: "#f2c230" });
+  const vlDat = new THREE.MeshLambertMaterial({ color: "#b98a5a" }), vlBao = new THREE.MeshLambertMaterial({ color: "#d8c49a" });
+  function maiHai(r, s, c, y) { // mái 2 mái (lăng trụ tam giác) dài theo trục x
+    const hinh = new THREE.Shape(); hinh.moveTo(-s / 2, 0); hinh.lineTo(0, c); hinh.lineTo(s / 2, 0); hinh.lineTo(-s / 2, 0);
+    const m = new THREE.Mesh(new THREE.ExtrudeGeometry(hinh, { depth: r, bevelEnabled: false }), vlRom);
+    m.rotation.y = Math.PI / 2; m.position.set(-r / 2, y, 0); m.castShadow = !nhe; return m;
+  }
+  function dongHang(loai, g, z) { // đống hàng trước cửa kho
+    if (loai === "kho_go") for (let i = 0; i < 5; i++) { const k = cot(0.11, 0.11, 0.9, vlCoc, -0.3 + (i % 3) * 0.24 + (i > 2 ? 0.12 : 0), 0.12 + (i > 2 ? 0.2 : 0), z); k.rotation.z = Math.PI / 2; g.add(k); }
+    else if (loai === "kho_da" || loai === "kho_vang") for (let i = 0; i < 6; i++) {
+      const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.13 + bam(i, 7) * 0.06), loai === "kho_da" ? vlDa : vlVang);
+      m.position.set(-0.3 + (i % 3) * 0.3, 0.12 + (i > 2 ? 0.18 : 0), z + (bam(i, 8) - 0.5) * 0.15); m.castShadow = !nhe; g.add(m);
+    }
+  }
+  function taoKho(ct) {
+    const g = new THREE.Group(), r = ct.rong * 0.72, s = ct.sau * 0.62;
+    if (ct.loai === "vua_luong_thuc") {
+      const C = 0.75;
+      for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, -1], [0, 1]]) g.add(cot(0.06, 0.07, C, vlCoc, sx * r * 0.42, C / 2, sz * s * 0.42));
+      g.add(hop(r, 0.1, s, vlGoSang, 0, C, 0));
+      g.add(hop(r * 0.9, 0.7, s * 0.85, vlGoSang, 0, C + 0.4, 0));
+      g.add(maiHai(r * 1.15, s * 1.25, 0.75, C + 0.75));
+      for (let i = 0; i < 3; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 5), vlBao); b.scale.y = 1.3; b.position.set(-0.3 + i * 0.3, 0.2, 0.05); b.castShadow = !nhe; g.add(b); }
+      return g;
+    }
+    g.add(hop(r, 0.95, s, vlGoSang, 0, 0.48, -0.1));
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) g.add(cot(0.06, 0.07, 1.0, vlCoc, sx * r / 2, 0.5, sz * s / 2 - 0.1));
+    g.add(hop(0.45, 0.65, 0.04, new THREE.MeshBasicMaterial({ color: "#2a1a10" }), 0, 0.33, s / 2 - 0.08)); // cửa
+    g.add(maiHai(r * 1.15, s * 1.3, 0.7, 0.95));
+    dongHang(ct.loai, g, s / 2 + 0.3);
+    g.rotation.y = gocCua;
+    return g;
+  }
+  function taoNhaO(ct) {
+    const g = new THREE.Group(), R = Math.min(ct.rong, ct.sau) * 0.34;
+    const vach = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 1.05, 0.85, 12), vlDat); vach.position.y = 0.43; vach.castShadow = vach.receiveShadow = !nhe; g.add(vach);
+    const mai = new THREE.Mesh(new THREE.ConeGeometry(R * 1.35, 1.05, 12), vlRom); mai.position.y = 0.85 + 0.5; mai.castShadow = !nhe; g.add(mai);
+    const cua = hop(0.32, 0.55, 0.05, new THREE.MeshBasicMaterial({ color: "#2a1a10" }), 0, 0.3, R * 1.0); g.add(cua);
+    g.add(cot(0.04, 0.04, 0.35, vlCoc, 0, 1.95, 0)); // cọc chóp mái
+    g.rotation.y = gocCua;
+    return g;
+  }
+  const LA_KHO = { kho_go: 1, kho_da: 1, kho_vang: 1, vua_luong_thuc: 1 };
   // Tường cọc gỗ (TC_D02C): MỘT InstancedMesh cho mọi ô tường (mỗi ô 5 cọc nhọn cụm chữ thập) -> vài
   // trăm ô tường vẫn chỉ 1 lệnh vẽ. Ô đang dựng: cọc mọc dần theo tiến độ.
   const dsTuong = new Map(); // id -> ct
@@ -132,7 +179,8 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
       coc.position.set(a * ct.rong * 0.44, 0.27, b * ct.sau * 0.44); coc.castShadow = !nhe; mong.add(coc);
     }
     nhom.add(mong);
-    const nha = ct.loai === "cong" ? taoCong(ct) : ct.loai === "thap_canh" ? taoThap(ct) : taoLeu(TI_LEU * Math.min(ct.rong, ct.sau) / 2); // TC_D03..: nhà khác theo ct.loai
+    const nha = ct.loai === "cong" ? taoCong(ct) : ct.loai === "thap_canh" ? taoThap(ct) : LA_KHO[ct.loai] ? taoKho(ct)
+      : ct.loai === "nha_o" ? taoNhaO(ct) : taoLeu(TI_LEU * Math.min(ct.rong, ct.sau) / 2); // TC_D03B1: kho + nhà ở
     nha.position.y = -0.05; nhom.add(nha);
     ctx.canh.add(nhom);
     const h = { ct, nhom, nha, mong, nay: 0 };
@@ -205,4 +253,4 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
   }
   return { leu, lua, hinhCt: id => dsCt.get(id) || null };
 }
-// 28/10/2026 00:05 - BƯỚC: TC_D02C
+// 28/10/2026 15:30 - BƯỚC: TC_D03B1
