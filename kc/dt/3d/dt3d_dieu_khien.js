@@ -11,15 +11,17 @@
 //         (TC_D02B2b, đều không bắt buộc) thayNguon(n) -> false thì coi như chạm đất (nguồn trong
 //         vùng đen), loiDi(dv, ô) -> câu báo khi ra lệnh đi, loiChon(hinh) -> câu gợi ý khi chọn,
 //         (TC_D02B3b) loiBan(hinh) -> câu báo khi chạm người của bạn khác (dv.laBan: không chọn được),
-//         (TC_D03A) chamO(hinh đang chọn, ô) -> true nếu phần trang đã xử lý cú chạm đất (móng đang xây) }
+//         (TC_D03A) chamO(hinh đang chọn | null, ô) -> true nếu phần trang đã xử lý cú chạm đất (móng đang xây;
+//         TC_D03B1: Lều trại, gọi cả khi chưa chọn ai) }
 //   datCheDoCham(fn(ô {x, y, px, pz}, "cham" | "re")): chế độ chạm riêng (soi đất, chọn chỗ dựng)
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), cam.khiCham / camera (dt3d_camera.js), taiNguyen.chon
 //           (dt3d_tai_nguyen.js), boNhanVat.dsHinh (dt3d_nhan_vat.js), diaHinh.matDat / doCaoDi,
 //           lang (lõi: giaoViec, lenhDi, nghe).
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (datCheDoCham: chế độ chạm riêng);
 //       TC_D02B2b (ô chạm kèm điểm chính xác, nguồn trong vùng đen, lời báo khám phá);
-//       TC_D02B3b (người của bạn khác không chọn được, hình đang ẩn không chạm được); TC_D03A (móc chamO)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 10:50
+//       TC_D02B3b (người của bạn khác không chọn được, hình đang ẩn không chạm được); TC_D03A (móc chamO);
+//       TC_D03B1 (chamO gọi cả khi chưa chọn ai: chạm Lều trại)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 10:50; 28/10/2026 15:30
 // ================================================================
 import * as THREE from "three";
 
@@ -89,9 +91,11 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     }
     // 3) chạm đất -> đi tới
     const trungDat = tia.intersectObject(diaHinh.matDat, false)[0];
+    const oDat = trungDat && { x: Math.floor(trungDat.point.x), y: Math.floor(trungDat.point.z) };
+    // TC_D03A: chạm móng đang xây -> vào xây cùng; TC_D03B1: chạm Lều trại (cả khi chưa chọn ai) -> sinh nông dân
+    if (oDat && ui.chamO && ui.chamO(dangChon, oDat)) return;
     if (trungDat && dangChon) {
-      const o = { x: Math.floor(trungDat.point.x), y: Math.floor(trungDat.point.z) };
-      if (ui.chamO && ui.chamO(dangChon, o)) return; // TC_D03A: chạm móng đang xây -> vào xây cùng
+      const o = oDat;
       if (lang.lenhDi(dangChon.dv, o)) {
         const c = dangChon.dv.duong[dangChon.dv.duong.length - 1];
         if (c) dauDich(c.x, c.z); else dauDich(trungDat.point.x, trungDat.point.z);
@@ -137,4 +141,4 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
 
   return { chon, dangChon: () => dangChon, datCheDoCham(fn) { cheDoRieng = fn || null; } };
 }
-// 28/10/2026 10:50 - BƯỚC: TC_D03A
+// 28/10/2026 15:30 - BƯỚC: TC_D03B1

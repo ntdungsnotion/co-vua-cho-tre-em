@@ -36,8 +36,14 @@
 //     đầy thì dừng; không giới hạn số giờ. Bé khác đang chơi: tính bù tối đa mỗi tinhLaiGiay giây (nguồn
 //     chung vơi đúng). vaoVung trả vang = { giay, thu{tài nguyên: số}, xong[loại], day{tài nguyên} }.
 //   - guiThuHoach: kho mỗi loại không quá sức chứa (congTrinh.*.sucChua của công trình đã xong).
-// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A
-// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50
+//   TC_D03B1 - KHO RIÊNG + DÂN SỐ + SINH NÔNG DÂN (SQL làm y hệt):
+//   - sức chứa theo cấp + chủng loại (KC_DT_LANG.sucChuaCt); tính bù vắng mặt: chuyến đi về chỗ cất GẦN NHẤT nhận
+//     loại tài nguyên đó (Lều trại hoặc kho đúng loại).
+//   - sinhNongDan(ten) -> { ok, hang{so, batDau}, kho, danSo, choO } | { ok: false, ma: chua_leu | hang_day | cho_o | thieu }:
+//     xếp hàng ở Lều trại, trả giá lúc xếp; tinhSinh(bé) ra từng người mỗi congTrinh.leu.sinh.giay giây theo giờ máy
+//     chủ (cả khi bé vắng mặt; vang.sinh = số người ra lúc vắng). vaoVung + layQuanh trả hang (null = không có ai chờ).
+// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1
+// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO)
 // ================================================================
 (function (goc) {
@@ -81,6 +87,7 @@
 
     const viTri = dv => dv.lenh ? BD.viTriTuLenh(lang, dv.lenh, gio(), null, dv.chu) : { x: dv.x, z: dv.z };
     const khoCua = be => { const k = {}; for (const t in CH.lang.taiNguyen) k[t] = (be.kho && be.kho[t]) || 0; return k; };
+    const hangCua = be => (be && be.hangSinh && be.hangSinh.so ? { so: be.hangSinh.so, batDau: be.hangSinh.batDau } : null); // TC_D03B1
     const cuaBe = ten => tt.donVi.filter(d => d.chu === ten);
     const cungPhe = ten => chu => chu === ten; // đồng minh: TC_D17B
     const trongCt = (c, x, y) => x >= c.x && x < c.x + c.rong && y >= c.y && y < c.y + c.sau;
@@ -100,28 +107,53 @@
       return L / TOC.di;
     }
     const toiLuc = l => l.batDau + giayDi(l) * 1000;
-    // Sức chứa mỗi loại tài nguyên của bé: tổng sucChua công trình đã xong (lõi: lang.sucChua)
+    // Sức chứa mỗi loại tài nguyên của bé: tổng sucChua công trình đã xong (lõi: lang.sucChua; TC_D03B1: theo cấp + chủng loại)
     function sucChua(ten, t) {
+      const cl = tt.be[ten] && tt.be[ten].chungLoai;
       let s = 0;
-      for (const c of tt.congTrinh) if (c.chu === ten && c.xongLuc) { const v = mauCt(c.loai).sucChua; if (v != null) s += typeof v === "number" ? v : (v[t] || 0); }
+      for (const c of tt.congTrinh) if (c.chu === ten && c.xongLuc) s += LANG.sucChuaCt(CH, c.loai, c.cap, cl, t);
       return s;
     }
-    // Công trình xong (mô phỏng hoặc báo xong): tường / cổng tính lại lãnh địa; Lều trại sinh nông dân đầu tiên
-    function hoanThanh(ct, luc) {
-      ct.xongLuc = luc; ct.tienDo = 1;
-      if (BD.LA_RAO[ct.loai]) lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, true);
-      if (ct.loai !== "leu") return;
-      // ô quanh lều, gần cửa (phía nam) trước; mỗi người một ô
+    // TC_D03B1: chỗ ở (Lều 5, Nhà ở 3 mỗi nhà đã xong) + dân số (đơn vị chiếm chỗ ở: nông dân)
+    const choO = ten => tt.congTrinh.reduce((s, c) => s + (c.chu === ten && c.xongLuc ? LANG.choOCt(CH, c.loai) : 0), 0);
+    const danSo = ten => tt.donVi.filter(d => d.chu === ten && LANG.chiemCho(CH, d.loai)).length;
+    const leuXongCua = ten => tt.congTrinh.find(c => c.chu === ten && c.loai === "leu" && c.xongLuc) || null;
+    // Ô quanh lều đi được, gần cửa (phía nam) trước (SQL: kc_dt_cho_quanh)
+    function choQuanh(ct) {
       const cho = [], cx = ct.x + ct.rong / 2, cz = ct.y + ct.sau + 1;
       for (let oy = ct.y - 1; oy <= ct.y + ct.sau; oy++) for (let ox = ct.x - 1; ox <= ct.x + ct.rong; ox++) {
         if (oy >= ct.y && oy < ct.y + ct.sau && ox >= ct.x && ox < ct.x + ct.rong) continue;
         if (goc.KC_DT_LUOI.diDuoc(lang.luoi, ox, oy)) cho.push({ x: ox + 0.5, z: oy + 0.5, d: Math.hypot(ox + 0.5 - cx, oy + 0.5 - cz) });
       }
       cho.sort((a, b) => a.d - b.d);
+      return cho.length ? cho : [{ x: cx, z: cz }];
+    }
+    // Công trình xong (mô phỏng hoặc báo xong): tường / cổng tính lại lãnh địa; Lều trại sinh nông dân đầu tiên
+    function hoanThanh(ct, luc) {
+      ct.xongLuc = luc; ct.tienDo = 1;
+      if (BD.LA_RAO[ct.loai]) lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, true);
+      if (ct.loai !== "leu") return;
+      const cho = choQuanh(ct); // mỗi người một ô
       for (let i = 0; i < (mauCt("leu").nongDanDau || 0); i++) {
-        const p = cho[i % Math.max(1, cho.length)] || { x: cx, z: cz };
+        const p = cho[i % cho.length];
         tt.donVi.push({ id: ++tt.soId, chu: ct.chu, loai: "nong_dan", x: p.x, z: p.z, lenh: null });
       }
+    }
+    // TC_D03B1: hàng sinh nông dân ở Lều trại (be.hangSinh = { so, batDau }: batDau = lúc người đầu hàng bắt đầu).
+    // Mỗi sinh.giay giây ra một người ở ô quanh lều (theo giờ máy chủ, cả khi bé vắng mặt). Trả số người vừa ra.
+    function tinhSinh(ten, bay) {
+      const be = tt.be[ten], h = be.hangSinh, leu = leuXongCua(ten);
+      if (!h || !h.so || !leu) return 0;
+      const ms = mauCt("leu").sinh.giay * 1000, cho = choQuanh(leu);
+      let ra = 0;
+      while (h.so > 0 && h.batDau + ms <= bay) {
+        if (danSo(ten) >= choO(ten)) break; // hết chỗ ở (chỉ khi cài đặt đổi): chờ, có chỗ thì ra ngay
+        const p = cho[danSo(ten) % cho.length];
+        tt.donVi.push({ id: ++tt.soId, chu: ten, loai: "nong_dan", x: p.x, z: p.z, lenh: null });
+        h.so--; h.batDau += ms; ra++;
+      }
+      if (!h.so) be.hangSinh = null;
+      return ra;
     }
     // Mô phỏng xây của bé từ be.xayBuLuc tới bay (SQL: kc_dt_tinh_xay). Trả các công trình vừa xong.
     function tinhXay(ten, bay) {
@@ -166,10 +198,16 @@
       }
       return xong;
     }
-    // Số món một nông dân mang về mỗi mili giây ở nguồn n (đi về lều + làm đủ một lần vác)
-    function nhipThu(n, leu, cl) {
+    // Số món một nông dân mang về mỗi mili giây ở nguồn n (đi về chỗ cất + làm đủ một lần vác).
+    // TC_D03B1: chỗ cất = công trình đã xong của bé GẦN NHẤT nhận loại tài nguyên đó (Lều trại hoặc kho đúng loại);
+    // quãng = từ nguồn tới tâm công trình trừ (nửa cạnh dài + 1) ô (Lều 2 x 2: trừ 2 như TC_D03A)
+    function nhipThu(n, ten, cl) {
       const sm = CH.lang.sucMang[cl] || CH.lang.sucMang.nhan;
-      const d = Math.max(0.5, Math.hypot(n.x - (leu.x + leu.rong / 2), n.z - (leu.y + leu.sau / 2)) - 2);
+      let d = Infinity;
+      for (const c of tt.congTrinh) if (c.chu === ten && c.xongLuc && LANG.nhanCat(CH, c.loai, n.taiNguyen))
+        d = Math.min(d, Math.hypot(n.x - (c.x + c.rong / 2), n.z - (c.y + c.sau / 2)) - (Math.max(c.rong, c.sau) / 2 + 1));
+      if (d === Infinity) return 0;
+      d = Math.max(0.5, d);
       return sm / (2 * d * VM.heSoDuong / TOC.di + sm * CH.lang.nguon[n.loai].nhipLam) / 1000;
     }
     // Tính bù việc nông dân lúc bé vắng mặt (SQL: kc_dt_tinh_vang)
@@ -187,7 +225,7 @@
         while (n && lang.dangSong(n) && t < bay) {
           const tn = n.taiNguyen, cho = sucChua(ten, tn) - (be.kho[tn] || 0);
           if (cho <= 0) { bao.day[tn] = true; break; }
-          const v = nhipThu(n, leu, be.chungLoai), lay = Math.min(Math.floor(v * (bay - t)), n.con, cho);
+          const v = nhipThu(n, ten, be.chungLoai), lay = v > 0 ? Math.min(Math.floor(v * (bay - t)), n.con, cho) : 0;
           if (lay <= 0) break;
           n.con -= lay;
           tt.nguon[n.ma] = { con: n.con, hetLuc: n.con <= 0 ? bay : null };
@@ -211,8 +249,10 @@
       if (!laChinh && vang && bay - (be.buLuc || 0) < VM.tinhLaiGiay * 1000) return;
       const bao = vang ? (be.baoVang = be.baoVang || { tu: be.songLuc || be.vaoLuc, thu: {}, xong: [], day: {} }) : null;
       const xong = tinhXay(ten, bay);
+      const sinh = tinhSinh(ten, bay); // TC_D03B1: sau xây (Nhà ở vừa xong thì có chỗ)
       if (!bao) return;
       for (const c of xong) bao.xong.push(c.loai);
+      if (sinh) bao.sinh = (bao.sinh || 0) + sinh;
       tinhVang(ten, bay, bao);
     }
     const songLai = (ten, bay) => { tinhBu(ten, bay, true); tt.be[ten].songLuc = bay; };
@@ -258,10 +298,10 @@
         const b = be.baoVang;
         delete be.baoVang;
         luu();
-        const vang = b ? { giay: Math.round((bay - b.tu) / 1000), thu: b.thu, xong: b.xong, day: Object.keys(b.day) } : null;
+        const vang = b ? { giay: Math.round((bay - b.tu) / 1000), thu: b.thu, xong: b.xong, day: Object.keys(b.day), sinh: b.sinh || 0 } : null;
         const cong = vung.cong.find(c => c.so === be.cong);
         return { ok: true, maVung: vung.ma, banSao: 1, cong: { so: cong.so, x: cong.x, z: cong.z }, lanDau, khamPha: be.khamPha,
-          donVi: cuaBe(ten).map(d => ({ id: d.id, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })), kho: khoCua(be), vang, gio: bay };
+          donVi: cuaBe(ten).map(d => ({ id: d.id, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })), kho: khoCua(be), vang, gio: bay, hang: hangCua(be) };
       },
 
       async layQuanh(ten) {
@@ -275,7 +315,30 @@
         const thay = BD.locDonViThayDuoc(tt.donVi, cungPhe(ten), s, viTri);
         const nguon = Object.keys(tt.nguon).map(ma => ({ ma: Number(ma), con: tt.nguon[ma].con }));
         const congTrinh = tt.congTrinh.filter(ct => ct.chu === ten || s.muc(ct.x, ct.y) !== BD.DEN);
-        return { ok: true, gio: gio(), nguon, congTrinh, donVi: thay.map(d => ({ id: d.id, chu: d.chu, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })) };
+        return { ok: true, gio: gio(), nguon, congTrinh, donVi: thay.map(d => ({ id: d.id, chu: d.chu, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })),
+          hang: hangCua(tt.be[ten]) };
+      },
+
+      // TC_D03B1: xếp một nông dân vào hàng sinh ở Lều trại (chỉ nhà chính sinh nông dân). Trả giá lúc xếp; cần
+      // lều xong, hàng chưa đủ sinh.hangToiDa, dân số + hàng chờ < chỗ ở. -> { ok, hang, kho, danSo, choO }
+      async sinhNongDan(ten) {
+        ten = tenChuan(ten);
+        const be = tt.be[ten];
+        if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        const bay = gio();
+        songLai(ten, bay);
+        if (!leuXongCua(ten)) return { ok: false, ma: "chua_leu", lyDo: BD.LY_DO.chua_leu() };
+        const S = mauCt("leu").sinh, h = be.hangSinh || { so: 0, batDau: bay };
+        if (h.so >= S.hangToiDa) return { ok: false, ma: "hang_day", lyDo: BD.LY_DO.hang_day(S.hangToiDa) };
+        const co = danSo(ten) + h.so, toiDa = choO(ten);
+        if (co >= toiDa) return { ok: false, ma: "cho_o", co, toiDa, lyDo: BD.LY_DO.cho_o(co, toiDa) };
+        const thieu = thieuGia(be, S.gia, 1);
+        if (thieu) return loiThieu(thieu);
+        truGia(be, S.gia, 1);
+        if (!h.so) h.batDau = bay;
+        h.so++; be.hangSinh = h;
+        luu();
+        return { ok: true, hang: hangCua(be), kho: khoCua(be), danSo: danSo(ten), choO: toiDa, gio: bay };
       },
 
       async guiLenh(ten, idDonVi, lenh) {
@@ -437,4 +500,4 @@
 
   goc.KC_DT_MAY_CHU = { taoMayChuGia };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 10:50 - BƯỚC: TC_D03A
+// 28/10/2026 15:10 - BƯỚC: TC_D03B1

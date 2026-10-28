@@ -41,8 +41,10 @@
 //       TC_D02C (cổng: ô cổng không chặn lưới, người của mình không qua cổng bé khác -> choQua(chu) cho
 //       viTriTuLenh; lenhXay(dv, ct, hang) dựng cả đoạn tường lần lượt; boCongTrinh(ct) khi cổng đè tường;
 //       sự kiện bo_cong_trinh); TC_D03A (xây theo số người, chỉ nông dân xây, sức chứa kho, "cat" kèm
-//       nguồn, lenh_di kèm công trình đang xây; tocDoXay dùng chung với máy chủ giả)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50
+//       nguồn, lenh_di kèm công trình đang xây; tocDoXay dùng chung với máy chủ giả);
+//       TC_D03B1 (4 kho riêng: nông dân về chỗ cất GẦN NHẤT nhận đúng loại đồ đang mang; sucChuaCt theo cấp +
+//       chủng loại; dân số danSo() / chỗ ở choO(): Lều 5, Nhà ở 3; sucChuaCt / nhanCat / choOCt dùng chung với máy chủ giả)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI)
 // ================================================================
 (function (goc) {
@@ -72,6 +74,26 @@
   }
   // Ai được xây công trình loại này: nông dân; Thủ lĩnh chỉ dựng Lều trại
   const duocXay = (vaiTro, loai) => vaiTro === "nong_dan" || loai === "leu";
+  // TC_D03B1: sức chứa tài nguyên t của MỘT công trình đã xong = congTrinh.*.sucChua (số: mọi loại; { loại: số }:
+  // chỉ loại đó) x xay.heSoCap.sucChua[cấp - 1] x kho.heSoChungLoai[chủng loại]. Dùng chung lõi + máy chủ giả; SQL y hệt.
+  function sucChuaCt(chFull, loai, cap, chungLoai, t) {
+    const m = chFull && chFull.congTrinh && chFull.congTrinh[loai], v = m && m.sucChua;
+    if (v == null) return 0;
+    const goc0 = typeof v === "number" ? v : (v[t] || 0);
+    if (!goc0) return 0;
+    const ds = (chFull.xay && chFull.xay.heSoCap && chFull.xay.heSoCap.sucChua) || [1];
+    const hsCap = ds[Math.min(Math.max(1, cap || 1), ds.length) - 1] || 1;
+    const hsCl = (chFull.kho && chFull.kho.heSoChungLoai && chFull.kho.heSoChungLoai[chungLoai]) || 1;
+    return Math.floor(goc0 * hsCap * hsCl);
+  }
+  // Công trình loại này nhận cất tài nguyên t (Lều trại: mọi loại; kho riêng: đúng loại của kho)
+  function nhanCat(chFull, loai, t) {
+    const m = chFull && chFull.congTrinh && chFull.congTrinh[loai], v = m && m.sucChua;
+    return v != null && (typeof v === "number" || (t != null && v[t] > 0));
+  }
+  // Chỗ ở công trình loại này cho (Lều trại 5, Nhà ở 3); loại đơn vị chiếm chỗ ở (danSo.tinh: nông dân, lính sau)
+  const choOCt = (chFull, loai) => ((chFull && chFull.congTrinh && chFull.congTrinh[loai]) || {}).choO || 0;
+  const chiemCho = (chFull, vaiTro) => ((chFull && chFull.danSo && chFull.danSo.tinh) || ["nong_dan"]).includes(vaiTro);
 
   // opt: { banDo, cauHinh, chungLoai, hatGiong?, dongHo?: () => ms }
   function taoLang(opt) {
@@ -543,6 +565,17 @@
     }
     const ganNguon = (dv, n) => Math.hypot(dv.x - n.x, dv.z - n.z) < CH.tamVoi;
     function choCatGanNhat(dv) {
+      // TC_D03B1: ô quanh công trình đã xong của bé GẦN NHẤT nhận cất loại đồ đang mang (Lều trại: mọi loại; kho: đúng loại)
+      if (CHF && laVung) {
+        let tot = null, kc = Infinity;
+        for (const c of congTrinh) {
+          if (!c.xong || c.cuaMinh === false || !nhanCat(CHF, c.loai, dv.mang.loai)) continue;
+          const o = oQuanh(c, dv.x, dv.z);
+          if (!o) continue;
+          const d = Math.hypot(o.x + 0.5 - dv.x, o.y + 0.5 - dv.z); if (d < kc) { kc = d; tot = o; }
+        }
+        if (tot) return tot;
+      }
       if (leu && leu.ct) return oQuanh(leu.ct, dv.x, dv.z) || { x: lx, y: lz + 1 }; // lều bé dựng: ô quanh lều gần nhất
       let tot = diemCat[0] || null, kc = Infinity; // chưa có lều: không có chỗ cất
       for (const c of diemCat) { const d = Math.hypot(c.x + 0.5 - dv.x, c.y + 0.5 - dv.z); if (d < kc) { kc = d; tot = c; } }
@@ -637,14 +670,18 @@
 
     // TC_D03A: sức chứa mỗi loại tài nguyên = tổng sucChua công trình đã xong của bé (Lều 300).
     // Bản mẫu thử (không phải vùng đất thật): không giới hạn.
+    // TC_D03B1: mỗi công trình tính theo cấp + chủng loại (sucChuaCt); kho riêng chỉ cộng loại của kho
     function sucChua(t) {
       if (!laVung) return Infinity;
       let s = 0;
-      for (const c of congTrinh) {
-        if (!c.xong || c.cuaMinh === false) continue;
-        const v = CT[c.loai] && CT[c.loai].sucChua;
-        if (v != null) s += typeof v === "number" ? v : (v[t] || 0);
-      }
+      for (const c of congTrinh) if (c.xong && c.cuaMinh !== false) s += sucChuaCt(CHF, c.loai, c.cap, chungLoai, t);
+      return s;
+    }
+    // TC_D03B1: dân số (đơn vị chiếm chỗ ở: nông dân) / chỗ ở (công trình đã xong của bé: Lều 5 + Nhà ở 3 mỗi nhà)
+    const danSo = () => donVi.filter(d => chiemCho(CHF, d.vaiTro)).length;
+    function choO() {
+      let s = 0;
+      for (const c of congTrinh) if (c.xong && c.cuaMinh !== false) s += choOCt(CHF, c.loai);
       return s;
     }
     // Lấy so món khỏi sổ "vác từ nguồn nào" của người này -> { mã nguồn: số } (gửi máy chủ lúc cất)
@@ -692,12 +729,12 @@
       tuaNhanh(ms) { lechGio += ms; xuLyHen(); },
       get chungLoai() { return chungLoai; }, datChungLoai(cl) { if (CH.sucMang[cl] != null) chungLoai = cl; }, sucMang,
       nghe(f) { nghe.push(f); },
-      themDonVi, lenhDi, giaoViec, capNhat, xuLyHen, nguonGanNhat, nguonSatBen, coKe, dangSong, sucChua,
+      themDonVi, lenhDi, giaoViec, capNhat, xuLyHen, nguonGanNhat, nguonSatBen, coKe, dangSong, sucChua, danSo, choO,
       duocXay, tocDoXay: (ct, n) => tocDoXay(CHF, ct, n),
       nguonTaiO: (x, y) => nguonO.get(chiSo(x, y)) || null
     };
   }
 
-  goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS, tocDoXay, duocXay };
+  goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS, tocDoXay, duocXay, sucChuaCt, nhanCat, choOCt, chiemCho };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 10:50 - BƯỚC: TC_D03A
+// 28/10/2026 15:10 - BƯỚC: TC_D03B1
