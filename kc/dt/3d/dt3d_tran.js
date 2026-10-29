@@ -10,12 +10,14 @@
 // HÀM KHAI RA (window.KC_DT_SAN3D):
 //   tao(vungVe, { nhe }) -> Promise<san>; san = { datTran({ chungLoai, hoSo, quai, chu }),
 //        ketQua(k) (k: kết quả lượt của lõi), thu(ben, bat), nghi(bat), ketThuc(thang),
-//        viTri(ben) -> { x, y } điểm ảnh trong vùng vẽ (trên đầu) }
+//        viTri(ben) -> { x, y } điểm ảnh trong vùng vẽ (trên đầu),
+//        chieuVung(ma) -> giây diễn (ma: mua_lua | thien_thach | loc_xoay | dam_dat | vo_khong_gian; TC_D05B2) }
 // LUẬT NỐI: dùng dt3d_canh.js, dt3d_mo_hinh.js, dt3d_nhan_vat.js, dt3d_quai.js; NV = window.KC_NV.
 // BƯỚC: TC_D05 (người dùng 29/10/2026: "đồ hoạ xấu quá" -> sân 3D cùng bộ hình với làng;
 //        sau đó: hiệu ứng chiến đấu + phép thuật theo tộc, dt3d_hieu_ung.js);
-//        TC_D05B1 (Thủ lĩnh = tướng người thật dt3d_tuong.js; tải lỗi thì KayKit như cũ)
-// NGÀY: 29/10/2026; 29/10/2026 19:00
+//        TC_D05B1 (Thủ lĩnh = tướng người thật dt3d_tuong.js; tải lỗi thì KayKit như cũ);
+//        TC_D05B2 (chiêu phủ vùng rộng dt3d_chieu_vung.js + bộ hạt card đồ hoạ dt3d_hat.js)
+// NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026
 // ================================================================
 import * as THREE from "three";
 import { taoCanh, docDoHoa, bam } from "./dt3d_canh.js";
@@ -24,6 +26,8 @@ import { taoBoNhanVat } from "./dt3d_nhan_vat.js";
 import { taoQuai3d } from "./dt3d_quai.js";
 import { taoBoTuong } from "./dt3d_tuong.js";
 import { taoHieuUng } from "./dt3d_hieu_ung.js";
+import { taoBoHat } from "./dt3d_hat.js";
+import { taoChieuVung } from "./dt3d_chieu_vung.js";
 import { EffectComposer } from "../../thu_vien/three/postprocessing/EffectComposer.js";
 import { RenderPass } from "../../thu_vien/three/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "../../thu_vien/three/postprocessing/UnrealBloomPass.js";
@@ -69,6 +73,9 @@ async function tao(vungVe, { nhe } = {}) {
   const moHinh = taoBoMoHinh(ctx, glbLang);
   const hu = taoHieuUng(ctx, { nhe });
   const bui = hu.taoBui();
+  const boHat = taoBoHat(ctx, { nhe });
+  let camera = null;
+  const cv = taoChieuVung(ctx, hu, boHat, { nhe, layCamera: () => camera });
   let kieu = KIEU_TOC.nhan, haoQuang = null, cham = 0;
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -180,7 +187,7 @@ async function tao(vungVe, { nhe } = {}) {
   function them(giay, fn, tre = 0) { dsTween.push({ t: -tre, giay, fn }); }
   ctx.moiKhung((dt, t) => {
     if (cham > 0) { cham -= dt; dt *= 0.08; } // khựng hình khi chí mạng
-    hu.capNhat(dt, t); bui.capNhat(dt, t);
+    hu.capNhat(dt, t); bui.capNhat(dt, t); boHat.capNhat(dt); cv.capNhat(dt, t);
     if (haoQuang) haoQuang.capNhat(dt, t, dvBe);
     for (let i = dsTween.length - 1; i >= 0; i--) {
       const w = dsTween[i]; w.t += dt;
@@ -208,7 +215,7 @@ async function tao(vungVe, { nhe } = {}) {
   });
 
   // --- camera phối cảnh nhìn ngang sân, vừa cả hai bên ---
-  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 80);
+  camera = new THREE.PerspectiveCamera(32, 1, 0.1, 80);
   // phát sáng Bloom (chỉ chế độ Đẹp): chỗ rất sáng (phép, lửa, tia chém) toả quầng
   let hauKy = null;
   if (!nhe) {
@@ -360,6 +367,42 @@ async function tao(vungVe, { nhe } = {}) {
         them(1.2, p => { q.nhom.position.x = X_QUAI + p * 5; q.nhom.position.y = Math.abs(Math.sin(p * Math.PI * 4)) * 0.35; q.nhom.rotation.y = Math.PI / 2; q.datMo(1 - p); }, 0.6);
       }
     },
+    // chiêu lớn phủ vùng (TC_D05B2; TC_D05C sẽ gắn vào kỹ năng). Trả về số giây diễn.
+    chieuVung(ma) {
+      if (!quai) return 0;
+      const qn = quai.nhom, xq = qn.position.x;
+      const TEN = { mua_lua: "HOẢ VŨ THIÊN GIÁNG", thien_thach: "THIÊN THẠCH LẠC", loc_xoay: "CUỒNG PHONG", dam_dat: "CHẤN ĐỊA", vo_khong_gian: "PHÁ KHÔNG QUYỀN" };
+      if (!TEN[ma]) return 0;
+      vong.be.visible = vong.quai.visible = bong.visible = false;
+      hu.chuChieu(TEN[ma], V(0, 2.4, 0.4), kieu.mau);
+      const runQuai = (giay, tre) => them(giay, p => { if (Math.random() < 0.06) quai.chop(0.12); qn.position.x = xq + Math.sin(p * 70) * 0.02; }, tre);
+      if (ma === "mua_lua") { dien("phepLon"); runQuai(3, 0.9); return cv.muaLua({ tam: V(xq - 0.4, 0, -0.7), r: 3.8 }); }
+      if (ma === "thien_thach") { dien("phepLon"); runQuai(2.6, 1.3); return cv.thienThach({ tam: V(xq - 0.6, 0, -0.5), r: 2.8, so: 8 }); }
+      if (ma === "loc_xoay") {
+        dien("phepLon");
+        // phễu đi từ sau quái, quét qua quái (tới đúng chỗ quái ở giây 1,8) rồi tan
+        const giay = cv.locXoay({ tu: V(xq + 1.6, 0, -1), den: V(xq - 1.4, 0, 0.4), giay: 3.4 }).giay;
+        // quái bị cuốn lên, xoay tít, rồi rơi phịch xuống
+        them(1.3, p => { qn.position.y = Math.sin(p * Math.PI) * 1.6; qn.rotation.y = HUONG_QUAI + p * Math.PI * 8; }, 1.4);
+        them(0.01, () => { qn.rotation.y = HUONG_QUAI; quai.chop(0.3); hu.songXung(V(xq, 0, 0), "#d8c9a8", 1.6, 0.5); hu.khoi(V(xq, 0.1, 0.1), "#cdbf9c", 8, 0.7, false); hu.rung(0.06, 0.3); }, 2.7);
+        return giay;
+      }
+      if (ma === "dam_dat") {
+        dien("chemLon");
+        them(0.01, () => cv.damDat({ tam: V(dvBe.x + 0.35, 0, 0.05), r: 4.2, huong: V(1, 0, 0.05) }), 0.32);
+        them(0.55, p => { qn.position.y = Math.sin(p * Math.PI) * 0.9; qn.rotation.z = Math.sin(p * Math.PI) * 0.4; }, 0.55);
+        them(0.01, () => { qn.rotation.z = 0; quai.chop(0.3); }, 1.1);
+        return 2.6;
+      }
+      // đấm vỡ không gian: lao tới, đấm, khung hình vỡ
+      dien("chemLon");
+      const tamDanh = tuong ? 1.45 : 1.15;
+      them(0.28, p => { dvBe.x = X_BE + (X_QUAI - tamDanh - X_BE) * Math.sin(p * Math.PI / 2); });
+      them(0.01, () => { quai.chop(0.4); cv.voKhongGian({ diem: tamQuai() }); }, 0.3);
+      them(0.35, p => { dvBe.x = X_QUAI - tamDanh + (X_BE - X_QUAI + tamDanh) * p; }, 1.9);
+      return 2.6;
+    },
+    demHat: () => boHat.dem(), // số hạt đang sống (kịch bản thử đo tải)
     viTri(ben) {
       const v = viTriDau(ben).project(camera);
       return { x: (v.x + 1) / 2 * vungVe.clientWidth, y: (1 - v.y) / 2 * vungVe.clientHeight };

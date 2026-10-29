@@ -9,7 +9,8 @@
 //        cotLua, khien, khoi, gio, chuChieu, rung, lechCamera(), taoVlKhien(mau), taoHaoQuang(mau), taoBui(vung) }
 //   Mọi hiệu ứng tự xoá khi hết thời gian. nhe = máy yếu: giảm số hạt.
 // BƯỚC: TC_D05 (người dùng 29/10/2026: "hiệu ứng chiến đấu, phép thuật có thể làm trước không?")
-// NGÀY: 29/10/2026
+//        TC_D05B2: chữ tên chiêu dài tự thu nhỏ cho vừa; chiêu phủ vùng ở dt3d_chieu_vung.js
+// NGÀY: 29/10/2026; 30/10/2026
 // ================================================================
 import * as THREE from "three";
 
@@ -262,6 +263,7 @@ export function taoHieuUng(ctx, { nhe } = {}) {
       const cv = document.createElement("canvas"); cv.width = 1024; cv.height = 192;
       const g = cv.getContext("2d");
       g.font = "italic 900 112px 'Segoe UI', system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      const rongChu = g.measureText(chu).width; if (rongChu > 960) g.font = "italic 900 " + Math.floor(112 * 960 / rongChu) + "px 'Segoe UI', system-ui, sans-serif"; // tên dài: thu nhỏ cho vừa (TC_D05B2)
       g.lineJoin = "round"; g.lineWidth = 18; g.strokeStyle = "rgba(20,8,0,.85)"; g.strokeText(chu, 512, 100);
       const gr = g.createLinearGradient(0, 40, 0, 160); gr.addColorStop(0, "#ffffff"); gr.addColorStop(0.5, mau); gr.addColorStop(1, new THREE.Color(mau).multiplyScalar(0.55).getStyle()); g.fillStyle = gr; g.fillText(chu, 512, 100);
       const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
