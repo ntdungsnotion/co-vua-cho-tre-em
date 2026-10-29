@@ -76,6 +76,11 @@ async function tao(vungVe, { nhe } = {}) {
   const boHat = taoBoHat(ctx, { nhe });
   let camera = null;
   const cv = taoChieuVung(ctx, hu, boHat, { nhe, layCamera: () => camera });
+  // kho chiêu thêm (phụ tá làm theo GEMINI.md việc A6, chỉ trong file dt3d_chieu_them.js); lỗi thì bỏ qua, sân vẫn chạy
+  let ct = null;
+  const coChieuThem = import("./dt3d_chieu_them.js")
+    .then(m => (ct = m.taoChieuThem({ ctx, hu, bo: boHat, cv, nhe, layCamera: () => camera })))
+    .catch(e => { console.warn("Kho chiêu thêm lỗi, bỏ qua", e); return null; });
   let kieu = KIEU_TOC.nhan, haoQuang = null, cham = 0;
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -188,6 +193,7 @@ async function tao(vungVe, { nhe } = {}) {
   ctx.moiKhung((dt, t) => {
     if (cham > 0) { cham -= dt; dt *= 0.08; } // khựng hình khi chí mạng
     hu.capNhat(dt, t); bui.capNhat(dt, t); boHat.capNhat(dt); cv.capNhat(dt, t);
+    if (ct && ct.capNhat) { try { ct.capNhat(dt, t); } catch (e) { console.warn("Kho chiêu thêm lỗi khi vẽ", e); ct = null; } }
     if (haoQuang) haoQuang.capNhat(dt, t, dvBe);
     for (let i = dsTween.length - 1; i >= 0; i--) {
       const w = dsTween[i]; w.t += dt;
@@ -414,6 +420,20 @@ async function tao(vungVe, { nhe } = {}) {
       them(0.01, () => { quai.chop(0.4); cv.voKhongGian({ diem: tamQuai() }); }, 0.3);
       them(0.35, p => { dvBe.x = X_QUAI - tamDanh + (X_BE - X_QUAI + tamDanh) * p; }, 1.9);
       return 2.6;
+    },
+    // kho chiêu thêm (A6): danh sách nút + diễn một chiêu; mỗi chiêu nhận đối tượng "tran" (xem đầu dt3d_chieu_them.js)
+    dsChieuThem: () => coChieuThem.then(c => c ? c.ds.map(({ ma, nut }) => ({ ma, nut })) : []),
+    chieuThem(ma) {
+      const c = ct && ct.ds.find(x => x.ma === ma);
+      if (!c || !quai) return 0;
+      vong.be.visible = vong.quai.visible = bong.visible = false;
+      if (c.ten) hu.chuChieu(c.ten, V(0, 2.4, 0.4), kieu.mau);
+      const tran = {
+        be: { tam: tamBe(), chan: V(dvBe.x, 0, dvBe.z), cao: caoBe },
+        quai: { nhom: quai.nhom, tam: tamQuai(), chan: V(quai.nhom.position.x, 0, quai.nhom.position.z), cao: quai.cao * TI_QUAI, chop: s => quai.chop(s) },
+        dongTac: k => dien(k), them, mau: kieu.mau
+      };
+      try { return c.chay(tran) || 0; } catch (e) { console.warn("Chiêu " + ma + " lỗi", e); return 0; }
     },
     demHat: () => boHat.dem(), // số hạt đang sống (kịch bản thử đo tải)
     viTri(ben) {

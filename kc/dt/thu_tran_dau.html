@@ -623,11 +623,17 @@
     function batNutChieu() {
       const hang = $("chieuThu"); hang.classList.remove("an");
       const nut = [...hang.querySelectorAll("button")];
-      nut.forEach(b => b.addEventListener("click", () => {
-        const giay = san3d.chieuVung(b.dataset.ma);
+      const bam = (b, giay) => {
         if (!giay) return;
         nut.forEach(x => { x.disabled = true; });
         setTimeout(() => nut.forEach(x => { x.disabled = false; }), giay * 1000);
+      };
+      nut.forEach(b => b.addEventListener("click", () => bam(b, san3d.chieuVung(b.dataset.ma))));
+      // nút của kho chiêu thêm (3d/dt3d_chieu_them.js, phụ tá làm): tự hiện theo danh sách trong file
+      san3d.dsChieuThem().then(ds => ds.forEach(c => {
+        const b = document.createElement("button"); b.dataset.them = c.ma; b.textContent = c.nut || c.ma;
+        b.addEventListener("click", () => bam(b, san3d.chieuThem(c.ma)));
+        hang.appendChild(b); nut.push(b);
       }));
     }
 
