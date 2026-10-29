@@ -3,8 +3,9 @@
 // CHỨC NĂNG: QUÁI của Đấu Trường Tri Thức (đặc tả dac_ta.md V.2, dac_ta_tran_dau.md mục 1-2):
 //            - taoQuai(ma, lv, ch): chỉ số quái theo loại + cấp (heSoCap).
 //            - xacSuatDung(quai, doKho, ch): xác suất quái đúng theo bậc x độ khó câu, kẹp 5-95 %.
-//            - giayTraLoi(quai, lop, ch, rng, nghiThem): thời điểm quái bấm (giây) trong khoảng của bậc,
-//              nhân thêm cho bé nhỏ (heSoQuaiLopNho) và hệ số nghĩ thêm (chế độ Thong thả).
+//            - giayBe(lv, ch): thời gian suy nghĩ tối đa của bé theo cấp quái (thoiGian.be).
+//            - giayTraLoi(quai, ch, rng, nghiThem): thời điểm quái bấm (giây), ngẫu nhiên theo cấp quái,
+//              nhân hệ số bậc, luôn ngắn hơn giayBe; nghiThem = chế độ Thong thả.
 //            - traLoi(quai, cau, ch, rng): quái chọn đáp án (đúng theo xác suất; sai thì chọn bừa
 //              một đáp án sai).
 //            Không đụng DOM: chạy được trong node. Mọi con số đọc từ du_lieu/cau_hinh_tran_dau.json.
@@ -37,12 +38,21 @@
     return Math.min(gh[1], Math.max(gh[0], p));
   }
 
-  // Hệ số "dòng đầu tiên có lớp <= denLop" dùng chung cho các bảng theo lớp
-  function heSoLopNho(lop, ch) { return lop <= ch.heSoQuaiLopNho.denLop ? ch.heSoQuaiLopNho.heSo : 1; }
+  // Thời gian suy nghĩ tối đa của bé theo cấp quái (TC_D05B1, người dùng 29/10/2026: Lv 1 10 giây,
+  // mỗi Lv giảm 1, thấp nhất 5 giây). Hết giờ thì tự ra đòn.
+  function giayBe(lv, ch) {
+    const b = ch.thoiGian.be;
+    return Math.max(b.toiThieu, b.lv1 - b.giamMoiLv * (Math.max(1, Math.floor(lv) || 1) - 1));
+  }
 
-  function giayTraLoi(quai, lop, ch, rng, nghiThem) {
-    const [a, b] = ch.quai.bac[quai.bac].giayTraLoi;
-    return (a + (b - a) * rng()) * heSoLopNho(lop, ch) * (nghiThem || 1);
+  // Thời điểm quái bấm (giây): ngẫu nhiên trong khoảng nội suy giữa Lv 1 và Lv 10, nhân hệ số bậc,
+  // luôn ngắn hơn thời gian tối đa của bé ít nhất nhoHonBe giây. nghiThem: Thong thả (nhân cả hai bên).
+  function giayTraLoi(quai, ch, rng, nghiThem) {
+    const q = ch.thoiGian.quai, k = Math.min(1, Math.max(0, ((quai.lv || 1) - 1) / 9));
+    const a = q.lv1[0] + (q.lv10[0] - q.lv1[0]) * k, b = q.lv1[1] + (q.lv10[1] - q.lv1[1]) * k;
+    const hs = ch.thoiGian.heSoBac[quai.bac] || 1;
+    const tran = Math.max(0.5, giayBe(quai.lv, ch) - q.nhoHonBe);
+    return Math.min(tran, (a + (b - a) * rng()) * hs) * (nghiThem || 1);
   }
 
   // Trả { dung, chiSo }: chiSo = vị trí đáp án quái chọn
@@ -54,6 +64,6 @@
     return { dung, chiSo: sai.length ? sai[Math.floor(rng() * sai.length)] : cau.dung[0] };
   }
 
-  goc.KC_DT_QUAI = { dsLoai, taoQuai, xacSuatDung, giayTraLoi, traLoi, heSoLopNho };
+  goc.KC_DT_QUAI = { dsLoai, taoQuai, xacSuatDung, giayBe, giayTraLoi, traLoi };
 })(typeof window !== "undefined" ? window : globalThis);
-// 29/10/2026 - BƯỚC: TC_D05
+// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (thời gian theo cấp quái)

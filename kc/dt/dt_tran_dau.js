@@ -8,7 +8,9 @@
 //            - Quái tấn công: lượt hết lúc quái bấm; bé bấm trước lúc đó mới được tính; bé đã bấm thì
 //              quái bấm sau nhiều nhất tuaKhiDaBamGiay (kết quả không đổi, bé khỏi chờ).
 //            - Bảng kết quả VI.2 (hụt / né theo AGI / trúng / sơ hở), combo, chí mạng, công thức VI.6.
-//            - Chế độ Thong thả (lớp nhỏ): quái tấn công nghĩ lâu hơn, bé phòng thủ sai không bị gì.
+//            - Thời gian (TC_D05B1): bé có thoiGian.be theo cấp quái (Lv 1 10 giây ... thấp nhất 5), hết giờ
+//              tự ra đòn; quái nghĩ ngẫu nhiên, luôn ngắn hơn bé (dt_quai.js giayTraLoi).
+//            - Chế độ Thong thả (lớp nhỏ): cả bé lẫn quái thêm thời gian (x heSoNghi), bé phòng thủ sai không bị gì.
 //            - Kết thúc: quái hết HP (thắng), Thủ lĩnh hết HP (thua: về Lều nghỉ thua.nghiGiay),
 //              đủ soLuotToiDa (hết lượt, quái chạy mất). Mỗi lượt sát thương nhiều nhất 1 lần.
 //            Lõi không chọn câu (nhận từ dt_cau_hoi.js qua moLuot), không đụng DOM, không đọc đồng hồ:
@@ -26,10 +28,6 @@
     return { hpToiDa: c.hp, hp: c.hp, mpToiDa: c.mp, mp: 0, str: c.str, int: c.int, agi: c.agi, def: c.def, uyLuc: c.uyLuc, chiSoDanh: c.chiSoDanh };
   }
 
-  function giayLuot(lop, ch) {
-    for (const d of ch.thoiGianLuot) if (lop <= d.denLop) return d.giay;
-    return ch.thoiGianLuot[ch.thoiGianLuot.length - 1].giay;
-  }
 
   function tiLeNe(agi, ch) { return Math.min(ch.ne.toiDa, ch.ne.goc + ch.ne.moiAgi * agi); }
 
@@ -49,6 +47,8 @@
     const thongTha = tc.thongTha != null ? !!tc.thongTha : lop <= ch.thongTha.denLop;
     const be = Object.assign(chiSoThuLinh(tc.chungLoai, ch), { combo: 0 });
     const quai = Object.assign({}, tc.quai, { combo: 0 });
+    // thời gian tối đa của bé mỗi lượt (theo cấp quái; Thong thả nhân cả bé lẫn quái để quái vẫn nhanh hơn bé)
+    const nghi = thongTha ? ch.thongTha.heSoNghi : 1, giayBe = QU.giayBe(quai.lv, ch) * nghi;
     const tongKet = { soLuot: 0, beDung: 0, beBam: 0, comboCaoNhat: 0, satThuongGay: 0, satThuongNhan: 0 };
     let luot = null, ketThuc = null, soLuot = 0;
 
@@ -60,10 +60,9 @@
       if (luot && !luot.ketQua) return luot.info;
       soLuot++;
       const tanCong = soLuot % 2 === 1 ? "be" : "quai";
-      const han = t + giayLuot(lop, ch) * 1000;
-      const nghi = tanCong === "quai" && thongTha ? ch.thongTha.heSoNghi : 1;
+      const han = t + giayBe * 1000;
       const tl = QU.traLoi(quai, cau, ch, rng);
-      let tQuai = t + QU.giayTraLoi(quai, lop, ch, rng, nghi) * 1000;
+      let tQuai = t + QU.giayTraLoi(quai, ch, rng, nghi) * 1000;
       if (tanCong === "quai") tQuai = Math.min(tQuai, han);
       luot = {
         so: soLuot, tanCong, cau, tMo: t, han,
@@ -159,13 +158,13 @@
 
     return {
       moLuot, beBam, capNhat, quaiDaBam,
-      be: () => be, quai: () => quai, lop, thongTha,
+      be: () => be, quai: () => quai, lop, thongTha, giayBe,
       luot: () => luot && luot.info, ketQuaLuot: () => luot && luot.ketQua,
       dangLuot: () => !!luot && !luot.ketQua && !ketThuc,
       ketThuc: () => ketThuc, tongKet: () => Object.assign({}, tongKet)
     };
   }
 
-  goc.KC_DT_TRAN_DAU = { taoTran, chiSoThuLinh, giayLuot, tiLeNe, satThuong };
+  goc.KC_DT_TRAN_DAU = { taoTran, chiSoThuLinh, tiLeNe, satThuong };
 })(typeof window !== "undefined" ? window : globalThis);
-// 29/10/2026 - BƯỚC: TC_D05
+// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (đồng hồ bé theo cấp quái: T.giayBe)
