@@ -10,7 +10,7 @@
 //     lop: "sang" (chấm sáng cộng màu), "lua" (lửa cháy, lật khung), "no" (nổ lửa, lật khung),
 //          "khoi" (khói / bụi, lật khung, tô màu theo mau)
 //     tuy chon: { p, v, g (trọng lực), can (sức cản), song (giây), co, coCuoi, mau, mauCuoi, mo,
-//                 hienDan (phần đầu hiện dần 0..1), moCuoi (từ đâu bắt đầu mờ, 0 = theo lớp), xoay, tocXoay, keoDai (kéo dài theo hướng bay),
+//                 hienDan (phần đầu hiện dần 0..1), (lớp lửa mặc định dựng đứng, không xoay ngẫu nhiên) moCuoi (từ đâu bắt đầu mờ, 0 = theo lớp), xoay, tocXoay, keoDai (kéo dài theo hướng bay),
 //                 sang (nhân độ sáng, > 1 thì Bloom toả quầng), quy: { r, a, w, vr } quay quanh tâm }
 // BƯỚC: TC_D05B2 (người dùng 29/10/2026: "cần có hiệu ứng với vùng tác động nhiều hơn")
 // NGÀY: 30/10/2026
@@ -20,7 +20,7 @@ import * as THREE from "three";
 const duongDan = p => new URL(p, import.meta.url).href;
 
 const DINH = `
-uniform float uT, uKhung, uMoCuoi;
+uniform float uT, uKhung, uMoCuoi, uDoc;
 attribute vec4 aP, aV, aDong, aCo, aMau, aMau2, aQuy;
 varying vec2 vUv; varying vec4 vMau;
 void main(){
@@ -36,7 +36,9 @@ void main(){
     vec3 vn = aV.xyz * exp(-d * tuoi) - vec3(0.0, aDong.x * tuoi, 0.0);
     vec2 vs = (modelViewMatrix * vec4(vn, 0.0)).xy; float l = length(vs);
     vec2 h = l > 1e-4 ? vs / l : vec2(1.0, 0.0);
-    q = h * g.x * (co + l * aDong.z) + vec2(-h.y, h.x) * g.y * co;
+    // lớp lửa (uDoc = 1): ngọn lửa dựng dọc theo đường bay, đầu lửa quay ngược hướng bay; lớp khác: kéo dài theo chiều ngang ảnh
+    if (uDoc > 0.5) q = vec2(-h.y, h.x) * g.x * co - h * g.y * (co + l * aDong.z);
+    else q = h * g.x * (co + l * aDong.z) + vec2(-h.y, h.x) * g.y * co;
   } else {
     float r = aCo.z + aCo.w * tuoi, c = cos(r), s = sin(r);
     q = vec2(c * g.x - s * g.y, s * g.x + c * g.y) * co;
@@ -96,7 +98,7 @@ export function taoBoHat(ctx, { nhe } = {}) {
     }
     g.instanceCount = L.toiDa;
     L.vl = new THREE.ShaderMaterial({
-      uniforms: { uT: { value: 0 }, uKhung: { value: L.khung }, uMoCuoi: { value: L.moCuoi }, uTex: { value: L.tex } },
+      uniforms: { uT: { value: 0 }, uDoc: { value: ten === "lua" ? 1 : 0 }, uKhung: { value: L.khung }, uMoCuoi: { value: L.moCuoi }, uTex: { value: L.tex } },
       vertexShader: DINH, fragmentShader: MANH, transparent: true, depthWrite: false,
       depthTest: true, blending: L.cong ? THREE.AdditiveBlending : THREE.NormalBlending
     });
@@ -108,7 +110,7 @@ export function taoBoHat(ctx, { nhe } = {}) {
 
   const c0 = new THREE.Color(), c1 = new THREE.Color();
   function hat(lop, { p, v = null, g = 0, can = 0, song = 1, co = 0.3, coCuoi = co, mau = "#ffffff", mauCuoi = null, mo = 1, hienDan = 0,
-    xoay = Math.random() * 6.28, tocXoay = 0, keoDai = 0, sang = 1, quy = null, moCuoi = 0 } = {}) {
+    xoay = lop === "lua" ? (Math.random() - 0.5) * 0.3 : Math.random() * 6.28, tocXoay = 0, keoDai = 0, sang = 1, quy = null, moCuoi = 0 } = {}) {
     const L = LOP[lop]; const i = L.ke; L.ke = (L.ke + 1) % L.toiDa;
     const o = i * 4, a = L.tt;
     c0.set(mau); c1.set(mauCuoi || mau);
