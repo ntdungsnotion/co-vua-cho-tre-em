@@ -1,7 +1,288 @@
 {
-  "_ghiChu": "Thư viện âm thanh Đấu Trường (TC_D05B3, 30/10/2026). Chỉ file CC0. nhac[]: { ma, ten, tep: 'nhac/<ma>.mp3', boiCanh: [tran|trum|lang|sanh|thang|thua|kham_pha], tamTrang: hung_trang|vui|cang_thang|nhe_nhang|bi_an, lap: true|false, amLuong: 0..1, giay, tacGia, nguon (đường dẫn trang tải), giayPhep: 'CC0' }. tieng[]: { ma, ten, nhom: kiem|va_cham|khien|phep|no|lua|bang|gio|dat|ten|kinh|nuoc|giao_dien|buoc_chan|quai, tep: ['tieng/<ma>_1.mp3', ...], amLuong, tacGia, nguon, giayPhep }. gan{}: 'nhac_<boiCanh>': ma nhạc; '<tên tiếng tự tạo trong dt3d_am_thanh.js>': { tieng: ma, kieu: chong|thay, amLuong }. Trang nghe thử: kc/dt/thu_am_thanh.html",
+  "_ghiChu": "Thư viện âm thanh Đấu Trường (TC_D05B3, 30/10/2026). Chỉ file CC0. nhac[]: { ma, ten, tep: 'nhac/<ma>.mp3', boiCanh: [tran|trum|lang|sanh|thang|thua|ket_thuc (đoạn ngắn chờ quản trị chọn cho thắng / thua)|<bối cảnh sân khấu: nui_bang, dam_lay, sa_mac, tren_may...>], tamTrang: hung_trang|vui|cang_thang|nhe_nhang|bi_an, lap: true|false, amLuong: 0..1, giay, tacGia, nguon (đường dẫn trang tải), giayPhep: 'CC0' }. tieng[]: { ma, ten, nhom: kiem|va_cham|khien|phep|no|lua|bang|gio|dat|ten|kinh|nuoc|giao_dien|buoc_chan|quai, tep: ['tieng/<ma>_1.mp3', ...], amLuong, tacGia, nguon, giayPhep }. gan{}: 'nhac_<boiCanh>': ma nhạc; '<tên tiếng tự tạo trong dt3d_am_thanh.js>': { tieng: ma, kieu: chong|thay, amLuong, tre (giây chờ) }. Trang nghe thử: kc/dt/thu_am_thanh.html Nhạc do QUẢN TRỊ chọn, bé không tắt / đổi được.",
   "phienBan": 1,
-  "nhac": [],
-  "tieng": [],
-  "gan": {}
+  "nhac": [
+    {
+      "ma": "tran_rung_xanh",
+      "ten": "Rừng xanh hăng hái",
+      "tep": "nhac/tran_rung_xanh.mp3",
+      "boiCanh": [
+        "tran"
+      ],
+      "tamTrang": "vui",
+      "lap": true,
+      "amLuong": 1,
+      "giay": 37,
+      "tacGia": "omfgdude",
+      "nguon": "https://opengameart.org/content/jungle-battle-loop",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "tran_phieu_luu",
+      "ten": "Phiêu lưu nhập vai",
+      "tep": "nhac/tran_phieu_luu.mp3",
+      "boiCanh": [
+        "tran"
+      ],
+      "tamTrang": "hung_trang",
+      "lap": true,
+      "amLuong": 1,
+      "giay": 59,
+      "tacGia": "iamoneabe",
+      "nguon": "https://opengameart.org/content/rpg-battle-loop",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "trum_quyet_chien",
+      "ten": "Quyết chiến (dàn nhạc)",
+      "tep": "nhac/trum_quyet_chien.mp3",
+      "boiCanh": [
+        "trum"
+      ],
+      "tamTrang": "hung_trang",
+      "lap": true,
+      "amLuong": 1,
+      "giay": 108,
+      "tacGia": "Emma_MA",
+      "nguon": "https://opengameart.org/content/determined-pursuit-epic-orchestra-loop",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "trum_dong_chay",
+      "ten": "Trùm xuất hiện",
+      "tep": "nhac/trum_dong_chay.mp3",
+      "boiCanh": [
+        "trum"
+      ],
+      "tamTrang": "cang_thang",
+      "lap": true,
+      "amLuong": 1,
+      "giay": 102,
+      "tacGia": "Pro Sensory",
+      "nguon": "https://opengameart.org/content/boss-battle-loop",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "ket_thuc_kenney_1",
+      "ten": "Đoạn kết 1: Hit jingles 00 (dàn nhạc)",
+      "tep": "nhac/ket_thuc_kenney_1.mp3",
+      "boiCanh": [
+        "ket_thuc"
+      ],
+      "tamTrang": "vui",
+      "lap": false,
+      "amLuong": 1,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/music-jingles",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "ket_thuc_kenney_2",
+      "ten": "Đoạn kết 2: Pizzicato jingles 00",
+      "tep": "nhac/ket_thuc_kenney_2.mp3",
+      "boiCanh": [
+        "ket_thuc"
+      ],
+      "tamTrang": "vui",
+      "lap": false,
+      "amLuong": 1,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/music-jingles",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "ket_thuc_kenney_3",
+      "ten": "Đoạn kết 3: 8-Bit jingles 00",
+      "tep": "nhac/ket_thuc_kenney_3.mp3",
+      "boiCanh": [
+        "ket_thuc"
+      ],
+      "tamTrang": "vui",
+      "lap": false,
+      "amLuong": 1,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/music-jingles",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "ket_thuc_kenney_4",
+      "ten": "Đoạn kết 4: Steel jingles 00",
+      "tep": "nhac/ket_thuc_kenney_4.mp3",
+      "boiCanh": [
+        "ket_thuc"
+      ],
+      "tamTrang": "vui",
+      "lap": false,
+      "amLuong": 1,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/music-jingles",
+      "giayPhep": "CC0"
+    }
+  ],
+  "tieng": [
+    {
+      "ma": "kiem_chem",
+      "ten": "Kiếm chém",
+      "nhom": "kiem",
+      "tep": [
+        "tieng/kiem_chem_1.mp3",
+        "tieng/kiem_chem_2.mp3"
+      ],
+      "amLuong": 0.8,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/rpg-audio",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "dam_trung",
+      "ten": "Trúng đòn (đấm mạnh)",
+      "nhom": "va_cham",
+      "tep": [
+        "tieng/dam_trung_1.mp3",
+        "tieng/dam_trung_2.mp3",
+        "tieng/dam_trung_3.mp3"
+      ],
+      "amLuong": 1,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/impact-sounds",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "khien_keng",
+      "ten": "Khiên kim loại keng",
+      "nhom": "khien",
+      "tep": [
+        "tieng/khien_keng_1.mp3",
+        "tieng/khien_keng_2.mp3",
+        "tieng/khien_keng_3.mp3"
+      ],
+      "amLuong": 0.7,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/impact-sounds",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "chuong_keng",
+      "ten": "Chuông / kết giới",
+      "nhom": "khien",
+      "tep": [
+        "tieng/chuong_keng_1.mp3",
+        "tieng/chuong_keng_2.mp3",
+        "tieng/chuong_keng_3.mp3"
+      ],
+      "amLuong": 0.6,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/impact-sounds",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "dat_tham",
+      "ten": "Đứng tấn chịu đòn (bịch)",
+      "nhom": "va_cham",
+      "tep": [
+        "tieng/dat_tham_1.mp3",
+        "tieng/dat_tham_2.mp3",
+        "tieng/dat_tham_3.mp3"
+      ],
+      "amLuong": 0.9,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/impact-sounds",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "ten_cam",
+      "ten": "Tên cắm (gỗ)",
+      "nhom": "ten",
+      "tep": [
+        "tieng/ten_cam_1.mp3",
+        "tieng/ten_cam_2.mp3",
+        "tieng/ten_cam_3.mp3"
+      ],
+      "amLuong": 0.5,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/impact-sounds",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "kinh_vo",
+      "ten": "Kính vỡ",
+      "nhom": "kinh",
+      "tep": [
+        "tieng/kinh_vo_1.mp3",
+        "tieng/kinh_vo_2.mp3",
+        "tieng/kinh_vo_3.mp3"
+      ],
+      "amLuong": 0.9,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/impact-sounds",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "da_vo",
+      "ten": "Đá vỡ / đất rung",
+      "nhom": "dat",
+      "tep": [
+        "tieng/da_vo_1.mp3",
+        "tieng/da_vo_2.mp3",
+        "tieng/da_vo_3.mp3"
+      ],
+      "amLuong": 0.9,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/impact-sounds",
+      "giayPhep": "CC0"
+    },
+    {
+      "ma": "buoc_chan",
+      "ten": "Bước chân trên cỏ",
+      "nhom": "buoc_chan",
+      "tep": [
+        "tieng/buoc_chan_1.mp3",
+        "tieng/buoc_chan_2.mp3",
+        "tieng/buoc_chan_3.mp3",
+        "tieng/buoc_chan_4.mp3"
+      ],
+      "amLuong": 0.6,
+      "tacGia": "Kenney",
+      "nguon": "https://kenney.nl/assets/impact-sounds",
+      "giayPhep": "CC0"
+    }
+  ],
+  "gan": {
+    "nhac_tran": "tran_rung_xanh",
+    "nhac_trum": "trum_quyet_chien",
+    "chem": {
+      "tieng": "kiem_chem",
+      "kieu": "chong"
+    },
+    "trung": {
+      "tieng": "dam_trung",
+      "kieu": "chong"
+    },
+    "keng": {
+      "tieng": "khien_keng",
+      "kieu": "thay"
+    },
+    "dungTan": {
+      "tieng": "dat_tham",
+      "kieu": "chong"
+    },
+    "tenCam": {
+      "tieng": "ten_cam",
+      "kieu": "thay"
+    },
+    "voKinh": {
+      "tieng": "kinh_vo",
+      "kieu": "chong",
+      "tre": 0.5
+    },
+    "damDat": {
+      "tieng": "da_vo",
+      "kieu": "chong"
+    },
+    "thachNo": {
+      "tieng": "da_vo",
+      "kieu": "chong",
+      "amLuong": 0.7
+    }
+  }
 }
