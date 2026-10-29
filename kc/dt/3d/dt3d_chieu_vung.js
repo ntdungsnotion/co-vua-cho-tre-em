@@ -134,10 +134,10 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
 
   // ================== 1) MƯA LỬA ==================
   // o: { tam (Vector3), r (bán kính vùng), giay, matDo (giọt / giây), mau, mau2 }
-  function muaLua({ tam = V(0, 0, 0), r = 4, giay = 3.2, matDo = 300, mau = "#ff6a1a", mau2 = "#ffb347" } = {}) {
-    toiTroi("#2a0a06", 0.9, giay + 1.4);
-    chieuSang(V(tam.x, 2.5, tam.z + 1), "#ff6a20", 26, giay + 0.8);
-    const roi = V(1.3, -11, 0.35), tRoi = 0.85;
+  function muaLua({ tam = V(0, 0, 0), r = 4, giay = 3.2, matDo = 100, mau = "#ff6a1a", mau2 = "#ffb347" } = {}) {
+    toiTroi("#2a0a06", 0.9, giay + 2.4);
+    chieuSang(V(tam.x, 2.5, tam.z + 1), "#ff6a20", 26, giay + 1.8);
+    const roi = V(0.7, -5.2, 0.18), tRoi = 1.7; // rơi chậm để mắt theo kịp (người dùng 30/10/2026)
     let tich = 0, dem = 0;
     lap(0.25, giay, (k, dt) => {
       tich += dt * so(matDo) * (k < 0.15 ? k / 0.15 : 1);
@@ -147,7 +147,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
         const dich = V(tam.x + Math.cos(a) * d, 0.05, Math.max(-4, Math.min(1.8, tam.z + Math.sin(a) * d * 0.6)));
         const tr = tRoi * ngau(0.85, 1.15), tu = dich.clone().addScaledVector(roi, -tr);
         const to = dem % 3 === 0;
-        bo.hat(to ? "lua" : "sang", { p: tu, v: roi, song: tr, co: to ? 0.55 : 0.16, keoDai: to ? 0.035 : 0.075, mau: to ? "#ffffff" : mau2, mauCuoi: mau, sang: to ? 1.5 : 1.9, moCuoi: 0.97 });
+        bo.hat(to ? "lua" : "sang", { p: tu, v: roi, song: tr, co: to ? 0.55 : 0.16, keoDai: to ? 0.05 : 0.1, mau: to ? "#ffffff" : mau2, mauCuoi: mau, sang: to ? 1.5 : 1.9, moCuoi: 0.97 });
         if (to) bo.hat("sang", { p: tu, v: roi, song: tr, co: 0.5, mau, sang: 1.2, mo: 0.5 });
         hen(tr, () => { // chạm đất
           if (dem % 2 === 0) bo.hat("lua", { p: V(dich.x, 0.25, dich.z), v: V(0, 0.8, 0), song: ngau(0.35, 0.55), co: 0.45, coCuoi: 0.8, sang: 1.4 });
@@ -159,14 +159,14 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
       }
     });
     lap(0.25, giay, k => { if (Math.random() < 0.08) hu.rung(0.02, 0.15); });
-    return giay + 1.2;
+    return giay + 2.2;
   }
 
   // ================== 2) MƯA THIÊN THẠCH ==================
   // o: { tam, r, so (số khối), giay (khoảng thả), co (cỡ khối), mau }
-  function thienThach({ tam = V(0, 0, 0), r = 3.4, so: soKhoi = 8, giay = 2.6, co = 0.45, mau = "#ff7a2a" } = {}) {
-    toiTroi("#2a0e10", 0.6, giay + 2.2);
-    chieuSang(V(tam.x, 3, tam.z + 1.2), "#ff5a20", 10, giay + 1.5);
+  function thienThach({ tam = V(0, 0, 0), r = 3.4, so: soKhoi = 3, giay = 2.6, co = 0.45, mau = "#ff7a2a" } = {}) {
+    toiTroi("#2a0e10", 0.6, giay + 3.2);
+    chieuSang(V(tam.x, 3, tam.z + 1.2), "#ff5a20", 10, giay + 2.5);
     const diem = [];
     for (let i = 0; i < soKhoi; i++) { // điểm rơi rải đều, không chồng nhau
       let p, lan = 0;
@@ -175,7 +175,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
       diem.push(p);
     }
     diem.forEach((dich, i) => {
-      const tre = i / Math.max(1, soKhoi - 1) * giay + ngau(-0.1, 0.1), bay = ngau(0.55, 0.7), c = co * ngau(0.75, 1.3);
+      const tre = i / Math.max(1, soKhoi - 1) * giay + ngau(-0.1, 0.1), bay = ngau(1.3, 1.6), c = co * ngau(0.75, 1.3);
       hen(Math.max(0, tre), () => {
         const vong = vetDat(dich, TEX.canhBao, { co: c * 4.2, giay: 0.7 + bay, mau: "#ff3b2a", sang: true, mo: 0.9, moTu: 0.85, no: 0.3 });
         vong.userData.nhip = true;
@@ -200,7 +200,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
         });
       });
     });
-    return giay + 2.6;
+    return giay + 3.6;
   }
   function noThach(p, c, mau) {
     const k = c / 0.45;

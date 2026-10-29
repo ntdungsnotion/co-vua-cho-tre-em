@@ -376,8 +376,9 @@ async function tao(vungVe, { nhe } = {}) {
       vong.be.visible = vong.quai.visible = bong.visible = false;
       hu.chuChieu(TEN[ma], V(0, 2.4, 0.4), kieu.mau);
       const runQuai = (giay, tre) => them(giay, p => { if (Math.random() < 0.06) quai.chop(0.12); qn.position.x = xq + Math.sin(p * 70) * 0.02; }, tre);
-      if (ma === "mua_lua") { dien("phepLon"); runQuai(3, 0.9); return cv.muaLua({ tam: V(xq - 0.4, 0, -0.7), r: 3.8 }); }
-      if (ma === "thien_thach") { dien("phepLon"); runQuai(2.6, 1.3); return cv.thienThach({ tam: V(xq - 0.6, 0, -0.5), r: 2.8, so: 8 }); }
+      // mưa lửa / thiên thạch: ít và chậm để mắt theo kịp (người dùng 30/10/2026: giảm còn 1/3, chậm hơn)
+      if (ma === "mua_lua") { dien("phepLon"); runQuai(3.2, 1.9); return cv.muaLua({ tam: V(xq - 0.4, 0, -0.7), r: 3.8 }); }
+      if (ma === "thien_thach") { dien("phepLon"); runQuai(2.8, 2.1); return cv.thienThach({ tam: V(xq - 0.2, 0, -0.4), r: 1.8, so: 3 }); }
       if (ma === "loc_xoay") {
         dien("phepLon");
         // phễu đi từ sau quái, quét qua quái (tới đúng chỗ quái ở giây 1,8) rồi tan
