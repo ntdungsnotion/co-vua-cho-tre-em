@@ -377,7 +377,7 @@ async function tao(vungVe, { nhe } = {}) {
       hu.chuChieu(TEN[ma], V(0, 2.4, 0.4), kieu.mau);
       const runQuai = (giay, tre) => them(giay, p => { if (Math.random() < 0.06) quai.chop(0.12); qn.position.x = xq + Math.sin(p * 70) * 0.02; }, tre);
       // mưa lửa / thiên thạch: ít và chậm để mắt theo kịp (người dùng 30/10/2026: giảm còn 1/3, chậm hơn)
-      if (ma === "mua_lua") { dien("phepLon"); runQuai(3.2, 1.9); return cv.muaLua({ tam: V(xq - 0.4, 0, -0.7), r: 3.8 }); }
+      if (ma === "mua_lua") { dien("phepLon"); runQuai(3.2, 1.9); return cv.muaLua({ tam: V(xq + 0.4, 0, -0.5), r: 2.3 }); } // chỉ phủ nửa sân phía quái, không trùm lên bé
       if (ma === "thien_thach") { dien("phepLon"); runQuai(2.8, 2.1); return cv.thienThach({ tam: V(xq - 0.2, 0, -0.4), r: 1.8, so: 3 }); }
       if (ma === "loc_xoay") {
         dien("phepLon");
