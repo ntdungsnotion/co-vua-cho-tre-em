@@ -7,12 +7,16 @@
 //              locXoay     - phễu gió xoắn cuốn bụi + đá, đi từ điểm này tới điểm kia
 //              damDat      - đất nứt toả ra, cột đá trồi lên rồi sụp, sóng bụi, rung mạnh
 //              voKhongGian - khung hình nứt như kính rồi vỡ văng ra, lộ khe không gian phía sau
+//              muaTen      - nhiều loạt mũi tên bay vòng cung từ sau lưng, cắm xuống vùng địch
+//              chuongNangLuong - gồng tụ cầu sáng (hạt bị hút vào) rồi bắn luồng sóng năng lượng lớn
 //            Dùng bộ hạt dt3d_hat.js (lửa / khói / nổ lật khung) + hiệu ứng cũ dt3d_hieu_ung.js.
 // HÀM KHAI RA:
 //   taoChieuVung(ctx, hu, bo, { nhe, layCamera }) -> cv = { capNhat(dt, t), muaLua(o), thienThach(o),
-//        locXoay(o), damDat(o), voKhongGian(o) }   (o: xem đầu mỗi hàm; mọi chiêu trả về thời gian diễn, giây)
+//        locXoay(o), damDat(o), voKhongGian(o), muaTen(o), chuongNangLuong(o) }
+//        (o: xem đầu mỗi hàm; mọi chiêu trả về thời gian diễn, giây; locXoay trả { giay, tam() })
 // BƯỚC: TC_D05B2 (người dùng 29/10/2026: "mưa lửa bao trùm vùng rộng lớn, mưa thiên thạch, lốc xoáy,
-//        dẫm chân làm rung chuyển mặt đất, đấm vỡ không gian")
+//        dẫm chân làm rung chuyển mặt đất, đấm vỡ không gian"; 30/10/2026: "thêm mưa mũi tên",
+//        đòn chưởng sóng năng lượng kiểu võ thuật)
 // NGÀY: 30/10/2026
 // ================================================================
 import * as THREE from "three";
@@ -389,6 +393,128 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
     return giay;
   }
 
+  // ================== 6) MƯA MŨI TÊN ==================
+  // o: { tu (chỗ cung thủ đứng bắn, phía sau người ra chiêu), tam (giữa vùng rơi), r, dot (số loạt), moiDot (tên / loạt),
+  //      cach (giây giữa 2 loạt), bay (giây bay), mau (vệt sáng), trungTam(p) (gọi khi tên cắm gần tâm) }
+  function muaTen({ tu = V(-4.5, 1, -0.3), tam = V(1.6, 0, 0), r = 1.8, dot = 3, moiDot = 14, cach = 0.55, bay = 1.5, mau = "#fff1c4", trungTam = null } = {}) {
+    for (let d = 0; d < dot; d++) hen(d * cach, () => {
+      const n = so(moiDot);
+      for (let i = 0; i < n; i++) {
+        const tre = ngau(0, 0.18);
+        hen(tre, () => {
+          if (dsTen.length >= N_TEN) dsTen.shift();
+          const a = ngau(0, 6.28), dd = Math.sqrt(Math.random()) * r;
+          const dich = V(Math.max(-3.2, Math.min(3.2, tam.x + Math.cos(a) * dd)), 0.05, Math.max(-3, Math.min(1.5, tam.z + Math.sin(a) * dd * 0.6)));
+          const p = tu.clone().add(V(ngau(-0.6, 0.6), ngau(-0.2, 0.3), ngau(-0.6, 0.6)));
+          const tb = bay * ngau(0.9, 1.1), G = 9.8;
+          const v = dich.clone().sub(p).divideScalar(tb); v.y += 0.5 * G * tb;
+          dsTen.push({ p, v, G, con: tb, cam: 0, tich: 0, mau, gan: dich.distanceTo(tam) < 0.75 });
+          if (i % 4 === 0) bo.hat("sang", { p: p.clone(), song: 0.12, co: 0.25, mau: "#fff8e0", mo: 0.6 });
+        });
+      }
+    });
+    hen(bay, () => hu.rung(0.02, 0.2));
+    muaTen.trungTam = trungTam;
+    return dot * cach + bay + 1.6;
+  }
+  // tên: thân + mũi (một khối tiện tròn) + lông đuôi (2 tấm chéo), dựng dọc trục +z
+  const N_TEN = nhe ? 40 : 90;
+  const hinhTen = new THREE.LatheGeometry([new THREE.Vector2(0, -0.36), new THREE.Vector2(0.011, -0.36), new THREE.Vector2(0.011, 0.27), new THREE.Vector2(0.032, 0.27), new THREE.Vector2(0, 0.37)], 6).rotateX(Math.PI / 2);
+  const hinhLong = new THREE.BufferGeometry();
+  hinhLong.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, -0.36, 0, 0.05, -0.33, 0, 0, -0.2, 0, -0.05, -0.33, 0.05, 0, -0.33, -0.05, 0, -0.33], 3));
+  hinhLong.setIndex([0, 1, 2, 0, 2, 3, 0, 4, 2, 0, 2, 5]); hinhLong.computeVertexNormals();
+  const tenMesh = new THREE.InstancedMesh(hinhTen, new THREE.MeshLambertMaterial({ color: "#6b4a2b", emissive: "#2a1a0c" }), N_TEN);
+  const longMesh = new THREE.InstancedMesh(hinhLong, new THREE.MeshBasicMaterial({ color: "#f2ead8", side: THREE.DoubleSide }), N_TEN);
+  for (const m of [tenMesh, longMesh]) { m.count = 0; m.frustumCulled = false; canh.add(m); }
+  const dsTen = [], TRUC_Z = V(0, 0, 1), huongTen = V();
+  function capNhatTen(dt) {
+    for (let i = dsTen.length - 1; i >= 0; i--) {
+      const a = dsTen[i];
+      if (a.cam) { a.cam += dt; if (a.cam > 1.6) dsTen.splice(i, 1); continue; }
+      a.v.y -= a.G * dt; a.p.addScaledVector(a.v, dt); a.con -= dt;
+      a.tich += dt; if (a.tich > (nhe ? 0.06 : 0.035)) { a.tich = 0; bo.hat("sang", { p: a.p.clone(), v: a.v.clone().multiplyScalar(0.05), song: 0.18, co: 0.035, keoDai: 0.03, mau: a.mau, mo: 0.55, sang: 1.3 }); }
+      if (a.con <= 0) { // cắm xuống đất: bụi + tia nhỏ
+        a.cam = 0.0001; a.p.y = Math.max(0.12, a.p.y);
+        bo.hat("khoi", { p: V(a.p.x, 0.1, a.p.z), v: V(ngau(-0.3, 0.3), ngau(0.2, 0.5), 0), song: 0.7, co: 0.25, coCuoi: 0.6, mau: "#a8977c", mo: 0.5 });
+        for (let k = 0; k < 2; k++) bo.hat("sang", { p: V(a.p.x, 0.08, a.p.z), v: V(ngau(-1.5, 1.5), ngau(1, 2.5), ngau(-0.8, 0.8)), g: 9, song: 0.3, co: 0.04, keoDai: 0.03, mau: "#ffe9b0", sang: 1.6 });
+        if (a.gan && muaTen.trungTam) muaTen.trungTam(a.p);
+      }
+    }
+    dsTen.forEach((a, i) => {
+      huongTen.copy(a.v).normalize(); qt.setFromUnitVectors(TRUC_Z, huongTen);
+      const co = a.cam > 1.2 ? Math.max(0.001, 1 - (a.cam - 1.2) / 0.4) : 1; // cắm 1,2 giây rồi tan
+      mt.compose(a.p, qt, cs.setScalar(co)); tenMesh.setMatrixAt(i, mt); longMesh.setMatrixAt(i, mt);
+    });
+    tenMesh.count = longMesh.count = dsTen.length;
+    tenMesh.instanceMatrix.needsUpdate = longMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  // ================== 7) CHƯỞNG SÓNG NĂNG LƯỢNG ==================
+  // Gồng tụ cầu sáng (hạt bị hút vào, đất rung), rồi bắn luồng sáng lớn xuyên qua mục tiêu.
+  // o: { tu (giữa hai tay), den (điểm cuối luồng), trung (điểm trúng, mặc định giữa đường), mau, gom (giây gồng),
+  //      ban (giây bắn), co (bán kính luồng) }  -> giây diễn
+  const DINH_CHUONG = "varying vec3 vN; varying vec3 vV; varying vec2 vUv; void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }";
+  const MANH_CHUONG = "uniform vec3 uMau; uniform float uT, uMo, uLoi; varying vec3 vN; varying vec3 vV; varying vec2 vUv;" +
+    "void main(){ float f = abs(dot(vN, vV)); float song = 0.78 + 0.22 * sin(vUv.y * 46.0 - uT * 38.0) * sin(vUv.x * 18.0 + uT * 9.0);" +
+    " float a = pow(f, mix(1.6, 0.6, uLoi)) * song; vec3 c = mix(uMau, vec3(1.0), pow(f, 4.0) * 0.9 * uLoi) * (0.75 + 0.55 * uLoi);" +
+    " gl_FragColor = vec4(c * a * uMo, 1.0);" + KET_MAU + "}";
+  function chuongNangLuong({ tu = V(-0.9, 1.05, 0.25), den = V(5.5, 1, 0), trung = null, mau = "#2fa8ff", gom = 1.3, ban = 1.4, co = 0.42 } = {}) {
+    trung = trung || tu.clone().lerp(den, 0.5);
+    // 1. gồng: cầu sáng lớn dần, hạt + tia điện hút vào, bụi xoáy dưới chân
+    const cau = new THREE.Group();
+    const lop = [["#ffffff", 0.5], [mau, 1.2], [mau, 2.2]].map(([m, k]) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.hoSang, color: m, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); s.userData.k = k; cau.add(s); return s; });
+    cau.position.copy(tu); cau.renderOrder = 14;
+    let tich = 0;
+    them(cau, gom + ban + 0.2, (k, dt, t) => {
+      const tg = k * (gom + ban + 0.2), lon = tg < gom ? mem(0, gom, tg) : tg < gom + ban ? 1 : 1 - (tg - gom - ban) / 0.2;
+      for (const s of lop) { s.scale.setScalar(co * 1.9 * s.userData.k * lon * (1 + 0.12 * Math.sin(t * 40 + s.userData.k))); s.material.opacity = Math.min(1, lon * 1.2) / s.userData.k; }
+      if (tg < gom) {
+        tich += dt * so(70);
+        while (tich >= 1) { tich -= 1; const h = V(ngau(-1, 1), ngau(-1, 1), ngau(-1, 1)).normalize().multiplyScalar(ngau(1.1, 1.8)), s0 = ngau(0.35, 0.6); bo.hat("sang", { p: tu.clone().add(h), v: h.clone().multiplyScalar(-1 / s0), song: s0, co: 0.05, keoDai: 0.035, mau, sang: 2, moCuoi: 0.9, hienDan: 0.3 }); }
+        if (Math.random() < 0.25) bo.hat("khoi", { p: V(tu.x, 0.1, tu.z), song: 0.8, co: 0.5, coCuoi: 1.3, mau: "#9fb0bb", mo: 0.2, quy: { r: ngau(0.6, 1.1), a: ngau(0, 6.28), w: 4, vr: -0.6 } });
+        if (Math.random() < 0.06) hu.rung(0.015 + 0.03 * tg / gom, 0.12);
+      }
+    });
+    chieuSang(V(tu.x + 0.3, tu.y, tu.z + 0.6), mau, 9, gom + ban + 0.3);
+    toiTroi("#0b1a2e", 0.45, gom + ban + 0.9);
+    // 2. bắn: luồng sáng hình trụ (lõi trắng + vỏ màu), dài ra trong 0,15 giây, giữ, rồi thu mảnh lại
+    hen(gom, () => {
+      const huong = den.clone().sub(tu), dai = huong.length(); huong.normalize();
+      const q = new THREE.Quaternion().setFromUnitVectors(V(1, 0, 0), huong);
+      const hinh = new THREE.CylinderGeometry(1, 1, 1, 28, 1, true).rotateZ(-Math.PI / 2).translate(0.5, 0, 0);
+      const luong = new THREE.Group(); luong.position.copy(tu); luong.quaternion.copy(q); luong.renderOrder = 15;
+      const vls = [[mau, 1, 0], ["#ffffff", 0.38, 1]].map(([m, k, loi]) => {
+        const vl = new THREE.ShaderMaterial({ uniforms: { uMau: { value: new THREE.Color(m) }, uT: { value: 0 }, uMo: { value: 1 }, uLoi: { value: loi } }, vertexShader: DINH_CHUONG, fragmentShader: MANH_CHUONG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+        const m3 = new THREE.Mesh(hinh, vl); m3.userData.k = k; luong.add(m3); return vl;
+      });
+      let t0 = 0, tichT = 0;
+      them(luong, ban, (k, dt) => {
+        t0 += dt;
+        const ra = mem(0, 0.15, t0), thu = 1 - mem(ban - 0.3, ban, t0), r = co * (0.35 + 0.65 * ra) * (0.25 + 0.75 * thu) * (1 + 0.08 * Math.sin(t0 * 55));
+        luong.children.forEach(m3 => m3.scale.set(dai * ra, r * m3.userData.k, r * m3.userData.k));
+        for (const vl of vls) { vl.uniforms.uT.value = t0; vl.uniforms.uMo.value = thu; }
+        // chỗ trúng: chớp, tia văng ngược, khói; bụi bị thổi dọc đường luồng
+        tichT += dt;
+        if (t0 > 0.12 && tichT > (nhe ? 0.06 : 0.03) && thu > 0.3) {
+          tichT = 0;
+          for (let i = 0; i < 2; i++) bo.hat("sang", { p: trung.clone(), v: V(ngau(-5, -1), ngau(-3, 4), ngau(-3, 3)), g: 6, can: 1.5, song: ngau(0.3, 0.6), co: 0.06, keoDai: 0.04, mau, sang: 2.2 });
+          if (Math.random() < 0.4) bo.hat("sang", { p: trung.clone(), song: 0.08, co: co * 4, mau, sang: 1, mo: 0.3 });
+          if (Math.random() < 0.5) bo.hat("khoi", { p: trung.clone().add(V(0, -0.2, 0)), v: V(ngau(1, 2.5), ngau(0.3, 1.2), ngau(-0.6, 0.6)), song: 1, co: 0.6, coCuoi: 1.6, mau: "#c4d2dc", mo: 0.4 });
+          const x = ngau(0, 1); const p = tu.clone().lerp(den, x);
+          bo.hat("khoi", { p: V(p.x, 0.12, p.z), v: V(huong.x * 2, ngau(0.3, 0.8), ngau(-0.8, 0.8)), can: 1.5, song: 0.8, co: 0.35, coCuoi: 1, mau: "#b3a48a", mo: 0.4 });
+        }
+        if (Math.random() < 0.3) hu.rung(0.05, 0.15);
+      });
+      hu.chop(tu, "#ffffff", 2, 0.2, 0.6);
+      hu.songXung(V(tu.x, 0, tu.z), mau, 2.4, 0.5);
+      hu.songXung(V(trung.x, 0, trung.z), mau, 3, 0.7);
+      hu.rung(0.1, 0.4);
+      vetDat(V(trung.x, 0, trung.z), TEX.ho, { co: 2, giay: 5, mo: 0.7, moTu: 0.8 });
+      chieuSang(trung.clone().add(V(0, 0.4, 0.6)), mau, 18, ban);
+    });
+    return gom + ban + 0.9;
+  }
+
   // ================== cập nhật mỗi khung ==================
   function capNhat(dt, t) {
     for (let i = viec.length - 1; i >= 0; i--) {
@@ -452,8 +578,9 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
       mt.compose(cs.set(g.x, -0.05 - xuong * 0.2, g.z), qt, new THREE.Vector3(g.ban, Math.max(0.001, h), g.ban)); gaiMesh.setMatrixAt(i, mt);
     });
     gaiMesh.count = dsGai.length; gaiMesh.instanceMatrix.needsUpdate = true;
+    capNhatTen(dt);
   }
 
-  return { capNhat, muaLua, thienThach, locXoay, damDat, voKhongGian };
+  return { capNhat, muaLua, thienThach, locXoay, damDat, voKhongGian, muaTen, chuongNangLuong };
 }
 // 30/10/2026 - BƯỚC: TC_D05B2

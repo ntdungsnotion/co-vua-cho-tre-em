@@ -11,7 +11,7 @@
 //   tao(vungVe, { nhe }) -> Promise<san>; san = { datTran({ chungLoai, hoSo, quai, chu }),
 //        ketQua(k) (k: kết quả lượt của lõi), thu(ben, bat), nghi(bat), ketThuc(thang),
 //        viTri(ben) -> { x, y } điểm ảnh trong vùng vẽ (trên đầu),
-//        chieuVung(ma) -> giây diễn (ma: mua_lua | thien_thach | loc_xoay | dam_dat | vo_khong_gian; TC_D05B2) }
+//        chieuVung(ma) -> giây diễn (ma: mua_lua | thien_thach | loc_xoay | dam_dat | vo_khong_gian | mua_ten | chuong; TC_D05B2) }
 // LUẬT NỐI: dùng dt3d_canh.js, dt3d_mo_hinh.js, dt3d_nhan_vat.js, dt3d_quai.js; NV = window.KC_NV.
 // BƯỚC: TC_D05 (người dùng 29/10/2026: "đồ hoạ xấu quá" -> sân 3D cùng bộ hình với làng;
 //        sau đó: hiệu ứng chiến đấu + phép thuật theo tộc, dt3d_hieu_ung.js);
@@ -371,7 +371,7 @@ async function tao(vungVe, { nhe } = {}) {
     chieuVung(ma) {
       if (!quai) return 0;
       const qn = quai.nhom, xq = qn.position.x;
-      const TEN = { mua_lua: "HOẢ VŨ THIÊN GIÁNG", thien_thach: "THIÊN THẠCH LẠC", loc_xoay: "CUỒNG PHONG", dam_dat: "CHẤN ĐỊA", vo_khong_gian: "PHÁ KHÔNG QUYỀN" };
+      const TEN = { mua_lua: "HOẢ VŨ THIÊN GIÁNG", thien_thach: "THIÊN THẠCH LẠC", loc_xoay: "CUỒNG PHONG", dam_dat: "CHẤN ĐỊA", vo_khong_gian: "PHÁ KHÔNG QUYỀN", mua_ten: "VẠN TIỄN TỀ PHÁT", chuong: "THIÊN QUANG CHƯỞNG" };
       if (!TEN[ma]) return 0;
       vong.be.visible = vong.quai.visible = bong.visible = false;
       hu.chuChieu(TEN[ma], V(0, 2.4, 0.4), kieu.mau);
@@ -386,6 +386,18 @@ async function tao(vungVe, { nhe } = {}) {
         // quái bị cuốn lên, xoay tít, rồi rơi phịch xuống
         them(1.3, p => { qn.position.y = Math.sin(p * Math.PI) * 1.6; qn.rotation.y = HUONG_QUAI + p * Math.PI * 8; }, 1.4);
         them(0.01, () => { qn.rotation.y = HUONG_QUAI; quai.chop(0.3); hu.songXung(V(xq, 0, 0), "#d8c9a8", 1.6, 0.5); hu.khoi(V(xq, 0.1, 0.1), "#cdbf9c", 8, 0.7, false); hu.rung(0.06, 0.3); }, 2.7);
+        return giay;
+      }
+      if (ma === "mua_ten") { // cung thủ phía sau bắn vòng cung qua đầu Thủ lĩnh
+        dien("phep");
+        return cv.muaTen({ tu: V(X_BE - 3.2, 1.2, -0.6), tam: V(xq + 0.1, 0, -0.2), r: 1.8, trungTam: () => quai.chop(0.12) });
+      }
+      if (ma === "chuong") { // gồng 1,3 giây rồi bắn luồng sáng xuyên qua quái, quái bị đẩy lùi
+        dien("phepLon");
+        const gom = 1.3, ban = 1.4;
+        const giay = cv.chuongNangLuong({ tu: V(dvBe.x + 0.6, caoBe * 0.56, 0.25), den: V(7, caoBe * 0.5, 0.1), trung: tamQuai(), gom, ban, mau: kieu === KIEU_TOC.quy ? "#ff7a3a" : kieu === KIEU_TOC.tien ? "#a070ff" : "#2fa8ff" });
+        them(ban, p => { qn.position.x = xq + Math.sin(Math.min(1, p * 1.4) * Math.PI / 2) * 0.7 + Math.sin(p * 80) * 0.03; if (Math.random() < 0.08) quai.chop(0.1); }, gom);
+        them(0.5, p => { qn.position.x = xq + 0.7 * (1 - p); }, gom + ban);
         return giay;
       }
       if (ma === "dam_dat") {
