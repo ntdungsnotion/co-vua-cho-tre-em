@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#14204a">
+  <title>Nghe thử âm thanh - Đấu Trường Tri Thức</title>
+  <!-- ================================================================
+       FILE: dt/thu_am_thanh.html
+       CHỨC NĂNG: Trang NGHE THỬ thư viện âm thanh của Đấu Trường (không có nút dẫn tới, mở bằng
+                  địa chỉ). Đọc am_thanh/thu_vien.json: nghe từng bài nhạc nền (cả chỗ nối vòng lặp),
+                  từng tiếng thu thật (từng biến thể), xem bảng gắn vào sân khấu / hiệu ứng, và bấm
+                  thử các tiếng tự tạo của trận (đã áp bảng gắn). Chủ dự án chọn bài ở đây; trang Cài
+                  đặt (TC_D05D) sẽ sửa bảng gắn.
+       BƯỚC: TC_D05B3 (người dùng 30/10/2026: "giao việc cho agy làm thư viện âm thanh để sau này
+             mình gắn bối cảnh sân khấu, hiệu ứng trong cài đặt")
+       NGÀY: 30/10/2026 06:30
+       PHỤ THUỘC: dt/3d/dt3d_am_thanh.js, dt/am_thanh/thu_vien.json
+       ================================================================ -->
+  <style>
+    :root {
+      --dem: #14204a; --dem2: #1c2b63; --the: #22347a; --vang: #ffc24b; --sang: #fff6dc; --nhat: #b9c3ec;
+      --xanh: #3ddc84; --vien: rgba(255, 194, 75, .55);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--dem); color: var(--sang); font-family: system-ui, "Segoe UI", sans-serif; }
+    body { font-size: 18px; padding: 0 16px 40px; }
+    button { font: inherit; color: inherit; }
+    a { color: var(--nhat); }
+    .an { display: none !important; }
+    .dau { display: flex; align-items: center; gap: 10px; padding: 10px 0; position: sticky; top: 0; background: var(--dem); z-index: 2; }
+    .dau h1 { font-size: 1.15rem; margin: 0 auto 0 0; color: var(--vang); }
+    .nut { background: var(--the); border: 2px solid var(--vang); border-radius: 12px; padding: 6px 14px; min-height: 48px; min-width: 48px; cursor: pointer; font-weight: 600; }
+    .nut.chinh { background: var(--vang); color: var(--dem); }
+    .nut.dang { background: var(--xanh); color: var(--dem); border-color: var(--xanh); }
+    h2 { font-size: 1.05rem; color: var(--vang); margin: 22px 0 8px; }
+    .luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 10px; }
+    .the { background: var(--dem2); border: 1px solid var(--vien); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .the b { font-size: 1.05rem; }
+    .phu { color: var(--nhat); font-size: .85rem; line-height: 1.4; overflow-wrap: anywhere; }
+    .chip { display: inline-block; background: var(--the); border-radius: 999px; padding: 1px 9px; margin: 2px 4px 0 0; font-size: .8rem; }
+    .hang { display: flex; flex-wrap: wrap; gap: 6px; }
+    .trong { color: var(--nhat); background: var(--dem2); border-radius: 12px; padding: 14px; }
+    table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+    td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--the); }
+    .goi { position: fixed; inset: 0; background: rgba(10, 16, 40, .85); display: flex; align-items: center; justify-content: center; z-index: 5; }
+    @media (min-width: 900px) { body { padding: 0 32px 48px; } .dau h1 { font-size: 1.4rem; } }
+  </style>
+</head>
+<body>
+  <div class="dau">
+    <h1>🎧 Thư viện âm thanh</h1>
+    <button class="nut" id="nutDung">⏹ Dừng nhạc</button>
+  </div>
+  <div class="goi" id="goi"><button class="nut chinh" id="nutMo">🔊 Chạm để nghe</button></div>
+
+  <h2>🎵 Nhạc nền</h2>
+  <div class="luoi" id="dsNhac"></div>
+  <h2>💥 Tiếng thu thật</h2>
+  <div class="luoi" id="dsTieng"></div>
+  <h2>🔗 Gắn vào sân khấu / hiệu ứng</h2>
+  <div id="dsGan"></div>
+  <h2>🎛️ Tiếng của trận (đã áp bảng gắn)</h2>
+  <div class="hang" id="dsTuTao"></div>
+
+  <script type="module">
+    import { taoAmThanh } from "./3d/dt3d_am_thanh.js";
+    const $ = id => document.getElementById(id);
+    const am = taoAmThanh();
+    am.datBat(true);
+    window.__amThanh = am; // cho kịch bản thử Chrome
+    $("nutMo").addEventListener("click", () => $("goi").classList.add("an"));
+    const nut = (chu, fn, lop = "nut") => { const b = document.createElement("button"); b.className = lop; b.textContent = chu; b.addEventListener("click", fn); return b; };
+    const the = html => { const d = document.createElement("div"); d.className = "the"; d.innerHTML = html; return d; };
+    const thoat = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const nguon = v => `${thoat(v.tacGia || "?")} · ${thoat(v.giayPhep || "?")}${v.nguon ? ` · <a href="${thoat(v.nguon)}" target="_blank" rel="noopener">nguồn</a>` : ""}`;
+    let dangNghe = null;
+    function danhDau(b) { if (dangNghe) dangNghe.classList.remove("dang"); dangNghe = b; if (b) b.classList.add("dang"); }
+    $("nutDung").addEventListener("click", () => { am.dungNhac(0.6); danhDau(null); });
+
+    am.thuVien().then(tv => {
+      if (!tv.nhac.length) $("dsNhac").innerHTML = '<div class="trong">Chưa có bài nào. Phụ tá đang tìm nhạc CC0 (việc A7).</div>';
+      for (const v of tv.nhac) {
+        const d = the(`<b>${thoat(v.ten || v.ma)}</b>
+          <div>${(v.boiCanh || []).map(b => `<span class="chip">${thoat(b)}</span>`).join("")}${v.tamTrang ? `<span class="chip">${thoat(v.tamTrang)}</span>` : ""}</div>
+          <div class="phu">${thoat(v.ma)} · ${v.giay ? Math.round(v.giay) + " giây" : ""} · ${v.lap === false ? "phát một lần" : "lặp"}<br>${nguon(v)}</div>`);
+        const h = document.createElement("div"); h.className = "hang";
+        const b1 = nut("▶ Nghe", () => { am.phatNhac({ ma: v.ma, tu: 0 }); danhDau(b1); });
+        h.append(b1);
+        if (v.lap !== false) { const b2 = nut("🔁 Nghe chỗ nối", () => { am.phatNhac({ ma: v.ma, tu: -4 }); danhDau(b2); }); h.append(b2); }
+        d.append(h); $("dsNhac").append(d);
+      }
+      if (!tv.tieng.length) $("dsTieng").innerHTML = '<div class="trong">Chưa có tiếng nào (việc A7).</div>';
+      for (const v of tv.tieng) {
+        const tep = Array.isArray(v.tep) ? v.tep : [v.tep];
+        const d = the(`<b>${thoat(v.ten || v.ma)}</b><div><span class="chip">${thoat(v.nhom || "")}</span></div><div class="phu">${thoat(v.ma)} · ${tep.length} biến thể<br>${nguon(v)}</div>`);
+        const h = document.createElement("div"); h.className = "hang";
+        // lần bấm đầu tải file, nên thử phát lại sau khi tải xong
+        tep.forEach((_, i) => h.append(nut("▶ " + (i + 1), () => { if (!am.mau(v.ma, 0, 1, i)) setTimeout(() => am.mau(v.ma, 0, 1, i), 400); })));
+        d.append(h); $("dsTieng").append(d);
+      }
+      const gan = Object.entries(tv.gan);
+      $("dsGan").innerHTML = gan.length
+        ? `<table><tr><th>Chỗ dùng</th><th>Âm thanh</th><th>Kiểu</th></tr>${gan.map(([k, g]) => `<tr><td>${thoat(k)}</td><td>${thoat(typeof g === "string" ? g : g.tieng)}</td><td>${thoat(typeof g === "string" ? "nhạc" : g.kieu === "thay" ? "thay tiếng tự tạo" : "chồng lên tiếng tự tạo")}</td></tr>`).join("")}</table>`
+        : '<div class="trong">Chưa gắn gì: trận dùng tiếng tự tạo.</div>';
+    });
+
+    // tiếng tự tạo của trận: x = 0 (giữa), các tiếng chiêu dài cần thêm tham số
+    const TU_TAO = [
+      ["chem", "Chém"], ["trung", "Trúng đòn"], ["hut", "Hụt"], ["phep", "Phép"], ["keng", "Khiên keng"], ["dungTan", "Đứng tấn"],
+      ["ne", "Né"], ["nhay", "Quái vồ"], ["tia", "Tia đom đóm"], ["chuChieu", "Tên chiêu"], ["dichChuyen", "Dịch chuyển"],
+      ["thang", "Thắng"], ["thua", "Thua"], ["chayTron", "Quái chạy"], ["luaCham", "Lửa chạm đất"], ["thachNo", "Thiên thạch nổ"],
+      ["damDat", "Dậm đất"], ["voKinh", "Kính vỡ"], ["tenCam", "Tên cắm"]
+    ];
+    const THAM_SO = { chuChieu: [], thang: [], thua: [], muaLua: [0, 3.2], locXoay: [2, -2, 3.4], tenBan: [-3, 1.5], chuong: [-1, 1.3, 1.4], thachVut: [0, 1.4] };
+    for (const [ma, ten] of [...TU_TAO, ["muaLua", "Mưa lửa"], ["thachVut", "Thiên thạch rít"], ["locXoay", "Lốc xoáy"], ["tenBan", "Bắn tên"], ["chuong", "Chưởng"]]) {
+      $("dsTuTao").append(nut(ten, () => am[ma](...(THAM_SO[ma] || [0]))));
+    }
+  </script>
+</body>
+</html>
+<!-- 30/10/2026 - BƯỚC: TC_D05B3 -->

@@ -1,0 +1,7 @@
+{
+  "_ghiChu": "Thư viện âm thanh Đấu Trường (TC_D05B3, 30/10/2026). Chỉ file CC0. nhac[]: { ma, ten, tep: 'nhac/<ma>.mp3', boiCanh: [tran|trum|lang|sanh|thang|thua|kham_pha], tamTrang: hung_trang|vui|cang_thang|nhe_nhang|bi_an, lap: true|false, amLuong: 0..1, giay, tacGia, nguon (đường dẫn trang tải), giayPhep: 'CC0' }. tieng[]: { ma, ten, nhom: kiem|va_cham|khien|phep|no|lua|bang|gio|dat|ten|kinh|nuoc|giao_dien|buoc_chan|quai, tep: ['tieng/<ma>_1.mp3', ...], amLuong, tacGia, nguon, giayPhep }. gan{}: 'nhac_<boiCanh>': ma nhạc; '<tên tiếng tự tạo trong dt3d_am_thanh.js>': { tieng: ma, kieu: chong|thay, amLuong }. Trang nghe thử: kc/dt/thu_am_thanh.html",
+  "phienBan": 1,
+  "nhac": [],
+  "tieng": [],
+  "gan": {}
+}

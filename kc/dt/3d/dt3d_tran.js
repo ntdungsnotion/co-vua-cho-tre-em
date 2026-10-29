@@ -18,7 +18,7 @@
 //        sau đó: hiệu ứng chiến đấu + phép thuật theo tộc, dt3d_hieu_ung.js);
 //        TC_D05B1 (Thủ lĩnh = tướng người thật dt3d_tuong.js; tải lỗi thì KayKit như cũ);
 //        TC_D05B2 (chiêu phủ vùng rộng dt3d_chieu_vung.js + bộ hạt card đồ hoạ dt3d_hat.js);
-//        TC_D05B3 (âm thanh chiến đấu dt3d_am_thanh.js: mỗi động tác / chiêu một tiếng)
+//        TC_D05B3 (âm thanh chiến đấu dt3d_am_thanh.js: mỗi động tác / chiêu một tiếng; nhạc nền bối cảnh tran / thang / thua)
 // NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026; 30/10/2026 06:00
 // ================================================================
 import * as THREE from "three";
@@ -289,6 +289,7 @@ async function tao(vungVe, { nhe } = {}) {
       haoQuang = hu.taoHaoQuang(kieu.mau);
       dungQuai(ma, chu);
       vong.be.visible = vong.quai.visible = bong.visible = false;
+      am.phatNhac({ boiCanh: "tran" }); // nhạc nền trận từ thư viện (chưa có bài thì im)
     },
     thu(ben, bat) {
       vong[ben].visible = !!bat;
@@ -369,10 +370,10 @@ async function tao(vungVe, { nhe } = {}) {
       vong.be.visible = vong.quai.visible = bong.visible = false;
       if (thang === "quai") {
         if (haoQuang) haoQuang.bat(0);
-        dien("thua"); am.thua(); // tướng quỳ xuống kiệt sức rồi dịch chuyển về Lều (không có cảnh chết)
+        dien("thua"); am.thua(); am.phatNhac({ boiCanh: "thua", lap: false }); // tướng quỳ xuống kiệt sức rồi dịch chuyển về Lều (không có cảnh chết)
         them(0.01, () => { am.dichChuyen(dvBe.x); noLapLanh(V(dvBe.x, 0, 0), "#fff1a8"); hu.chop(V(dvBe.x, 1, 0.2), "#fff1a8", 2.4, 0.4); if (voBe()) voBe().visible = false; }, tuong ? 2.4 : 1.3);
       } else {
-        if (thang === "be") { dien("mung"); am.thang(0.1); if (haoQuang) haoQuang.bat(2); them(0.01, () => { hu.songXung(V(dvBe.x, 0, 0), kieu.mau, 2.4, 0.8); hu.chop(V(dvBe.x, 1.2, 0.2), kieu.mau2, 3, 0.5); }, 0.2); }
+        if (thang === "be") { dien("mung"); am.thang(0.1); am.phatNhac({ boiCanh: "thang", lap: false }); if (haoQuang) haoQuang.bat(2); them(0.01, () => { hu.songXung(V(dvBe.x, 0, 0), kieu.mau, 2.4, 0.8); hu.chop(V(dvBe.x, 1.2, 0.2), kieu.mau2, 3, 0.5); }, 0.2); }
         const q = quai;
         them(0.01, () => { am.chayTron(q.nhom.position.x); hu.khoi(V(q.nhom.position.x, 0.1, 0.1), "#cdbf9c", 6, 0.7, false); }, 0.6);
         them(1.2, p => { q.nhom.position.x = X_QUAI + p * 5; q.nhom.position.y = Math.abs(Math.sin(p * Math.PI * 4)) * 0.35; q.nhom.rotation.y = Math.PI / 2; q.datMo(1 - p); }, 0.6);
