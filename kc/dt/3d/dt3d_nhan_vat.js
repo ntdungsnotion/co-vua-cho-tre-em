@@ -9,13 +9,13 @@
 //   taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV) -> {
 //     tao(dv, vaiTro, hoSo) -> hinh { vo, trung, goc, dv }  (dv: đơn vị lõi, chỉ đọc)
 //     xoa(hinh); capNhat(dt) (gọi mỗi khung); dsHinh;
-//     dien(hinh, [tên động tác]) (diễn động tác trận), themDongTac(clip[]),
+//     dien(hinh, [tên động tác], khiDoi, khiXong, huong?) (diễn động tác trận; huong bỏ trống = nhìn camera), themDongTac(clip[]),
 //     reo(hinh, giây) (reo mừng, TC_D02B2b) }
 //   Đơn vị đang dựng nhà (trangThai "xay", TC_D02B2b): động tác Interact.
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh.mauGoc / vatLieu (dt3d_mo_hinh.js),
 //           diaHinh.doCaoDi (dt3d_dia_hinh.js), NV = window.KC_NV (bảng màu chung).
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C + đồ mang); TC_D02B2b (dựng nhà, reo mừng);
-//       TC_D03B2 (gặt ruộng: cúi gặt; lúa chưa chín thì đứng chờ)
+//       TC_D03B2 (gặt ruộng: cúi gặt; lúa chưa chín thì đứng chờ); TC_D05 (dien nhận hướng nhìn, cho màn đấu)
 // NGÀY: 23/10/2026; 27/10/2026; 28/10/2026 19:05
 // ================================================================
 import * as THREE from "three";
@@ -212,7 +212,7 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam } = {}) 
     const dv = h.dv;
     if (h.dien) { // diễn động tác trận (nút thử)
       const d = h.dien, ten = d.ds[d.i];
-      if (d.t === 0) { datDongTac(h, ten, true); h.huongMuon = Math.atan2(ctx.camera.position.x - dv.x, ctx.camera.position.z - dv.z); if (d.khiDoi) d.khiDoi(ten); }
+      if (d.t === 0) { datDongTac(h, ten, true); h.huongMuon = d.huong != null ? d.huong : Math.atan2(ctx.camera.position.x - dv.x, ctx.camera.position.z - dv.z); if (d.khiDoi) d.khiDoi(ten); }
       d.t += dt;
       if (d.t >= h.dt[ten].getClip().duration + 0.25) { d.i++; d.t = 0; }
       if (d.i >= d.ds.length) { const xong = d.khiXong; h.dien = null; hienVuKhi(h, h.vuKhiMacDinh); if (xong) xong(); }
@@ -246,7 +246,7 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam } = {}) 
     capNhat(dt) { for (const h of dsHinh) capNhatMot(h, dt); },
     reo(h, giay) { h.reo = giay || 2.5; },
     themDongTac(clip) { clipTran = clip; for (const h of dsHinh) for (const c of clip) if (!h.dt[c.name]) h.dt[c.name] = h.tron.clipAction(c); },
-    dien(h, ds, khiDoi, khiXong) { hienVuKhi(h, "1H_Axe"); if (h.vuKhi["1H_Axe"]) h.vuKhi["1H_Axe"].visible = true; h.dien = { ds, i: 0, t: 0, khiDoi, khiXong }; }
+    dien(h, ds, khiDoi, khiXong, huong) { hienVuKhi(h, "1H_Axe"); if (h.vuKhi["1H_Axe"]) h.vuKhi["1H_Axe"].visible = true; h.dien = { ds, i: 0, t: 0, khiDoi, khiXong, huong }; }
   };
 }
-// 28/10/2026 19:05 - BƯỚC: TC_D03B2
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2; 29/10/2026 - TC_D05
