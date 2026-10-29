@@ -477,7 +477,10 @@
     return kq;
   }
   const dangCuaLop = lop => DANG.filter(d => d.lop === lop);
+  // Giao diện nguồn chung cho dt_cau_hoi.js (TC_D04B): dạng dùng được cho một (lớp, mức), chủ đề của môn
+  const dangCho = (m, chuDe) => DANG.filter(d => d.lop === m.lop && (!chuDe || d.chuDe === chuDe));
+  const coChuDe = cd => DANG.some(d => d.chuDe === cd);
 
-  goc.KC_DT_SINH_TOAN = { DANG, taoCau, dsMuc, dangCuaLop, timDang, so, tp, laMa };
+  goc.KC_DT_SINH_TOAN = { mon: "toan", DANG, taoCau, dsMuc, dangCho, coChuDe, dangCuaLop, timDang, so, tp, laMa };
 })(typeof window !== "undefined" ? window : globalThis);
 // 29/10/2026 - BƯỚC: TC_D04A

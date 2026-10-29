@@ -22,5 +22,7 @@
     { "duoi": 1.01, "heSo": 0.3 }
   ],
   "_ghiChuThanhThao": "Thành thạo chủ đề 0-100 % = tỉ lệ đúng có trọng số của 'soLan' lần gần nhất; trọng số theo mức (câu khó nặng ký hơn).",
-  "thanhThao": { "soLan": 10, "trongSo": { "de": 1, "vua": 2, "kho": 3 } }
+  "thanhThao": { "soLan": 10, "trongSo": { "de": 1, "vua": 2, "kho": 3 } },
+  "_ghiChuTiengAnh": "TIẾNG ANH (TC_D04B): câu sinh từ kho từ chung (kc/tu_vung/kho_tu.json, cấp 1-4). Điểm độ khó = batDauCap[cấp - 1] + mucCong[mức], theo cùng thang lớp với Toán: mỗi cấp trải 2 lớp (cấp 1: 1 / 1,67 / 2,33; cấp 2: 3-4,33; cấp 3: 5-6,33; cấp 4: 7-8,33). Bước 0,67 giữa hai mức liền nhau (mô phỏng: bé lớp 6 leo tới câu lớp 6 nhanh hơn bước 0,7) để luôn có câu trong vùng vừa sức. Lớp của câu = phần nguyên điểm độ khó (trần: không hỏi quá lớp đang học). Mức theo đáp án nhiễu: Dễ khác chủ đề, Vừa cùng chủ đề, Khó viết gần giống.",
+  "tiengAnh": { "batDauCap": [1, 3, 5, 7], "mucCong": { "de": 0, "vua": 0.67, "kho": 1.33 } }
 }
