@@ -11,13 +11,15 @@
 //   tao(vungVe, { nhe }) -> Promise<san>; san = { datTran({ chungLoai, hoSo, quai, chu }),
 //        ketQua(k) (k: kết quả lượt của lõi), thu(ben, bat), nghi(bat), ketThuc(thang),
 //        viTri(ben) -> { x, y } điểm ảnh trong vùng vẽ (trên đầu),
-//        chieuVung(ma) -> giây diễn (ma: mua_lua | thien_thach | loc_xoay | dam_dat | vo_khong_gian | mua_ten | chuong; TC_D05B2) }
+//        chieuVung(ma) -> giây diễn (ma: mua_lua | thien_thach | loc_xoay | dam_dat | vo_khong_gian | mua_ten | chuong; TC_D05B2),
+//        am = bộ tiếng dt3d_am_thanh.js (dangBat(), datBat(b): nút tắt tiếng của trang; TC_D05B3) }
 // LUẬT NỐI: dùng dt3d_canh.js, dt3d_mo_hinh.js, dt3d_nhan_vat.js, dt3d_quai.js; NV = window.KC_NV.
 // BƯỚC: TC_D05 (người dùng 29/10/2026: "đồ hoạ xấu quá" -> sân 3D cùng bộ hình với làng;
 //        sau đó: hiệu ứng chiến đấu + phép thuật theo tộc, dt3d_hieu_ung.js);
 //        TC_D05B1 (Thủ lĩnh = tướng người thật dt3d_tuong.js; tải lỗi thì KayKit như cũ);
-//        TC_D05B2 (chiêu phủ vùng rộng dt3d_chieu_vung.js + bộ hạt card đồ hoạ dt3d_hat.js)
-// NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026
+//        TC_D05B2 (chiêu phủ vùng rộng dt3d_chieu_vung.js + bộ hạt card đồ hoạ dt3d_hat.js);
+//        TC_D05B3 (âm thanh chiến đấu dt3d_am_thanh.js: mỗi động tác / chiêu một tiếng)
+// NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026; 30/10/2026 06:00
 // ================================================================
 import * as THREE from "three";
 import { taoCanh, docDoHoa, bam } from "./dt3d_canh.js";
@@ -28,6 +30,7 @@ import { taoBoTuong } from "./dt3d_tuong.js";
 import { taoHieuUng } from "./dt3d_hieu_ung.js";
 import { taoBoHat } from "./dt3d_hat.js";
 import { taoChieuVung } from "./dt3d_chieu_vung.js";
+import { taoAmThanh } from "./dt3d_am_thanh.js";
 import { EffectComposer } from "../../thu_vien/three/postprocessing/EffectComposer.js";
 import { RenderPass } from "../../thu_vien/three/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "../../thu_vien/three/postprocessing/UnrealBloomPass.js";
@@ -75,7 +78,8 @@ async function tao(vungVe, { nhe } = {}) {
   const bui = hu.taoBui();
   const boHat = taoBoHat(ctx, { nhe });
   let camera = null;
-  const cv = taoChieuVung(ctx, hu, boHat, { nhe, layCamera: () => camera });
+  const am = taoAmThanh(); // tiếng chiến đấu tự tạo (TC_D05B3); im lặng tới khi bé chạm trang
+  const cv = taoChieuVung(ctx, hu, boHat, { nhe, layCamera: () => camera, am });
   // kho chiêu thêm (phụ tá làm theo GEMINI.md việc A6, chỉ trong file dt3d_chieu_them.js); lỗi thì bỏ qua, sân vẫn chạy
   let ct = null;
   const coChieuThem = import("./dt3d_chieu_them.js")
@@ -263,12 +267,12 @@ async function tao(vungVe, { nhe } = {}) {
   }
   // chiêu lớn khi chí mạng, theo tộc
   function chieuLon(p) {
-    hu.chuChieu(kieu.chieu, V(0, 2.4, 0.4), kieu.mau);
-    if (kieu === KIEU_TOC.quy) hu.cotLua(V(p.x, 0, 0), 0.9);
-    else if (kieu === KIEU_TOC.tien) hu.set(V(p.x, 0, 0), "#bfe9ff");
+    hu.chuChieu(kieu.chieu, V(0, 2.4, 0.4), kieu.mau); am.chuChieu();
+    if (kieu === KIEU_TOC.quy) { hu.cotLua(V(p.x, 0, 0), 0.9); am.thachNo(p.x, 0.7); }
+    else if (kieu === KIEU_TOC.tien) { hu.set(V(p.x, 0, 0), "#bfe9ff"); am.thachNo(p.x, 0.5); }
     else {
       hu.vetChem(p, kieu.mau2, { r: 1.25, day: 0.5, tu: 2.5, den: -0.7, xoayY: 0, giay: 0.32, sang: 2 });
-      them(0.01, () => hu.vetChem(p, kieu.mau, { r: 1.25, day: 0.5, tu: 0.65, den: -2.55, xoayY: 0, giay: 0.32, sang: 2 }), 0.1);
+      them(0.01, () => { am.chem(p.x); hu.vetChem(p, kieu.mau, { r: 1.25, day: 0.5, tu: 0.65, den: -2.55, xoayY: 0, giay: 0.32, sang: 2 }); }, 0.1);
       them(0.01, () => { hu.songXung(V(p.x, 0, 0), kieu.mau, 2.6, 0.7); hu.chop(p, kieu.mau2, 2.6, 0.35, 0.5); }, 0.18);
     }
   }
@@ -296,9 +300,9 @@ async function tao(vungVe, { nhe } = {}) {
       const trung = k.satThuong > 0, ne = k.kieu === "ne";
       const qn = quai.nhom;
       if (k.tanCong === "be") {
-        const quaiNe = () => { hu.gio(V(qn.position.x, 0, 0.1), 1); noLapLanh(qn.position.clone(), "#bfeaff"); them(0.45, p => { qn.position.x = X_QUAI + Math.sin(p * Math.PI) * 0.9; qn.position.y = Math.sin(p * Math.PI) * 0.55; }); };
+        const quaiNe = () => { am.ne(X_QUAI); hu.gio(V(qn.position.x, 0, 0.1), 1); noLapLanh(qn.position.clone(), "#bfeaff"); them(0.45, p => { qn.position.x = X_QUAI + Math.sin(p * Math.PI) * 0.9; qn.position.y = Math.sin(p * Math.PI) * 0.55; }); };
         const trungDon = p => {
-          quai.chop(0.3); vaCham(p, kieu.mau, k.chiMang);
+          quai.chop(0.3); am.trung(p.x, k.chiMang); vaCham(p, kieu.mau, k.chiMang);
           if (kieu === KIEU_TOC.quy) hu.khoi(p, "#ff8a3a", 6, 0.5);
           if (k.chiMang) chieuLon(p);
           them(0.35, q => { qn.position.x = X_QUAI + Math.sin(q * Math.PI) * 0.45; qn.scale.set(TI_QUAI * (1 + Math.sin(q * Math.PI) * 0.18), TI_QUAI * (1 - Math.sin(q * Math.PI) * 0.18), TI_QUAI); });
@@ -308,16 +312,16 @@ async function tao(vungVe, { nhe } = {}) {
           them(0.01, () => {
             const tu = V(dvBe.x + 0.45, caoBe * 0.7, 0.25), den = tamQuai();
             if (ne) den.x += 1.8; else if (!trung) den.set(den.x - 0.5, 0.05, 0.3);
-            hu.chop(tu, kieu.mau, 1.3, 0.3);
-            hu.phong(tu, den, { mau: kieu.mau, mau2: "#ffffff", giay: 0.32, co: 0.3, cong: 0.25, khiToi: p => { if (trung) trungDon(p); else if (!ne) hu.khoi(p, "#9aa7b5", 5, 0.6, false); } });
+            hu.chop(tu, kieu.mau, 1.3, 0.3); am.phep(tu.x, k.chiMang);
+            hu.phong(tu, den, { mau: kieu.mau, mau2: "#ffffff", giay: 0.32, co: 0.3, cong: 0.25, khiToi: p => { if (trung) trungDon(p); else if (!ne) { am.hut(p.x); hu.khoi(p, "#9aa7b5", 5, 0.6, false); } } });
           }, 0.22);
           if (ne) them(0.01, quaiNe, 0.36);
         } else { // Nhân / Quỷ tộc: lao tới chém
           dien(k.chiMang ? "chemLon" : "chem");
           const tamDanh = tuong ? 1.45 : 1.15; // tướng người thật tay dài + kiếm: dừng xa quái hơn
           them(0.28, p => { dvBe.x = X_BE + (X_QUAI - tamDanh - X_BE) * Math.sin(p * Math.PI / 2); });
-          them(0.01, () => hu.vetChem(V(dvBe.x + 0.5, caoBe * 0.52, 0.35), kieu.mau, { r: 0.9, giay: 0.3, nghieng: -0.15 }), 0.2);
-          them(0.01, () => { if (trung) trungDon(tamQuai()); else if (ne) quaiNe(); else hu.tia(V(dvBe.x + 0.9, 0.1, 0.2), "#d8c9a8", 6, 2.5); }, 0.3);
+          them(0.01, () => { am.chem(dvBe.x); hu.vetChem(V(dvBe.x + 0.5, caoBe * 0.52, 0.35), kieu.mau, { r: 0.9, giay: 0.3, nghieng: -0.15 }); }, 0.2);
+          them(0.01, () => { if (trung) trungDon(tamQuai()); else if (ne) quaiNe(); else { am.hut(dvBe.x + 0.9); hu.tia(V(dvBe.x + 0.9, 0.1, 0.2), "#d8c9a8", 6, 2.5); } }, 0.3);
           them(0.35, p => { dvBe.x = X_QUAI - tamDanh + (X_BE - X_QUAI + tamDanh) * p; }, 0.75);
         }
       } else {
@@ -328,29 +332,30 @@ async function tao(vungVe, { nhe } = {}) {
         them(0.01, () => { daTha = true; if (tuong && ["thu", "do"].indexOf(tuong.dangDien()) >= 0) dien("dung"); }, 1.15);
         const beChiu = p => {
           if (trung) {
-            dien("trung"); chopBe(0.3);
+            dien("trung"); chopBe(0.3); am.trung(p.x, k.chiMang);
             vaCham(p, k.chiMang ? "#ff5a4a" : "#ffb08a", k.chiMang);
             if (quai.ma === "nam_chu_cai") hu.khoi(p, kq.mau, 8, 0.8); else hu.tia(p, kq.mau, 10, 4);
             them(0.35, q => { dvBe.x = X_BE - Math.sin(q * Math.PI) * 0.4; });
-          } else if (ne) { dien("ne"); hu.gio(V(dvBe.x, 0, 0.1), -1); noLapLanh(V(dvBe.x, 0, 0), "#bfeaff"); }
+          } else if (ne) { dien("ne"); am.ne(dvBe.x); hu.gio(V(dvBe.x, 0, 0.1), -1); noLapLanh(V(dvBe.x, 0, 0), "#bfeaff"); }
           else if (k.beChon != null) {
             // đỡ được: Nhân tộc giơ khiên + khiên năng lượng; Quỷ tộc đứng tấn chịu đòn (bụi + tia); Tiên tộc kết giới sáng
             if (dangThu) dien("do", () => { if (!daTha) dien("thu"); }); else dien("do");
-            if (kieu === KIEU_TOC.quy) { hu.tia(p, "#ffb070", 12, 4); hu.khoi(V(dvBe.x, 0.1, 0.2), "#cdbf9c", 6, 0.6, false); hu.rung(0.03, 0.2); }
-            else { hu.khien(V(dvBe.x, caoBe * 0.5, 0.05), kieu === KIEU_TOC.tien ? "#9fe4ff" : kieu.mau, 0.6, caoBe * 0.55); hu.tia(p, "#ffffff", 8, 4); }
+            if (kieu === KIEU_TOC.quy) { am.dungTan(dvBe.x); hu.tia(p, "#ffb070", 12, 4); hu.khoi(V(dvBe.x, 0.1, 0.2), "#cdbf9c", 6, 0.6, false); hu.rung(0.03, 0.2); }
+            else { am.keng(dvBe.x, kieu === KIEU_TOC.tien ? 1.5 : 1); hu.khien(V(dvBe.x, caoBe * 0.5, 0.05), kieu === KIEU_TOC.tien ? "#9fe4ff" : kieu.mau, 0.6, caoBe * 0.55); hu.tia(p, "#ffffff", 8, 4); }
           }
-          else { if (!dangThu) dien("dung"); hu.khoi(V(dvBe.x + 0.6, 0.1, 0.2), "#cdbf9c", 5, 0.6, false); }
+          else { if (!dangThu) dien("dung"); am.hut(dvBe.x + 0.6); hu.khoi(V(dvBe.x + 0.6, 0.1, 0.2), "#cdbf9c", 5, 0.6, false); }
         };
         if (kq.xa) { // đom đóm bắn tia sáng
           them(0.25, p => { qn.position.y = Math.sin(p * Math.PI) * 0.35; });
           them(0.01, () => {
             const tu = tamQuai(), den = tamBe();
             if (ne) den.x -= 1.6; else if (!trung && k.beChon == null) den.set(den.x + 0.6, 0.05, 0.3);
-            hu.chop(tu, kq.mau, 1.5, 0.3);
+            hu.chop(tu, kq.mau, 1.5, 0.3); am.tia(tu.x);
             hu.phong(tu, den, { mau: kq.mau, mau2: "#ffffff", giay: 0.38, co: 0.26, cong: 0.3, khiToi: p => { if (!ne) beChiu(p); } });
           }, 0.12);
           if (ne) them(0.01, () => beChiu(), 0.3);
         } else {
+          am.nhay(X_QUAI);
           them(0.3, p => { qn.position.x = X_QUAI + (X_BE + 1.0 - X_QUAI) * p; qn.position.y = Math.sin(p * Math.PI) * 0.6; });
           them(0.01, () => beChiu(tamBe()), 0.3);
           them(0.4, p => { qn.position.x = X_BE + 1.0 + (X_QUAI - X_BE - 1.0) * p; qn.position.y = Math.sin(p * Math.PI) * 0.4; }, 0.55);
@@ -364,12 +369,12 @@ async function tao(vungVe, { nhe } = {}) {
       vong.be.visible = vong.quai.visible = bong.visible = false;
       if (thang === "quai") {
         if (haoQuang) haoQuang.bat(0);
-        dien("thua"); // tướng quỳ xuống kiệt sức rồi dịch chuyển về Lều (không có cảnh chết)
-        them(0.01, () => { noLapLanh(V(dvBe.x, 0, 0), "#fff1a8"); hu.chop(V(dvBe.x, 1, 0.2), "#fff1a8", 2.4, 0.4); if (voBe()) voBe().visible = false; }, tuong ? 2.4 : 1.3);
+        dien("thua"); am.thua(); // tướng quỳ xuống kiệt sức rồi dịch chuyển về Lều (không có cảnh chết)
+        them(0.01, () => { am.dichChuyen(dvBe.x); noLapLanh(V(dvBe.x, 0, 0), "#fff1a8"); hu.chop(V(dvBe.x, 1, 0.2), "#fff1a8", 2.4, 0.4); if (voBe()) voBe().visible = false; }, tuong ? 2.4 : 1.3);
       } else {
-        if (thang === "be") { dien("mung"); if (haoQuang) haoQuang.bat(2); them(0.01, () => { hu.songXung(V(dvBe.x, 0, 0), kieu.mau, 2.4, 0.8); hu.chop(V(dvBe.x, 1.2, 0.2), kieu.mau2, 3, 0.5); }, 0.2); }
+        if (thang === "be") { dien("mung"); am.thang(0.1); if (haoQuang) haoQuang.bat(2); them(0.01, () => { hu.songXung(V(dvBe.x, 0, 0), kieu.mau, 2.4, 0.8); hu.chop(V(dvBe.x, 1.2, 0.2), kieu.mau2, 3, 0.5); }, 0.2); }
         const q = quai;
-        them(0.01, () => hu.khoi(V(q.nhom.position.x, 0.1, 0.1), "#cdbf9c", 6, 0.7, false), 0.6);
+        them(0.01, () => { am.chayTron(q.nhom.position.x); hu.khoi(V(q.nhom.position.x, 0.1, 0.1), "#cdbf9c", 6, 0.7, false); }, 0.6);
         them(1.2, p => { q.nhom.position.x = X_QUAI + p * 5; q.nhom.position.y = Math.abs(Math.sin(p * Math.PI * 4)) * 0.35; q.nhom.rotation.y = Math.PI / 2; q.datMo(1 - p); }, 0.6);
       }
     },
@@ -380,7 +385,7 @@ async function tao(vungVe, { nhe } = {}) {
       const TEN = { mua_lua: "HOẢ VŨ THIÊN GIÁNG", thien_thach: "THIÊN THẠCH LẠC", loc_xoay: "CUỒNG PHONG", dam_dat: "CHẤN ĐỊA", vo_khong_gian: "PHÁ KHÔNG QUYỀN", mua_ten: "VẠN TIỄN TỀ PHÁT", chuong: "THIÊN QUANG CHƯỞNG" };
       if (!TEN[ma]) return 0;
       vong.be.visible = vong.quai.visible = bong.visible = false;
-      hu.chuChieu(TEN[ma], V(0, 2.4, 0.4), kieu.mau);
+      hu.chuChieu(TEN[ma], V(0, 2.4, 0.4), kieu.mau); am.chuChieu();
       const runQuai = (giay, tre) => them(giay, p => { if (Math.random() < 0.06) quai.chop(0.12); qn.position.x = xq + Math.sin(p * 70) * 0.02; }, tre);
       // mưa lửa / thiên thạch: ít và chậm để mắt theo kịp (người dùng 30/10/2026: giảm còn 1/3, chậm hơn)
       if (ma === "mua_lua") { dien("phepLon"); runQuai(3.2, 1.9); return cv.muaLua({ tam: V(xq + 0.4, 0, -0.5), r: 2.3 }); } // chỉ phủ nửa sân phía quái, không trùm lên bé
@@ -391,7 +396,7 @@ async function tao(vungVe, { nhe } = {}) {
         const giay = cv.locXoay({ tu: V(xq + 1.6, 0, -1), den: V(xq - 1.4, 0, 0.4), giay: 3.4 }).giay;
         // quái bị cuốn lên, xoay tít, rồi rơi phịch xuống
         them(1.3, p => { qn.position.y = Math.sin(p * Math.PI) * 1.6; qn.rotation.y = HUONG_QUAI + p * Math.PI * 8; }, 1.4);
-        them(0.01, () => { qn.rotation.y = HUONG_QUAI; quai.chop(0.3); hu.songXung(V(xq, 0, 0), "#d8c9a8", 1.6, 0.5); hu.khoi(V(xq, 0.1, 0.1), "#cdbf9c", 8, 0.7, false); hu.rung(0.06, 0.3); }, 2.7);
+        them(0.01, () => { qn.rotation.y = HUONG_QUAI; quai.chop(0.3); am.trung(xq, false); hu.songXung(V(xq, 0, 0), "#d8c9a8", 1.6, 0.5); hu.khoi(V(xq, 0.1, 0.1), "#cdbf9c", 8, 0.7, false); hu.rung(0.06, 0.3); }, 2.7);
         return giay;
       }
       if (ma === "mua_ten") { // cung thủ phía sau bắn vòng cung qua đầu Thủ lĩnh
@@ -410,7 +415,7 @@ async function tao(vungVe, { nhe } = {}) {
         dien("chemLon");
         them(0.01, () => cv.damDat({ tam: V(dvBe.x + 0.35, 0, 0.05), r: 4.2, huong: V(1, 0, 0.05) }), 0.32);
         them(0.55, p => { qn.position.y = Math.sin(p * Math.PI) * 0.9; qn.rotation.z = Math.sin(p * Math.PI) * 0.4; }, 0.55);
-        them(0.01, () => { qn.rotation.z = 0; quai.chop(0.3); }, 1.1);
+        them(0.01, () => { qn.rotation.z = 0; quai.chop(0.3); am.trung(xq, false); }, 1.1);
         return 2.6;
       }
       // đấm vỡ không gian: lao tới, đấm, khung hình vỡ
@@ -427,14 +432,15 @@ async function tao(vungVe, { nhe } = {}) {
       const c = ct && ct.ds.find(x => x.ma === ma);
       if (!c || !quai) return 0;
       vong.be.visible = vong.quai.visible = bong.visible = false;
-      if (c.ten) hu.chuChieu(c.ten, V(0, 2.4, 0.4), kieu.mau);
+      if (c.ten) { hu.chuChieu(c.ten, V(0, 2.4, 0.4), kieu.mau); am.chuChieu(); }
       const tran = {
         be: { tam: tamBe(), chan: V(dvBe.x, 0, dvBe.z), cao: caoBe },
         quai: { nhom: quai.nhom, tam: tamQuai(), chan: V(quai.nhom.position.x, 0, quai.nhom.position.z), cao: quai.cao * TI_QUAI, chop: s => quai.chop(s) },
-        dongTac: k => dien(k), them, mau: kieu.mau
+        dongTac: k => dien(k), them, mau: kieu.mau, am
       };
       try { return c.chay(tran) || 0; } catch (e) { console.warn("Chiêu " + ma + " lỗi", e); return 0; }
     },
+    am, // bộ tiếng: trang gắn nút 🔊 / 🔇 (TC_D05B3)
     demHat: () => boHat.dem(), // số hạt đang sống (kịch bản thử đo tải)
     viTri(ben) {
       const v = viTriDau(ben).project(camera);

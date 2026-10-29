@@ -9,15 +9,16 @@
 //              voKhongGian - khung hình nứt như kính rồi vỡ văng ra, lộ khe không gian phía sau
 //              muaTen      - nhiều loạt mũi tên bay vòng cung từ sau lưng, cắm xuống vùng địch
 //              chuongNangLuong - gồng tụ cầu sáng (hạt bị hút vào) rồi bắn luồng sóng năng lượng lớn
+//            Tiếng: o.am = bộ tiếng dt3d_am_thanh.js (TC_D05B3), kêu đúng lúc chạm / nổ / vỡ.
 //            Dùng bộ hạt dt3d_hat.js (lửa / khói / nổ lật khung) + hiệu ứng cũ dt3d_hieu_ung.js.
 // HÀM KHAI RA:
-//   taoChieuVung(ctx, hu, bo, { nhe, layCamera }) -> cv = { capNhat(dt, t), muaLua(o), thienThach(o),
+//   taoChieuVung(ctx, hu, bo, { nhe, layCamera, am }) -> cv = { capNhat(dt, t), muaLua(o), thienThach(o),
 //        locXoay(o), damDat(o), voKhongGian(o), muaTen(o), chuongNangLuong(o) }
 //        (o: xem đầu mỗi hàm; mọi chiêu trả về thời gian diễn, giây; locXoay trả { giay, tam() })
 // BƯỚC: TC_D05B2 (người dùng 29/10/2026: "mưa lửa bao trùm vùng rộng lớn, mưa thiên thạch, lốc xoáy,
 //        dẫm chân làm rung chuyển mặt đất, đấm vỡ không gian"; 30/10/2026: "thêm mưa mũi tên",
 //        đòn chưởng sóng năng lượng kiểu võ thuật)
-// NGÀY: 30/10/2026
+// NGÀY: 30/10/2026; 30/10/2026 06:00 (TC_D05B3: tiếng từng chiêu)
 // ================================================================
 import * as THREE from "three";
 import { taoNgauNhien } from "./dt3d_canh.js";
@@ -54,9 +55,10 @@ function veNut(g, n, hatGiong, { mau = "#000", day = 1 } = {}) {
 const DINH_DON_GIAN = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }";
 const KET_MAU = "\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n";
 
-export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
+export function taoChieuVung(ctx, hu, bo, { nhe, layCamera, am } = {}) {
   const { canh, renderer } = ctx;
   const so = n => bo.so(n);
+  const keu = (ten, ...a) => { if (am && am[ten]) am[ten](...a); }; // tiếng (dt3d_am_thanh.js, TC_D05B3)
 
   // --- ảnh mặt đất ---
   const TEX = {
@@ -140,6 +142,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
   // o: { tam (Vector3), r (bán kính vùng), giay, matDo (giọt / giây), mau, mau2 }
   function muaLua({ tam = V(0, 0, 0), r = 4, giay = 3.2, matDo = 100, mau = "#ff6a1a", mau2 = "#ffb347" } = {}) {
     toiTroi("#2a0a06", 0.9, giay + 2.4);
+    keu("muaLua", tam.x, giay);
     chieuSang(V(tam.x, 2.5, tam.z + 1), "#ff6a20", 26, giay + 1.8);
     const roi = V(0.7, -5.2, 0.18), tRoi = 1.7; // rơi chậm để mắt theo kịp (người dùng 30/10/2026)
     let tich = 0, dem = 0;
@@ -154,6 +157,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
         bo.hat(to ? "lua" : "sang", { p: tu, v: roi, song: tr, co: to ? 0.55 : 0.16, keoDai: to ? 0.05 : 0.1, mau: to ? "#ffffff" : mau2, mauCuoi: mau, sang: to ? 1.5 : 1.9, moCuoi: 0.97 });
         if (to) bo.hat("sang", { p: tu, v: roi, song: tr, co: 0.5, mau, sang: 1.2, mo: 0.5 });
         hen(tr, () => { // chạm đất
+          keu("luaCham", dich.x);
           if (dem % 2 === 0) bo.hat("lua", { p: V(dich.x, 0.25, dich.z), v: V(0, 0.8, 0), song: ngau(0.35, 0.55), co: 0.45, coCuoi: 0.8, sang: 1.4 });
           for (let i = 0; i < 3; i++) bo.hat("sang", { p: V(dich.x, 0.08, dich.z), v: V(ngau(-2, 2), ngau(1.5, 3.5), ngau(-1, 1)), g: 9, song: ngau(0.25, 0.45), co: 0.07, keoDai: 0.05, mau: mau2, sang: 2.2 });
           if (dem % 7 === 0) { vetDat(dich, TEX.chay, { co: ngau(0.9, 1.6), giay: giay + 4, mo: 0.85, moTu: 0.75 }); }
@@ -187,6 +191,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
       hen(Math.max(0, tre) + 0.7, () => {
         const m = khoThach.find(x => !x.visible); if (!m) return;
         const tu = dich.clone().add(V(ngau(-7, -5), ngau(11, 13), ngau(-4, -2))), p = V();
+        keu("thachVut", dich.x, bay);
         m.visible = true; m.scale.setScalar(c); const w = V(ngau(-1, 1), ngau(-1, 1), ngau(-1, 1)).normalize();
         let tich = 0, xong = false;
         lap(0, bay, (k, dt) => {
@@ -208,6 +213,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
   }
   function noThach(p, c, mau) {
     const k = c / 0.45;
+    keu("thachNo", p.x, k);
     hu.chop(V(p.x, 0.6, p.z), "#ffffff", 3.2 * k, 0.18, 0.9);
     hu.chop(V(p.x, 0.6, p.z), mau, 5 * k, 0.4, 0.6);
     for (let i = 0; i < 3; i++) bo.hat("no", { p: V(p.x + ngau(-0.3, 0.3) * k, 0.7 * k + i * 0.25, p.z + ngau(-0.2, 0.2)), v: V(ngau(-0.3, 0.3), ngau(0.6, 1.4), 0), song: ngau(1.1, 1.5), co: 2.2 * k, coCuoi: 3.4 * k, sang: 1.5, xoay: ngau(0, 6.28) });
@@ -244,6 +250,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
       const m = new THREE.Mesh(g, vl); m.renderOrder = 11 + i; nhom.add(m); vlds.push({ vl, mo });
     });
     nhom.position.copy(tu); nhom.scale.set(0.3, 0.05, 0.3);
+    keu("locXoay", tu.x, den.x, giay);
     const tam = tu.clone(), vTam = den.clone().sub(tu).divideScalar(giay);
     let tich = 0, t0 = 0, tichDa = 0;
     them(nhom, giay, (k, dt, t) => {
@@ -277,6 +284,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
   // o: { tam (chân người dậm), r (bán kính), huong (Vector3 hướng toả đá, null = toả đều), mau (vết nứt sáng), vong (số vòng cột đá) }
   function damDat({ tam = V(0, 0, 0), r = 4, huong = null, mau = "#ffb24a", vong = 5 } = {}) {
     hu.rung(0.2, 0.85);
+    keu("damDat", tam.x, vong, 0.075);
     hu.chop(V(tam.x, 0.3, tam.z), "#ffffff", 1.6, 0.14, 0.55);
     hu.chop(V(tam.x, 0.3, tam.z), mau, 2.6, 0.3, 0.35);
     for (let i = 0; i < 3; i++) hen(i * 0.12, () => hu.songXung(tam, i ? "#e8d6b0" : mau, r * (0.7 + i * 0.25), 0.7 + i * 0.1));
@@ -387,6 +395,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
     });
     hu.chop(diem, "#ffffff", 2.6, 0.2, 0.9); hu.chop(diem, mau, 4, 0.45, 0.6);
     hu.rung(0.06, 0.3);
+    keu("voKinh", diem.x, VO);
     hen(VO, () => { hu.rung(0.14, 0.55); for (let i = 0; i < so(40); i++) { const a = ngau(0, 6.28), t = ngau(2, 7); bo.hat("sang", { p: diem.clone(), v: V(Math.cos(a) * t, Math.sin(a) * t, ngau(-1, 1)), can: 2, song: ngau(0.4, 0.9), co: 0.07, keoDai: 0.05, mau, sang: 2.4 }); } });
     toiTroi("#0d0618", 0.5, giay);
     nhom.userData.huy = () => rt.dispose();
@@ -398,6 +407,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
   //      cach (giây giữa 2 loạt), bay (giây bay), mau (vệt sáng), trungTam(p) (gọi khi tên cắm gần tâm) }
   function muaTen({ tu = V(-4.5, 1, -0.3), tam = V(1.6, 0, 0), r = 1.8, dot = 3, moiDot = 14, cach = 0.55, bay = 1.5, mau = "#fff1c4", trungTam = null } = {}) {
     for (let d = 0; d < dot; d++) hen(d * cach, () => {
+      keu("tenBan", tu.x, bay);
       const n = so(moiDot);
       for (let i = 0; i < n; i++) {
         const tre = ngau(0, 0.18);
@@ -435,6 +445,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
       a.tich += dt; if (a.tich > (nhe ? 0.06 : 0.035)) { a.tich = 0; bo.hat("sang", { p: a.p.clone(), v: a.v.clone().multiplyScalar(0.05), song: 0.18, co: 0.035, keoDai: 0.03, mau: a.mau, mo: 0.55, sang: 1.3 }); }
       if (a.con <= 0) { // cắm xuống đất: bụi + tia nhỏ
         a.cam = 0.0001; a.p.y = Math.max(0.12, a.p.y);
+        keu("tenCam", a.p.x);
         bo.hat("khoi", { p: V(a.p.x, 0.1, a.p.z), v: V(ngau(-0.3, 0.3), ngau(0.2, 0.5), 0), song: 0.7, co: 0.25, coCuoi: 0.6, mau: "#a8977c", mo: 0.5 });
         for (let k = 0; k < 2; k++) bo.hat("sang", { p: V(a.p.x, 0.08, a.p.z), v: V(ngau(-1.5, 1.5), ngau(1, 2.5), ngau(-0.8, 0.8)), g: 9, song: 0.3, co: 0.04, keoDai: 0.03, mau: "#ffe9b0", sang: 1.6 });
         if (a.gan && muaTen.trungTam) muaTen.trungTam(a.p);
@@ -460,6 +471,7 @@ export function taoChieuVung(ctx, hu, bo, { nhe, layCamera } = {}) {
     " gl_FragColor = vec4(c * a * uMo, 1.0);" + KET_MAU + "}";
   function chuongNangLuong({ tu = V(-0.9, 1.05, 0.25), den = V(5.5, 1, 0), trung = null, mau = "#2fa8ff", gom = 1.3, ban = 1.4, co = 0.42 } = {}) {
     trung = trung || tu.clone().lerp(den, 0.5);
+    keu("chuong", tu.x, gom, ban);
     // 1. gồng: cầu sáng lớn dần, hạt + tia điện hút vào, bụi xoáy dưới chân
     const cau = new THREE.Group();
     const lop = [["#ffffff", 0.5], [mau, 1.2], [mau, 2.2]].map(([m, k]) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.hoSang, color: m, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); s.userData.k = k; cau.add(s); return s; });

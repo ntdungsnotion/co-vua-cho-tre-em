@@ -18,7 +18,8 @@
 //                                                           diễn xong PHẢI trả về như cũ)
 //              dongTac(kieu)  (động tác tướng: "phep" | "phepLon" | "chem" | "chemLon" | "mung" | "thu")
 //              them(giay, fn(p 0..1), tre)  (hoạt cảnh theo thời gian của sân: khựng hình thì chậm theo)
-//              mau }          (màu chiêu theo tộc người ra chiêu)
+//              mau,           (màu chiêu theo tộc người ra chiêu)
+//              am }           (bộ tiếng dt3d_am_thanh.js, TC_D05B3: gọi tiếng có sẵn, vd tran.am.thachNo(x), tran.am.keng(x))
 // BƯỚC: TC_D05B2 (khung + chiêu ví dụ, Claude Code); A6 (phụ tá thêm chiêu)
 // NGÀY: 30/10/2026
 // ================================================================
