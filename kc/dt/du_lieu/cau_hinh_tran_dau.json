@@ -1,0 +1,40 @@
+{
+  "_ghiChu": "Đấu Trường Tri Thức - THAM SỐ TRẬN ĐẤU THEO LƯỢT (TC_D05, 29/10/2026; đặc tả repo_rieng dau_truong_tri_thuc/dac_ta_tran_dau.md). Tách khỏi cau_hinh.json vì file đó được chép vào SQL bản đồ. Code (dt/dt_tran_dau.js, dt/dt_quai.js) chỉ đọc file này, không viết cứng con số nào. Chỉ người lớn sửa (trang quản trị sau này). Thời gian tính bằng GIÂY.",
+  "phienBan": 1,
+  "_ghiChuLuot": "thoiGianLuot: đồng hồ của bên tấn công theo lớp (dòng đầu tiên có lớp <= denLop). heSoQuaiLopNho: thời gian trả lời của quái nhân thêm cho bé nhỏ. thongTha: chế độ cho bé lớp <= denLop (quái tấn công nghĩ lâu hơn x heSoNghi; boSoHo = bé phòng thủ sai không bị sơ hở, không mất combo). tuaKhiDaBamGiay: bé đã bấm phòng thủ thì quái bấm sau nhiều nhất bấy nhiêu giây (kết quả không đổi, bé khỏi chờ).",
+  "thoiGianLuot": [ { "denLop": 5, "giay": 60 }, { "denLop": 12, "giay": 45 } ],
+  "heSoQuaiLopNho": { "denLop": 5, "heSo": 1.5 },
+  "thongTha": { "denLop": 3, "heSoNghi": 1.5, "boSoHo": true },
+  "tuaKhiDaBamGiay": 1.5,
+  "_ghiChuSatThuong": "Sát thương = làm tròn(max(toiThieu, uyLuc x (1 + chỉ số đánh / 100) x k_combo x k_chí_mạng x k_sơ_hở - heSoDef x DEF đối thủ)). k_combo = min(combo.toiDa, 1 + combo.buoc x (combo - 1)). Chí mạng x chiMang.heSo khi combo chia hết cho chiMang.moiCombo hoặc (khiCauKho) trả lời đúng câu mức Khó. Né (khi cả hai cùng đúng, phòng thủ bấm trước) = min(ne.toiDa, ne.goc + ne.moiAgi x AGI).",
+  "satThuong": { "toiThieu": 1, "heSoDef": 0.5 },
+  "soHo": 1.2,
+  "combo": { "buoc": 0.1, "toiDa": 1.5 },
+  "chiMang": { "heSo": 1.5, "moiCombo": 5, "khiCauKho": true },
+  "ne": { "goc": 0.4, "moiAgi": 0.005, "toiDa": 0.85 },
+  "mpPhongThuDung": 10,
+  "soLuotToiDa": 30,
+  "thua": { "nghiGiay": 120 },
+  "_ghiChuThuLinh": "Chỉ số Thủ lĩnh cấp 1 theo chủng loại (lên cấp + cộng điểm ở TC_D08). chiSoDanh: chỉ số cộng vào sát thương (str hoặc int).",
+  "thuLinh": {
+    "nhan": { "hp": 100, "mp": 50, "str": 12, "int": 12, "agi": 10, "def": 6, "uyLuc": 18, "chiSoDanh": "str" },
+    "quy":  { "hp": 120, "mp": 30, "str": 20, "int": 4,  "agi": 6,  "def": 8, "uyLuc": 18, "chiSoDanh": "str" },
+    "tien": { "hp": 85,  "mp": 80, "str": 4,  "int": 22, "agi": 14, "def": 4, "uyLuc": 18, "chiSoDanh": "int" }
+  },
+  "_ghiChuQuai": "Quái: xác suất trả lời đúng theo bậc x độ khó câu (de / vua / kho), kẹp trong xacSuatGioiHan; giayTraLoi = khoảng thời gian bấm [ít nhất, nhiều nhất]. heSoCap: mỗi cấp trên Lv 1 nhân thêm (hp, uyLuc, def theo tỉ lệ; agi cộng điểm). loai.*.mon: toan | tieng_anh | bat_ky (mỗi lượt chọn ngẫu nhiên môn có câu).",
+  "quai": {
+    "xacSuatGioiHan": [0.05, 0.95],
+    "bac": {
+      "thuong":     { "ten": "Thường",     "xacSuat": { "de": 0.55, "vua": 0.40, "kho": 0.20 }, "giayTraLoi": [12, 20] },
+      "chuyen_mon": { "ten": "Chuyên môn", "xacSuat": { "de": 0.70, "vua": 0.55, "kho": 0.35 }, "giayTraLoi": [9, 15] },
+      "tinh_anh":   { "ten": "Tinh anh",   "xacSuat": { "de": 0.80, "vua": 0.68, "kho": 0.50 }, "giayTraLoi": [7, 12] },
+      "trum":       { "ten": "Trùm",       "xacSuat": { "de": 0.88, "vua": 0.78, "kho": 0.62 }, "giayTraLoi": [5, 9] }
+    },
+    "heSoCap": { "hp": 0.15, "uyLuc": 0.08, "def": 0.1, "agi": 1 },
+    "loai": {
+      "slime_so":    { "ten": "Slime Số",     "bac": "thuong", "mon": "toan",      "hp": 60, "mp": 20, "str": 5, "agi": 4,  "def": 2, "uyLuc": 12 },
+      "nam_chu_cai": { "ten": "Nấm Chữ Cái",  "bac": "thuong", "mon": "tieng_anh", "hp": 55, "mp": 20, "str": 4, "agi": 6,  "def": 3, "uyLuc": 11 },
+      "dom_dom":     { "ten": "Đom Đóm",      "bac": "thuong", "mon": "bat_ky",    "hp": 50, "mp": 30, "str": 6, "agi": 12, "def": 1, "uyLuc": 11 }
+    }
+  }
+}
