@@ -18,7 +18,7 @@
 //            - Thành thạo chủ đề 0-100 %: 'soLan' lần trả lời gần nhất của chủ đề, câu khó nặng ký hơn.
 //            MỌI CON SỐ đọc từ du_lieu/cau_hinh_trinh_do.json (tách khỏi cau_hinh.json vì file đó được chép vào SQL bản đồ), không viết cứng (MAC_DINH chỉ để chạy
 //            khi chưa nạp được file). Đặc tả: repo_rieng dau_truong_tri_thuc/dac_ta_trinh_do.md.
-// BƯỚC: TC_D04A
+// BƯỚC: TC_D04A; TC_D04B (diemDoKho: thang riêng của nguồn, Tiếng Anh theo cấp từ; khối tiengAnh)
 // NGÀY: 29/10/2026
 // ================================================================
 (function (goc) {
@@ -43,7 +43,8 @@
       { duoi: 0.95, heSo: 0.6 },
       { duoi: 1.01, heSo: 0.3 }
     ],
-    thanhThao: { soLan: 10, trongSo: { de: 1, vua: 2, kho: 3 } }
+    thanhThao: { soLan: 10, trongSo: { de: 1, vua: 2, kho: 3 } },
+    tiengAnh: { batDauCap: [1, 3, 5, 7], mucCong: { de: 0, vua: 0.67, kho: 1.33 } }
   };
   const MUC = ["de", "vua", "kho"];
 
@@ -54,6 +55,7 @@
     c.mucDoKho = Object.assign({}, MAC_DINH.mucDoKho, (ch && ch.mucDoKho) || {});
     c.onTap = Object.assign({}, MAC_DINH.onTap, (ch && ch.onTap) || {});
     c.thanhThao = Object.assign({}, MAC_DINH.thanhThao, (ch && ch.thanhThao) || {});
+    c.tiengAnh = Object.assign({}, MAC_DINH.tiengAnh, (ch && ch.tiengAnh) || {});
     return c;
   }
 
@@ -104,6 +106,9 @@
 
   // ---------- Xác suất + chọn độ khó ----------
   function doKho(lop, muc, ch) { return lop + cauHinh(ch).mucDoKho[muc]; }
+  // Điểm độ khó của một câu / một (lớp, mức): nguồn có thang riêng (Tiếng Anh theo cấp từ) thì ghi sẵn
+  // diemDoKho (câu) / doKho (mục của dsMuc); không có thì lớp + mức
+  const diemCau = (cau, ch) => cau.diemDoKho != null ? cau.diemDoKho : doKho(cau.lop, cau.doKho, ch);
   function xacSuat(d, dk, ch) {
     const c = cauHinh(ch);
     return 1 / (1 + Math.exp(-(c.doDoc * (d - dk) + logit(c.mucTieu))));
@@ -117,8 +122,8 @@
     const tranLop = lopDuocHoi(hs, c);
     const nhamP = mucTieu || c.mucTieu;
     const ung = dsMuc.filter(m => m.lop <= tranLop).map(m => {
-      const dk = doKho(m.lop, m.muc, c);
-      return { lop: m.lop, muc: m.muc, doKho: dk, p: xacSuat(d, dk, c) };
+      const dk = typeof m.doKho === "number" ? m.doKho : doKho(m.lop, m.muc, c);
+      return Object.assign({}, m, { doKho: dk, p: xacSuat(d, dk, c) });
     });
     if (!ung.length) return null;
     const [thap, cao] = c.vungVuaSuc;
@@ -150,13 +155,12 @@
     return bang[bang.length - 1].heSo;
   }
 
-  // cau: { mon, lop, doKho (mức), chuDe }. dung: true / false. dsLopCoCau (tùy chọn): lớp cao nhất có câu.
+  // cau: { mon, lop, doKho (mức), chuDe, diemDoKho? }. dung: true / false. dsLopCoCau (tùy chọn): lớp cao nhất có câu.
   // Trả { truoc, sau, p, k, heSoThuong } (heSoThuong = 0 khi sai).
   function capNhat(hs, cau, dung, ch, lopCoCau) {
     const c = cauHinh(ch);
     const m = mon(hs, cau.mon, c);
-    const dk = doKho(cau.lop, cau.doKho, c);
-    const p = xacSuat(m.d, dk, c);
+    const p = xacSuat(m.d, diemCau(cau, c), c);
     const k = heSoK(m, c);
     // đang leo nhanh mà sai một câu: chỉ hạ theo K đã nhân heSoSaiKhiLeo (một câu sơ ý không kéo tụt cả lớp);
     // sai thêm thì soSai tăng, K tự nhỏ dần, trình độ vẫn về đúng sức học
@@ -206,7 +210,7 @@
 
   goc.KC_DT_TRINH_DO = {
     MAC_DINH, MUC, cauHinh, taoHoSo, mon, chuanHoa, tran, lopDuocHoi, doKho, xacSuat,
-    chonDoKho, heSoK, heSoThuong, capNhat, thanhThao, chuDeYeu, rngHat
+    diemCau, chonDoKho, heSoK, heSoThuong, capNhat, thanhThao, chuDeYeu, rngHat
   };
 })(typeof window !== "undefined" ? window : globalThis);
 // 29/10/2026 - BƯỚC: TC_D04A
