@@ -13,8 +13,9 @@
                   Điện thoại: sân đấu nửa trên, câu hỏi nửa dưới. Máy tính: sân rộng bên trái, câu hỏi
                   bên phải. TC_D06 đưa màn này vào bản đồ (chạm quái mở trận).
        BƯỚC: TC_D05; TC_D05 sửa 29/10/2026 chiều (người dùng: bỏ chữ hướng dẫn, tự sang lượt,
-             quái nghĩ nhanh, sân 3D 3d/dt3d_tran.js thay hình 2D; hình 2D chỉ còn khi máy không có WebGL)
-       NGÀY: 29/10/2026
+             quái nghĩ nhanh, sân 3D 3d/dt3d_tran.js thay hình 2D; hình 2D chỉ còn khi máy không có WebGL);
+             TC_D05B1 (chọn Tướng Nam / Nữ: tướng người thật 3d/dt3d_tuong.js)
+       NGÀY: 29/10/2026; 29/10/2026 22:47
        PHỤ THUỘC: chung/nv_ve.js, dt/dt_trinh_do.js, dt/dt_sinh_toan.js, dt/dt_sinh_tieng_anh.js,
                   dt/dt_cau_hoi.js, dt/dt_quai.js, dt/dt_tran_dau.js, dt/dt_ve_quai.js,
                   dt/du_lieu/cau_hinh_tran_dau.json, dt/du_lieu/cau_hinh_trinh_do.json, tu_vung/kho_tu.json
@@ -201,6 +202,7 @@
       <div class="hang" style="margin-top: 8px">
         <label>Cấp quái <select id="chonLv"></select></label>
         <label>Lớp đang học <select id="chonLop"></select></label>
+        <label>Tướng <select id="chonGioi"><option value="nam">Nam</option><option value="nu">Nữ</option></select></label>
       </div>
       <h3>Chủng loại Thủ lĩnh</h3>
       <div class="chon-cl" id="chonCl"></div>
@@ -249,7 +251,7 @@
     const CHU_QUAI = { slime_so: () => String(1 + Math.floor(Math.random() * 9)), nam_chu_cai: () => "ABCDEFGHKLMNPRST"[Math.floor(Math.random() * 16)], dom_dom: () => "?" };
 
     let chTran = null, chTD = null, bo = null, NG = { toan: ST };
-    let chon = { quai: "slime_so", lv: 1, lop: 2, cl: "nhan", thongTha: null };
+    let chon = { quai: "slime_so", lv: 1, lop: 2, cl: "nhan", gioi: "nam", thongTha: null };
     let hs = null, T = null, cauNay = null, chuQuai = "7";
     let hieuUng = null; // { loai: "danh"|"trung"|"ne", ben, t0 }
     let ketThucLuc = 0, beThu = false, quaiThu = false, henTiep = 0;
@@ -278,7 +280,7 @@
       $("nutDongChon").classList.toggle("an", !dongDuoc);
       document.querySelectorAll("#chonQuai button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.ma === chon.quai)); veQuaiNho(b.querySelector("canvas"), b.dataset.ma); });
       document.querySelectorAll("#chonCl button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.ma === chon.cl)));
-      $("chonLv").value = chon.lv; $("chonLop").value = chon.lop;
+      $("chonLv").value = chon.lv; $("chonLop").value = chon.lop; $("chonGioi").value = chon.gioi || "nam";
       $("chonThongTha").checked = chon.thongTha != null ? chon.thongTha : chon.lop <= chTran.thongTha.denLop;
     }
     function dungHopChon() {
@@ -302,6 +304,7 @@
       $("nutVaoTran").addEventListener("click", () => {
         const lopMoi = +$("chonLop").value;
         chon.lv = +$("chonLv").value;
+        chon.gioi = $("chonGioi").value;
         const macDinh = lopMoi <= chTran.thongTha.denLop;
         chon.thongTha = $("chonThongTha").checked === macDinh ? null : $("chonThongTha").checked;
         if (!hs || hs.lop !== lopMoi) hs = TD.taoHoSo(lopMoi, chTD);
@@ -323,7 +326,7 @@
       $("tenBe").textContent = "Thủ lĩnh";
       $("tenQuai").innerHTML = "<small></small> "; $("tenQuai").querySelector("small").textContent = "Lv " + q.lv;
       $("tenQuai").appendChild(document.createTextNode(q.ten));
-      if (san3d) san3d.datTran({ hoSo: { chungLoai: chon.cl, gioi: "nam" }, quai: chon.quai, chu: chuQuai });
+      if (san3d) san3d.datTran({ hoSo: { chungLoai: chon.cl, gioi: chon.gioi || "nam" }, quai: chon.quai, chu: chuQuai });
       veThanh();
       moLuotMoi();
     }
@@ -529,7 +532,7 @@
       // Thủ lĩnh
       c2.save(); c2.globalAlpha = moBe;
       if (ngaBe) { c2.translate(xBe, dat); c2.rotate(-ngaBe * 0.5); c2.translate(-xBe, -dat); }
-      NV.ve(c2, { chungLoai: chon.cl, gioi: "nam" }, { x: xBe, y: dat - (hu && hu.do === "be" ? yBay : 0), co: coNV, huong: 1, t, tuThe, cam: "gay" });
+      NV.ve(c2, { chungLoai: chon.cl, gioi: chon.gioi || "nam" }, { x: xBe, y: dat - (hu && hu.do === "be" ? yBay : 0), co: coNV, huong: 1, t, tuThe, cam: "gay" });
       c2.restore();
       // quái
       VQ.ve(c2, chon.quai, { x: xQ, y: dat - (hu && hu.do === "quai" ? yBay : 0), co: coQ, t, huong: -1, chu: chuQuai, mo: moQ });
@@ -590,7 +593,7 @@
       if (/2d/.test(location.hash)) return ve2d();
       const thu = () => window.KC_DT_SAN3D.tao($("san3d")).then(s => {
         san3d = s; $("canvas").classList.add("an"); $("dangTai").classList.add("an");
-        if (T) { san3d.datTran({ hoSo: { chungLoai: chon.cl, gioi: "nam" }, quai: chon.quai, chu: chuQuai }); if (T.dangLuot()) san3d.nghi(T.luot().tanCong === "quai"); }
+        if (T) { san3d.datTran({ hoSo: { chungLoai: chon.cl, gioi: chon.gioi || "nam" }, quai: chon.quai, chu: chuQuai }); if (T.dangLuot()) san3d.nghi(T.luot().tanCong === "quai"); }
       }).catch(e => { console.warn("Không dựng được sân 3D, dùng hình 2D", e); ve2d(); });
       if (window.KC_DT_SAN3D) thu();
       else { window.addEventListener("dt-san3d", thu, { once: true }); setTimeout(() => { if (!san3d) ve2d(); }, 15000); }
