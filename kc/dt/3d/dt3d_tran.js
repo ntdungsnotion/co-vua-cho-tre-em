@@ -1,0 +1,237 @@
+// ================================================================
+// FILE: dt/3d/dt3d_tran.js  (ES module) - PHẦN VẼ 3D: SÂN ĐẤU
+// CHỨC NĂNG: Sân đấu 3D cho màn chiến đấu theo lượt (TC_D05): bãi cỏ + cây, đá của bộ mô hình
+//            làng, Thủ lĩnh KayKit đúng ngoại hình bé (dt3d_nhan_vat.js, gói động tác trận),
+//            quái 3D (dt3d_quai.js). Diễn kết quả lượt mà LÕI (dt_tran_dau.js) đã tính:
+//            lao tới + chém / quái nhảy vồ, trúng (chớp sáng, lùi lại, sao bay), né (lùi né),
+//            hụt; vòng sáng thế thủ, bóng "..." khi quái nghĩ; kết thúc: quái bỏ chạy / Thủ lĩnh
+//            kiệt sức rồi dịch chuyển về Lều (không có cảnh chết, đặc tả VI.8).
+//            Trang không phải module: tải xong gán window.KC_DT_SAN3D và phát sự kiện "dt-san3d".
+// HÀM KHAI RA (window.KC_DT_SAN3D):
+//   tao(vungVe, { nhe }) -> Promise<san>; san = { datTran({ chungLoai, hoSo, quai, chu }),
+//        ketQua(k) (k: kết quả lượt của lõi), thu(ben, bat), nghi(bat), ketThuc(thang),
+//        viTri(ben) -> { x, y } điểm ảnh trong vùng vẽ (trên đầu) }
+// LUẬT NỐI: dùng dt3d_canh.js, dt3d_mo_hinh.js, dt3d_nhan_vat.js, dt3d_quai.js; NV = window.KC_NV.
+// BƯỚC: TC_D05 (người dùng 29/10/2026: "đồ hoạ xấu quá" -> sân 3D cùng bộ hình với làng)
+// NGÀY: 29/10/2026
+// ================================================================
+import * as THREE from "three";
+import { taoCanh, docDoHoa, bam } from "./dt3d_canh.js";
+import { taiGlb, taoBoMoHinh } from "./dt3d_mo_hinh.js";
+import { taoBoNhanVat } from "./dt3d_nhan_vat.js";
+import { taoQuai3d } from "./dt3d_quai.js";
+
+const duongDan = p => new URL(p, import.meta.url).href;
+const X_BE = -1.55, X_QUAI = 1.55, TI_BE = 1.45, TI_QUAI = 1.25;
+const HUONG_BE = Math.PI / 2 - 0.6, HUONG_QUAI = -Math.PI / 2 + 0.85;
+
+function anhTron(ve, co = 64) { const cv = document.createElement("canvas"); cv.width = cv.height = co; ve(cv.getContext("2d"), co); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; }
+
+async function tao(vungVe, { nhe } = {}) {
+  nhe = nhe != null ? nhe : docDoHoa() === "nhe";
+  const [glbLang, glbNv, glbTran] = await Promise.all([
+    taiGlb(duongDan("../mo_hinh/lang.glb")), taiGlb(duongDan("../mo_hinh/nhan_vat.glb")), taiGlb(duongDan("../mo_hinh/dong_tac_tran.glb"))
+  ]);
+  const ctx = taoCanh(vungVe, { nhe });
+  const { canh } = ctx;
+  canh.background = new THREE.Color("#9fd2ec");
+  canh.fog = new THREE.Fog("#9fd2ec", 16, 34);
+  ctx.datNangTheo(new THREE.Vector3(0, 0, 0));
+  const moHinh = taoBoMoHinh(ctx, glbLang);
+
+  // --- bãi cỏ (màu loang), sân đất giữa, cây + đá xung quanh ---
+  {
+    const g = new THREE.PlaneGeometry(70, 50, 70, 50); g.rotateX(-Math.PI / 2);
+    const p = g.attributes.position, mau = [], c = new THREE.Color();
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), n = bam(Math.round(x * 2), Math.round(z * 2)); c.setHSL(0.27 + n * 0.03, 0.45, 0.36 + n * 0.08); mau.push(c.r, c.g, c.b); }
+    g.setAttribute("color", new THREE.Float32BufferAttribute(mau, 3));
+    const dat = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true })); dat.receiveShadow = !nhe; canh.add(dat);
+    const san = new THREE.Mesh(new THREE.CircleGeometry(3.4, 48).scale(1.35, 1, 0.75).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ color: "#b8a473", transparent: true, opacity: 0.55 }));
+    san.position.y = 0.01; san.receiveShadow = !nhe; canh.add(san);
+    const datMoHinh = (ten, x, z, cao, xoay) => {
+      if (!moHinh.mauGoc[ten]) return;
+      const kt = moHinh.kichThuoc(ten), m = new THREE.Mesh(moHinh.mauGoc[ten].geometry, moHinh.vatLieu);
+      m.scale.setScalar(cao / Math.max(0.01, kt.y)); m.position.set(x, 0, z); m.rotation.y = xoay; m.castShadow = !nhe; m.receiveShadow = !nhe; canh.add(m);
+    };
+    const cay = [[-7.5, -4.5], [-5.2, -6.8], [-2.5, -8.5], [1.2, -9], [4.5, -7.2], [7.6, -5], [9.5, -8], [-9.6, -7.5], [-11, -2.5], [11.5, -2.8], [-3.8, -12], [6.5, -12]];
+    cay.forEach(([x, z], i) => datMoHinh(i % 2 ? "tree_single_B" : "tree_single_A", x, z, 2.8 + bam(i, 3) * 1.4, bam(i, 7) * 6));
+    [[-4.6, -2.6, 0.45], [4.9, -2.2, 0.38], [-6.2, 1.6, 0.3], [6.4, 1.2, 0.5], [3.3, -4.4, 0.3]].forEach(([x, z, cao], i) => datMoHinh(["rock_single_A", "rock_single_C", "rock_single_E"][i % 3], x, z, cao, i));
+    datMoHinh("flag_red", -4.2, -3.6, 1.6, 0.4);
+  }
+
+  // --- Thủ lĩnh ---
+  const NV = window.KC_NV;
+  const boNv = taoBoNhanVat(ctx, glbNv, moHinh, { doCaoDi: () => 0 }, NV);
+  boNv.themDongTac(glbTran.animations);
+  const dvBe = { ten: "", x: X_BE, z: 0, huongMuon: HUONG_BE, trangThai: "dung", duong: [], viec: null, mang: { loai: null, so: 0 }, chay: false, ranh: false };
+  let hBe = null, khoaBe = "", vlBe = [];
+  function dungBe(hoSo) {
+    const khoa = JSON.stringify(hoSo);
+    if (hBe && khoa === khoaBe) { hBe.vo.visible = true; return; }
+    if (hBe) boNv.xoa(hBe);
+    hBe = boNv.tao(dvBe, "thu_linh", hoSo); khoaBe = khoa;
+    hBe.vo.scale.setScalar(TI_BE);
+    hBe.vuKhiMacDinh = "1H_Axe"; if (hBe.vuKhi["1H_Axe"]) hBe.vuKhi["1H_Axe"].visible = true;
+    vlBe = []; hBe.goc.traverse(o => { if (o.isMesh && o.material.emissive && vlBe.indexOf(o.material) < 0) vlBe.push(o.material); });
+  }
+  const dien = (ds, xong) => hBe && boNv.dien(hBe, ds, null, xong, HUONG_BE);
+
+  // --- quái ---
+  let quai = null;
+  function dungQuai(ma, chu) {
+    if (quai) canh.remove(quai.nhom);
+    quai = taoQuai3d(ma, { nhe }); quai.ma = ma;
+    quai.nhom.position.set(X_QUAI, 0, 0); quai.nhom.rotation.y = HUONG_QUAI;
+    quai.nhom.scale.setScalar(TI_QUAI);
+    if (chu) quai.datChu(chu);
+    canh.add(quai.nhom);
+  }
+
+  // --- vòng thế thủ, bóng suy nghĩ, sao bay, chớp sáng ---
+  const vongTex = anhTron((g, n) => { const gr = g.createRadialGradient(n / 2, n / 2, n * 0.3, n / 2, n / 2, n / 2); gr.addColorStop(0, "rgba(255,230,120,0)"); gr.addColorStop(0.75, "rgba(255,230,120,.95)"); gr.addColorStop(1, "rgba(255,230,120,0)"); g.fillStyle = gr; g.fillRect(0, 0, n, n); }, 128);
+  function taoVong(mau) {
+    const nhom = new THREE.Group();
+    const day = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: vongTex, color: mau, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    day.position.y = 0.03; nhom.add(day);
+    const vom = new THREE.Mesh(new THREE.SphereGeometry(1.05, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 1.6, 1), new THREE.MeshBasicMaterial({ color: mau, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    nhom.add(vom); nhom.visible = false; canh.add(nhom);
+    return nhom;
+  }
+  const vong = { be: taoVong("#ffd75e"), quai: taoVong("#ff9b9b") };
+  const bongCv = document.createElement("canvas"); bongCv.width = 128; bongCv.height = 96;
+  const bongTex = new THREE.CanvasTexture(bongCv); bongTex.colorSpace = THREE.SRGBColorSpace;
+  const bong = new THREE.Sprite(new THREE.SpriteMaterial({ map: bongTex, depthTest: false })); bong.scale.set(0.8, 0.6, 1); bong.visible = false; canh.add(bong);
+  function veBong(t) {
+    const g = bongCv.getContext("2d"); g.clearRect(0, 0, 128, 96);
+    g.fillStyle = "#ffffff"; g.strokeStyle = "#1d1630"; g.lineWidth = 5;
+    g.beginPath(); g.ellipse(64, 40, 56, 32, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.beginPath(); g.arc(30, 80, 9, 0, Math.PI * 2); g.fill(); g.stroke();
+    for (let i = 0; i < 3; i++) { const a = Math.max(0, Math.sin(t * 5 - i * 0.8)); g.globalAlpha = 0.3 + 0.7 * a; g.fillStyle = "#1d1630"; g.beginPath(); g.arc(40 + i * 24, 40, 7, 0, Math.PI * 2); g.fill(); }
+    g.globalAlpha = 1; bongTex.needsUpdate = true;
+  }
+  const saoTex = anhTron((g, n) => { g.fillStyle = "#ffe066"; g.strokeStyle = "#8a5a00"; g.lineWidth = 3; g.font = "bold " + (n * 0.9) + "px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.strokeText("★", n / 2, n / 2 + 3); g.fillText("★", n / 2, n / 2 + 3); });
+  const chopTex = anhTron((g, n) => { const gr = g.createRadialGradient(n / 2, n / 2, 1, n / 2, n / 2, n / 2); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.4, "rgba(255,245,200,.7)"); gr.addColorStop(1, "rgba(255,240,180,0)"); g.fillStyle = gr; g.fillRect(0, 0, n, n); });
+  const hatSang = [];
+  function noSao(p, so) {
+    for (let i = 0; i < so; i++) {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: saoTex, transparent: true, depthTest: false }));
+      s.scale.setScalar(0.28); s.position.copy(p); canh.add(s);
+      const a = i / so * Math.PI * 2;
+      hatSang.push({ s, v: new THREE.Vector3(Math.cos(a) * 2.2, 1.6 + Math.sin(a) * 1.6, 0.6), con: 0.7, tong: 0.7, quay: true });
+    }
+    const c = new THREE.Sprite(new THREE.SpriteMaterial({ map: chopTex, transparent: true, depthTest: false, blending: THREE.AdditiveBlending }));
+    c.position.copy(p); c.scale.setScalar(1.6); canh.add(c);
+    hatSang.push({ s: c, v: new THREE.Vector3(), con: 0.3, tong: 0.3, lon: 1.2 });
+  }
+  function noLapLanh(p, mau) { // hạt sáng khi dịch chuyển / né
+    for (let i = 0; i < 14; i++) {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: chopTex, color: mau, transparent: true, depthTest: false, blending: THREE.AdditiveBlending }));
+      s.scale.setScalar(0.25); s.position.copy(p).add(new THREE.Vector3((Math.random() - 0.5) * 0.8, Math.random() * 1.2, (Math.random() - 0.5) * 0.6)); canh.add(s);
+      hatSang.push({ s, v: new THREE.Vector3(0, 1.2 + Math.random(), 0), con: 0.9, tong: 0.9 });
+    }
+  }
+  function chopBe(giay) { them(giay, p => { const k = 1 - p; for (const v of vlBe) v.emissive.setRGB(k, k, k); }); }
+
+  // --- hoạt cảnh theo thời gian (tween) ---
+  const dsTween = [];
+  function them(giay, fn, tre = 0) { dsTween.push({ t: -tre, giay, fn }); }
+  ctx.moiKhung((dt, t) => {
+    for (let i = dsTween.length - 1; i >= 0; i--) {
+      const w = dsTween[i]; w.t += dt;
+      if (w.t < 0) continue;
+      const p = Math.min(1, w.t / w.giay); w.fn(p);
+      if (p >= 1) dsTween.splice(i, 1);
+    }
+    for (let i = hatSang.length - 1; i >= 0; i--) {
+      const h = hatSang[i]; h.con -= dt;
+      h.s.position.addScaledVector(h.v, dt); h.v.y -= dt * (h.quay ? 5 : 0);
+      h.s.material.opacity = Math.max(0, h.con / h.tong);
+      if (h.lon) h.s.scale.setScalar(1.2 + (1 - h.con / h.tong) * h.lon);
+      if (h.quay) h.s.material.rotation += dt * 6;
+      if (h.con <= 0) { canh.remove(h.s); h.s.material.dispose(); hatSang.splice(i, 1); }
+    }
+    boNv.capNhat(dt);
+    if (quai) quai.capNhat(dt, t);
+    for (const k of ["be", "quai"]) {
+      const v = vong[k]; if (!v.visible) continue;
+      v.position.set(k === "be" ? dvBe.x : quai.nhom.position.x, 0, k === "be" ? dvBe.z : quai.nhom.position.z);
+      const n = 1 + Math.sin(t * 5) * 0.05; v.scale.set(n, 1, n);
+    }
+    if (bong.visible && quai) { veBong(t); bong.position.set(quai.nhom.position.x + 0.5, quai.cao * TI_QUAI + 0.55, 0.2); }
+  });
+
+  // --- camera phối cảnh nhìn ngang sân, vừa cả hai bên ---
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 80);
+  const dich = new THREE.Vector3(0, 0.8, 0), huongCam = new THREE.Vector3(0, 0.26, 1).normalize();
+  function coKhung() {
+    const w = vungVe.clientWidth || 1, h = vungVe.clientHeight || 1, a = w / h;
+    ctx.renderer.setSize(w, h);
+    camera.aspect = a;
+    const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const kc = Math.max(3.05 / (a * tan), 1.45 / tan);
+    camera.position.copy(dich).addScaledVector(huongCam, kc);
+    camera.lookAt(dich); camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(coKhung).observe(vungVe); coKhung();
+  ctx.batDau(camera);
+
+  const viTriDau = ben => ben === "be" ? new THREE.Vector3(dvBe.x, 1.35 * TI_BE, dvBe.z) : new THREE.Vector3(quai ? quai.nhom.position.x : X_QUAI, (quai ? quai.cao : 1) * TI_QUAI + 0.2, 0);
+
+  const san = {
+    datTran({ hoSo, quai: ma, chu }) {
+      dsTween.length = 0;
+      dvBe.x = X_BE; dvBe.z = 0;
+      dungBe(NV.chuanHoa(hoSo || {}));
+      dungQuai(ma, chu);
+      vong.be.visible = vong.quai.visible = bong.visible = false;
+    },
+    thu(ben, bat) {
+      vong[ben].visible = !!bat;
+      if (bat && ben === "be") dien(["Block"]);
+    },
+    nghi(bat) { bong.visible = !!bat; },
+    ketQua(k) {
+      vong.be.visible = vong.quai.visible = false; bong.visible = false;
+      const trung = k.satThuong > 0, ne = k.kieu === "ne";
+      if (k.tanCong === "be") {
+        dien(["1H_Melee_Attack_Slice_Diagonal"]);
+        them(0.28, p => { dvBe.x = X_BE + (X_QUAI - 1.15 - X_BE) * Math.sin(p * Math.PI / 2); });
+        them(0.01, () => {
+          const qn = quai.nhom;
+          if (trung) { quai.chop(0.3); noSao(viTriDau("quai").setY(quai.cao * TI_QUAI * 0.6), k.chiMang ? 9 : 6); them(0.35, p => { qn.position.x = X_QUAI + Math.sin(p * Math.PI) * 0.45; qn.scale.set(TI_QUAI * (1 + Math.sin(p * Math.PI) * 0.18), TI_QUAI * (1 - Math.sin(p * Math.PI) * 0.18), TI_QUAI); }); }
+          else if (ne) { noLapLanh(qn.position.clone(), "#bfeaff"); them(0.45, p => { qn.position.x = X_QUAI + Math.sin(p * Math.PI) * 0.9; qn.position.y = Math.sin(p * Math.PI) * 0.55; }); }
+        }, 0.3);
+        them(0.35, p => { dvBe.x = X_QUAI - 1.15 + (X_BE - X_QUAI + 1.15) * p; }, 0.75);
+      } else {
+        const qn = quai.nhom;
+        them(0.3, p => { qn.position.x = X_QUAI + (X_BE + 1.0 - X_QUAI) * p; qn.position.y = Math.sin(p * Math.PI) * 0.6; });
+        them(0.01, () => {
+          if (trung) { dien(["Hit_A"]); chopBe(0.3); noSao(new THREE.Vector3(dvBe.x, 0.6 * TI_BE, 0.2), k.chiMang ? 9 : 6); them(0.35, p => { dvBe.x = X_BE - Math.sin(p * Math.PI) * 0.4; }); }
+          else if (ne) { dien(["Dodge_Backward"]); noLapLanh(new THREE.Vector3(dvBe.x, 0, 0), "#bfeaff"); }
+          else if (k.beChon != null) dien(["Block"]);
+        }, 0.3);
+        them(0.4, p => { qn.position.x = X_BE + 1.0 + (X_QUAI - X_BE - 1.0) * p; qn.position.y = Math.sin(p * Math.PI) * 0.4; }, 0.55);
+      }
+    },
+    ketThuc(thang) {
+      vong.be.visible = vong.quai.visible = bong.visible = false;
+      if (thang === "quai") {
+        dien(["Hit_B"]);
+        them(0.01, () => { noLapLanh(new THREE.Vector3(dvBe.x, 0, 0), "#fff1a8"); if (hBe) hBe.vo.visible = false; }, 1.3);
+      } else {
+        if (thang === "be") dien(["Cheer", "Cheer"]);
+        const qn = quai.nhom, q = quai;
+        them(1.2, p => { qn.position.x = X_QUAI + p * 5; qn.position.y = Math.abs(Math.sin(p * Math.PI * 4)) * 0.35; qn.rotation.y = Math.PI / 2; q.datMo(1 - p); }, 0.6);
+      }
+    },
+    viTri(ben) {
+      const v = viTriDau(ben).project(camera);
+      return { x: (v.x + 1) / 2 * vungVe.clientWidth, y: (1 - v.y) / 2 * vungVe.clientHeight };
+    }
+  };
+  return san;
+}
+
+window.KC_DT_SAN3D = { tao };
+window.dispatchEvent(new Event("dt-san3d"));
+// 29/10/2026 - BƯỚC: TC_D05
