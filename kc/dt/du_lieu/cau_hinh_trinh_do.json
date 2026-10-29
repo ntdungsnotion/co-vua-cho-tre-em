@@ -1,0 +1,26 @@
+{
+  "_ghiChu": "Đấu Trường Tri Thức - THAM SỐ ĐỘ KHÓ THÍCH ỨNG (TC_D04A, 29/10/2026; đặc tả repo_rieng dau_truong_tri_thuc/dac_ta_trinh_do.md). Tách khỏi cau_hinh.json vì cau_hinh.json được chép vào SQL bản đồ (đổi số ở đây không phải chạy lại SQL). Code (dt/dt_trinh_do.js) chỉ đọc file này; MAC_DINH trong code là bản sao để chạy khi chưa nạp được file. Chỉ người lớn sửa (trang quản trị sau này).",
+  "_ghiChuThang": "Trình độ theo THANG LỚP: 2,5 = câu lớp 2 mức Vừa bé đúng khoảng 'mucTieu'. Ai cũng bắt đầu 'batDau'. Độ khó câu = lớp + mucDoKho[mức]. Xác suất đúng = 1 / (1 + e^-(doDoc x (trình độ - độ khó) + ln(mucTieu / (1 - mucTieu)))). Trần = lớp đang học + cuoiLop (vượt lớp: tới lopToiDa).",
+  "batDau": 1.0,
+  "lopToiDa": 12,
+  "cuoiLop": 0.99,
+  "mucTieu": 0.75,
+  "vungVuaSuc": [0.65, 0.85],
+  "doDoc": 1.6,
+  "mucDoKho": { "de": 0.1, "vua": 0.5, "kho": 0.9 },
+  "_ghiChuK": "Sau mỗi câu: trình độ += K x (đúng 1 / sai 0 - xác suất dự đoán). LEO NHANH: K = leoNhanh lúc đầu, giảm đều tới onDinh khi bé đã sai soSaiLeoNhanh câu HOẶC đã làm soCauLeoNhanh câu (cái nào tới trước). Bé lớp cao trả lời đúng liền thì vẫn leo nhanh tới câu vừa sức. Đang leo nhanh mà sai một câu (có thể do sơ ý) thì chỉ hạ với K x heSoSaiKhiLeo.",
+  "K": { "leoNhanh": 2.0, "soCauLeoNhanh": 40, "soSaiLeoNhanh": 6, "onDinh": 0.12, "heSoSaiKhiLeo": 0.5 },
+  "_ghiChuOnTap": "Khoảng 'tiLeOnTap' số câu là ôn tập: chủ đề bé yếu nhất (khi bé đã làm ít nhất onTap.soChuDeToiThieu chủ đề), nhắm xác suất onTap.xacSuat (dễ hơn câu thường).",
+  "tiLeOnTap": 0.2,
+  "onTap": { "xacSuat": 0.88, "soChuDeToiThieu": 3 },
+  "_ghiChuThuong": "Hệ số thưởng của câu ĐÚNG theo xác suất dự đoán lúc hỏi: lấy dòng đầu tiên có xác suất < 'duoi'. Câu vừa sức x1 (bé lớp 2 và bé lớp 6 được như nhau), câu khó hơn trình độ thưởng thêm, câu dễ (ôn tập) thưởng ít. Số tài nguyên gốc mỗi câu đặt ở bước trận đấu (TC_D05 / TC_D06).",
+  "thuong": [
+    { "duoi": 0.5, "heSo": 1.5 },
+    { "duoi": 0.65, "heSo": 1.25 },
+    { "duoi": 0.86, "heSo": 1 },
+    { "duoi": 0.95, "heSo": 0.6 },
+    { "duoi": 1.01, "heSo": 0.3 }
+  ],
+  "_ghiChuThanhThao": "Thành thạo chủ đề 0-100 % = tỉ lệ đúng có trọng số của 'soLan' lần gần nhất; trọng số theo mức (câu khó nặng ký hơn).",
+  "thanhThao": { "soLan": 10, "trongSo": { "de": 1, "vua": 2, "kho": 3 } }
+}

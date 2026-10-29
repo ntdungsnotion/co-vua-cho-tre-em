@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#14204a">
+  <title>Thử câu hỏi - Đấu Trường Tri Thức</title>
+  <!-- ================================================================
+       FILE: dt/thu_cau_hoi.html
+       CHỨC NĂNG: Trang NỘI BỘ thử câu hỏi + độ khó thích ứng của Đấu Trường Tri Thức (không có nút
+                  dẫn tới, mở bằng địa chỉ). Hai thẻ:
+                  - "Chơi thử": trả lời câu Toán do máy chọn theo trình độ, xem trình độ, xác suất đúng
+                    dự đoán, hệ số thưởng, thành thạo chủ đề thay đổi sau mỗi câu (lưu ở máy này).
+                  - "Xem từng dạng": chọn lớp, dạng, mức -> xem câu sinh ra (người lớn rà nội dung).
+                  Điện thoại 1 cột; máy tính 2 cột (câu hỏi to bên trái, bảng trình độ bên phải).
+       BƯỚC: TC_D04A
+       NGÀY: 29/10/2026
+       PHỤ THUỘC: dt/dt_trinh_do.js, dt/dt_sinh_toan.js, dt/dt_cau_hoi.js, dt/du_lieu/cau_hinh_trinh_do.json
+       ================================================================ -->
+  <style>
+    :root {
+      --dem: #14204a; --dem2: #1c2b63; --the: #22347a; --vang: #ffc24b; --sang: #fff6dc; --nhat: #b9c3ec;
+      --xanh: #3ddc84; --do: #ff6b6b; --vien: rgba(255, 194, 75, .55);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--dem); color: var(--sang); font-family: system-ui, "Segoe UI", sans-serif; }
+    body { min-height: 100vh; padding: 12px 16px 24px; }
+    button, select, input { font: inherit; color: inherit; }
+    .dau { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+    .dau h1 { font-size: 1.15rem; margin: 0 auto 0 0; color: var(--vang); }
+    .the-chon { display: flex; gap: 6px; }
+    .the-chon button { background: var(--dem2); border: 2px solid var(--vien); border-radius: 999px; padding: 8px 14px; min-height: 44px; cursor: pointer; }
+    .the-chon button[aria-pressed="true"] { background: var(--vang); color: var(--dem); font-weight: 700; }
+    .khung { background: var(--dem2); border: 2px solid var(--vien); border-radius: 16px; padding: 14px; }
+    select { background: var(--the); border: 1px solid var(--vang); border-radius: 10px; padding: 8px; min-height: 44px; }
+    .hang { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .nut { background: var(--the); border: 2px solid var(--vang); border-radius: 12px; padding: 10px 16px; min-height: 48px; cursor: pointer; font-weight: 600; }
+    .nut.chinh { background: var(--vang); color: var(--dem); }
+    .nut:disabled { opacity: .45; cursor: default; }
+    label.hop { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+    label.hop input { width: 22px; height: 22px; }
+
+    /* ---- câu hỏi ---- */
+    .bo-cuc { display: grid; gap: 14px; }
+    .nhan { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .nhan span { background: var(--the); border-radius: 999px; padding: 4px 10px; font-size: .85rem; color: var(--nhat); }
+    .nhan .on-tap { background: #5a3d8a; color: #fff; }
+    .hinh-chu { font-size: 2.2rem; line-height: 1.25; text-align: center; letter-spacing: 2px; word-break: break-all; margin: 6px 0 10px; }
+    .hinh-chu.dong-ho { font-size: 5rem; }
+    .noi-dung { font-size: 1.5rem; font-weight: 700; text-align: center; margin: 8px 0 16px; line-height: 1.35; }
+    .dap-an { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .dap-an button { min-height: 64px; font-size: 1.3rem; font-weight: 700; border-radius: 14px; border: 3px solid var(--nhat); background: var(--the); cursor: pointer; padding: 8px; }
+    .dap-an button:hover:not(:disabled) { border-color: var(--vang); }
+    .dap-an button.dung { background: #1f6b45; border-color: var(--xanh); }
+    .dap-an button.sai { background: #7a2a36; border-color: var(--do); }
+    .dap-an button:disabled { cursor: default; }
+    .ket-qua { margin-top: 14px; min-height: 1.5em; font-size: 1.1rem; }
+    .ket-qua b { font-size: 1.25rem; }
+    .loi-giai { margin-top: 6px; color: var(--nhat); line-height: 1.45; }
+    .tiep { margin-top: 12px; display: flex; justify-content: flex-end; }
+
+    /* ---- bảng trình độ ---- */
+    .so-to { font-size: 2.4rem; font-weight: 800; color: var(--vang); line-height: 1; }
+    .thang { position: relative; height: 16px; background: var(--the); border-radius: 8px; margin: 10px 0 4px; overflow: hidden; }
+    .thang i { position: absolute; top: 0; bottom: 0; left: 0; background: linear-gradient(90deg, #3ddc84, #ffc24b); border-radius: 8px; }
+    .vach { display: flex; font-size: .8rem; color: var(--nhat); }
+    .vach span { flex: 1; border-left: 1px solid #3b4c8f; padding-left: 4px; white-space: nowrap; overflow: hidden; }
+    .chi-so { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin: 12px 0; font-size: .95rem; }
+    .chi-so div { background: var(--the); border-radius: 10px; padding: 6px 10px; }
+    .chi-so b { display: block; font-size: 1.1rem; color: var(--sang); }
+    .chi-so small { color: var(--nhat); }
+    h2 { font-size: 1rem; margin: 14px 0 6px; color: var(--vang); }
+    svg.vet { width: 100%; height: 90px; background: var(--the); border-radius: 10px; display: block; }
+    .chu-de { display: grid; gap: 4px; font-size: .9rem; }
+    .chu-de div { display: grid; grid-template-columns: 1fr 50px; gap: 6px; align-items: center; }
+    .chu-de .vach-tt { height: 8px; background: var(--the); border-radius: 4px; overflow: hidden; grid-column: 1 / -1; }
+    .chu-de .vach-tt i { display: block; height: 100%; background: var(--xanh); }
+    .lich-su { font-size: .85rem; color: var(--nhat); display: grid; gap: 2px; max-height: 220px; overflow: auto; }
+
+    /* ---- xem từng dạng ---- */
+    .ds-mau { display: grid; gap: 10px; margin-top: 12px; }
+    .mau { background: var(--the); border-radius: 12px; padding: 10px 12px; }
+    .mau .nd { font-weight: 700; font-size: 1.1rem; }
+    .mau .da { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .mau .da span { border: 1px solid var(--nhat); border-radius: 8px; padding: 2px 8px; }
+    .mau .da span.dung { border-color: var(--xanh); color: var(--xanh); font-weight: 700; }
+    .mau .lg { color: var(--nhat); font-size: .9rem; }
+    .an { display: none !important; }
+
+    /* ---- máy tính: 2 cột, chữ to hơn ---- */
+    @media (min-width: 900px) {
+      body { padding: 20px 28px; }
+      .dau h1 { font-size: 1.5rem; }
+      .bo-cuc { grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); max-width: 1500px; margin: 0 auto; align-items: start; }
+      .cau { padding: 28px 32px; }
+      .noi-dung { font-size: 2.1rem; }
+      .hinh-chu { font-size: 3rem; }
+      .hinh-chu.dong-ho { font-size: 7rem; }
+      .dap-an { gap: 16px; }
+      .dap-an button { min-height: 86px; font-size: 1.7rem; }
+      .ds-mau { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+      .xem { max-width: 1500px; margin: 0 auto; }
+    }
+    /* laptop thấp (14" phóng 125 % ~ 1229 x 600): gọn chiều cao để thấy đủ 4 đáp án */
+    @media (min-width: 900px) and (max-height: 700px) {
+      .cau { padding: 16px 24px; }
+      .noi-dung { font-size: 1.7rem; margin: 4px 0 10px; }
+      .hinh-chu.dong-ho { font-size: 4.5rem; }
+      .dap-an button { min-height: 62px; font-size: 1.45rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dau">
+    <h1>🧠 Thử câu hỏi Đấu Trường</h1>
+    <div class="the-chon" role="group" aria-label="Chế độ">
+      <button id="nutChoi" aria-pressed="true">Chơi thử</button>
+      <button id="nutXem" aria-pressed="false">Xem từng dạng</button>
+    </div>
+  </div>
+
+  <!-- ===== Chơi thử ===== -->
+  <div id="manChoi" class="bo-cuc">
+    <section class="khung cau" aria-live="polite">
+      <div class="nhan" id="cNhan"></div>
+      <div class="hinh-chu" id="cHinh"></div>
+      <div class="noi-dung" id="cNoiDung">Đang nạp...</div>
+      <div class="dap-an" id="cDapAn"></div>
+      <div class="ket-qua" id="cKetQua"></div>
+      <div class="tiep"><button class="nut chinh an" id="nutTiep">Câu tiếp ▶</button></div>
+    </section>
+    <aside class="khung">
+      <div class="hang" style="justify-content: space-between">
+        <label>Lớp đang học
+          <select id="chonLop"></select>
+        </label>
+        <label class="hop"><input type="checkbox" id="vuotLop"> Vượt lớp</label>
+        <button class="nut" id="nutLai">Bắt đầu lại</button>
+      </div>
+      <h2>Trình độ Toán</h2>
+      <div class="so-to" id="tSo">1,00</div>
+      <div class="thang"><i id="tThang"></i></div>
+      <div class="vach" id="tVach"></div>
+      <div class="chi-so">
+        <div><small>Xác suất đúng dự đoán</small><b id="tP">-</b></div>
+        <div><small>Hệ số thưởng câu vừa rồi</small><b id="tThuong">-</b></div>
+        <div><small>Số câu · đúng</small><b id="tDem">0 · 0 %</b></div>
+        <div><small>Bước nhảy K</small><b id="tK">-</b></div>
+      </div>
+      <h2>Trình độ qua từng câu</h2>
+      <svg class="vet" id="tVet" viewBox="0 0 300 90" preserveAspectRatio="none"></svg>
+      <h2>Thành thạo chủ đề</h2>
+      <div class="chu-de" id="tChuDe"><small>Chưa làm câu nào.</small></div>
+      <h2>Câu vừa làm</h2>
+      <div class="lich-su" id="tLichSu"></div>
+    </aside>
+  </div>
+
+  <!-- ===== Xem từng dạng ===== -->
+  <div id="manXem" class="xem an">
+    <div class="khung">
+      <div class="hang">
+        <label>Lớp <select id="xLop"></select></label>
+        <label>Dạng <select id="xDang"></select></label>
+        <label>Mức <select id="xMuc"><option value="de">Dễ</option><option value="vua">Vừa</option><option value="kho">Khó</option></select></label>
+        <button class="nut chinh" id="xSinh">Sinh 8 câu khác</button>
+      </div>
+      <div class="ds-mau" id="xDs"></div>
+    </div>
+  </div>
+
+  <script src="dt_trinh_do.js"></script>
+  <script src="dt_sinh_toan.js"></script>
+  <script src="dt_cau_hoi.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    const TD = window.KC_DT_TRINH_DO, ST = window.KC_DT_SINH_TOAN, CH = window.KC_DT_CAU_HOI;
+    const KHOA = "kc_dt_thu_trinh_do";
+    const TEN_MUC = { de: "Dễ", vua: "Vừa", kho: "Khó" };
+    const $ = id => document.getElementById(id);
+    const so2 = x => x.toFixed(2).replace(".", ",");
+    const pt = p => Math.round(p * 100) + " %";
+    const tenChuDe = {};
+    ST.DANG.forEach(d => { tenChuDe[d.chuDe] = d.ten; });
+
+    let chJson = null, bo = null, hs = null, cauNay = null, daTraLoi = false;
+    let vet = [], lichSu = [], soDung = 0, soCau = 0;
+
+    function docLuu() {
+      try { return JSON.parse(localStorage.getItem(KHOA) || "null"); } catch (e) { return null; }
+    }
+    function luu() {
+      try { localStorage.setItem(KHOA, JSON.stringify({ hs, vet, lichSu, soDung, soCau })); } catch (e) { /* trình duyệt chặn lưu: vẫn chơi được */ }
+    }
+
+    // ---------- Chơi thử ----------
+    function batDau(lop) {
+      hs = TD.taoHoSo(lop, chJson);
+      hs.vuotLop = $("vuotLop").checked;
+      vet = [TD.mon(hs, "toan", chJson).d]; lichSu = []; soDung = 0; soCau = 0;
+      luu(); cauTiep(); veBang(null);
+    }
+    function cauTiep() {
+      const x = bo.cauTiep(hs, "toan");
+      cauNay = x; daTraLoi = false;
+      const c = x.cau;
+      $("cNhan").innerHTML = "";
+      [["Lớp " + c.lop], [TEN_MUC[c.doKho]], [tenChuDe[c.chuDe] || c.chuDe]].concat(x.onTap ? [["🔁 Ôn tập", "on-tap"]] : [])
+        .forEach(([t, lop]) => { const s = document.createElement("span"); s.textContent = t; if (lop) s.className = lop; $("cNhan").appendChild(s); });
+      $("cHinh").textContent = c.hinhChu || "";
+      $("cHinh").className = "hinh-chu" + (/[\u{1F550}-\u{1F567}]/u.test(c.hinhChu) ? " dong-ho" : "") + (c.hinhChu ? "" : " an");
+      $("cNoiDung").textContent = c.noiDung;
+      $("cDapAn").innerHTML = "";
+      c.dapAn.forEach((d, i) => {
+        const b = document.createElement("button");
+        b.textContent = d;
+        b.addEventListener("click", () => traLoi(i));
+        $("cDapAn").appendChild(b);
+      });
+      $("cKetQua").innerHTML = "";
+      $("nutTiep").classList.add("an");
+      $("tP").textContent = pt(x.p);
+    }
+    function traLoi(i) {
+      if (daTraLoi) return;
+      daTraLoi = true;
+      const c = cauNay.cau;
+      const kq = bo.traLoi(hs, c, i);
+      const nut = $("cDapAn").children;
+      for (let j = 0; j < nut.length; j++) {
+        nut[j].disabled = true;
+        if (c.dung.indexOf(j) >= 0) nut[j].classList.add("dung");
+        else if (j === i) nut[j].classList.add("sai");
+      }
+      soCau++; if (kq.dung) soDung++;
+      vet.push(kq.sau);
+      lichSu.unshift((kq.dung ? "✅ " : "❌ ") + "Lớp " + c.lop + " " + TEN_MUC[c.doKho] + " · " + c.noiDung + " → " + so2(kq.truoc) + " ➜ " + so2(kq.sau));
+      if (lichSu.length > 30) lichSu.pop();
+      $("cKetQua").innerHTML = (kq.dung ? "<b>Đúng rồi! 🎉</b>" : "<b>Chưa đúng.</b> Đáp án: <b></b>") + '<div class="loi-giai"></div>';
+      if (!kq.dung) $("cKetQua").querySelectorAll("b")[1].textContent = kq.dapAnDung;
+      $("cKetQua").querySelector(".loi-giai").textContent = "💡 " + c.loiGiai;
+      $("nutTiep").classList.remove("an");
+      $("nutTiep").focus();
+      luu(); veBang(kq);
+    }
+    function veBang(kq) {
+      const m = TD.mon(hs, "toan", chJson);
+      const lopMax = Math.min(TD.lopDuocHoi(hs, chJson), bo.lopCoCau("toan"));
+      const tran = lopMax + 1;
+      $("tSo").textContent = so2(m.d);
+      $("tThang").style.width = Math.min(100, (m.d - 1) / (tran - 1) * 100) + "%";
+      $("tVach").innerHTML = "";
+      for (let l = 1; l <= lopMax; l++) { const s = document.createElement("span"); s.textContent = "Lớp " + l; $("tVach").appendChild(s); }
+      $("tThuong").textContent = kq ? (kq.dung ? "× " + String(kq.heSoThuong).replace(".", ",") : "0 (sai)") : "-";
+      $("tK").textContent = so2(TD.heSoK(m, chJson));
+      $("tDem").textContent = soCau + " · " + (soCau ? Math.round(soDung / soCau * 100) : 0) + " %";
+      // vệt trình độ
+      const n = vet.length, w = 300, h = 90, toiDa = Math.max(tran, 2);
+      const diem = vet.map((d, i) => ((n > 1 ? i / (n - 1) : 0) * w).toFixed(1) + "," + (h - (d - 1) / (toiDa - 1) * (h - 6) - 3).toFixed(1)).join(" ");
+      let luoi = "";
+      for (let l = 2; l < toiDa; l++) { const y = (h - (l - 1) / (toiDa - 1) * (h - 6) - 3).toFixed(1); luoi += '<line x1="0" x2="300" y1="' + y + '" y2="' + y + '" stroke="#3b4c8f" stroke-width="1"/>'; }
+      $("tVet").innerHTML = luoi + '<polyline fill="none" stroke="#ffc24b" stroke-width="2.5" vector-effect="non-scaling-stroke" points="' + diem + '"/>';
+      // thành thạo
+      const ds = Object.keys(hs.chuDe);
+      $("tChuDe").innerHTML = ds.length ? "" : "<small>Chưa làm câu nào.</small>";
+      ds.map(cd => [cd, TD.thanhThao(hs, cd)]).sort((a, b) => a[1] - b[1]).forEach(([cd, t]) => {
+        const d = document.createElement("div");
+        d.innerHTML = '<span></span><b>' + t + ' %</b><span class="vach-tt"><i style="width:' + t + '%"></i></span>';
+        d.firstChild.textContent = tenChuDe[cd] || cd;
+        $("tChuDe").appendChild(d);
+      });
+      $("tLichSu").innerHTML = "";
+      lichSu.forEach(t => { const d = document.createElement("div"); d.textContent = t; $("tLichSu").appendChild(d); });
+    }
+
+    // ---------- Xem từng dạng ----------
+    function napDang() {
+      const lop = +$("xLop").value;
+      $("xDang").innerHTML = "";
+      ST.dangCuaLop(lop).forEach(d => { const o = document.createElement("option"); o.value = d.ma; o.textContent = d.ten; $("xDang").appendChild(o); });
+      sinhMau();
+    }
+    function sinhMau() {
+      $("xDs").innerHTML = "";
+      for (let k = 0; k < 8; k++) {
+        const c = ST.taoCau($("xDang").value, $("xMuc").value, Math.floor(Math.random() * 4294967296));
+        if (!c) continue;
+        const d = document.createElement("div");
+        d.className = "mau";
+        d.innerHTML = '<div class="nd"></div><div class="da"></div><div class="lg"></div>';
+        d.querySelector(".nd").textContent = (c.hinhChu ? c.hinhChu + "  " : "") + c.noiDung;
+        c.dapAn.forEach((x, i) => { const s = document.createElement("span"); s.textContent = x; if (c.dung.indexOf(i) >= 0) s.className = "dung"; d.querySelector(".da").appendChild(s); });
+        d.querySelector(".lg").textContent = "💡 " + c.loiGiai;
+        $("xDs").appendChild(d);
+      }
+    }
+
+    function chonThe(xem) {
+      $("nutChoi").setAttribute("aria-pressed", String(!xem));
+      $("nutXem").setAttribute("aria-pressed", String(xem));
+      $("manChoi").classList.toggle("an", xem);
+      $("manXem").classList.toggle("an", !xem);
+    }
+
+    function khoiDong(ch) {
+      chJson = TD.cauHinh(ch);
+      bo = CH.taoBoChon(chJson);
+      for (let l = 1; l <= 12; l++) { const o = document.createElement("option"); o.value = l; o.textContent = "Lớp " + l; $("chonLop").appendChild(o); }
+      for (let l = 1; l <= 6; l++) { const o = document.createElement("option"); o.value = l; o.textContent = "Lớp " + l; $("xLop").appendChild(o); }
+      const cu = docLuu();
+      if (cu && cu.hs) {
+        hs = TD.chuanHoa(cu.hs, chJson);
+        vet = Array.isArray(cu.vet) ? cu.vet.filter(isFinite) : [TD.mon(hs, "toan", chJson).d];
+        lichSu = Array.isArray(cu.lichSu) ? cu.lichSu.slice(0, 30).map(String) : [];
+        soDung = +cu.soDung || 0; soCau = +cu.soCau || 0;
+        $("chonLop").value = hs.lop; $("vuotLop").checked = hs.vuotLop;
+        cauTiep(); veBang(null);
+      } else {
+        $("chonLop").value = 2;
+        batDau(2);
+      }
+      $("chonLop").addEventListener("change", () => batDau(+$("chonLop").value));
+      $("vuotLop").addEventListener("change", () => { hs.vuotLop = $("vuotLop").checked; luu(); veBang(null); });
+      $("nutLai").addEventListener("click", () => batDau(+$("chonLop").value));
+      $("nutTiep").addEventListener("click", cauTiep);
+      $("nutChoi").addEventListener("click", () => chonThe(false));
+      $("nutXem").addEventListener("click", () => chonThe(true));
+      $("xLop").addEventListener("change", napDang);
+      $("xDang").addEventListener("change", sinhMau);
+      $("xMuc").addEventListener("change", sinhMau);
+      $("xSinh").addEventListener("click", sinhMau);
+      napDang();
+      if (location.hash === "#xem") chonThe(true);
+    }
+
+    window.__dtThu = { cau: () => cauNay && cauNay.cau }; // cho kịch bản thử Chrome biết đáp án đúng
+
+    fetch("du_lieu/cau_hinh_trinh_do.json", { cache: "no-cache" }).then(r => r.json())
+      .then(khoiDong, () => khoiDong(null)); // không nạp được file: dùng bản mặc định trong code
+  })();
+  </script>
+</body>
+</html>
+<!-- 29/10/2026 - BƯỚC: TC_D04A -->
