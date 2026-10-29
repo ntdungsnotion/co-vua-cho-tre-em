@@ -1,10 +1,13 @@
 {
   "_ghiChu": "Đấu Trường Tri Thức - THAM SỐ TRẬN ĐẤU THEO LƯỢT (TC_D05, 29/10/2026; đặc tả repo_rieng dau_truong_tri_thuc/dac_ta_tran_dau.md). Tách khỏi cau_hinh.json vì file đó được chép vào SQL bản đồ. Code (dt/dt_tran_dau.js, dt/dt_quai.js) chỉ đọc file này, không viết cứng con số nào. Chỉ người lớn sửa (trang quản trị sau này). Thời gian tính bằng GIÂY.",
   "phienBan": 1,
-  "_ghiChuLuot": "thoiGianLuot: đồng hồ của bên tấn công theo lớp (dòng đầu tiên có lớp <= denLop). heSoQuaiLopNho: thời gian trả lời của quái nhân thêm cho bé nhỏ. thongTha: chế độ cho bé lớp <= denLop (quái tấn công nghĩ lâu hơn x heSoNghi; boSoHo = bé phòng thủ sai không bị sơ hở, không mất combo). tuaKhiDaBamGiay: bé đã bấm phòng thủ thì quái bấm sau nhiều nhất bấy nhiêu giây (kết quả không đổi, bé khỏi chờ).",
-  "thoiGianLuot": [ { "denLop": 5, "giay": 60 }, { "denLop": 12, "giay": 45 } ],
-  "heSoQuaiLopNho": { "denLop": 5, "heSo": 1.25 },
-  "thongTha": { "denLop": 3, "heSoNghi": 1.3, "boSoHo": true },
+  "_ghiChuLuot": "thoiGian (TC_D05B1, người dùng 29/10/2026): be = thời gian suy nghĩ tối đa của bé mỗi lượt theo CẤP QUÁI: lv1 giây ở Lv 1, mỗi Lv giảm giamMoiLv, thấp nhất toiThieu; hết giờ thì tự ra đòn, bé bấm đáp án thì ra đòn ngay. quai = quái nghĩ ngẫu nhiên trong khoảng [ít nhất, nhiều nhất] nội suy từ lv1 tới lv10 (Lv > 10 như Lv 10), nhân heSoBac theo bậc quái, luôn ngắn hơn thời gian của bé ít nhất nhoHonBe giây. thongTha: chế độ cho bé lớp <= denLop (cả bé lẫn quái nghĩ lâu hơn x heSoNghi, người dùng chốt 1,5 ngày 29/10/2026; boSoHo = bé phòng thủ sai không bị sơ hở, không mất combo). tuaKhiDaBamGiay: bé đã bấm phòng thủ thì quái bấm sau nhiều nhất bấy nhiêu giây (kết quả không đổi, bé khỏi chờ).",
+  "thoiGian": {
+    "be": { "lv1": 10, "giamMoiLv": 1, "toiThieu": 5 },
+    "quai": { "lv1": [5, 9], "lv10": [2, 3], "nhoHonBe": 0.5 },
+    "heSoBac": { "thuong": 1, "chuyen_mon": 0.9, "tinh_anh": 0.8, "trum": 0.7 }
+  },
+  "thongTha": { "denLop": 3, "heSoNghi": 1.5, "boSoHo": true },
   "tuaKhiDaBamGiay": 1,
   "_ghiChuLatBai": "Lật bài xong tự sang lượt sau sau bấy nhiêu giây (người dùng 29/10/2026: quái tự đánh, không bấm nút); bé trả lời sai / không trả lời thì đọc lời giải lâu hơn. Chạm vào khung câu hỏi để sang ngay.",
   "latBaiGiay": { "dung": 2.2, "sai": 4.5 },
@@ -23,14 +26,14 @@
     "quy":  { "hp": 120, "mp": 30, "str": 20, "int": 4,  "agi": 6,  "def": 8, "uyLuc": 18, "chiSoDanh": "str" },
     "tien": { "hp": 85,  "mp": 80, "str": 4,  "int": 22, "agi": 14, "def": 4, "uyLuc": 18, "chiSoDanh": "int" }
   },
-  "_ghiChuQuai": "Quái: xác suất trả lời đúng theo bậc x độ khó câu (de / vua / kho), kẹp trong xacSuatGioiHan; giayTraLoi = khoảng thời gian bấm [ít nhất, nhiều nhất] (người dùng 29/10/2026: quái nghĩ lâu quá, rút từ 12-20 giây của đặc tả gốc xuống 4-7 giây cho bậc Thường). heSoCap: mỗi cấp trên Lv 1 nhân thêm (hp, uyLuc, def theo tỉ lệ; agi cộng điểm). loai.*.mon: toan | tieng_anh | bat_ky (mỗi lượt chọn ngẫu nhiên môn có câu).",
+  "_ghiChuQuai": "Quái: xác suất trả lời đúng theo bậc x độ khó câu (de / vua / kho), kẹp trong xacSuatGioiHan; thời gian nghĩ ở thoiGian.quai (theo cấp) x thoiGian.heSoBac (theo bậc). heSoCap: mỗi cấp trên Lv 1 nhân thêm (hp, uyLuc, def theo tỉ lệ; agi cộng điểm). loai.*.mon: toan | tieng_anh | bat_ky (mỗi lượt chọn ngẫu nhiên môn có câu).",
   "quai": {
     "xacSuatGioiHan": [0.05, 0.95],
     "bac": {
-      "thuong":     { "ten": "Thường",     "xacSuat": { "de": 0.55, "vua": 0.40, "kho": 0.20 }, "giayTraLoi": [4, 7] },
-      "chuyen_mon": { "ten": "Chuyên môn", "xacSuat": { "de": 0.70, "vua": 0.55, "kho": 0.35 }, "giayTraLoi": [3.5, 6] },
-      "tinh_anh":   { "ten": "Tinh anh",   "xacSuat": { "de": 0.80, "vua": 0.68, "kho": 0.50 }, "giayTraLoi": [3, 5] },
-      "trum":       { "ten": "Trùm",       "xacSuat": { "de": 0.88, "vua": 0.78, "kho": 0.62 }, "giayTraLoi": [2, 4] }
+      "thuong":     { "ten": "Thường",     "xacSuat": { "de": 0.55, "vua": 0.40, "kho": 0.20 } },
+      "chuyen_mon": { "ten": "Chuyên môn", "xacSuat": { "de": 0.70, "vua": 0.55, "kho": 0.35 } },
+      "tinh_anh":   { "ten": "Tinh anh",   "xacSuat": { "de": 0.80, "vua": 0.68, "kho": 0.50 } },
+      "trum":       { "ten": "Trùm",       "xacSuat": { "de": 0.88, "vua": 0.78, "kho": 0.62 } }
     },
     "heSoCap": { "hp": 0.15, "uyLuc": 0.08, "def": 0.1, "agi": 1 },
     "loai": {

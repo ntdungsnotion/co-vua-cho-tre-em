@@ -45,12 +45,22 @@ function anhTron(ve, co = 64) { const cv = document.createElement("canvas"); cv.
 
 async function tao(vungVe, { nhe } = {}) {
   nhe = nhe != null ? nhe : docDoHoa() === "nhe";
-  const [glbLang, glbNv, glbTran, glbTuong] = await Promise.all([
+  // tướng người thật (TC_D05B1): kho tướng ở du_lieu/tuong.json; chỉ tải file của tướng đang đấu
+  // (mỗi file ~1 MB), nhớ lại khi đấu tiếp. Lỗi ở bất kỳ bước nào thì dùng Thủ lĩnh KayKit như cũ.
+  const boNhoTuong = {};
+  const taiTuong = tep => boNhoTuong[tep] || (boNhoTuong[tep] = taiGlb(duongDan("../mo_hinh/" + tep)));
+  const [glbLang, glbNv, glbTran, glbDongTacTuong, khoTuong] = await Promise.all([
     taiGlb(duongDan("../mo_hinh/lang.glb")), taiGlb(duongDan("../mo_hinh/nhan_vat.glb")), taiGlb(duongDan("../mo_hinh/dong_tac_tran.glb")),
-    // tướng người thật (TC_D05B1); tải lỗi thì dùng Thủ lĩnh KayKit như cũ
-    Promise.all(["tuong_nam", "tuong_nu", "dong_tac_tuong"].map(t => taiGlb(duongDan("../mo_hinh/" + t + ".glb"))))
-      .then(([nam, nu, dongTac]) => ({ nam, nu, dongTac }), () => null)
+    taiGlb(duongDan("../mo_hinh/dong_tac_tuong.glb")).catch(() => null),
+    fetch(duongDan("../du_lieu/tuong.json")).then(r => r.json()).catch(() => null)
   ]);
+  // tướng cho hồ sơ: hoSo.tuong (mã trong kho, vd trang thử ?tuong=demon) hoặc Thủ lĩnh theo tộc + giới
+  function chonTuong(hoSo) {
+    if (!khoTuong) return null;
+    const ma = hoSo.tuong || khoTuong.thuLinh[hoSo.chungLoai + "_" + (hoSo.gioi === "nu" ? "nu" : "nam")] || khoTuong.thuLinh.nhan_nam;
+    return khoTuong.kho.find(t => t.ma === ma) || null;
+  }
+  if (khoTuong) { const t = chonTuong({ chungLoai: "nhan" }); if (t) taiTuong(t.tep).catch(() => {}); } // tải sẵn tướng mặc định
   const ctx = taoCanh(vungVe, { nhe });
   const { canh } = ctx;
   canh.background = new THREE.Color("#9fd2ec");
@@ -87,19 +97,28 @@ async function tao(vungVe, { nhe } = {}) {
   const boNv = taoBoNhanVat(ctx, glbNv, moHinh, { doCaoDi: () => 0 }, NV);
   boNv.themDongTac(glbTran.animations);
   const dvBe = { ten: "", x: X_BE, z: 0, huongMuon: HUONG_BE, trangThai: "dung", duong: [], viec: null, mang: { loai: null, so: 0 }, chay: false, ranh: false };
-  const boTuong = glbTuong ? taoBoTuong(ctx, glbTuong) : null;
-  let hBe = null, tuong = null, khoaBe = "", vlBe = [], caoBe = 1.5 * TI_BE;
+  const boTuong = glbDongTacTuong ? taoBoTuong(ctx, glbDongTacTuong) : null;
+  let hBe = null, tuong = null, khoaBe = "", vlBe = [], caoBe = 1.5 * TI_BE, lanDung = 0;
   function dungBe(hoSo) {
     const khoa = JSON.stringify(hoSo);
     const vo = tuong ? tuong.vo : hBe && hBe.vo;
     if (vo && khoa === khoaBe) { vo.visible = true; return; }
     khoaBe = khoa;
-    if (boTuong) {
-      if (tuong) canh.remove(tuong.vo);
-      tuong = boTuong.tao(hoSo, CAO_TUONG); tuong.vo.rotation.y = HUONG_BE;
-      vlBe = tuong.vlPhatSang; caoBe = CAO_TUONG;
+    const lan = ++lanDung, tt = boTuong && chonTuong(hoSo);
+    if (tt) { // tải tướng (lần đầu ~1 MB); trong lúc tải giữ tướng cũ trên sân
+      taiTuong(tt.tep).then(glb => {
+        if (lan !== lanDung) return; // bé đã đổi tướng khác trong lúc tải
+        if (tuong) canh.remove(tuong.vo);
+        if (hBe) { boNv.xoa(hBe); hBe = null; }
+        tuong = boTuong.tao(glb, Object.assign({}, hoSo, { chungLoai: tt.toc }), CAO_TUONG); tuong.vo.rotation.y = HUONG_BE;
+        tuong.vo.position.set(dvBe.x, 0, dvBe.z);
+        vlBe = tuong.vlPhatSang; caoBe = CAO_TUONG;
+      }, () => { if (lan === lanDung && !tuong) dungKayKit(hoSo); });
       return;
     }
+    dungKayKit(hoSo);
+  }
+  function dungKayKit(hoSo) {
     if (hBe) boNv.xoa(hBe);
     hBe = boNv.tao(dvBe, "thu_linh", hoSo);
     hBe.vo.scale.setScalar(TI_BE);
@@ -246,6 +265,7 @@ async function tao(vungVe, { nhe } = {}) {
       dsTween.length = 0;
       dvBe.x = X_BE; dvBe.z = 0;
       const hs = NV.chuanHoa(hoSo || {});
+      if (hoSo && hoSo.tuong) hs.tuong = hoSo.tuong; // chuanHoa (dùng chung) không biết trường tuong
       dungBe(hs);
       kieu = KIEU_TOC[hs.chungLoai] || KIEU_TOC.nhan;
       if (haoQuang) canh.remove(haoQuang.nhom);
@@ -271,7 +291,7 @@ async function tao(vungVe, { nhe } = {}) {
           them(0.35, q => { qn.position.x = X_QUAI + Math.sin(q * Math.PI) * 0.45; qn.scale.set(TI_QUAI * (1 + Math.sin(q * Math.PI) * 0.18), TI_QUAI * (1 - Math.sin(q * Math.PI) * 0.18), TI_QUAI); });
         };
         if (kieu.phep) { // Tiên tộc: đứng tại chỗ bắn cầu phép
-          dien("phep");
+          dien(k.chiMang ? "phepLon" : "phep");
           them(0.01, () => {
             const tu = V(dvBe.x + 0.45, caoBe * 0.7, 0.25), den = tamQuai();
             if (ne) den.x += 1.8; else if (!trung) den.set(den.x - 0.5, 0.05, 0.3);
@@ -289,6 +309,10 @@ async function tao(vungVe, { nhe } = {}) {
         }
       } else {
         const kq = KIEU_QUAI[quai.ma] || KIEU_QUAI.slime_so;
+        // bé chọn đúng => đang giữ thế thủ (trang gọi thu("be", true)); giữ tới khi quái đánh xong rồi mới thả
+        const dangThu = !!(tuong && tuong.dangDien() === "thu");
+        let daTha = false;
+        them(0.01, () => { daTha = true; if (tuong && ["thu", "do"].indexOf(tuong.dangDien()) >= 0) dien("dung"); }, 1.15);
         const beChiu = p => {
           if (trung) {
             dien("trung"); chopBe(0.3);
@@ -296,8 +320,13 @@ async function tao(vungVe, { nhe } = {}) {
             if (quai.ma === "nam_chu_cai") hu.khoi(p, kq.mau, 8, 0.8); else hu.tia(p, kq.mau, 10, 4);
             them(0.35, q => { dvBe.x = X_BE - Math.sin(q * Math.PI) * 0.4; });
           } else if (ne) { dien("ne"); hu.gio(V(dvBe.x, 0, 0.1), -1); noLapLanh(V(dvBe.x, 0, 0), "#bfeaff"); }
-          else if (k.beChon != null) { dien("do"); hu.khien(V(dvBe.x, caoBe * 0.5, 0.05), kieu.mau, 0.6, caoBe * 0.55); hu.tia(p, "#ffffff", 8, 4); }
-          else { dien("dung"); hu.khoi(V(dvBe.x + 0.6, 0.1, 0.2), "#cdbf9c", 5, 0.6, false); }
+          else if (k.beChon != null) {
+            // đỡ được: Nhân tộc giơ khiên + khiên năng lượng; Quỷ tộc đứng tấn chịu đòn (bụi + tia); Tiên tộc kết giới sáng
+            if (dangThu) dien("do", () => { if (!daTha) dien("thu"); }); else dien("do");
+            if (kieu === KIEU_TOC.quy) { hu.tia(p, "#ffb070", 12, 4); hu.khoi(V(dvBe.x, 0.1, 0.2), "#cdbf9c", 6, 0.6, false); hu.rung(0.03, 0.2); }
+            else { hu.khien(V(dvBe.x, caoBe * 0.5, 0.05), kieu === KIEU_TOC.tien ? "#9fe4ff" : kieu.mau, 0.6, caoBe * 0.55); hu.tia(p, "#ffffff", 8, 4); }
+          }
+          else { if (!dangThu) dien("dung"); hu.khoi(V(dvBe.x + 0.6, 0.1, 0.2), "#cdbf9c", 5, 0.6, false); }
         };
         if (kq.xa) { // đom đóm bắn tia sáng
           them(0.25, p => { qn.position.y = Math.sin(p * Math.PI) * 0.35; });

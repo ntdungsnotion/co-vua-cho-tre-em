@@ -1,0 +1,17 @@
+{
+  "_ghiChu": "Đấu Trường Tri Thức - KHO TƯỚNG tỉ lệ người thật (TC_D05B1, 29/10/2026). Mục tiêu (người dùng 29/10/2026): sau này có thật nhiều tướng để bé chiêu mộ. thuLinh: tướng dùng làm Thủ lĩnh của bé theo '<chủng loại>_<giới>' (trỏ tới ma trong kho). kho: mọi tướng; tep = file trong kc/dt/mo_hinh/ (Blender: repo_rieng dau_truong_tri_thuc/cong_cu/chuyen_tuong_glb.py), toc = nhan | quy | tien (quyết định bộ động tác riêng của tộc trong dt3d_tuong.js KIEU_TOC), gioi = nam | nu, vuKhi = món đã gắn sẵn trong file (kiem, khien...), nguon = nhân vật gốc + giấy phép. Xem thử một tướng: kc/dt/thu_tran_dau.html?tuong=<ma>.",
+  "phienBan": 1,
+  "thuLinh": {
+    "nhan_nam": "pelegrini", "nhan_nu": "erika",
+    "quy_nam": "demon", "quy_nu": "nightshade",
+    "tien_nam": "uriel", "tien_nu": "kachujin"
+  },
+  "kho": [
+    { "ma": "pelegrini",  "ten": "Hiệp sĩ Pelegrini", "toc": "nhan", "gioi": "nam", "tep": "tuong_nam.glb",      "vuKhi": ["kiem", "khien"], "nguon": "Mixamo: Knight D Pelegrini + kiếm khiên Paladin J Nordstrom" },
+    { "ma": "erika",      "ten": "Nữ hiệp Erika",     "toc": "nhan", "gioi": "nu",  "tep": "tuong_nu.glb",       "vuKhi": ["kiem", "khien"], "nguon": "Mixamo: Erika Archer + kiếm khiên Paladin J Nordstrom" },
+    { "ma": "demon",      "ten": "Quỷ vương Demon",   "toc": "quy",  "gioi": "nam", "tep": "tuong_quy_nam.glb",  "vuKhi": ["kiem"],          "nguon": "Mixamo: Demon T Wiezzorek + kiếm Paladin J Nordstrom" },
+    { "ma": "nightshade", "ten": "Quỷ nữ Nightshade", "toc": "quy",  "gioi": "nu",  "tep": "tuong_quy_nu.glb",   "vuKhi": ["kiem"],          "nguon": "Mixamo: Nightshade J Friedrich + kiếm Paladin J Nordstrom" },
+    { "ma": "uriel",      "ten": "Thiên tướng Uriel", "toc": "tien", "gioi": "nam", "tep": "tuong_tien_nam.glb", "vuKhi": [],                "nguon": "Mixamo: Uriel A Plotexia" },
+    { "ma": "kachujin",   "ten": "Tiên nữ Kachujin",  "toc": "tien", "gioi": "nu",  "tep": "tuong_tien_nu.glb",  "vuKhi": [],                "nguon": "Mixamo: Kachujin G Rosales" }
+  ]
+}
