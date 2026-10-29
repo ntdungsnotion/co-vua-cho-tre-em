@@ -12,7 +12,8 @@
 //        ketQua(k) (k: kết quả lượt của lõi), thu(ben, bat), nghi(bat), ketThuc(thang),
 //        viTri(ben) -> { x, y } điểm ảnh trong vùng vẽ (trên đầu) }
 // LUẬT NỐI: dùng dt3d_canh.js, dt3d_mo_hinh.js, dt3d_nhan_vat.js, dt3d_quai.js; NV = window.KC_NV.
-// BƯỚC: TC_D05 (người dùng 29/10/2026: "đồ hoạ xấu quá" -> sân 3D cùng bộ hình với làng)
+// BƯỚC: TC_D05 (người dùng 29/10/2026: "đồ hoạ xấu quá" -> sân 3D cùng bộ hình với làng;
+//        sau đó: hiệu ứng chiến đấu + phép thuật theo tộc, dt3d_hieu_ung.js)
 // NGÀY: 29/10/2026
 // ================================================================
 import * as THREE from "three";
@@ -20,10 +21,23 @@ import { taoCanh, docDoHoa, bam } from "./dt3d_canh.js";
 import { taiGlb, taoBoMoHinh } from "./dt3d_mo_hinh.js";
 import { taoBoNhanVat } from "./dt3d_nhan_vat.js";
 import { taoQuai3d } from "./dt3d_quai.js";
+import { taoHieuUng } from "./dt3d_hieu_ung.js";
+import { EffectComposer } from "../../thu_vien/three/postprocessing/EffectComposer.js";
+import { RenderPass } from "../../thu_vien/three/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "../../thu_vien/three/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "../../thu_vien/three/postprocessing/OutputPass.js";
 
 const duongDan = p => new URL(p, import.meta.url).href;
 const X_BE = -1.55, X_QUAI = 1.55, TI_BE = 1.45, TI_QUAI = 1.25;
 const HUONG_BE = Math.PI / 2 - 0.6, HUONG_QUAI = -Math.PI / 2 + 0.85;
+// phong cách chiêu theo tộc: Nhân tộc kiếm quang vàng, Quỷ tộc chém lửa, Tiên tộc bắn cầu phép (chí mạng = chiêu lớn)
+const KIEU_TOC = {
+  nhan: { mau: "#ffd36b", mau2: "#fff3c4", chieu: "KIẾM QUANG TRẢM" },
+  quy: { mau: "#ff6a2a", mau2: "#ffc27a", chieu: "HOẢ NGỤC BẠO" },
+  tien: { mau: "#7fd8ff", mau2: "#e2c8ff", chieu: "LÔI THẦN GIÁNG", phep: true }
+};
+// đòn của quái: dom_dom bắn tia sáng từ xa, còn lại lao tới
+const KIEU_QUAI = { slime_so: { mau: "#86ff6e" }, nam_chu_cai: { mau: "#c995ff" }, dom_dom: { mau: "#fff27a", xa: true } };
 
 function anhTron(ve, co = 64) { const cv = document.createElement("canvas"); cv.width = cv.height = co; ve(cv.getContext("2d"), co); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; }
 
@@ -38,6 +52,10 @@ async function tao(vungVe, { nhe } = {}) {
   canh.fog = new THREE.Fog("#9fd2ec", 16, 34);
   ctx.datNangTheo(new THREE.Vector3(0, 0, 0));
   const moHinh = taoBoMoHinh(ctx, glbLang);
+  const hu = taoHieuUng(ctx, { nhe });
+  const bui = hu.taoBui();
+  let kieu = KIEU_TOC.nhan, haoQuang = null, cham = 0;
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
   // --- bãi cỏ (màu loang), sân đất giữa, cây + đá xung quanh ---
   {
@@ -93,7 +111,8 @@ async function tao(vungVe, { nhe } = {}) {
     const nhom = new THREE.Group();
     const day = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: vongTex, color: mau, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
     day.position.y = 0.03; nhom.add(day);
-    const vom = new THREE.Mesh(new THREE.SphereGeometry(1.05, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 1.6, 1), new THREE.MeshBasicMaterial({ color: mau, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    const vlVom = hu.taoVlKhien(mau); vlVom.uniforms.uMo.value = 0.75;
+    const vom = new THREE.Mesh(new THREE.SphereGeometry(1.05, 28, 16, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 1.6, 1), vlVom);
     nhom.add(vom); nhom.visible = false; canh.add(nhom);
     return nhom;
   }
@@ -109,20 +128,8 @@ async function tao(vungVe, { nhe } = {}) {
     for (let i = 0; i < 3; i++) { const a = Math.max(0, Math.sin(t * 5 - i * 0.8)); g.globalAlpha = 0.3 + 0.7 * a; g.fillStyle = "#1d1630"; g.beginPath(); g.arc(40 + i * 24, 40, 7, 0, Math.PI * 2); g.fill(); }
     g.globalAlpha = 1; bongTex.needsUpdate = true;
   }
-  const saoTex = anhTron((g, n) => { g.fillStyle = "#ffe066"; g.strokeStyle = "#8a5a00"; g.lineWidth = 3; g.font = "bold " + (n * 0.9) + "px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.strokeText("★", n / 2, n / 2 + 3); g.fillText("★", n / 2, n / 2 + 3); });
   const chopTex = anhTron((g, n) => { const gr = g.createRadialGradient(n / 2, n / 2, 1, n / 2, n / 2, n / 2); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.4, "rgba(255,245,200,.7)"); gr.addColorStop(1, "rgba(255,240,180,0)"); g.fillStyle = gr; g.fillRect(0, 0, n, n); });
   const hatSang = [];
-  function noSao(p, so) {
-    for (let i = 0; i < so; i++) {
-      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: saoTex, transparent: true, depthTest: false }));
-      s.scale.setScalar(0.28); s.position.copy(p); canh.add(s);
-      const a = i / so * Math.PI * 2;
-      hatSang.push({ s, v: new THREE.Vector3(Math.cos(a) * 2.2, 1.6 + Math.sin(a) * 1.6, 0.6), con: 0.7, tong: 0.7, quay: true });
-    }
-    const c = new THREE.Sprite(new THREE.SpriteMaterial({ map: chopTex, transparent: true, depthTest: false, blending: THREE.AdditiveBlending }));
-    c.position.copy(p); c.scale.setScalar(1.6); canh.add(c);
-    hatSang.push({ s: c, v: new THREE.Vector3(), con: 0.3, tong: 0.3, lon: 1.2 });
-  }
   function noLapLanh(p, mau) { // hạt sáng khi dịch chuyển / né
     for (let i = 0; i < 14; i++) {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: chopTex, color: mau, transparent: true, depthTest: false, blending: THREE.AdditiveBlending }));
@@ -130,12 +137,15 @@ async function tao(vungVe, { nhe } = {}) {
       hatSang.push({ s, v: new THREE.Vector3(0, 1.2 + Math.random(), 0), con: 0.9, tong: 0.9 });
     }
   }
-  function chopBe(giay) { them(giay, p => { const k = 1 - p; for (const v of vlBe) v.emissive.setRGB(k, k, k); }); }
+  function chopBe(giay) { them(giay, p => { const k = (1 - p) * 0.5; for (const v of vlBe) v.emissive.setRGB(k, k * 0.55, k * 0.5); }); } // chớp đỏ nhạt khi trúng đòn
 
   // --- hoạt cảnh theo thời gian (tween) ---
   const dsTween = [];
   function them(giay, fn, tre = 0) { dsTween.push({ t: -tre, giay, fn }); }
   ctx.moiKhung((dt, t) => {
+    if (cham > 0) { cham -= dt; dt *= 0.08; } // khựng hình khi chí mạng
+    hu.capNhat(dt, t); bui.capNhat(dt, t);
+    if (haoQuang) haoQuang.capNhat(dt, t, dvBe);
     for (let i = dsTween.length - 1; i >= 0; i--) {
       const w = dsTween[i]; w.t += dt;
       if (w.t < 0) continue;
@@ -162,26 +172,66 @@ async function tao(vungVe, { nhe } = {}) {
 
   // --- camera phối cảnh nhìn ngang sân, vừa cả hai bên ---
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 80);
+  // phát sáng Bloom (chỉ chế độ Đẹp): chỗ rất sáng (phép, lửa, tia chém) toả quầng
+  let hauKy = null;
+  if (!nhe) {
+    hauKy = new EffectComposer(ctx.renderer);
+    hauKy.addPass(new RenderPass(canh, camera));
+    hauKy.addPass(new UnrealBloomPass(new THREE.Vector2(256, 256), 0.4, 0.35, 0.92));
+    hauKy.addPass(new OutputPass());
+    ctx.ve = () => hauKy.render();
+  }
   const dich = new THREE.Vector3(0, 0.8, 0), huongCam = new THREE.Vector3(0, 0.26, 1).normalize();
   function coKhung() {
     const w = vungVe.clientWidth || 1, h = vungVe.clientHeight || 1, a = w / h;
     ctx.renderer.setSize(w, h);
+    if (hauKy) { hauKy.setPixelRatio(ctx.renderer.getPixelRatio()); hauKy.setSize(w, h); }
     camera.aspect = a;
     const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const kc = Math.max(3.05 / (a * tan), 1.45 / tan);
     camera.position.copy(dich).addScaledVector(huongCam, kc);
     camera.lookAt(dich); camera.updateProjectionMatrix();
+    camGoc.copy(camera.position);
   }
+  const camGoc = new THREE.Vector3();
+  ctx.moiKhung(() => camera.position.copy(camGoc).add(hu.lechCamera()));
   new ResizeObserver(coKhung).observe(vungVe); coKhung();
   ctx.batDau(camera);
 
   const viTriDau = ben => ben === "be" ? new THREE.Vector3(dvBe.x, 1.35 * TI_BE, dvBe.z) : new THREE.Vector3(quai ? quai.nhom.position.x : X_QUAI, (quai ? quai.cao : 1) * TI_QUAI + 0.2, 0);
 
+  const tamQuai = () => V(quai.nhom.position.x, quai.cao * TI_QUAI * 0.55, 0.15);
+  const tamBe = () => V(dvBe.x, 0.75 * TI_BE, 0.2);
+  // va chạm: chớp + tia lửa + sóng đất + rung; manh = chí mạng (to hơn, khựng hình)
+  function vaCham(p, mau, manh) {
+    hu.chop(p, "#ffffff", manh ? 1.1 : 0.7, 0.14, 0.7);
+    hu.chop(p, mau, manh ? 2 : 1.2, 0.28, 0.45);
+    hu.tia(p, mau, manh ? 26 : 14, manh ? 7 : 5);
+    hu.songXung(V(p.x, 0, p.z), mau, manh ? 2.2 : 1.2, 0.5);
+    hu.rung(manh ? 0.09 : 0.035, manh ? 0.45 : 0.22);
+    if (manh) cham = 0.1;
+  }
+  // chiêu lớn khi chí mạng, theo tộc
+  function chieuLon(p) {
+    hu.chuChieu(kieu.chieu, V(0, 2.25, 0.4), kieu.mau);
+    if (kieu === KIEU_TOC.quy) hu.cotLua(V(p.x, 0, 0), 0.9);
+    else if (kieu === KIEU_TOC.tien) hu.set(V(p.x, 0, 0), "#bfe9ff");
+    else {
+      hu.vetChem(p, kieu.mau2, { r: 1.25, day: 0.5, tu: 2.5, den: -0.7, xoayY: 0, giay: 0.32, sang: 2 });
+      them(0.01, () => hu.vetChem(p, kieu.mau, { r: 1.25, day: 0.5, tu: 0.65, den: -2.55, xoayY: 0, giay: 0.32, sang: 2 }), 0.1);
+      them(0.01, () => { hu.songXung(V(p.x, 0, 0), kieu.mau, 2.6, 0.7); hu.chop(p, kieu.mau2, 2.6, 0.35, 0.5); }, 0.18);
+    }
+  }
+
   const san = {
     datTran({ hoSo, quai: ma, chu }) {
       dsTween.length = 0;
       dvBe.x = X_BE; dvBe.z = 0;
-      dungBe(NV.chuanHoa(hoSo || {}));
+      const hs = NV.chuanHoa(hoSo || {});
+      dungBe(hs);
+      kieu = KIEU_TOC[hs.chungLoai] || KIEU_TOC.nhan;
+      if (haoQuang) canh.remove(haoQuang.nhom);
+      haoQuang = hu.taoHaoQuang(kieu.mau);
       dungQuai(ma, chu);
       vong.be.visible = vong.quai.visible = bong.visible = false;
     },
@@ -193,35 +243,73 @@ async function tao(vungVe, { nhe } = {}) {
     ketQua(k) {
       vong.be.visible = vong.quai.visible = false; bong.visible = false;
       const trung = k.satThuong > 0, ne = k.kieu === "ne";
+      const qn = quai.nhom;
       if (k.tanCong === "be") {
-        dien(["1H_Melee_Attack_Slice_Diagonal"]);
-        them(0.28, p => { dvBe.x = X_BE + (X_QUAI - 1.15 - X_BE) * Math.sin(p * Math.PI / 2); });
-        them(0.01, () => {
-          const qn = quai.nhom;
-          if (trung) { quai.chop(0.3); noSao(viTriDau("quai").setY(quai.cao * TI_QUAI * 0.6), k.chiMang ? 9 : 6); them(0.35, p => { qn.position.x = X_QUAI + Math.sin(p * Math.PI) * 0.45; qn.scale.set(TI_QUAI * (1 + Math.sin(p * Math.PI) * 0.18), TI_QUAI * (1 - Math.sin(p * Math.PI) * 0.18), TI_QUAI); }); }
-          else if (ne) { noLapLanh(qn.position.clone(), "#bfeaff"); them(0.45, p => { qn.position.x = X_QUAI + Math.sin(p * Math.PI) * 0.9; qn.position.y = Math.sin(p * Math.PI) * 0.55; }); }
-        }, 0.3);
-        them(0.35, p => { dvBe.x = X_QUAI - 1.15 + (X_BE - X_QUAI + 1.15) * p; }, 0.75);
+        const quaiNe = () => { hu.gio(V(qn.position.x, 0, 0.1), 1); noLapLanh(qn.position.clone(), "#bfeaff"); them(0.45, p => { qn.position.x = X_QUAI + Math.sin(p * Math.PI) * 0.9; qn.position.y = Math.sin(p * Math.PI) * 0.55; }); };
+        const trungDon = p => {
+          quai.chop(0.3); vaCham(p, kieu.mau, k.chiMang);
+          if (kieu === KIEU_TOC.quy) hu.khoi(p, "#ff8a3a", 6, 0.5);
+          if (k.chiMang) chieuLon(p);
+          them(0.35, q => { qn.position.x = X_QUAI + Math.sin(q * Math.PI) * 0.45; qn.scale.set(TI_QUAI * (1 + Math.sin(q * Math.PI) * 0.18), TI_QUAI * (1 - Math.sin(q * Math.PI) * 0.18), TI_QUAI); });
+        };
+        if (kieu.phep) { // Tiên tộc: đứng tại chỗ bắn cầu phép
+          dien(["Spellcast_Shoot"]);
+          them(0.01, () => {
+            const tu = V(dvBe.x + 0.45, 1.05 * TI_BE, 0.25), den = tamQuai();
+            if (ne) den.x += 1.8; else if (!trung) den.set(den.x - 0.5, 0.05, 0.3);
+            hu.chop(tu, kieu.mau, 1.3, 0.3);
+            hu.phong(tu, den, { mau: kieu.mau, mau2: "#ffffff", giay: 0.32, co: 0.3, cong: 0.25, khiToi: p => { if (trung) trungDon(p); else if (!ne) hu.khoi(p, "#9aa7b5", 5, 0.6, false); } });
+          }, 0.22);
+          if (ne) them(0.01, quaiNe, 0.36);
+        } else { // Nhân / Quỷ tộc: lao tới chém
+          dien(["1H_Melee_Attack_Slice_Diagonal"]);
+          them(0.28, p => { dvBe.x = X_BE + (X_QUAI - 1.15 - X_BE) * Math.sin(p * Math.PI / 2); });
+          them(0.01, () => hu.vetChem(V(dvBe.x + 0.5, 0.78 * TI_BE, 0.35), kieu.mau, { r: 0.9, giay: 0.3, nghieng: -0.15 }), 0.2);
+          them(0.01, () => { if (trung) trungDon(tamQuai()); else if (ne) quaiNe(); else hu.tia(V(dvBe.x + 0.9, 0.1, 0.2), "#d8c9a8", 6, 2.5); }, 0.3);
+          them(0.35, p => { dvBe.x = X_QUAI - 1.15 + (X_BE - X_QUAI + 1.15) * p; }, 0.75);
+        }
       } else {
-        const qn = quai.nhom;
-        them(0.3, p => { qn.position.x = X_QUAI + (X_BE + 1.0 - X_QUAI) * p; qn.position.y = Math.sin(p * Math.PI) * 0.6; });
-        them(0.01, () => {
-          if (trung) { dien(["Hit_A"]); chopBe(0.3); noSao(new THREE.Vector3(dvBe.x, 0.6 * TI_BE, 0.2), k.chiMang ? 9 : 6); them(0.35, p => { dvBe.x = X_BE - Math.sin(p * Math.PI) * 0.4; }); }
-          else if (ne) { dien(["Dodge_Backward"]); noLapLanh(new THREE.Vector3(dvBe.x, 0, 0), "#bfeaff"); }
-          else if (k.beChon != null) dien(["Block"]);
-        }, 0.3);
-        them(0.4, p => { qn.position.x = X_BE + 1.0 + (X_QUAI - X_BE - 1.0) * p; qn.position.y = Math.sin(p * Math.PI) * 0.4; }, 0.55);
+        const kq = KIEU_QUAI[quai.ma] || KIEU_QUAI.slime_so;
+        const beChiu = p => {
+          if (trung) {
+            dien(["Hit_A"]); chopBe(0.3);
+            vaCham(p, k.chiMang ? "#ff5a4a" : "#ffb08a", k.chiMang);
+            if (quai.ma === "nam_chu_cai") hu.khoi(p, kq.mau, 8, 0.8); else hu.tia(p, kq.mau, 10, 4);
+            them(0.35, q => { dvBe.x = X_BE - Math.sin(q * Math.PI) * 0.4; });
+          } else if (ne) { dien(["Dodge_Backward"]); hu.gio(V(dvBe.x, 0, 0.1), -1); noLapLanh(V(dvBe.x, 0, 0), "#bfeaff"); }
+          else if (k.beChon != null) { dien(["Block"]); hu.khien(V(dvBe.x, 0.8 * TI_BE, 0.05), kieu.mau, 0.6, 0.85 * TI_BE); hu.tia(p, "#ffffff", 8, 4); }
+          else hu.khoi(V(dvBe.x + 0.6, 0.1, 0.2), "#cdbf9c", 5, 0.6, false);
+        };
+        if (kq.xa) { // đom đóm bắn tia sáng
+          them(0.25, p => { qn.position.y = Math.sin(p * Math.PI) * 0.35; });
+          them(0.01, () => {
+            const tu = tamQuai(), den = tamBe();
+            if (ne) den.x -= 1.6; else if (!trung && k.beChon == null) den.set(den.x + 0.6, 0.05, 0.3);
+            hu.chop(tu, kq.mau, 1.5, 0.3);
+            hu.phong(tu, den, { mau: kq.mau, mau2: "#ffffff", giay: 0.38, co: 0.26, cong: 0.3, khiToi: p => { if (!ne) beChiu(p); } });
+          }, 0.12);
+          if (ne) them(0.01, () => beChiu(), 0.3);
+        } else {
+          them(0.3, p => { qn.position.x = X_QUAI + (X_BE + 1.0 - X_QUAI) * p; qn.position.y = Math.sin(p * Math.PI) * 0.6; });
+          them(0.01, () => beChiu(tamBe()), 0.3);
+          them(0.4, p => { qn.position.x = X_BE + 1.0 + (X_QUAI - X_BE - 1.0) * p; qn.position.y = Math.sin(p * Math.PI) * 0.4; }, 0.55);
+        }
       }
+      // hào quang combo dưới chân Thủ lĩnh
+      const cb = k.combo ? k.combo.be : 0;
+      if (haoQuang) haoQuang.bat(cb >= 5 ? 2 : cb >= 3 ? 1 : 0);
     },
     ketThuc(thang) {
       vong.be.visible = vong.quai.visible = bong.visible = false;
       if (thang === "quai") {
+        if (haoQuang) haoQuang.bat(0);
         dien(["Hit_B"]);
-        them(0.01, () => { noLapLanh(new THREE.Vector3(dvBe.x, 0, 0), "#fff1a8"); if (hBe) hBe.vo.visible = false; }, 1.3);
+        them(0.01, () => { noLapLanh(V(dvBe.x, 0, 0), "#fff1a8"); hu.chop(V(dvBe.x, 1, 0.2), "#fff1a8", 2.4, 0.4); if (hBe) hBe.vo.visible = false; }, 1.3);
       } else {
-        if (thang === "be") dien(["Cheer", "Cheer"]);
-        const qn = quai.nhom, q = quai;
-        them(1.2, p => { qn.position.x = X_QUAI + p * 5; qn.position.y = Math.abs(Math.sin(p * Math.PI * 4)) * 0.35; qn.rotation.y = Math.PI / 2; q.datMo(1 - p); }, 0.6);
+        if (thang === "be") { dien(["Cheer", "Cheer"]); if (haoQuang) haoQuang.bat(2); them(0.01, () => { hu.songXung(V(dvBe.x, 0, 0), kieu.mau, 2.4, 0.8); hu.chop(V(dvBe.x, 1.2, 0.2), kieu.mau2, 3, 0.5); }, 0.2); }
+        const q = quai;
+        them(0.01, () => hu.khoi(V(q.nhom.position.x, 0.1, 0.1), "#cdbf9c", 6, 0.7, false), 0.6);
+        them(1.2, p => { q.nhom.position.x = X_QUAI + p * 5; q.nhom.position.y = Math.abs(Math.sin(p * Math.PI * 4)) * 0.35; q.nhom.rotation.y = Math.PI / 2; q.datMo(1 - p); }, 0.6);
       }
     },
     viTri(ben) {

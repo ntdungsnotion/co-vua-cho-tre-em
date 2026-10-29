@@ -10,7 +10,7 @@
 //   bam(x, y), nhieu(x, y), mem(a, b, x), taoNgauNhien(hạt)
 // LUẬT NỐI: phần này không gọi phần nào khác.
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C)
-// NGÀY: 23/10/2026
+// NGÀY: 23/10/2026 (sửa 29/10/2026 TC_D05: ctx.ve cho hậu kỳ Bloom)
 // ================================================================
 import * as THREE from "three";
 
@@ -60,6 +60,7 @@ export function taoCanh(vungVe, { nhe }) {
   const ctx = {
     THREE, renderer, canh, nhe, nang, camera: null,
     moiKhung(fn) { dsCapNhat.push(fn); },
+    ve: null, // gán hàm vẽ riêng (vd. qua bộ hậu kỳ Bloom); null = vẽ thẳng
     khiDo(fn) { dsDo.push(fn); },
     datNangTheo(dich) { nang.position.copy(dich).add(lechNang); nang.target.position.copy(dich); },
     batDau(camera) {
@@ -67,7 +68,7 @@ export function taoCanh(vungVe, { nhe }) {
       renderer.setAnimationLoop(() => {
         const dt = Math.min(dongHo.getDelta(), 0.1), t = dongHo.elapsedTime;
         for (const f of dsCapNhat) f(dt, t);
-        renderer.render(canh, camera);
+        if (ctx.ve) ctx.ve(); else renderer.render(canh, camera);
         doFps.khung++; doFps.tg += dt;
         if (doFps.tg >= 1) {
           const so = { fps: Math.round(doFps.khung / doFps.tg), lenhVe: renderer.info.render.calls, tamGiac: renderer.info.render.triangles };

@@ -140,7 +140,7 @@ export function taoQuai3d(ma, { nhe } = {}) {
       q.capNhat(dt, t);
       if (chopCon > 0) {
         chopCon = Math.max(0, chopCon - dt);
-        const k = chopCon / 0.25;
+        const k = chopCon / 0.25 * 0.55; // chớp vừa phải (sân đấu có Bloom)
         q.vlChop.forEach((v, i) => { if (v.emissive) { v.emissive.copy(goc[i]).lerp(new THREE.Color("#ffffff"), k); v.emissiveIntensity = gocI[i] + k; } });
       }
     },

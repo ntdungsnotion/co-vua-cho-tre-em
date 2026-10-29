@@ -596,7 +596,7 @@
       else { window.addEventListener("dt-san3d", thu, { once: true }); setTimeout(() => { if (!san3d) ve2d(); }, 15000); }
     }
 
-    window.__dtTran = { tran: () => T, cau: () => cauNay }; // cho kịch bản thử Chrome biết trạng thái
+    window.__dtTran = { tran: () => T, cau: () => cauNay, san: () => san3d }; // cho kịch bản thử Chrome biết trạng thái
 
     const nap = u => fetch(u, { cache: "no-cache" }).then(r => r.json()).catch(() => null);
     Promise.all([nap("du_lieu/cau_hinh_tran_dau.json"), nap("du_lieu/cau_hinh_trinh_do.json"), nap("../tu_vung/kho_tu.json")]).then(([a, b, c]) => khoiDong(a, b, c));
