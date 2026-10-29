@@ -11,7 +11,9 @@
 //              khi đã quá nhiều tiếng đang kêu, cuối đường có bộ nén âm lượng.
 //            THƯ VIỆN ÂM THANH (file thu thật, CC0) ở kc/dt/am_thanh/thu_vien.json (phụ tá điền, việc A7):
 //            - nhac[]: nhạc nền theo bối cảnh (tran / trum / lang / sanh / thang / thua...), lặp liền
-//              (tự cắt khoảng lặng đầu / cuối file mp3), chuyển bài êm; nút 🎵 riêng ("kc_dt_nhac").
+//              (tự cắt khoảng lặng đầu / cuối file mp3), chuyển bài êm. Nhạc do QUẢN TRỊ chọn (bảng gan,
+//              trang Cài đặt TC_D05D), bé không tắt / đổi được (người dùng 30/10/2026); nút 🔊 của bé chỉ
+//              tắt tiếng hiệu ứng. datNhac() để dành cho Quản trị / trang thử.
 //            - tieng[]: tiếng thu thật, mỗi tiếng vài biến thể (chọn ngẫu nhiên cho đỡ nhàm).
 //            - gan{}: GẮN thư viện vào sân khấu / hiệu ứng (sau này trang Cài đặt sửa, TC_D05D):
 //                "nhac_<bối cảnh>": mã nhạc;  "<tên tiếng tự tạo>": { "tieng": mã, "kieu": "chong" | "thay" }
@@ -20,7 +22,8 @@
 // HÀM KHAI RA:
 //   taoAmThanh() -> am = { dangBat(), datBat(b), moKhoa(), thongKe() + các tiếng bên dưới,
 //        thuVien() -> Promise<json>, phatNhac({ ma | boiCanh, lap }), dungNhac(giay), nhacBat(), datNhac(b),
-//        giamNhac(b) (nhỏ nhạc khi máy đọc câu hỏi), mau(ma, x, amLuong, bienThe) (phát một tiếng thư viện) }
+//        giamNhac(b) (nhỏ nhạc khi máy đọc câu hỏi), mau(ma, x, amLuong, bienThe, tre) (phát một tiếng thư viện),
+//        doanKet(thang) (đoạn kết thắng / thua: bài quản trị gắn ở nhac_thang / nhac_thua, chưa gắn thì tiếng tự tạo) }
 //   Trang nghe thử thư viện: kc/dt/thu_am_thanh.html
 //   Tham số chung: x = vị trí ngang trên sân (-3..3, trái / phải loa), tre = giây chờ trước khi kêu.
 // BƯỚC: TC_D05B3 (người dùng 29/10/2026: "bổ sung âm thanh cho chiến đấu"; 30/10/2026: "thiếu nhạc
@@ -147,11 +150,12 @@ export function taoAmThanh() {
   choMo.then(thuVien).then(tv => {
     const can = new Set(Object.values(tv.gan).filter(g => g && g.tieng).map(g => g.tieng));
     for (const t of tv.tieng) if (can.has(t.ma)) for (const tep of dsTep(t)) tai(tep).then(b => { if (b) daGiai[tep] = b; });
+    for (const k of ["nhac_thang", "nhac_thua"]) { const bai = tv.nhac.find(v => v.ma === tv.gan[k]); if (bai) tai(bai.tep); } // đoạn kết ngắn: tải sẵn để kêu ngay
   });
   let tvSan = null; thuVien().then(tv => { tvSan = tv; });
 
   // phát một tiếng thư viện (biến thể ngẫu nhiên); trả false nếu chưa có / chưa tải xong
-  function mau(ma, x, amLuong = 1, bienThe) {
+  function mau(ma, x, amLuong = 1, bienThe, tre = 0) {
     if (!san() || dangKeu >= TOI_DA || !tvSan) return false;
     const t = tvSan.tieng.find(v => v.ma === ma); if (!t) return false;
     const tep = dsTep(t), chon = tep[bienThe != null ? bienThe % tep.length : Math.floor(Math.random() * tep.length)];
@@ -160,7 +164,7 @@ export function taoAmThanh() {
     const s = ac.createBufferSource(); s.buffer = b; s.playbackRate.value = ngau(0.96, 1.04);
     const g = ac.createGain(); g.gain.value = (t.amLuong == null ? 1 : t.amLuong) * amLuong;
     s.connect(g); ra(g, x, 0.15);
-    dangKeu++; s.onended = () => { dangKeu--; }; s.start();
+    dangKeu++; s.onended = () => { dangKeu--; }; s.start(ac.currentTime + tre);
     return true;
   }
 
@@ -222,6 +226,12 @@ export function taoAmThanh() {
       batNhac = !!b;
       try { localStorage.setItem(KHOA_NHAC, batNhac ? "bat" : "tat"); } catch (e) { /* bỏ qua */ }
       if (ac && busNhac) busNhac.gain.setTargetAtTime(mucNhac(), ac.currentTime, 0.1);
+    },
+    // đoạn kết thắng / thua: quản trị đã gắn bài thì phát bài (dừng nhạc trận), chưa gắn thì kèn tự tạo
+    doanKet(thang) {
+      const k = thang ? "thang" : "thua";
+      if (tvSan && tvSan.gan["nhac_" + k]) phatNhac({ boiCanh: k, lap: false });
+      else { dungNhac(1.2); am[k](thang ? 0.1 : 0); }
     },
     giamNhac(b) {
       giam = !!b;
@@ -417,7 +427,7 @@ export function taoAmThanh() {
     }
   };
   // gắn tiếng thu thật vào tiếng tự tạo theo bảng gan{} của thư viện (chong: phát cả hai, thay: chỉ file)
-  const KHONG_GAN = ["dangBat", "datBat", "moKhoa", "thongKe", "thuVien", "phatNhac", "dungNhac", "mau", "nhacBat", "datNhac", "giamNhac"];
+  const KHONG_GAN = ["dangBat", "datBat", "moKhoa", "thongKe", "thuVien", "phatNhac", "dungNhac", "mau", "nhacBat", "datNhac", "giamNhac", "doanKet"];
   for (const ten of Object.keys(am)) {
     const goc = am[ten];
     if (typeof goc !== "function" || KHONG_GAN.indexOf(ten) >= 0) continue;
@@ -425,7 +435,7 @@ export function taoAmThanh() {
       const g = tvSan && tvSan.gan[ten];
       if (g && g.tieng) {
         const x = KHONG_X[ten] ? undefined : a[0];
-        const da = duoc(ten + "_tep", 0.05) && mau(g.tieng, typeof x === "number" ? x : undefined, g.amLuong == null ? 1 : g.amLuong);
+        const da = duoc(ten + "_tep", 0.05) && mau(g.tieng, typeof x === "number" ? x : undefined, g.amLuong == null ? 1 : g.amLuong, undefined, g.tre || 0);
         if (da && g.kieu === "thay") return;
       }
       goc(...a);

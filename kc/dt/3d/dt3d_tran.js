@@ -370,10 +370,10 @@ async function tao(vungVe, { nhe } = {}) {
       vong.be.visible = vong.quai.visible = bong.visible = false;
       if (thang === "quai") {
         if (haoQuang) haoQuang.bat(0);
-        dien("thua"); am.thua(); am.phatNhac({ boiCanh: "thua", lap: false }); // tướng quỳ xuống kiệt sức rồi dịch chuyển về Lều (không có cảnh chết)
+        dien("thua"); am.doanKet(false); // tướng quỳ xuống kiệt sức rồi dịch chuyển về Lều (không có cảnh chết)
         them(0.01, () => { am.dichChuyen(dvBe.x); noLapLanh(V(dvBe.x, 0, 0), "#fff1a8"); hu.chop(V(dvBe.x, 1, 0.2), "#fff1a8", 2.4, 0.4); if (voBe()) voBe().visible = false; }, tuong ? 2.4 : 1.3);
       } else {
-        if (thang === "be") { dien("mung"); am.thang(0.1); am.phatNhac({ boiCanh: "thang", lap: false }); if (haoQuang) haoQuang.bat(2); them(0.01, () => { hu.songXung(V(dvBe.x, 0, 0), kieu.mau, 2.4, 0.8); hu.chop(V(dvBe.x, 1.2, 0.2), kieu.mau2, 3, 0.5); }, 0.2); }
+        if (thang === "be") { dien("mung"); am.doanKet(true); if (haoQuang) haoQuang.bat(2); them(0.01, () => { hu.songXung(V(dvBe.x, 0, 0), kieu.mau, 2.4, 0.8); hu.chop(V(dvBe.x, 1.2, 0.2), kieu.mau2, 3, 0.5); }, 0.2); }
         const q = quai;
         them(0.01, () => { am.chayTron(q.nhom.position.x); hu.khoi(V(q.nhom.position.x, 0.1, 0.1), "#cdbf9c", 6, 0.7, false); }, 0.6);
         them(1.2, p => { q.nhom.position.x = X_QUAI + p * 5; q.nhom.position.y = Math.abs(Math.sin(p * Math.PI * 4)) * 0.35; q.nhom.rotation.y = Math.PI / 2; q.datMo(1 - p); }, 0.6);
