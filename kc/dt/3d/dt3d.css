@@ -41,6 +41,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   color: #fff; background: var(--cam); border: 2px solid #fff; border-radius: 50%; width: 30px; height: 30px; line-height: 28px; text-align: center;
   animation: nay 0.8s ease-in-out infinite alternate; }
 @keyframes nay { to { margin-top: -6px; } }
+/* TC_D06A: nhãn cấp quái (khung xanh dễ / vàng ngang sức / đỏ mạnh hơn), nhãn nghỉ trên đầu Thủ lĩnh, màn chiến đấu phủ */
+.d3LvQuai, .d3NghiTl { position: absolute; left: 0; top: 0; pointer-events: none; font-family: "Baloo 2", sans-serif; font-weight: 800;
+  font-size: .95rem; line-height: 1; padding: 4px 8px; border-radius: 10px; border: 2px solid; background: rgba(20, 32, 74, .85); color: #fff; white-space: nowrap; }
+.d3LvQuai[data-mau="xanh"] { border-color: #3ddc84; color: #b8ffd4; }
+.d3LvQuai[data-mau="vang"] { border-color: #ffc24b; color: #ffe7a6; }
+.d3LvQuai[data-mau="do"] { border-color: #ff6b6b; color: #ffc4c4; }
+.d3NghiTl { border-color: #b9c3ec; color: #fff6dc; }
+.d3Tran { position: fixed; inset: 0; z-index: 30; background: #14204a; }
+.d3Tran iframe { width: 100%; height: 100%; border: 0; display: block; }
 /* Màn chờ tải */
 #d3Tai { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 0%, #2b3f8a, var(--dem) 70%); z-index: 5; }
 #d3TaiChu { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--vang); padding: 20px; text-align: center; }
@@ -61,4 +70,4 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   .d3HangNut { gap: 6px; }
 }
 @media (prefers-reduced-motion: reduce) { .d3Ranh { animation: none; } }
-/* 27/10/2026 00:52 - BƯỚC: TC_D02B2b */
+/* 30/10/2026 - BƯỚC: TC_D06A (nhãn cấp quái, màn chiến đấu phủ) */

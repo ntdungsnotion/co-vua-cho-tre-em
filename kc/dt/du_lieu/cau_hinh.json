@@ -64,5 +64,16 @@
       "ruong": { "chinGiay": 30, "sanLuong": [200, 260, 340], "coSauGiay": 300, "giaTrongLai": { "go": 30 } } }
   },
   "_ghiChuRuong": "Khối 'congTrinh.ruong.ruong' (TC_D03B2, người dùng 28/10/2026, dac_ta_lang.md mục 13): ruộng xây xong là trồng; lúa chín sau 'chinGiay' giây theo GIỜ MÁY CHỦ (cả khi bé tắt game); chín thì nông dân ra gặt như một nguồn Lương thực (lang.nguon.ruong: nhipLam, mã nguồn = -id công trình), 'sanLuong'[cấp - 1] Lương thực mỗi vụ; gặt hết thì thành bãi: trồng lại tốn 'giaTrongLai', để quá 'coSauGiay' giây thì bãi thành cỏ (mất ruộng). Ô ruộng đi được (nông dân đứng trên ruộng gặt). Ruộng (như mọi công trình) xây được ở bất kỳ chỗ nào hợp lệ trên bản đồ (người dùng 28/10/2026).",
+  "_ghiChuQuaiBanDo": "Khối 'quaiBanDo' (TC_D06A, 30/10/2026): quái nhỏ lang thang trong thung lũng (lõi dt/dt_quai_ban_do.js). soQuai = số quái cùng lúc trên bản đồ (mỗi bé thấy quái riêng; TC_D06B đưa lên máy chủ). loai = tỉ lệ từng loại (mã trong cau_hinh_tran_dau.json quai.loai). capTheoKhoangCach = [từ khoảng cách (ô) tới cổng gần nhất, cấp quái]: càng vào sâu càng mạnh. khongGanCong / khongGanLeu = không sinh quái / không đi gần hơn số ô này (vùng đầu an toàn). cachNhau = hai quái sinh cách nhau ít nhất. banKinhLangThang = đi quanh chỗ sinh trong bán kính này. tocDo / tocDoChay = ô mỗi giây khi đi / khi bỏ chạy; chayGiay = chạy bao lâu thì mất. dungGiay = đứng nghỉ [ít nhất, nhiều nhất] giây giữa hai lần đi. hoiSinhGiay = quái thua chạy mất thì sau bấy nhiêu giây (giờ thật) một quái mới xuất hiện ở chỗ khác. thuLaiGiay = không còn chỗ sinh thì thử lại sau. vaoTranCach = Thủ lĩnh tới gần hơn số ô này thì vào trận. mauKhung: cấp quái - cấp Thủ lĩnh <= xanhDenLech thì khung xanh (dễ), <= vangDenLech vàng (ngang sức), lớn hơn đỏ (mạnh hơn). capThuLinh = cấp Thủ lĩnh khi chưa có hệ lên cấp.",
+  "quaiBanDo": {
+    "soQuai": 10,
+    "loai": { "slime_so": 1, "nam_chu_cai": 1, "dom_dom": 1 },
+    "capTheoKhoangCach": [[0, 1], [28, 2], [48, 3]],
+    "khongGanCong": 10, "khongGanLeu": 6, "cachNhau": 6, "banKinhLangThang": 4,
+    "tocDo": 0.7, "tocDoChay": 3, "chayGiay": 1.6, "dungGiay": [2, 6],
+    "hoiSinhGiay": 90, "thuLaiGiay": 30, "lanThuSinh": 200, "vaoTranCach": 1.6,
+    "mauKhung": { "xanhDenLech": 0, "vangDenLech": 1 },
+    "capThuLinh": 1
+  },
   "_ghiChuChoi": "TC_D03C (người dùng 28/10/2026: 'làm Chòi hái lượm; chòi vàng, đá, sắt (3 tài nguyên chung 1 chòi)'): congTrinh.*.cat = các loại tài nguyên công trình đó NHẬN CẤT nhưng KHÔNG thêm sức chứa (không có sucChua): chòi chỉ là chỗ cất sát chỗ làm cho nông dân đi ít hơn; đồ cất vẫn tính vào sức chứa Lều + kho. Chòi hái lượm: Lương thực (trái cây, cá, ruộng); Chòi mỏ: Đá, Vàng, Sắt."
 }

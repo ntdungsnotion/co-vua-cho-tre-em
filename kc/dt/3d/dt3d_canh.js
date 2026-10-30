@@ -10,7 +10,7 @@
 //   bam(x, y), nhieu(x, y), mem(a, b, x), taoNgauNhien(hạt)
 // LUẬT NỐI: phần này không gọi phần nào khác.
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C)
-// NGÀY: 23/10/2026 (sửa 29/10/2026 TC_D05: ctx.ve cho hậu kỳ Bloom)
+// NGÀY: 23/10/2026 (sửa 29/10/2026 TC_D05: ctx.ve cho hậu kỳ Bloom; 30/10/2026 TC_D06A: ctx.nghiVe)
 // ================================================================
 import * as THREE from "three";
 
@@ -61,6 +61,7 @@ export function taoCanh(vungVe, { nhe }) {
     THREE, renderer, canh, nhe, nang, camera: null,
     moiKhung(fn) { dsCapNhat.push(fn); },
     ve: null, // gán hàm vẽ riêng (vd. qua bộ hậu kỳ Bloom); null = vẽ thẳng
+    nghiVe: false, // true: chạy cập nhật nhưng không vẽ (TC_D06A, đang ở màn chiến đấu)
     khiDo(fn) { dsDo.push(fn); },
     datNangTheo(dich) { nang.position.copy(dich).add(lechNang); nang.target.position.copy(dich); },
     batDau(camera) {
@@ -68,6 +69,7 @@ export function taoCanh(vungVe, { nhe }) {
       renderer.setAnimationLoop(() => {
         const dt = Math.min(dongHo.getDelta(), 0.1), t = dongHo.elapsedTime;
         for (const f of dsCapNhat) f(dt, t);
+        if (ctx.nghiVe) return; // TC_D06A: màn chiến đấu phủ lên: lõi vẫn chạy, thôi vẽ cho nhẹ máy
         if (ctx.ve) ctx.ve(); else renderer.render(canh, camera);
         doFps.khung++; doFps.tg += dt;
         if (doFps.tg >= 1) {
@@ -80,4 +82,4 @@ export function taoCanh(vungVe, { nhe }) {
   };
   return ctx;
 }
-// 23/10/2026 18:00 - BƯỚC: TC_D02A
+// 30/10/2026 13:56 - BƯỚC: TC_D06A (ctx.nghiVe)

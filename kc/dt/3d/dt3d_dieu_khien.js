@@ -12,7 +12,8 @@
 //         vùng đen), loiDi(dv, ô) -> câu báo khi ra lệnh đi, loiChon(hinh) -> câu gợi ý khi chọn,
 //         (TC_D02B3b) loiBan(hinh) -> câu báo khi chạm người của bạn khác (dv.laBan: không chọn được),
 //         (TC_D03A) chamO(hinh đang chọn | null, ô) -> true nếu phần trang đã xử lý cú chạm đất (móng đang xây;
-//         TC_D03B1: Lều trại, gọi cả khi chưa chọn ai) }
+//         TC_D03B1: Lều trại, gọi cả khi chưa chọn ai),
+//         (TC_D06A) trungQuai(tia) -> { q, kc } | null + chamQuai(q, hình đang chọn | null): quái trên bản đồ }
 //   datCheDoCham(fn(ô {x, y, px, pz}, "cham" | "re")): chế độ chạm riêng (soi đất, chọn chỗ dựng)
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), cam.khiCham / camera (dt3d_camera.js), taiNguyen.chon
 //           (dt3d_tai_nguyen.js), boNhanVat.dsHinh (dt3d_nhan_vat.js), diaHinh.matDat / doCaoDi,
@@ -20,8 +21,8 @@
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (datCheDoCham: chế độ chạm riêng);
 //       TC_D02B2b (ô chạm kèm điểm chính xác, nguồn trong vùng đen, lời báo khám phá);
 //       TC_D02B3b (người của bạn khác không chọn được, hình đang ẩn không chạm được); TC_D03A (móc chamO);
-//       TC_D03B1 (chamO gọi cả khi chưa chọn ai: chạm Lều trại)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 10:50; 28/10/2026 15:30
+//       TC_D03B1 (chamO gọi cả khi chưa chọn ai: chạm Lều trại); TC_D06A (chạm quái trên bản đồ)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 10:50; 28/10/2026 15:30; 30/10/2026
 // ================================================================
 import * as THREE from "three";
 
@@ -72,6 +73,9 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     tia.setFromCamera(diem, cam.camera);
     // 1) chạm nhân vật -> chọn (người của bạn khác: chỉ xem, không ra lệnh; ẩn trong sương: bỏ qua)
     const trungNv = tia.intersectObjects(boNhanVat.dsHinh.filter(h => h.vo.visible).map(h => h.trung), false)[0];
+    // TC_D06A: chạm quái (gần mắt hơn nhân vật) -> phần quái xử lý (đánh / xem cấp)
+    const trungQuai = ui.trungQuai && ui.trungQuai(tia);
+    if (trungQuai && (!trungNv || trungQuai.kc < trungNv.distance)) { ui.chamQuai(trungQuai.q, dangChon); return; }
     if (trungNv) {
       const h = trungNv.object.userData.hinh;
       if (h.dv.laBan) { ui.baoGoiY((ui.loiBan && ui.loiBan(h)) || "Đây là người của bạn khác."); return; }
@@ -141,4 +145,4 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
 
   return { chon, dangChon: () => dangChon, datCheDoCham(fn) { cheDoRieng = fn || null; } };
 }
-// 28/10/2026 15:30 - BƯỚC: TC_D03B1
+// 30/10/2026 - BƯỚC: TC_D06A
