@@ -18,8 +18,12 @@
              TC_D05B2 (hàng nút thử 5 chiêu lớn phủ vùng trên sân 3D);
              TC_D05B3 (âm thanh chiến đấu: nút 🔊 / 🔇 ở thanh trên, tiếng do 3d/dt3d_am_thanh.js;
              nhạc nền từ thư viện am_thanh/thu_vien.json do quản trị đặt, bé KHÔNG tắt / đổi được (người dùng
-             30/10/2026); nhạc nhỏ lại khi máy đọc câu)
-       NGÀY: 29/10/2026; 29/10/2026 22:47; 30/10/2026; 30/10/2026 06:00
+             30/10/2026); nhạc nhỏ lại khi máy đọc câu);
+             TC_D06A (?nhung=1&quai=&lv=&cl=&gioi=&lop=&ten=&tl=&chu=: MÀN CHIẾN ĐẤU THẬT mở từ bản đồ Thung Lũng
+             (khung phủ của 3d/dt3d_quai_ban_do.js): vào trận ngay, không hộp chọn / nút thử chiêu, trình độ lưu
+             riêng từng bé "kc_dt_trinh_do_<tên>", xong trận postMessage "dt-tran-ket" cho bản đồ, nút "⬅ Về thung
+             lũng" / "🏃 Rút lui" postMessage "dt-tran-dong")
+       NGÀY: 29/10/2026; 29/10/2026 22:47; 30/10/2026; 30/10/2026 06:00; 30/10/2026 (TC_D06A)
        PHỤ THUỘC: chung/nv_ve.js, dt/dt_trinh_do.js, dt/dt_sinh_toan.js, dt/dt_sinh_tieng_anh.js,
                   dt/dt_cau_hoi.js, dt/dt_quai.js, dt/dt_tran_dau.js, dt/dt_ve_quai.js,
                   dt/du_lieu/cau_hinh_tran_dau.json, dt/du_lieu/cau_hinh_trinh_do.json, tu_vung/kho_tu.json
@@ -171,6 +175,7 @@
     <h1>⚔️ Đấu thử<span class="tren-may"> · Đấu Trường Tri Thức</span></h1>
     <button class="nut tieng an" id="nutTieng" title="Tắt tiếng" aria-label="Tắt tiếng">🔊</button>
     <button class="nut" id="nutChonTran">Chọn trận</button>
+    <button class="nut an" id="nutRutLui" aria-label="Rút lui về thung lũng">🏃<span class="tren-may"> Rút lui</span></button>
   </div>
   <div class="chieu-thu an" id="chieuThu">
     <button data-ma="mua_lua">🔥 Mưa lửa</button>
@@ -242,6 +247,7 @@
         <button class="nut an" id="nutBoNghi">Bỏ qua thời gian nghỉ (trang thử)</button>
         <button class="nut" id="nutDoiTran">Chọn trận khác</button>
         <button class="nut chinh" id="nutDauLai">Đấu lại</button>
+        <button class="nut chinh an" id="nutVeBanDo">⬅ Về thung lũng</button>
       </div>
     </div>
   </div>
@@ -261,7 +267,12 @@
     "use strict";
     const NV = window.KC_NV, TD = window.KC_DT_TRINH_DO, ST = window.KC_DT_SINH_TOAN, TA = window.KC_DT_SINH_TA;
     const CH = window.KC_DT_CAU_HOI, QU = window.KC_DT_QUAI, TR = window.KC_DT_TRAN_DAU, VQ = window.KC_DT_VE_QUAI;
-    const KHOA = "kc_dt_thu_tran_dau";
+    // TC_D06A: ?nhung=1 = màn chiến đấu thật mở từ bản đồ (khung phủ của dt3d_quai_ban_do.js): quái + cấp + Thủ lĩnh
+    // theo tham số, không có hộp chọn trận / nút thử chiêu; xong trận báo bản đồ (postMessage) rồi về thung lũng
+    const TS = new URLSearchParams(location.search), NHUNG = TS.get("nhung") === "1";
+    const TEN_BE = String(TS.get("ten") || "").trim().toLowerCase();
+    const KHOA = NHUNG ? "kc_dt_trinh_do_" + (TEN_BE || "khach") : "kc_dt_thu_tran_dau"; // trình độ câu hỏi: riêng từng bé
+    const baoBanDo = du => { try { if (window.parent !== window) window.parent.postMessage(du, location.origin); } catch (e) { /* không có bản đồ */ } };
     const $ = id => document.getElementById(id);
     const bayGio = () => performance.now();
     const TEN_MUC = { de: "Dễ", vua: "Vừa", kho: "Khó" };
@@ -349,9 +360,9 @@
       $("manKet").classList.add("an");
       const q = QU.taoQuai(chon.quai, chon.lv, chTran);
       T = TR.taoTran({ ch: chTran, chungLoai: chon.cl, quai: q, lop: chon.lop, thongTha: chon.thongTha == null ? undefined : chon.thongTha });
-      chuQuai = CHU_QUAI[chon.quai] ? CHU_QUAI[chon.quai]() : "";
+      chuQuai = NHUNG && TS.get("chu") ? TS.get("chu").slice(0, 2) : CHU_QUAI[chon.quai] ? CHU_QUAI[chon.quai]() : "";
       hieuUng = null; ketThucLuc = 0; clearTimeout(henTiep);
-      $("tenBe").textContent = "Thủ lĩnh";
+      $("tenBe").textContent = (NHUNG && TS.get("tl")) || "Thủ lĩnh";
       $("tenQuai").innerHTML = "<small></small> "; $("tenQuai").querySelector("small").textContent = "Lv " + q.lv;
       $("tenQuai").appendChild(document.createTextNode(q.ten));
       if (san3d) san3d.datTran({ hoSo: hoSoBe(), quai: chon.quai, chu: chuQuai });
@@ -494,6 +505,14 @@
       });
       clearInterval(demNghi);
       const coNghi = k.thang === "quai";
+      if (NHUNG) { // trận thật: báo bản đồ ngay (tải lại / đóng giữa chừng vẫn tính), chỉ còn nút về thung lũng
+        baoBanDo({ loai: "dt-tran-ket", thang: k.thang, nghiGiay: coNghi ? Math.max(0, (k.nghiDen - bayGio()) / 1000) : 0 });
+        $("nutDauLai").classList.add("an"); $("nutDoiTran").classList.add("an"); $("nutBoNghi").classList.add("an"); $("nutVeBanDo").classList.remove("an");
+        $("ketNghi").classList.toggle("an", !coNghi);
+        if (coNghi) { const s = Math.ceil(chTran.thua.nghiGiay); $("ketNghi").textContent = "⛺ " + Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+        $("nutVeBanDo").focus();
+        return;
+      }
       $("ketNghi").classList.toggle("an", !coNghi); $("nutBoNghi").classList.toggle("an", !coNghi);
       $("nutDauLai").disabled = coNghi; $("nutDoiTran").disabled = coNghi;
       if (coNghi) {
@@ -596,8 +615,18 @@
         if (!chTran.thuLinh[chon.cl]) chon.cl = "nhan";
         if (cu.hs) hs = TD.chuanHoa(cu.hs, chTD);
       }
+      if (NHUNG) { // trận thật từ bản đồ: quái + cấp + Thủ lĩnh theo tham số
+        const q = TS.get("quai");
+        chon = { quai: chTran.quai.loai[q] ? q : "slime_so", lv: Math.max(1, Math.min(10, +TS.get("lv") || 1)), lop: Math.max(1, Math.min(12, +TS.get("lop") || 2)),
+          cl: chTran.thuLinh[TS.get("cl")] ? TS.get("cl") : "nhan", gioi: TS.get("gioi") === "nu" ? "nu" : "nam", thongTha: null };
+        document.title = "Trận đấu - Đấu Trường Tri Thức";
+        $("nutChonTran").classList.add("an"); $("nutRutLui").classList.remove("an");
+        document.querySelector(".dau h1").firstChild.textContent = "⚔️ Trận đấu";
+        $("nutRutLui").addEventListener("click", () => { clearTimeout(henTiep); baoBanDo({ loai: "dt-tran-dong" }); });
+        $("nutVeBanDo").addEventListener("click", () => baoBanDo({ loai: "dt-tran-dong" }));
+      }
       if (!hs || hs.lop !== chon.lop) hs = TD.taoHoSo(chon.lop, chTD);
-      const m = /#quai=(\w+)/.exec(location.hash); if (m && chTran.quai.loai[m[1]]) chon.quai = m[1];
+      const m = /#quai=(\w+)/.exec(location.hash); if (!NHUNG && m && chTran.quai.loai[m[1]]) chon.quai = m[1];
       dungHopChon();
       $("nutChonTran").addEventListener("click", () => moChon(true));
       // chạm khung câu hỏi lúc lật bài: sang lượt ngay
@@ -611,7 +640,7 @@
         if (/^[1-4]$/.test(e.key)) beBam(+e.key - 1);
         else if (e.key === "Enter" && T && !T.dangLuot() && !T.ketThuc() && henTiep) { clearTimeout(henTiep); henTiep = 0; moLuotMoi(); }
       });
-      if (/#vao/.test(location.hash)) vaoTran(); else moChon(false);
+      if (NHUNG || /#vao/.test(location.hash)) vaoTran(); else moChon(false);
       requestAnimationFrame(ve);
       batSan3d();
     }
@@ -631,6 +660,7 @@
 
     // nút thử chiêu lớn (TC_D05B2): chỉ để xem hiệu ứng, không tính vào trận; TC_D05C gắn chiêu vào kỹ năng
     function batNutChieu() {
+      if (NHUNG) return; // trận thật: không có nút thử chiêu (TC_D05C gắn chiêu vào kỹ năng)
       const hang = $("chieuThu"); hang.classList.remove("an");
       const nut = [...hang.querySelectorAll("button")];
       const bam = (b, giay) => {
@@ -663,4 +693,4 @@
   </script>
 </body>
 </html>
-<!-- 29/10/2026 - BƯỚC: TC_D05 -->
+<!-- 30/10/2026 - BƯỚC: TC_D06A (chế độ nhúng từ bản đồ) -->

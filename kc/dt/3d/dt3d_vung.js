@@ -48,7 +48,8 @@
 //     the = { ctx, cam, lang, banDo, cauHinh, diaHinh, boNv, dk, uiDk (ui đã đưa cho dk: thêm móc),
 //             be: { ten, hoSo, tenThuLinh }, themNongDan(x, z) -> dv, $, baoGoiY, kho (localStorage | null),
 //             capNhatKho? () (vẽ lại thanh tài nguyên khi kho bị trừ, TC_D02B3b) }
-//     vung = { dvTl, hTl, suong, veSuong, mayChu, vao, batDau() (sau khung đầu), moc (kịch bản thử) }
+//     vung = { dvTl, hTl, suong, veSuong, mayChu, vao, batDau() (sau khung đầu), moc (kịch bản thử),
+//              laLanhDia(x, y) (TC_D06A, 30/10/2026: ô thuộc lãnh địa của bé bất kỳ, cho quái tránh) }
 //   Không vào được (thung lũng đầy...): ném lỗi, err.lyDo là câu cho bé.
 //     the.mayChu (TC_D02B3a): máy chủ thật dt/dt_may_chu_sb.js (trang game); không có thì máy chủ giả.
 //     Có máy chủ thật: nguồn cạn chỉ mọc lại theo máy chủ (lang.datMocTheoMayChu, TC_D02B3b).
@@ -872,6 +873,7 @@ export async function vaoThungLung(the) {
 
   return {
     dvTl, hTl, suong, veSuong, mayChu, vao, batDau,
+    laLanhDia: (x, y) => !!lanhDia.chuO(x, y, null), // TC_D06A: quái không vào lãnh địa của ai
     moc: {
       cong: vao.cong, lanDau: vao.lanDau, mayChu,
       muc: (x, z) => suong.muc(Math.floor(x), Math.floor(z)), demDaKham: () => suong.demDaKham(),
@@ -905,4 +907,4 @@ export async function vaoThungLung(the) {
     }
   };
 }
-// 28/10/2026 19:05 - BƯỚC: TC_D03B2 (ruộng: xây, gặt, xem, trồng lại)
+// 30/10/2026 13:56 - BƯỚC: TC_D06A (khai laLanhDia cho quái tránh lãnh địa)

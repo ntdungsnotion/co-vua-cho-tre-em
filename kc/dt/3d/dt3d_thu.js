@@ -14,8 +14,9 @@
 // BƯỚC: TC_D02A (thay dt/dt_lang_3d.js của TC_D01C); TC_D02B2a (chế độ ?vung);
 //       TC_D02B2b (thung lũng tách sang dt3d_vung.js, trang game); TC_D02B3a (trang game dùng máy chủ
 //       Supabase dt/dt_may_chu_sb.js; kịch bản thử đặt sessionStorage kc_dt_may_chu_gia = "1" để dùng bản giả);
-//       TC_D02B3b (đưa capNhatKho cho thung lũng: kho bị trừ phần máy chủ cắt thì vẽ lại thanh)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55
+//       TC_D02B3b (đưa capNhatKho cho thung lũng: kho bị trừ phần máy chủ cắt thì vẽ lại thanh);
+//       TC_D06A (thung lũng có quái lang thang dt3d_quai_ban_do.js, chạm quái vào trận)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 30/10/2026
 // PHỤ THUỘC: chung/nv_ve.js (KC_NV), dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), các phần dt/3d/*.js;
 //            thung lũng thêm dt/dt_ban_do.js, dt/dt_may_chu.js; trang game thêm chung/nv_ho_so.js,
 //            dt/dt_tien_do.js (phiên đăng nhập: sessionStorage của kc_auth.js)
@@ -29,6 +30,7 @@ import { taoTaiNguyen } from "./dt3d_tai_nguyen.js";
 import { taoBoNhanVat } from "./dt3d_nhan_vat.js";
 import { taoDieuKhien } from "./dt3d_dieu_khien.js";
 import { vaoThungLung } from "./dt3d_vung.js";
+import { taoQuaiBanDo } from "./dt3d_quai_ban_do.js";
 
 const NV = window.KC_NV, LANG = window.KC_DT_LANG, BD = window.KC_DT_BAN_DO;
 const $ = id => document.getElementById(id);
@@ -46,7 +48,7 @@ function docBeDangNhap() {
   const td = ten && window.KC_DT_TIEN_DO.doc(ten);
   if (!td) return null;
   const hoSo = window.KC_NV_HO_SO.doc(ten) || NV.chuanHoa({ chungLoai: td.chungLoai });
-  return { ten, hoSo, tenThuLinh: td.tenThuLinh, tenVuongQuoc: td.tenVuongQuoc };
+  return { ten, hoSo, tenThuLinh: td.tenThuLinh, tenVuongQuoc: td.tenVuongQuoc, lop: td.lop };
 }
 // Trang thử: hồ sơ ngoại hình đầu tiên tìm thấy trên máy này (không có thì hình mẫu)
 function docHoSoBe() {
@@ -56,7 +58,7 @@ function docHoSoBe() {
       if (k && k.startsWith("kc_nhan_vat_")) {
         const ten = k.slice("kc_nhan_vat_".length);
         const td = JSON.parse(localStorage.getItem("kc_dt_tien_do_" + ten) || "null");
-        return { ten, hoSo: NV.chuanHoa(JSON.parse(localStorage.getItem(k))), tenThuLinh: td && td.tenThuLinh, tenVuongQuoc: td && td.tenVuongQuoc };
+        return { ten, hoSo: NV.chuanHoa(JSON.parse(localStorage.getItem(k))), tenThuLinh: td && td.tenThuLinh, tenVuongQuoc: td && td.tenVuongQuoc, lop: td && td.lop };
       }
     }
   } catch (e) { /* bộ nhớ bị chặn: dùng hình mẫu */ }
@@ -122,7 +124,7 @@ function themNongDan(x, z) {
 }
 
 // Thủ lĩnh + nông dân: làng mẫu đặt sẵn; thung lũng thật lấy từ máy chủ (dt3d_vung.js)
-let hoSoTl = be.hoSo, dvTl, hTl, vung = null;
+let hoSoTl = be.hoSo, dvTl, hTl, vung = null, quaiBd = null;
 if (VUNG) {
   let kho = null; try { localStorage.setItem("kc_dt_thu", "1"); kho = localStorage; } catch (e) { /* bị chặn: giữ trong bộ nhớ */ }
   const mayChu = GAME ? taoMayChuThat() : null; // trang thử ?vung: máy chủ giả trên máy
@@ -130,6 +132,12 @@ if (VUNG) {
     vung = await vaoThungLung({ ctx, cam, lang, banDo, cauHinh, diaHinh, boNv, dk, uiDk, be: { ...be, ten: be.ten || "khach" }, themNongDan, $, baoGoiY, kho, mayChu, capNhatKho: () => capNhatKho() });
   } catch (e) { chuTai.textContent = e.lyDo || "Chưa vào được thung lũng. Con tải lại trang nhé!"; throw e; }
   dvTl = vung.dvTl; hTl = vung.hTl;
+  // TC_D06A: quái lang thang; chạm quái khi đang chọn Thủ lĩnh -> màn chiến đấu
+  try {
+    quaiBd = await taoQuaiBanDo({ ctx, cam, lang, diaHinh, banDo, cauHinh, suong: vung.suong, laLanhDia: vung.laLanhDia, dvTl, hTl,
+      be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY });
+    uiDk.trungQuai = quaiBd.trung; uiDk.chamQuai = quaiBd.cham;
+  } catch (e) { console.warn("Chưa dựng được quái trên bản đồ", e); } // thiếu quái vẫn chơi làng được
 } else {
   dvTl = lang.themDonVi("thu_linh", banDo.batDau.thuLinh.x, banDo.batDau.thuLinh.z, be.tenThuLinh || "Thủ lĩnh");
   hTl = boNv.tao(dvTl, "thu_linh", hoSoTl);
@@ -214,7 +222,8 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   nhinVe: (x, z) => cam.nhinVe(x, z),
   zoom: z => cam.datZoom(z),
   lang, // kịch bản thử đọc / chỉnh trạng thái lõi (vd làm cạn nhanh một cây)
-  vung: vung && vung.moc // thung lũng thật
+  vung: vung && vung.moc, // thung lũng thật
+  quai: quaiBd && quaiBd.moc // TC_D06A: quái trên bản đồ
 };
 ctx.khiDo(so => {
   Object.assign(window.__dt3d, so);
@@ -231,4 +240,4 @@ window.__dt3d.taiMs = Math.round(performance.now() - t0);
 $("d3Tai").hidden = true;
 if (vung) vung.batDau();
 else baoGoiY("Chạm vào nông dân 🧑‍🌾 rồi chạm cây, mỏ, bãi cá hoặc bụi trái cây để giao việc. Kéo để xem quanh làng, chụm hai ngón (hoặc lăn chuột) để phóng to.");
-// 27/10/2026 20:55 - BƯỚC: TC_D02B3b
+// 30/10/2026 - BƯỚC: TC_D06A
