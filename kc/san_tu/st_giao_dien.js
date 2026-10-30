@@ -36,6 +36,9 @@
              Tập chơi và Xem thử không cất.
    CẬP NHẬT: 17/10/2026 - TC_00G4: cấp từ 3-4 vẫn ẩn chữ tiếng Anh nhưng HIỆN nghĩa tiếng Việt
              dưới hình (người dùng yêu cầu).
+   CẬP NHẬT: 30/10/2026 09:30 - TC_00K: tiến độ đường đua đồng bộ lên tài khoản (ST.DongBoTienDo): mở game
+             thì kéo tiến độ từ máy chủ, đổi gì thì gửi lên; máy chủ mang về đường / màn mới thì menu vẽ lại
+             (đang chơi thì đợi về menu). Xem thử không đồng bộ.
    CẬP NHẬT: 20/10/2026 - TC_T03A: kho từ tải từ kc/tu_vung/kho_tu.json (chờ tải xong mới vào màn; lỗi
              mạng thì báo bé). Ô gợi ý, bảng ôn tập, chip từ đã học hiện HÌNH RIÊNG của từ nếu có,
              chưa có thì emoji như cũ.
@@ -78,6 +81,13 @@
   const layPhien = () => { try { return JSON.parse(sessionStorage.getItem("coVuaTaiKhoanDangNhap") || "null"); } catch (e) { return null; } };
   const coMayChu = typeof kcGoiRpc === "function" && typeof kcSupabaseClient !== "undefined";
   const kho = new ST.KhoKimCuong(dangXemThu ? "" : tenBe, coMayChu ? kcGoiRpc : null, layPhien);
+  // TC_00K: tiến độ đường đua đồng bộ lên tài khoản; máy chủ có đường / màn mới thì vẽ lại menu (nếu đang mở)
+  const dongBo = new ST.DongBoTienDo(tienDo, dangXemThu ? "" : tenBe, coMayChu ? kcGoiRpc : null, layPhien, () => {
+    if (!$("manBatDau").classList.contains("hien")) return;
+    try { const d = localStorage.getItem(KHOA_DUONG); if (d && d !== maDuong && tienDo.duongMo(d)) { maDuong = d; soManChon = manMacDinh(d); } } catch (e) { /* bỏ qua */ }
+    if (soManChon !== 0 && !tienDo.manChoiDuoc(maDuong, soManChon)) soManChon = manMacDinh(maDuong);
+    veMenuChon();
+  });
   let catMan = null;         // kim cương của màn vừa xong: { g, so, tt, kq }
   let ketQuaMan = null;      // { manMoi, xongDuong } của lần qua màn vừa rồi
   let veMan1 = false;        // vừa hết sạch mạng của lượt: phải chơi lại từ màn 1
@@ -792,11 +802,11 @@
   const bam = location.hash.replace("#", "");
   if (ST.DO_KHO[bam]) { maDoKho = bam; veChonDoKho(); }
   // để kiểm thử tự động
-  window.__sanTu = { layTroChoi: () => g, batDau, tamDung, tiepTuc, am, tienDo, kho, layCatMan: () => catMan, layBangOnTap: () => bang,
+  window.__sanTu = { layTroChoi: () => g, batDau, tamDung, tiepTuc, am, tienDo, kho, dongBo, layCatMan: () => catMan, layBangOnTap: () => bang,
     chonMan: (duong, so) => { maDuong = duong; soManChon = so; veMenuChon(); },
     moOnTap: ds => { tuDaGap = ds.slice(); tuSai = []; hienOnTap(); } }; // moOnTap: chỉ để kiểm thử bảng ôn tập
   // Màn chưa cất được (mất mạng lần trước): gửi bù khi mở game và khi có mạng lại
-  const guiBu = () => { if (coMayChu) kho.gui().then(t => capNhatDiemSo(t.diemSoMoi)); };
+  const guiBu = () => { if (coMayChu) { kho.gui().then(t => capNhatDiemSo(t.diemSoMoi)); dongBo.gui(); } };
   guiBu();
   window.addEventListener("online", guiBu);
   requestAnimationFrame(khung);
