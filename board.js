@@ -17,6 +17,13 @@
 //   (du_lieu {trang:{...},den:{...}}); (3) DỰ PHÒNG TỪNG Ô: quân/màu chưa có ảnh
 //   hoặc ảnh lỗi -> vẽ ký tự cổ điển; (4) BỎ bộ động vật đóng cứng ở Lv10 (nay là
 //   vật phẩm bo_co_dong_vat, trẻ tự chọn). HƯỚNG DẪN 4.6/4.7.
+// SỬA: 30/10/2026 - BƯỚC: NC_10 (SỬA LỖI "tự thoát trận khi đấu với máy" - đúng
+//   ngoại lệ mở file đóng băng): ván đấu máy chỉ nằm trong bộ nhớ trang, mà điện
+//   thoại hay tự tải lại trang (bé sang app khác / khóa máy -> trình duyệt đóng thẻ
+//   cho đỡ tốn bộ nhớ; vuốt xuống làm mới) -> mở lại ở Tab Tài Khoản, ván mất.
+//   Nay GIỮ VÁN ĐANG DỞ (PHẦN 5): lưu nước đi vào localStorage sau mỗi nước, mở
+//   trang thấy ván dở của đúng bé thì tự mở lại Tab Chơi Cờ + ván đó; chặn vuốt
+//   xuống làm mới khi đang có ván.
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "board" để tránh xung đột
 // PHỤ THUỘC:
 //   - chess.js 0.12.0 (nạp trong index.html, biến toàn cục "Chess")
@@ -160,6 +167,9 @@ var boardDangChoGoiY = false;    // true = đang chờ Stockfish trả lời cho
                                   // (khác boardDangChoAI - chờ nước đi CỦA MÁY ĐỐI THỦ)
 var boardTimeoutGoiY = null;     // Bộ đếm giờ dự phòng nếu engine không trả lời gợi ý
 var BOARD_DO_SAU_GOI_Y = 12;     // Độ sâu cố định khi tính Gợi Ý (không phụ thuộc cấp máy đối thủ)
+var BOARD_KHOA_VAN_DANG_DO = "coVua_vanDangDo";  // NC_10: localStorage giữ ván dở
+var BOARD_HAN_GIU_VAN_MS = 24 * 60 * 60 * 1000;  // NC_10: ván dở quá 24 giờ thì bỏ
+var boardHuaCauHinh = null;      // NC_10: Promise tải cấu hình (ván mở lại chờ xong mới cho máy đi)
 var boardMaPhienNhapNhayGoiY = 0;// Số phiên nhấp nháy: gợi ý mới tăng số này để hẹn giờ
                                   // tự tắt của gợi ý CŨ không xóa nhầm nhấp nháy MỚI
 
@@ -273,6 +283,10 @@ function boardKhoiTao() {
 
   // Level có thể thay đổi sau khi đăng nhập / lên cấp -> vẽ lại danh sách cấp khi cần
   setInterval(boardDienLuaChonCapDoMay, 1500);
+
+  // NC_10: có ván dở (trang vừa bị tải lại) -> mở lại. Hẹn 0ms để chạy SAU mọi
+  // hàm khởi tạo khác (taptrung_NC.js nạp sau board.js).
+  setTimeout(boardKhoiPhucVanDangDo, 0);
 }
 
 // ================================
@@ -286,7 +300,7 @@ function boardKhoiTao() {
 function boardTaiCauHinh() {
   if (typeof apiLayCauHinh !== "function") return;
 
-  apiLayCauHinh().then(function (phanHoi) {
+  boardHuaCauHinh = apiLayCauHinh().then(function (phanHoi) {
     if (phanHoi && phanHoi.thanhCong) {
       boardCauHinhChung = phanHoi.cauHinhChung || {};
       boardCauHinhCapDo = phanHoi.cauHinhCapDo || [];
@@ -561,6 +575,7 @@ function boardBatDauVanMoi() {
   boardCapNhatTheThongTinTranDau();
   boardNoiCauSuKien("bat_dau_van", "Bắt đầu ván mới. Đến lượt bạn.");
   boardBatDauChoGoiY(); // Lượt đầu tiên của trẻ -> bắt đầu hẹn giờ nhắc gợi ý
+  boardLuuVanDangDo();  // NC_10: ván mới thay ván dở cũ (nếu có)
 }
 
 /**
@@ -855,6 +870,7 @@ function boardThucHienNuocNguoi(oTu, oDen) {
   // NC_02: ghi nhớ ô xuất phát/đích để tô sáng nước vừa đi
   boardONguonNuocCuoi = nuoc.from;
   boardODichNuocCuoi = nuoc.to;
+  boardLuuVanDangDo(); // NC_10 (ván xong thì boardKiemTraKetThuc xóa lại)
 
   // NC_03: trẻ vừa đi -> hủy lời nhắc gợi ý đang chờ + xóa nhấp nháy Gợi Ý cũ
   // (làm TRƯỚC khi vẽ lại bàn cờ để không hiện sót 1 khung hình gợi ý cũ)
@@ -1007,6 +1023,7 @@ function boardApDungNuocAiAnToan(nuocUci) {
     boardONguonNuocCuoi = nuocDaDi.from;
     boardODichNuocCuoi = nuocDaDi.to;
   }
+  boardLuuVanDangDo(); // NC_10
   boardXoaNhapNhayGoiY(); // NC_03: máy vừa đi -> xóa nhấp nháy Gợi Ý cũ (nếu có)
 
   var gayChieu = boardGame.in_check();
@@ -1069,6 +1086,7 @@ function boardKiemTraKetThuc() {
   boardKetThuc = true;
   boardDangChoAI = false;
   boardHuyChoGoiY(); // Ván xong -> không nhắc gợi ý nữa
+  boardXoaVanDangDo(); // NC_10: ván xong -> không còn gì để mở lại
 
   var ketQua;    // "thang" | "thua" | "hoa"
   var laHoa = false;
@@ -1324,6 +1342,7 @@ function boardApDungGoiY(nuocUci) {
   boardONguonGoiY = nuocUci.substring(0, 2);
   boardODichGoiY = nuocUci.substring(2, 4);
   boardSoLanDaGoiYVan++;
+  boardLuuVanDangDo(); // NC_10: tải lại trang không được "hồi" lượt gợi ý
 
   boardVeBanCo(); // Vẽ nhấp nháy + cập nhật nút/dòng chú thích lượt còn lại
 
@@ -2297,7 +2316,9 @@ function boardTiemCssHieuUng() {
     // NC_03B: nút "Gợi Ý" nhấp nháy mời bấm, thay cho hộp thoại hỏi đã bỏ.
     // :not(:disabled) để nút đang khóa (lượt máy, hết lượt gợi ý) không nhấp nháy vô duyên.
     "@keyframes boardNutGoiYNhay { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); } 50% { transform: scale(1.07); box-shadow: 0 0 0 12px rgba(46, 204, 113, 0); } }" +
-    "#btnGoiY.boardNutGoiYNhapNhay:not(:disabled) { animation: boardNutGoiYNhay 0.9s ease-in-out infinite; }";
+    "#btnGoiY.boardNutGoiYNhapNhay:not(:disabled) { animation: boardNutGoiYNhay 0.9s ease-in-out infinite; }" +
+    // NC_10: đang có ván -> vuốt xuống ở đầu trang không làm mới (tải lại) trang
+    "html.boardCoVanDangDo, html.boardCoVanDangDo body { overscroll-behavior-y: contain; }";
   document.head.appendChild(the);
 }
 
@@ -2381,6 +2402,101 @@ function boardHieuUngKhoBau() {
   setTimeout(function () {
     if (lop.parentNode) lop.parentNode.removeChild(lop);
   }, 2600);
+}
+
+// ================================
+// PHẦN 5: GIỮ VÁN ĐANG DỞ KHI TRANG BỊ TẢI LẠI (NC_10)
+// ================================
+// Lưu { ten, nuoc: [các nước SAN], levelMay, goiY, luc } vào localStorage sau mỗi
+// nước. Lưu DANH SÁCH NƯỚC (không chỉ FEN) để chess.js vẫn nhận ra hòa do lặp
+// lại 3 lần sau khi mở lại. Chỉ mở lại cho ĐÚNG bé đã chơi (máy dùng chung).
+// Không có gì gửi máy chủ: kim cương vẫn chỉ tính khi ván kết thúc như cũ.
+
+/** Ghi ván đang chơi (gọi sau mỗi nước, lúc bắt đầu ván, sau mỗi lần Gợi Ý) */
+function boardLuuVanDangDo() {
+  if (boardKetThuc || !boardGame) return;
+  var taiKhoan = (typeof appLayTaiKhoanDangNhap === "function") ? appLayTaiKhoanDangNhap() : null;
+  if (!taiKhoan) return;
+  document.documentElement.classList.add("boardCoVanDangDo");
+  try {
+    localStorage.setItem(BOARD_KHOA_VAN_DANG_DO, JSON.stringify({
+      ten: taiKhoan.tenDangNhap,
+      nuoc: boardGame.history(),
+      levelMay: boardLevelMay,
+      goiY: boardSoLanDaGoiYVan,
+      luc: Date.now()
+    }));
+  } catch (loi) { /* trình duyệt chặn localStorage -> như cũ, tải lại thì mất ván */ }
+}
+
+/** Xóa ván đã lưu (ván kết thúc) */
+function boardXoaVanDangDo() {
+  document.documentElement.classList.remove("boardCoVanDangDo");
+  try { localStorage.removeItem(BOARD_KHOA_VAN_DANG_DO); } catch (loi) { /* bỏ qua */ }
+}
+
+/**
+ * Mở trang mà có ván dở của bé đang đăng nhập -> dựng lại đúng ván đó, chuyển
+ * sang Tab Chơi Cờ (bật chế độ tập trung nếu là điện thoại). Đang lượt máy thì
+ * chờ cấu hình cấp máy tải xong (tối đa 3 giây) rồi máy mới đi tiếp.
+ */
+function boardKhoiPhucVanDangDo() {
+  var taiKhoan = (typeof appLayTaiKhoanDangNhap === "function") ? appLayTaiKhoanDangNhap() : null;
+  if (!taiKhoan) return;
+
+  var van = null;
+  try { van = JSON.parse(localStorage.getItem(BOARD_KHOA_VAN_DANG_DO) || "null"); } catch (loi) { van = null; }
+  if (!van || van.ten !== taiKhoan.tenDangNhap || !Array.isArray(van.nuoc)) return;
+  if (!(Date.now() - van.luc < BOARD_HAN_GIU_VAN_MS)) { boardXoaVanDangDo(); return; }
+
+  var game = new Chess();
+  for (var i = 0; i < van.nuoc.length; i++) {
+    if (!game.move(van.nuoc[i])) { boardXoaVanDangDo(); return; } // dữ liệu hỏng -> bỏ
+  }
+  if (game.game_over()) { boardXoaVanDangDo(); return; }
+
+  boardGame = game;
+  boardLevelMay = Math.min(Math.max(parseInt(van.levelMay, 10) || 1, 1), 20);
+  boardSoLanDaGoiYVan = parseInt(van.goiY, 10) || 0;
+  boardKetThuc = false;
+  boardDangChoAI = false;
+  boardDaGoiMayDiLuotNay = false;
+  boardODangChon = null;
+  boardCacNuocHopLe = [];
+  var lichSu = game.history({ verbose: true });
+  var nuocCuoi = lichSu.length ? lichSu[lichSu.length - 1] : null;
+  boardONguonNuocCuoi = nuocCuoi ? nuocCuoi.from : null;
+  boardODichNuocCuoi = nuocCuoi ? nuocCuoi.to : null;
+  document.documentElement.classList.add("boardCoVanDangDo");
+
+  boardDienLuaChonCapDoMay();
+  var oChonLevel = document.getElementById("chonLevelMay");
+  if (oChonLevel) oChonLevel.value = boardLevelMay;
+  boardCauHinhDoKho(boardLevelMay);
+
+  if (typeof appChuyenTab === "function") appChuyenTab("play");
+  if (typeof taptrungLaDienThoai === "function" && taptrungLaDienThoai()) taptrungBat();
+
+  var trangThai = "Đang chơi tiếp - Máy cấp " + boardLevelMay;
+  if (game.turn() === BOARD_MAU_MAY) {
+    // Khóa bàn cờ trong lúc chờ cấu hình, rồi để máy đi như mọi lượt
+    boardDangChoAI = true;
+    boardVeBanCo();
+    boardCapNhatTheThongTinTranDau();
+    boardCapNhatThongTinLuot("Máy tính đang suy nghĩ...", trangThai);
+    var choToiDa = new Promise(function (xong) { setTimeout(xong, 3000); });
+    var choMayDi = function () {
+      if (boardGame !== game || boardKetThuc) return; // bé đã bắt đầu ván mới
+      boardYeuCauAiDiChuyen();
+    };
+    // Lỗi mạng cũng cho máy đi (dùng thông số dự phòng) - ván không bao giờ kẹt
+    Promise.race([boardHuaCauHinh || Promise.resolve(), choToiDa]).then(choMayDi, choMayDi);
+  } else {
+    boardVeBanCo();
+    boardCapNhatTheThongTinTranDau();
+    boardCapNhatThongTinLuot("Ván đang dở đã mở lại - đến lượt bạn (Quân Trắng)", trangThai);
+    boardBatDauChoGoiY();
+  }
 }
 
 // Chạy hàm khởi tạo ngay khi toàn bộ HTML đã được dựng xong
