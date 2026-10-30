@@ -33,7 +33,7 @@
 // ================================================================
 const KHOA = "kc_dt_tieng", KHOA_NHAC = "kc_dt_nhac";
 const TOI_DA = 64; // không mở tiếng mới khi đã có ngần này nguồn đang kêu
-const AM_NHAC = 0.32; // nhạc nhỏ hơn tiếng hiệu ứng
+const AM_NHAC = 0.16; // nhạc nhỏ hơn tiếng hiệu ứng (người dùng 30/10/2026: giảm 50%, 0,32 -> 0,16)
 const URL_THU_VIEN = new URL("../am_thanh/thu_vien.json", import.meta.url).href;
 const ngau = (a, b) => a + Math.random() * (b - a);
 // tên tiếng tự tạo mà tham số đầu KHÔNG phải vị trí x
