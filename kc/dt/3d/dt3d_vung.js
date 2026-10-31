@@ -49,7 +49,9 @@
 //             be: { ten, hoSo, tenThuLinh }, themNongDan(x, z) -> dv, $, baoGoiY, kho (localStorage | null),
 //             capNhatKho? () (vẽ lại thanh tài nguyên khi kho bị trừ, TC_D02B3b) }
 //     vung = { dvTl, hTl, suong, veSuong, mayChu, vao, batDau() (sau khung đầu), moc (kịch bản thử),
-//              laLanhDia(x, y) (TC_D06A, 30/10/2026: ô thuộc lãnh địa của bé bất kỳ, cho quái tránh) }
+//              laLanhDia(x, y) (TC_D06A, 30/10/2026: ô thuộc lãnh địa của bé bất kỳ, cho quái tránh),
+//              quanhDau { quai, nghiDen }, ngheQuanh(f(kqLayQuanh)), hoiLai(), tlBan(chu) -> { dv, h } | null (TC_D06C1) }
+//   TC_D06C1: Thủ lĩnh của bạn có dv.danhQuai = { x, z } (phần quái đặt) và đã tới nơi -> trangThai "danh" (động tác đánh).
 //   Không vào được (thung lũng đầy...): ném lỗi, err.lyDo là câu cho bé.
 //     the.mayChu (TC_D02B3a): máy chủ thật dt/dt_may_chu_sb.js (trang game); không có thì máy chủ giả.
 //     Có máy chủ thật: nguồn cạn chỉ mọc lại theo máy chủ (lang.datMocTheoMayChu, TC_D02B3b).
@@ -241,6 +243,7 @@ export async function vaoThungLung(the) {
       dv.duong = p.xong ? [] : DANG_DI;
       const n = p.xong && l && l.viec != null ? lang.nguonTheoMa(l.viec) : null;
       if (n && lang.dangSong(n)) { dv.trangThai = "lam"; dv.viec = n; dv.huongMuon = Math.atan2(n.x - dv.x, n.z - dv.z); }
+      else if (dv.danhQuai && p.xong) { dv.trangThai = "danh"; dv.viec = null; dv.huongMuon = Math.atan2(dv.danhQuai.x - dv.x, dv.danhQuai.z - dv.z); } // TC_D06C1: đang đánh quái (phần quái đặt danhQuai)
       else { dv.trangThai = "dung"; dv.viec = null; }
       b.h.vo.visible = suong.muc(Math.floor(dv.x), Math.floor(dv.z)) === BD.SANG;
     }
@@ -288,6 +291,7 @@ export async function vaoThungLung(the) {
   }
   // Mỗi chuKyGui giây: gửi thu hoạch, CHỜ xong rồi mới hỏi lại (khỏi lấy trạng thái cũ hơn lần gửi)
   let dangHoi = false;
+  const ngheQuanh = []; // TC_D06C1: phần quái nhận quai[] + nghiDen mỗi lần hỏi lại
   async function chuKy() {
     if (dangHoi) return;
     dangHoi = true;
@@ -295,7 +299,7 @@ export async function vaoThungLung(the) {
       await guiThuHoach();
       for (const { ct, dv } of [...choBaoXong.values()]) await xongCt(ct, dv, true); // TC_D03A
       const q = await mayChu.layQuanh(ten);
-      if (q && q.ok) { dongBoNguon(q.nguon); dongBoCongTrinh(q.congTrinh); dongBoBan(q.donVi); dongBoMinh(q); }
+      if (q && q.ok) { dongBoNguon(q.nguon); dongBoCongTrinh(q.congTrinh); dongBoBan(q.donVi); dongBoMinh(q); for (const f of ngheQuanh) f(q); }
     } finally { dangHoi = false; }
   }
   // TC_D03B1: nông dân Lều trại vừa sinh (máy chủ tạo theo giờ máy chủ) -> thêm vào làng, đứng chờ việc (dấu "!")
@@ -874,6 +878,10 @@ export async function vaoThungLung(the) {
   return {
     dvTl, hTl, suong, veSuong, mayChu, vao, batDau,
     laLanhDia: (x, y) => !!lanhDia.chuO(x, y, null), // TC_D06A: quái không vào lãnh địa của ai
+    // TC_D06C1: quái chung: kết quả vào vùng + hỏi lại đầu tiên, nghe các lần hỏi lại sau, Thủ lĩnh của bạn (vẽ đánh quái)
+    quanhDau: { quai: quanh.quai || vao.quai || [], nghiDen: vao.nghiDen || 0 },
+    ngheQuanh: f => ngheQuanh.push(f), hoiLai: () => chuKy(),
+    tlBan: chu => { for (const b of ban.values()) if (b.dv.chu === chu && b.dv.vaiTro === "thu_linh") return b; return null; },
     moc: {
       cong: vao.cong, lanDau: vao.lanDau, mayChu,
       muc: (x, z) => suong.muc(Math.floor(x), Math.floor(z)), demDaKham: () => suong.demDaKham(),
@@ -907,4 +915,4 @@ export async function vaoThungLung(the) {
     }
   };
 }
-// 30/10/2026 13:56 - BƯỚC: TC_D06A (khai laLanhDia cho quái tránh lãnh địa)
+// 30/10/2026 13:56 - BƯỚC: TC_D06A (khai laLanhDia cho quái tránh lãnh địa); 30/10/2026 17:30 - TC_D06C1 (quái chung: quanhDau, ngheQuanh, tlBan, Thủ lĩnh bạn đánh quái)

@@ -135,7 +135,7 @@ if (VUNG) {
   // TC_D06A: quái lang thang; chạm quái khi đang chọn Thủ lĩnh -> màn chiến đấu
   try {
     quaiBd = await taoQuaiBanDo({ ctx, cam, lang, diaHinh, banDo, cauHinh, suong: vung.suong, laLanhDia: vung.laLanhDia, dvTl, hTl,
-      be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY });
+      be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY, mayChu: vung.mayChu, vung }); // TC_D06C1: quái chung từ máy chủ
     uiDk.trungQuai = quaiBd.trung; uiDk.chamQuai = quaiBd.cham;
   } catch (e) { console.warn("Chưa dựng được quái trên bản đồ", e); } // thiếu quái vẫn chơi làng được
 } else {
@@ -240,4 +240,4 @@ window.__dt3d.taiMs = Math.round(performance.now() - t0);
 $("d3Tai").hidden = true;
 if (vung) vung.batDau();
 else baoGoiY("Chạm vào nông dân 🧑‍🌾 rồi chạm cây, mỏ, bãi cá hoặc bụi trái cây để giao việc. Kéo để xem quanh làng, chụm hai ngón (hoặc lăn chuột) để phóng to.");
-// 30/10/2026 - BƯỚC: TC_D06A
+// 30/10/2026 - BƯỚC: TC_D06A; 30/10/2026 17:30 - TC_D06C1 (quái nhận mayChu + vung)

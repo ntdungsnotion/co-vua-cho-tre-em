@@ -26,6 +26,7 @@ const PHU_KIEN_VAI_TRO = { thu_linh: ["Barbarian_Hat", "Barbarian_Cape"], nong_d
 const MAU_NONG_DAN = { nhan: "#a87a4a", quy: "#5c5470", tien: "#7aa35a" };
 const MAU_LOAI = { quy: { sung: "#e9dcf5" }, tien: { la: "#5fb04a" } };
 // Động tác + vũ khí theo loại nguồn đang làm
+export const NHIP_DANH = 1.4; // TC_D06C1: giây một nhát khi Thủ lĩnh bạn đánh quái trên bản đồ (quái chớp trắng cùng nhịp)
 const VIEC = {
   cay: { dongTac: "1H_Melee_Attack_Chop", vuKhi: "1H_Axe" },
   mo_da: { dongTac: "2H_Melee_Attack_Chop", vuKhi: "2H_Axe" }, mo_vang: { dongTac: "2H_Melee_Attack_Chop", vuKhi: "2H_Axe" }, mo_sat: { dongTac: "2H_Melee_Attack_Chop", vuKhi: "2H_Axe" },
@@ -224,6 +225,7 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam } = {}) 
       else if (dv.duong.length) datDongTac(h, dv.chay ? "Running_A" : "Walking_A");
       else if (lam) datDongTac(h, lam.dongTac, false, nhipLam && nhipLam(dv.viec.loai)); // 1 nhát = 1 tài nguyên
       else if (dv.trangThai === "xay") datDongTac(h, "Interact"); // dựng nhà (TC_D02B2b)
+      else if (dv.trangThai === "danh") datDongTac(h, "1H_Melee_Attack_Slice_Diagonal", false, NHIP_DANH); // TC_D06C1: Thủ lĩnh bạn đang đánh quái
       else datDongTac(h, "Idle");
       if (h.doMang) {
         const mon = monCua(h);
@@ -249,4 +251,4 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam } = {}) 
     dien(h, ds, khiDoi, khiXong, huong) { hienVuKhi(h, "1H_Axe"); if (h.vuKhi["1H_Axe"]) h.vuKhi["1H_Axe"].visible = true; h.dien = { ds, i: 0, t: 0, khiDoi, khiXong, huong }; }
   };
 }
-// 28/10/2026 19:05 - BƯỚC: TC_D03B2; 29/10/2026 - TC_D05
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2; 29/10/2026 - TC_D05; 30/10/2026 17:30 - TC_D06C1 (động tác "danh")
