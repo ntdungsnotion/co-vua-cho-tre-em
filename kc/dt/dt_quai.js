@@ -2,7 +2,8 @@
 // FILE: dt/dt_quai.js
 // CHỨC NĂNG: QUÁI của Đấu Trường Tri Thức (đặc tả dac_ta.md V.2, dac_ta_tran_dau.md mục 1-2):
 //            - taoQuai(ma, lv, ch): chỉ số quái theo loại + cấp (heSoCap).
-//            - xacSuatDung(quai, doKho, ch): xác suất quái đúng theo bậc x độ khó câu, kẹp 5-95 %.
+//            - xacSuatDung(quai, doKho, ch, vaiTro): xác suất quái đúng; lượt có vai trò dùng cấu hình
+//              tanCong / phongThu, gọi cũ không có vai trò vẫn dùng bảng bậc x độ khó.
 //            - giayBe(lv, ch): thời gian suy nghĩ tối đa của bé theo cấp quái (thoiGian.be).
 //            - giayTraLoi(quai, ch, rng, nghiThem): thời điểm quái bấm (giây), ngẫu nhiên theo cấp quái,
 //              nhân hệ số bậc, luôn ngắn hơn giayBe; nghiThem = chế độ Thong thả.
@@ -32,7 +33,9 @@
     };
   }
 
-  function xacSuatDung(quai, doKho, ch) {
+  function xacSuatDung(quai, doKho, ch, vaiTro) {
+    const theoVai = ch.quai.xacSuatDung && ch.quai.xacSuatDung[vaiTro];
+    if (theoVai != null) return theoVai;
     const bac = ch.quai.bac[quai.bac], gh = ch.quai.xacSuatGioiHan;
     const p = bac.xacSuat[doKho] != null ? bac.xacSuat[doKho] : bac.xacSuat.vua;
     return Math.min(gh[1], Math.max(gh[0], p));
@@ -56,8 +59,8 @@
   }
 
   // Trả { dung, chiSo }: chiSo = vị trí đáp án quái chọn
-  function traLoi(quai, cau, ch, rng) {
-    const dung = rng() < xacSuatDung(quai, cau.doKho, ch);
+  function traLoi(quai, cau, ch, rng, vaiTro) {
+    const dung = rng() < xacSuatDung(quai, cau.doKho, ch, vaiTro);
     if (dung) return { dung, chiSo: cau.dung[0] };
     const sai = [];
     for (let i = 0; i < cau.dapAn.length; i++) if (cau.dung.indexOf(i) < 0) sai.push(i);
