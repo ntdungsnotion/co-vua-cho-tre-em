@@ -80,6 +80,15 @@ export async function vaoThungLung(the) {
   const CB = cauHinh.banDo, CT = cauHinh.congTrinh, W = banDo.rong, H = banDo.cao;
   const ten = be.ten, tenChuan = String(ten).trim().toLowerCase();
   const R = CT.leu.rong, S = CT.leu.sau;
+  const phaHuy = ct => {
+    if (!ct || ct.cuaMinh === false || !ct.xong || ct.phaHuyLuc != null) return false;
+    ct.phaHuyLuc = lang.bayGio();
+    baoGoiY("Công trình đang hư hỏng và sẽ biến mất sau 30 giây.");
+    setTimeout(() => {
+      if (ct.phaHuyLuc != null && lang.congTrinh.includes(ct)) lang.boCongTrinh(ct);
+    }, 30000);
+    return true;
+  };
 
   // ---------------- Vào vùng: trạng thái chung từ máy chủ ----------------
   const mayChu = the.mayChu || MC.taoMayChuGia({ vung: banDo, cauHinh, kho: the.kho });
@@ -882,6 +891,7 @@ export async function vaoThungLung(the) {
     quanhDau: { quai: quanh.quai || vao.quai || [], nghiDen: vao.nghiDen || 0 },
     ngheQuanh: f => ngheQuanh.push(f), hoiLai: () => chuKy(),
     tlBan: chu => { for (const b of ban.values()) if (b.dv.chu === chu && b.dv.vaiTro === "thu_linh") return b; return null; },
+    phaHuy,
     moc: {
       cong: vao.cong, lanDau: vao.lanDau, mayChu,
       muc: (x, z) => suong.muc(Math.floor(x), Math.floor(z)), demDaKham: () => suong.demDaKham(),

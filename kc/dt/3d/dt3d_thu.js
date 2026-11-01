@@ -105,13 +105,14 @@ ctx.moiKhung(dt => lang.capNhat(dt)); // lõi chạy trước, các phần vẽ 
 const moHinh = taoBoMoHinh(ctx, glbLang);
 const cam = taoCamera(ctx, vungVe, banDo);
 const diaHinh = taoDiaHinh(ctx, moHinh, banDo, lang);
-taoCongTrinh(ctx, moHinh, diaHinh, banDo, cam.huong, lang);
+const congTrinhVe = taoCongTrinh(ctx, moHinh, diaHinh, banDo, cam.huong, lang);
 const taiNguyen = taoTaiNguyen(ctx, moHinh, diaHinh, lang);
 const boNv = taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam: loai => CH.nguon[loai].nhipLam });
 ctx.moiKhung(dt => boNv.capNhat(dt));
 const goiY = $("d3GoiY");
 const baoGoiY = chu => { goiY.textContent = chu; };
-const uiDk = { baoGoiY, baoChon: chu => { $("d3Chon").textContent = chu; }, lop: $("d3ChuNoi") };
+const uiDk = { baoGoiY, baoChon: chu => { $("d3Chon").textContent = chu; }, lop: $("d3ChuNoi"),
+  chamCongTrinh: tia => congTrinhVe.chon(tia) };
 const dk = taoDieuKhien(ctx, cam, lang, taiNguyen, boNv, diaHinh, uiDk);
 
 let soNongDan = 0;
@@ -143,6 +144,28 @@ if (VUNG) {
   hTl = boNv.tao(dvTl, "thu_linh", hoSoTl);
   for (const p of banDo.batDau.nongDan || []) themNongDan(p.x, p.z);
 }
+
+// Bảng điều khiển công trình kiểu AoE: chỉ hiện khi chọn nhà của chính mình.
+const bang = $("d3BangDieuKhien"), bangTen = $("d3BangTen"), bangThai = $("d3BangTrangThai"), bangAnh = $("d3BangAnh");
+let ctDangChon = null;
+const bieuTuongCt = { leu: "🏕️", tuong: "🧱", cong: "🚪", thap_canh: "🗼", nha_o: "🏠", ruong: "🌾", kho_go: "📦", kho_da: "📦", kho_vang: "📦", vua_luong_thuc: "🍖", choi_hai_luom: "🧺", choi_mo: "⛏️" };
+function capBang(ct) {
+  ctDangChon = ct;
+  if (!ct || ct.cuaMinh === false) { bang.hidden = true; return; }
+  const mau = cauHinh.congTrinh[ct.loai] || {};
+  bang.hidden = false; bangAnh.textContent = bieuTuongCt[ct.loai] || "🏗️"; bangTen.textContent = mau.ten || ct.loai;
+  if (ct.phaHuyLuc != null) {
+    const con = Math.max(0, Math.ceil((30000 - (lang.bayGio() - ct.phaHuyLuc)) / 1000));
+    bangThai.textContent = con ? "Đang hư hỏng · biến mất sau " + con + " giây" : "Đã biến mất";
+  } else bangThai.textContent = ct.xong ? "Đã hoàn thành" : "Đang xây · " + Math.round((ct.tienDo || 0) * 100) + "%";
+}
+uiDk.chonCongTrinh = capBang;
+$("d3PhaHuy").addEventListener("click", () => {
+  if (!ctDangChon || !vung || ctDangChon.cuaMinh === false || ctDangChon.phaHuyLuc != null) return;
+  if (!confirm("Phá hủy công trình này? Công trình sẽ hư dần và biến mất sau 30 giây.")) return;
+  if (vung.phaHuy(ctDangChon)) { capBang(ctDangChon); baoGoiY("Công trình đang sụp dần. Còn 30 giây."); }
+});
+setInterval(() => { if (ctDangChon && !bang.hidden) capBang(ctDangChon); }, 250);
 $("d3TenVuong").textContent = be.tenVuongQuoc ? "Vương quốc " + be.tenVuongQuoc : VUNG ? banDo.ten + " · Cổng " + vung.vao.cong.so : "Thung Lũng Khởi Đầu";
 
 // ---------------- Thanh tài nguyên ----------------

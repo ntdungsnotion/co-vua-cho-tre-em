@@ -33,6 +33,16 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 #d3Chon { color: var(--vang); font-family: "Baloo 2", sans-serif; font-weight: 800; }
 .d3HangNut { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .d3Do { font-size: .85rem; color: var(--nhat); padding: 4px 10px; }
+.d3BangDieuKhien { display: flex; align-items: center; gap: 10px; padding: 8px 10px; min-height: 66px;
+  background: linear-gradient(180deg, rgba(98, 74, 48, .96), rgba(38, 31, 28, .96));
+  border-color: rgba(224, 190, 125, .8); border-radius: 8px; }
+.d3BangAnh { display: grid; place-items: center; width: 52px; height: 52px; border: 2px solid #d8bc81;
+  background: #1d1c22; font-size: 1.8rem; box-shadow: inset 0 0 0 3px rgba(0, 0, 0, .35); }
+.d3BangThongTin { display: grid; gap: 2px; min-width: 0; flex: 1; font-family: "Baloo 2", sans-serif; }
+.d3BangThongTin strong { color: #ffe0a0; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.d3BangThongTin span { color: #f7e8c3; font-size: .83rem; }
+.d3NutPhaHuy { background: #9d1d1d; border-color: #ff6a58; color: #fff4e8; min-width: 112px; }
+.d3NutPhaHuy:hover { background: #c33124; }
 /* Chữ nổi "+5 🪵" và dấu "!" nông dân rảnh */
 #d3ChuNoi { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .d3Noi { position: absolute; left: 0; top: 0; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.5rem; color: #fff6c8;
@@ -68,6 +78,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   .d3Chu { display: none; }
   .d3Duoi { gap: 6px; }
   .d3HangNut { gap: 6px; }
+  .d3BangDieuKhien { gap: 7px; padding: 6px; }
+  .d3BangAnh { width: 44px; height: 44px; font-size: 1.5rem; }
+  .d3BangThongTin strong { font-size: 1rem; }
 }
 @media (prefers-reduced-motion: reduce) { .d3Ranh { animation: none; } }
 /* 30/10/2026 - BƯỚC: TC_D06A (nhãn cấp quái, màn chiến đấu phủ) */
