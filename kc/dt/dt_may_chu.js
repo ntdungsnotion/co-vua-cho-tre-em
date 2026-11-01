@@ -47,9 +47,13 @@
 //     tinhVang gặt bù khi vắng mặt (chờ chín, chuyến về chỗ cất gần nhất như hái quả; vang.gat = số ruộng gặt hết);
 //     donRuong: bãi quá coSauGiay giây thành cỏ (bỏ ruộng); ruộng xây ở bất kỳ chỗ nào hợp lệ như mọi công trình;
 //     trongLai(ten, id) -> { ok, id, trongLuc, con, kho } | { ok: false, ma: het_bai | chua_gat | thieu }.
-// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2
-// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05
-// PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO)
+//   TC_D06C1 - QUÁI CHUNG (SQL làm y hệt): vaoVung / layQuanh trả quai[] (bản ghi: id, ma, lv, x, z, hat, sinhLuc, khoa, chay;
+//     đường đi tính ở máy bé bằng KC_DT_QUAI_BAN_DO.viTri) + nghiDen (giờ hết nghỉ của Thủ lĩnh); quaiGiu(ten, id, x, z),
+//     quaiDanh(ten, id), quaiKet(ten, id, ket, nghiGiay): khoá quái cho một bé, kết quả, giờ nghỉ khi thua. quaiBu sinh quái hoang
+//     (quaiBanDo.soQuai) + quái quanh mỗi Lều trại (quanhLeu), thả khoá quá hạn, sinh lại sau hoiSinhGiay.
+// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1
+// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30
+// PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1)
 // ================================================================
 (function (goc) {
   "use strict";
@@ -315,6 +319,44 @@
         laLanhDiaDoiThu: (ox, oy) => !!lanhDia.chuO(ox, oy, ten), deLen: loai === "cong" ? laRaoCua(ten, "tuong") : null };
     }
 
+    // ---------------- TC_D06C1: QUÁI CHUNG (SQL kc_dt_quai làm y hệt) ----------------
+    // Mỗi quái một bản ghi { id, leu (id Lều trại nếu là quái quanh làng), ma, lv, x, z (chỗ ở), hat, sinhLuc, khoa, chay };
+    // đường lang thang mọi máy tự tính (KC_DT_QUAI_BAN_DO.viTri). quaiBu tối đa mỗi buGiay giây: thả khoá quá hạn,
+    // bỏ quái của lều đã mất, chỗ ở bị chặn thì quái đi mất, tới hẹn thì sinh lại chỗ mới, sinh thêm cho đủ số.
+    const QB = goc.KC_DT_QUAI_BAN_DO, CQ = CH.quaiBanDo;
+    const dsLeu = () => tt.congTrinh.filter(c => c.loai === "leu").map(c => ({ id: c.id, chu: c.chu, x: c.x + c.rong / 2, z: c.y + c.sau / 2, xong: !!c.xongLuc }));
+    const laRuong = (x, y) => tt.congTrinh.some(c => c.loai === "ruong" && trongCt(c, x, y));
+    // Ô quái đứng / đi được: như lõi trang (dt3d_quai_ban_do.js): không chặn, không ruộng, không lãnh địa, không sát lều
+    const quaiDiDuoc = leu => (x, y) => LUOI.diDuoc(lang.luoi, x, y) && !laRuong(x, y) && !lanhDia.chuO(x, y, null)
+      && !leu.some(l => Math.hypot(l.x - x - 0.5, l.z - y - 0.5) < CQ.khongGanLeu);
+    const banGhiQuai = q => ({ id: q.id, ma: q.ma, lv: q.lv, x: q.x, z: q.z, hat: q.hat, sinhLuc: q.sinhLuc, khoa: q.khoa ? { ...q.khoa } : null, chay: q.chay ? { ...q.chay } : null });
+    // Quái còn trên bản đồ hoặc vừa bỏ chạy (máy bé vẽ nốt lúc chạy); quái chờ sinh lại thì không trả
+    const dsQuai = bay => (tt.quai || []).filter(q => !q.chay || bay < q.chay.luc + CQ.chayGiay * 1000 + 10000).map(banGhiQuai);
+    function datQuai(q, c, bay) {
+      q.ma = QB.chonLoai(CQ, Math.random()); q.lv = c.lv; q.x = c.x + 0.5; q.z = c.y + 0.5;
+      q.hat = Math.floor(Math.random() * 2147483647); q.sinhLuc = bay; q.khoa = null; q.chay = null;
+    }
+    function quaiBu(bay) {
+      if (!QB || !CQ) return;
+      if (!tt.quai) { tt.quai = []; tt.soIdQuai = 0; }
+      if (tt.quaiBuLuc && bay - tt.quaiBuLuc < CQ.buGiay * 1000) return;
+      tt.quaiBuLuc = bay;
+      const leu = dsLeu(), dd = quaiDiDuoc(leu);
+      for (const q of tt.quai) if (q.khoa && bay - q.khoa.luc > (q.khoa.trang === "danh" ? CQ.khoaDanhGiay : CQ.khoaToiGiay) * 1000) q.khoa = null;
+      tt.quai = tt.quai.filter(q => q.leu == null || leu.some(l => l.id === q.leu && l.xong));
+      const henLai = q => { q.chay = { x: q.x, z: q.z, huong: 0, luc: bay + (CQ.thuLaiGiay - CQ.hoiSinhGiay) * 1000 }; }; // mất ngay, sinh lại sau thuLaiGiay
+      for (const q of tt.quai) if (!q.chay && !q.khoa && !dd(Math.floor(q.x), Math.floor(q.z))) henLai(q);
+      // cấp làng cao nhất vùng = cấp Lều trại đã dựng cao nhất (chưa có Lều nào: 1) -> Lv quái mới tối đa (lvTheoCapLang)
+      const capLang = Math.max(1, ...tt.congTrinh.filter(c => c.loai === "leu" && c.xongLuc).map(c => c.cap || 1));
+      const sinh = leuId => QB.chonCho({ ch: CQ, W: vung.rong, H: vung.cao, diDuoc: dd, cong: vung.cong, leu, capLang,
+        nha: tt.quai.filter(q => !q.chay).map(q => ({ x: q.x, z: q.z })), quanh: leuId != null ? leu.find(l => l.id === leuId) : null });
+      for (const q of tt.quai) if (q.chay && bay >= q.chay.luc + CQ.hoiSinhGiay * 1000) { const c = sinh(q.leu); if (c) datQuai(q, c, bay); else henLai(q); }
+      const them = leuId => { const c = sinh(leuId); if (!c) return false; const q = { id: ++tt.soIdQuai, leu: leuId }; datQuai(q, c, bay); tt.quai.push(q); return true; };
+      while (tt.quai.filter(q => q.leu == null).length < CQ.soQuai) if (!them(null)) break;
+      for (const l of leu) if (l.xong) while (tt.quai.filter(q => q.leu === l.id).length < CQ.quanhLeu.so) if (!them(l.id)) break;
+    }
+    const tlCua = ten => cuaBe(ten).find(d => d.loai === "thu_linh");
+
     const api = {
       gio: () => gio(),
 
@@ -335,13 +377,15 @@
         // TC_D03A: tính bù lúc vắng mặt rồi mới trả trạng thái; lời báo trả một lần
         const bay = gio();
         songLai(ten, bay);
+        quaiBu(bay); // TC_D06C1
         const b = be.baoVang;
         delete be.baoVang;
         luu();
         const vang = b ? { giay: Math.round((bay - b.tu) / 1000), thu: b.thu, xong: b.xong, day: Object.keys(b.day), sinh: b.sinh || 0, gat: b.gat || 0 } : null;
         const cong = vung.cong.find(c => c.so === be.cong);
         return { ok: true, maVung: vung.ma, banSao: 1, cong: { so: cong.so, x: cong.x, z: cong.z }, lanDau, khamPha: be.khamPha,
-          donVi: cuaBe(ten).map(d => ({ id: d.id, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })), kho: khoCua(be), vang, gio: bay, hang: hangCua(be) };
+          donVi: cuaBe(ten).map(d => ({ id: d.id, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })), kho: khoCua(be), vang, gio: bay, hang: hangCua(be),
+          quai: dsQuai(bay), nghiDen: be.nghiDen || 0 };
       },
 
       async layQuanh(ten) {
@@ -350,13 +394,66 @@
         const bay = gio(); // TC_D03A: bé này còn đang chơi; tính bù xây mọi bé + việc của bé vắng mặt
         tt.be[ten].songLuc = bay;
         for (const k in tt.be) tinhBu(k, bay, false);
+        quaiBu(bay); // TC_D06C1
         luu();
         const s = suongCua(ten);
         const thay = BD.locDonViThayDuoc(tt.donVi, cungPhe(ten), s, viTri);
         const nguon = Object.keys(tt.nguon).map(ma => ({ ma: Number(ma), con: tt.nguon[ma].con }));
         const congTrinh = tt.congTrinh.filter(ct => ct.chu === ten || s.muc(ct.x, ct.y) !== BD.DEN);
         return { ok: true, gio: gio(), nguon, congTrinh, donVi: thay.map(d => ({ id: d.id, chu: d.chu, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })),
-          hang: hangCua(tt.be[ten]) };
+          hang: hangCua(tt.be[ten]), quai: dsQuai(bay), nghiDen: tt.be[ten].nghiDen || 0 };
+      },
+
+      // TC_D06C1: bé chạm quái (Thủ lĩnh bắt đầu tiến tới): giữ quái đứng ở (x, z) cho mọi bé thấy; mỗi bé giữ một con.
+      // -> { ok, quai } | { ok: false, ma: dang_nghi (nghiDen) | quai_mat | dang_danh (chu) }
+      async quaiGiu(ten, id, x, z) {
+        ten = tenChuan(ten);
+        const be = tt.be[ten];
+        if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        const bay = gio();
+        quaiBu(bay);
+        if ((be.nghiDen || 0) > bay) return { ok: false, ma: "dang_nghi", nghiDen: be.nghiDen, lyDo: "Thủ lĩnh đang nghỉ ở Lều." };
+        const q = (tt.quai || []).find(k => k.id === id);
+        if (!q || q.chay) return { ok: false, ma: "quai_mat", lyDo: "Quái đã chạy mất rồi." };
+        if (q.khoa && q.khoa.ten !== ten) return { ok: false, ma: "dang_danh", chu: q.khoa.ten, lyDo: "Quái này đang giao chiến với bạn khác." };
+        for (const k of tt.quai) if (k !== q && k.khoa && k.khoa.ten === ten) k.khoa = null;
+        let px = Number(x), pz = Number(z);
+        if (!Number.isFinite(px) || !Number.isFinite(pz) || Math.hypot(px - q.x, pz - q.z) > CQ.banKinhLangThang + CQ.giuLechO) { px = q.x; pz = q.z; }
+        if (!q.khoa) q.khoa = { ten, x: px, z: pz, trang: "toi", luc: bay };
+        luu();
+        return { ok: true, quai: banGhiQuai(q), gio: bay };
+      },
+      // TC_D06C1: Thủ lĩnh đã tới sát quái đang giữ -> vào trận (bé khác thấy hoạt ảnh đánh nhau). -> { ok, quai } | { ok: false, ma: khong_giu | xa_qua }
+      async quaiDanh(ten, id) {
+        ten = tenChuan(ten);
+        if (!tt.be[ten]) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        const bay = gio(), q = (tt.quai || []).find(k => k.id === id);
+        if (!q || q.chay || !q.khoa || q.khoa.ten !== ten) return { ok: false, ma: "khong_giu", lyDo: "Quái đã đi chỗ khác." };
+        const tl = tlCua(ten), p = tl && viTri(tl);
+        if (!p || Math.hypot(p.x - q.khoa.x, p.z - q.khoa.z) > CQ.danhCachO) return { ok: false, ma: "xa_qua", lyDo: "Thủ lĩnh chưa tới chỗ quái." };
+        q.khoa.trang = "danh"; q.khoa.luc = bay;
+        luu();
+        return { ok: true, quai: banGhiQuai(q), gio: bay };
+      },
+      // TC_D06C1: kết quả trận / thôi đánh. ket: "be" | "hoa" (quái bỏ chạy) | "quai" (thua: Thủ lĩnh nghỉ nghiGiay giây,
+      // tối đa nghiToiDaGiay) | "rut" | "tha" (thả quái). -> { ok, nghiDen, quai }
+      async quaiKet(ten, id, ket, nghiGiay) {
+        ten = tenChuan(ten);
+        const be = tt.be[ten];
+        if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        const bay = gio(), q = (tt.quai || []).find(k => k.id === id);
+        const giu = q && !q.chay && q.khoa && q.khoa.ten === ten;
+        if (ket === "be" || ket === "hoa") {
+          if (giu) {
+            const tl = tlCua(ten), p = tl ? viTri(tl) : { x: q.khoa.x, z: q.khoa.z };
+            q.chay = { x: q.khoa.x, z: q.khoa.z, huong: Math.atan2(q.khoa.x - p.x, q.khoa.z - p.z), luc: bay }; q.khoa = null;
+          }
+        } else {
+          if (giu) q.khoa = null;
+          if (ket === "quai") be.nghiDen = bay + Math.min(Math.max(Number(nghiGiay) || 0, 0), CQ.nghiToiDaGiay) * 1000;
+        }
+        luu();
+        return { ok: true, nghiDen: be.nghiDen || 0, quai: q ? banGhiQuai(q) : null, gio: bay };
       },
 
       // TC_D03B1: xếp một nông dân vào hàng sinh ở Lều trại (chỉ nhà chính sinh nông dân). Trả giá lúc xếp; cần
@@ -564,11 +661,14 @@
       // Chỉ trang thử + kiểm thử (bản Supabase không có): xoá hết để bé vào lại từ đầu (tải lại
       // trang sau khi gọi); đọc trạng thái thô
       async xoaHet() { tt = { phienBan: PHIEN_BAN, be: {}, donVi: [], congTrinh: [], nguon: {}, soId: 0 }; luu(); return { ok: true }; },
-      _trangThai: () => tt, _lanhDia: lanhDia
+      _trangThai: () => tt, _lanhDia: lanhDia,
+      // TC_D06C1 (chỉ kiểm thử): dời chỗ ở một quái tới (x, z), lang thang lại từ bây giờ; buộc quaiBu chạy ở lần gọi tới
+      _dichQuai(id, x, z) { const q = (tt.quai || []).find(k => k.id === id); if (!q) return false; q.x = x; q.z = z; q.sinhLuc = gio(); q.khoa = null; q.chay = null; luu(); return true; },
+      _buNgay() { tt.quaiBuLuc = 0; }
     };
     return api;
   }
 
   goc.KC_DT_MAY_CHU = { taoMayChuGia };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 19:05 - BƯỚC: TC_D03B2
+// 30/10/2026 17:30 - BƯỚC: TC_D06C1

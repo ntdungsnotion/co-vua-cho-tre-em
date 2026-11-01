@@ -81,6 +81,12 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
       if (h.dv.laBan) { ui.baoGoiY((ui.loiBan && ui.loiBan(h)) || "Đây là người của bạn khác."); return; }
       chon(h); return;
     }
+    // TC_D06C1: chon cong trinh de mo bang dieu khien kieu AoE.
+    const congTrinh = ui.chamCongTrinh && ui.chamCongTrinh(tia);
+    if (congTrinh) {
+      if (ui.chonCongTrinh) ui.chonCongTrinh(congTrinh);
+      return;
+    }
     // 2) chạm nguồn tài nguyên
     let n = taiNguyen.chon(tia);
     if (n && ui.thayNguon && !ui.thayNguon(n)) n = null; // nguồn còn trong sương đen: bé chưa thấy

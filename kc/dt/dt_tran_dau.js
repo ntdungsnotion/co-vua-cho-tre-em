@@ -61,7 +61,7 @@
       soLuot++;
       const tanCong = soLuot % 2 === 1 ? "be" : "quai";
       const han = t + giayBe * 1000;
-      const tl = QU.traLoi(quai, cau, ch, rng);
+      const tl = QU.traLoi(quai, cau, ch, rng, tanCong === "quai" ? "tanCong" : "phongThu");
       let tQuai = t + QU.giayTraLoi(quai, ch, rng, nghi) * 1000;
       if (tanCong === "quai") tQuai = Math.min(tQuai, han);
       luot = {

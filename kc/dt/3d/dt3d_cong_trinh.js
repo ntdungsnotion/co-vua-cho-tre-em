@@ -250,6 +250,7 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
       : ct.loai === "nha_o" ? taoNhaO(ct) : ct.loai === "ruong" ? taoRuong(ct) : /^choi_/.test(ct.loai) ? taoChoi(ct)
       : taoLeu(TI_LEU * Math.min(ct.rong, ct.sau) / 2); // TC_D03B1: kho + nhà ở; TC_D03B2: ruộng; TC_D03C: chòi
     nha.position.y = -0.05; nhom.add(nha);
+    nhom.userData.congTrinh = ct;
     ctx.canh.add(nhom);
     const h = { ct, nhom, nha, mong, nay: 0, laRuong: ct.loai === "ruong" };
     dsCt.set(ct.id, h);
@@ -279,6 +280,16 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
       if (veLaiRuong) demRuong = 0;
       for (const h of dsCt.values()) {
         if (!h.ct.xong) datTienDo(h);
+        else if (h.ct.phaHuyLuc != null) {
+          const con = Math.max(0, 30000 - (lang.bayGio() - h.ct.phaHuyLuc));
+          const p = con / 30000;
+          h.nha.visible = p > 0;
+          h.mong.visible = p > 0;
+          h.nha.scale.setScalar(0.42 + p * 0.58);
+          h.nha.rotation.z = Math.sin(t * 18 + h.ct.id) * (1 - p) * 0.16;
+          h.nha.position.y = -0.05 - (1 - p) * 0.25;
+          if (p <= 0) { ctx.canh.remove(h.nhom); dsCt.delete(h.ct.id); }
+        }
         else if (h.nay > 0) { h.nay = Math.max(0, h.nay - dt); const k = 1 + Math.sin((0.5 - h.nay) / 0.5 * Math.PI) * 0.12; h.nha.scale.set(k, h.laRuong ? 1 : k, k); }
         else if (h.laRuong && veLaiRuong) veRuong(h); // TC_D03B2: lúa lớn / chín / vơi / bãi theo giờ thật
       }
@@ -324,6 +335,15 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
       if (den) den.intensity = 5 + Math.sin(t * 11) * 1.2 + Math.sin(t * 17) * 0.8;
     });
   }
-  return { leu, lua, hinhCt: id => dsCt.get(id) || null };
+  return { leu, lua, hinhCt: id => dsCt.get(id) || null,
+    chon: tia => {
+      const hs = tia.intersectObjects([...dsCt.values()].map(h => h.nhom), true);
+      for (const x of hs) {
+        let o = x.object;
+        while (o && !o.userData.congTrinh) o = o.parent;
+        if (o && o.userData.congTrinh) return o.userData.congTrinh;
+      }
+      return null;
+    } };
 }
-// 28/10/2026 19:05 - BƯỚC: TC_D03B2
+// 01/11/2026 17:53 - BƯỚC: TC_D06C1 giao diện công trình + trạng thái phá hủy

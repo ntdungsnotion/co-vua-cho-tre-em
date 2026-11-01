@@ -26,9 +26,10 @@
     "quy":  { "hp": 120, "mp": 30, "str": 20, "int": 4,  "agi": 6,  "def": 8, "uyLuc": 18, "chiSoDanh": "str" },
     "tien": { "hp": 85,  "mp": 80, "str": 4,  "int": 22, "agi": 14, "def": 4, "uyLuc": 18, "chiSoDanh": "int" }
   },
-  "_ghiChuQuai": "Quái: xác suất trả lời đúng theo bậc x độ khó câu (de / vua / kho), kẹp trong xacSuatGioiHan; thời gian nghĩ ở thoiGian.quai (theo cấp) x thoiGian.heSoBac (theo bậc). heSoCap: mỗi cấp trên Lv 1 nhân thêm (hp, uyLuc, def theo tỉ lệ; agi cộng điểm). loai.*.mon: toan | tieng_anh | bat_ky (mỗi lượt chọn ngẫu nhiên môn có câu).",
+  "_ghiChuQuai": "Quái: khi tấn công dùng quai.xacSuatDung.tanCong; khi phòng thủ dùng quai.xacSuatDung.phongThu. Bảng xacSuat cũ theo bậc x độ khó vẫn giữ để tương thích công cụ cũ, nhưng không dùng cho lượt có vai trò. Thời gian nghĩ ở thoiGian.quai (theo cấp) x thoiGian.heSoBac (theo bậc). heSoCap: mỗi cấp trên Lv 1 nhân thêm (hp, uyLuc, def theo tỉ lệ; agi cộng điểm). loai.*.mon: toan | tieng_anh | bat_ky (mỗi lượt chọn ngẫu nhiên môn).",
   "quai": {
     "xacSuatGioiHan": [0.05, 0.95],
+    "xacSuatDung": { "tanCong": 0.80, "phongThu": 0.30 },
     "bac": {
       "thuong":     { "ten": "Thường",     "xacSuat": { "de": 0.55, "vua": 0.40, "kho": 0.20 } },
       "chuyen_mon": { "ten": "Chuyên môn", "xacSuat": { "de": 0.70, "vua": 0.55, "kho": 0.35 } },
