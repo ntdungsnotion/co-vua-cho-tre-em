@@ -27,12 +27,12 @@
 import * as THREE from "three";
 
 const LOI_GIAO = {
-  cay: ten => "🪓 " + ten + " đi chặt cây. Gỗ sẽ được vác về lều.",
-  mo_da: ten => "⛏️ " + ten + " đi đào đá.",
-  mo_vang: ten => "⛏️ " + ten + " đi đào vàng.",
-  mo_sat: ten => "⛏️ " + ten + " đi đào sắt.",
-  bai_ca: ten => "🎣 " + ten + " đi bắt cá.",
-  bui_trai_cay: ten => "🍓 " + ten + " đi hái trái cây."
+  cay: ten => "🪓 " + ten + " đang chặt cây. Gỗ sẽ về lều.",
+  mo_da: ten => "⛏️ " + ten + " đang đào đá.",
+  mo_vang: ten => "⛏️ " + ten + " đang đào vàng.",
+  mo_sat: ten => "⛏️ " + ten + " đang đào sắt.",
+  bai_ca: ten => "🎣 " + ten + " đang bắt cá.",
+  bui_trai_cay: ten => "🍓 " + ten + " đang hái trái cây."
 };
 
 export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) {
@@ -53,7 +53,7 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     if (!h) { ui.baoChon("Chưa chọn ai"); return; }
     const laTl = h.vaiTro === "thu_linh";
     ui.baoChon((laTl ? "👑 " : "🧑‍🌾 ") + h.dv.ten);
-    ui.baoGoiY((ui.loiChon && ui.loiChon(h)) || (laTl ? "Chạm mặt đất để Thủ lĩnh đi tới đó." : "Chạm cây để chặt gỗ, chạm mỏ để đào đá / vàng, chạm bãi cá hoặc bụi trái cây để lấy lương thực, hoặc chạm đất để đi."));
+    ui.baoGoiY((ui.loiChon && ui.loiChon(h)) || (laTl ? "Chạm đất để Thủ lĩnh đi." : "Chạm cây, mỏ, cá hoặc bụi quả để giao việc. Chạm đất để đi."));
   }
 
   // Chế độ chạm riêng (TC_D02B2a: "🔍 Soi đất"): chạm đất -> gọi fn(ô) thay cho ra lệnh đi
@@ -91,10 +91,10 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
       if (dangChon && dangChon.vaiTro === "nong_dan") {
         const that = lang.giaoViec(dangChon.dv, n);
         if (that) { dauDich(that.x, that.z); ui.baoGoiY(LOI_GIAO[that.loai](dangChon.dv.ten)); }
-        else ui.baoGoiY("Chỗ đó chưa tới được, con chọn chỗ khác nhé.");
+        else ui.baoGoiY("Chưa tới chỗ đó được. Chọn chỗ khác nhé.");
         return;
       }
-      if (!dangChon) { ui.baoGoiY("Chạm vào nông dân 🧑‍🌾 trước, rồi chạm vào đây để giao việc nhé!"); return; }
+      if (!dangChon) { ui.baoGoiY("Chạm nông dân 🧑‍🌾 trước, rồi chạm vào đây để giao việc nhé!"); return; }
     }
     // 3) chạm đất -> đi tới
     const trungDat = tia.intersectObject(diaHinh.matDat, false)[0];
@@ -107,8 +107,8 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
         const c = dangChon.dv.duong[dangChon.dv.duong.length - 1];
         if (c) dauDich(c.x, c.z); else dauDich(trungDat.point.x, trungDat.point.z);
         ui.baoGoiY((ui.loiDi && ui.loiDi(dangChon.dv, o)) || dangChon.dv.ten + " đang đi.");
-      } else ui.baoGoiY("Chỗ đó không tới được đâu.");
-    } else if (!dangChon) ui.baoGoiY("Chạm vào Thủ lĩnh hoặc nông dân để chọn.");
+      } else ui.baoGoiY("Không đi tới chỗ đó được.");
+    } else if (!dangChon) ui.baoGoiY("Chạm Thủ lĩnh hoặc nông dân để chọn.");
   });
 
   // --- Chữ nổi "+10 🪵" + dấu "!" ---
