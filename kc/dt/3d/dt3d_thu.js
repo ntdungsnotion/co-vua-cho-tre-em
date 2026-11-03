@@ -152,6 +152,7 @@ if (vung) {
 }
 
 // Bảng điều khiển công trình kiểu AoE: chỉ hiện khi chọn nhà của chính mình.
+const PHA_HUY_MO = false; // bật lại khi SQL nhận lệnh phá hủy (bước sau)
 const bang = $("d3BangDieuKhien"), bangTen = $("d3BangTen"), bangThai = $("d3BangTrangThai"), bangAnh = $("d3BangAnh"), nutPhaHuy = $("d3PhaHuy");
 let ctDangChon = null;
 const bieuTuongCt = { leu: "🏕️", tuong: "🧱", cong: "🚪", thap_canh: "🗼", nha_o: "🏠", ruong: "🌾", kho_go: "📦", kho_da: "📦", kho_vang: "📦", vua_luong_thuc: "🍖", choi_hai_luom: "🧺", choi_mo: "⛏️" };
@@ -166,7 +167,8 @@ function capBang(ct) {
     if (nutPhaHuy) nutPhaHuy.hidden = true;
   } else {
     bangThai.textContent = ct.xong ? "Đã hoàn thành" : "Đang xây · " + Math.round((ct.tienDo || 0) * 100) + "%";
-    if (nutPhaHuy) nutPhaHuy.hidden = !ct.xong;
+    // Tạm ẩn: phá hủy mới chạy trên máy bé, máy chủ chưa biết -> tải lại / hỏi lại máy chủ công trình hiện lại (03/11/2026)
+    if (nutPhaHuy) nutPhaHuy.hidden = !(PHA_HUY_MO && ct.xong);
   }
 }
 uiDk.chonCongTrinh = capBang;
@@ -277,4 +279,4 @@ window.__dt3d.taiMs = Math.round(performance.now() - t0);
 $("d3Tai").hidden = true;
 if (vung) vung.batDau();
 else baoGoiY("Chạm vào nông dân 🧑‍🌾 rồi chạm cây, mỏ, bãi cá hoặc bụi trái cây để giao việc. Kéo để xem quanh làng, chụm hai ngón (hoặc lăn chuột) để phóng to.");
-// 30/10/2026 - BƯỚC: TC_D06A; 30/10/2026 17:30 - TC_D06C1 (quái nhận mayChu + vung)
+// 30/10/2026 - BƯỚC: TC_D06A; 30/10/2026 17:30 - TC_D06C1 (quái nhận mayChu + vung); 03/11/2026 23:3x - TC_D06C1 (tạm ẩn nút Phá hủy)
