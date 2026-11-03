@@ -729,8 +729,12 @@ export async function vaoThungLung(the) {
   }
   function capNhatNut() {
     const nut = $("d3SoiDat"), xongLeu = !!(leuBe && leuBe.xong);
+    const dangChon = dk.dangChon();
+    const nongDanDangChon = !!(dangChon && dangChon.vaiTro === "nong_dan" && !dangChon.dv.laBan);
     if (xongLeu) {
-      nut.hidden = false;
+      // Xây là kỹ năng của nông dân đang chọn, không phải nút chung của cả làng.
+      nut.hidden = !nongDanDangChon;
+      if (!nongDanDangChon && (menuMo || cheDo)) { menuMo = false; batCheDo(null); }
       const dang = !!cheDo || menuMo;
       datNut(nut, cheDo ? "✋<span class=\"d3Chu\"> Thôi xây</span>" : menuMo ? "✋<span class=\"d3Chu\"> Đóng</span>" : "🔨<span class=\"d3Chu\"> Xây</span>",
         cheDo ? "Thôi chọn chỗ xây" : menuMo ? "Đóng menu xây" : "Mở menu xây");
@@ -906,6 +910,7 @@ export async function vaoThungLung(the) {
       dangDo: () => dangDo().length,
       leu: () => leuBe && { id: leuBe.id, x: leuBe.x, y: leuBe.y, xong: leuBe.xong, tienDo: leuBe.tienDo },
       nongDan: () => dsNd.map(d => ({ ten: d.ten, x: d.x, z: d.z, viec: d.trangThai, nguon: d.viec && d.viec.loai, tuKhamPha: d.tuKhamPha, ranh: d.ranh })),
+      capNhatNut,
       // TC_D02B3b: quân + nhà của bạn đang thấy, hỏi lại máy chủ ngay, phần kho còn phải trừ
       ban: () => [...ban.values()].map(b => ({ id: b.d.id, chu: b.dv.chu, vaiTro: b.dv.vaiTro, x: b.dv.x, z: b.dv.z, hien: b.h.vo.visible, viec: b.dv.trangThai, di: b.dv.duong.length > 0 })),
       nhaBan: () => [...ctBan.values()].map(c => ({ id: c.id, chu: c.chu, x: c.x, y: c.y, xong: c.xong, tienDo: c.tienDo })),
