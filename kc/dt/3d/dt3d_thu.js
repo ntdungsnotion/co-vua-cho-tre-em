@@ -145,27 +145,43 @@ if (VUNG) {
   for (const p of banDo.batDau.nongDan || []) themNongDan(p.x, p.z);
 }
 
+// Khi chọn nông dân, bảng kỹ năng ở đáy phải cập nhật ngay (không chờ vòng hỏi máy chủ).
+if (vung) {
+  const baoChonCu = uiDk.baoChon;
+  uiDk.baoChon = chu => { baoChonCu(chu); if (vung.moc && vung.moc.capNhatNut) vung.moc.capNhatNut(); };
+}
+
 // Bảng điều khiển công trình kiểu AoE: chỉ hiện khi chọn nhà của chính mình.
-const bang = $("d3BangDieuKhien"), bangTen = $("d3BangTen"), bangThai = $("d3BangTrangThai"), bangAnh = $("d3BangAnh");
+const PHA_HUY_MO = false; // bật lại khi SQL nhận lệnh phá hủy (bước sau)
+const bang = $("d3BangDieuKhien"), bangTen = $("d3BangTen"), bangThai = $("d3BangTrangThai"), bangAnh = $("d3BangAnh"), nutPhaHuy = $("d3PhaHuy");
 let ctDangChon = null;
 const bieuTuongCt = { leu: "🏕️", tuong: "🧱", cong: "🚪", thap_canh: "🗼", nha_o: "🏠", ruong: "🌾", kho_go: "📦", kho_da: "📦", kho_vang: "📦", vua_luong_thuc: "🍖", choi_hai_luom: "🧺", choi_mo: "⛏️" };
 function capBang(ct) {
   ctDangChon = ct;
-  if (!ct || ct.cuaMinh === false) { bang.hidden = true; return; }
+  if (!bang || !bangTen || !bangThai || !bangAnh || !ct || ct.cuaMinh === false) { if (bang) bang.hidden = true; return; }
   const mau = cauHinh.congTrinh[ct.loai] || {};
   bang.hidden = false; bangAnh.textContent = bieuTuongCt[ct.loai] || "🏗️"; bangTen.textContent = mau.ten || ct.loai;
   if (ct.phaHuyLuc != null) {
     const con = Math.max(0, Math.ceil((30000 - (lang.bayGio() - ct.phaHuyLuc)) / 1000));
     bangThai.textContent = con ? "Đang hư hỏng · biến mất sau " + con + " giây" : "Đã biến mất";
-  } else bangThai.textContent = ct.xong ? "Đã hoàn thành" : "Đang xây · " + Math.round((ct.tienDo || 0) * 100) + "%";
+    if (nutPhaHuy) nutPhaHuy.hidden = true;
+  } else {
+    bangThai.textContent = ct.xong ? "Đã hoàn thành" : "Đang xây · " + Math.round((ct.tienDo || 0) * 100) + "%";
+    // Tạm ẩn: phá hủy mới chạy trên máy bé, máy chủ chưa biết -> tải lại / hỏi lại máy chủ công trình hiện lại (03/11/2026)
+    if (nutPhaHuy) nutPhaHuy.hidden = !(PHA_HUY_MO && ct.xong);
+  }
 }
 uiDk.chonCongTrinh = capBang;
-$("d3PhaHuy").addEventListener("click", () => {
+if (nutPhaHuy) nutPhaHuy.addEventListener("click", () => {
   if (!ctDangChon || !vung || ctDangChon.cuaMinh === false || ctDangChon.phaHuyLuc != null) return;
   if (!confirm("Phá hủy công trình này? Công trình sẽ hư dần và biến mất sau 30 giây.")) return;
-  if (vung.phaHuy(ctDangChon)) { capBang(ctDangChon); baoGoiY("Công trình đang sụp dần. Còn 30 giây."); }
+  if (vung.phaHuy(ctDangChon)) {
+    // Không giữ bảng phủ lên khu điều khiển sau khi ra lệnh; công trình tự hư ở nền.
+    capBang(null);
+    baoGoiY("Công trình đang sụp dần. Con vẫn điều khiển được làng.");
+  }
 });
-setInterval(() => { if (ctDangChon && !bang.hidden) capBang(ctDangChon); }, 250);
+setInterval(() => { if (bang && ctDangChon && !bang.hidden) capBang(ctDangChon); }, 250);
 $("d3TenVuong").textContent = be.tenVuongQuoc ? "Vương quốc " + be.tenVuongQuoc : VUNG ? banDo.ten + " · Cổng " + vung.vao.cong.so : "Thung Lũng Khởi Đầu";
 
 // ---------------- Thanh tài nguyên ----------------
@@ -263,4 +279,4 @@ window.__dt3d.taiMs = Math.round(performance.now() - t0);
 $("d3Tai").hidden = true;
 if (vung) vung.batDau();
 else baoGoiY("Chạm vào nông dân 🧑‍🌾 rồi chạm cây, mỏ, bãi cá hoặc bụi trái cây để giao việc. Kéo để xem quanh làng, chụm hai ngón (hoặc lăn chuột) để phóng to.");
-// 30/10/2026 - BƯỚC: TC_D06A; 30/10/2026 17:30 - TC_D06C1 (quái nhận mayChu + vung)
+// 30/10/2026 - BƯỚC: TC_D06A; 30/10/2026 17:30 - TC_D06C1 (quái nhận mayChu + vung); 03/11/2026 23:3x - TC_D06C1 (tạm ẩn nút Phá hủy)

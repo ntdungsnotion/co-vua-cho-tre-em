@@ -81,12 +81,9 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
       if (h.dv.laBan) { ui.baoGoiY((ui.loiBan && ui.loiBan(h)) || "Đây là người của bạn khác."); return; }
       chon(h); return;
     }
-    // TC_D06C1: chon cong trinh de mo bang dieu khien kieu AoE.
-    const congTrinh = ui.chamCongTrinh && ui.chamCongTrinh(tia);
-    if (congTrinh) {
-      if (ui.chonCongTrinh) ui.chonCongTrinh(congTrinh);
-      return;
-    }
+    // TC_D06C1: chạm công trình -> mở bảng điều khiển kiểu AoE (chạm chỗ khác: đóng). KHÔNG dừng ở đây:
+    // Lều vẫn hiện nút sinh nông dân, móng vẫn gọi nông dân vào xây, ruộng vẫn báo... như bước 3 dưới (03/11/2026)
+    if (ui.chamCongTrinh && ui.chonCongTrinh) ui.chonCongTrinh(ui.chamCongTrinh(tia) || null);
     // 2) chạm nguồn tài nguyên
     let n = taiNguyen.chon(tia);
     if (n && ui.thayNguon && !ui.thayNguon(n)) n = null; // nguồn còn trong sương đen: bé chưa thấy
@@ -151,4 +148,4 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
 
   return { chon, dangChon: () => dangChon, datCheDoCham(fn) { cheDoRieng = fn || null; } };
 }
-// 30/10/2026 - BƯỚC: TC_D06A
+// 30/10/2026 - BƯỚC: TC_D06A; 03/11/2026 23:2x - TC_D06C1 (chạm công trình mở bảng mà không chặn Lều / móng / ruộng)
