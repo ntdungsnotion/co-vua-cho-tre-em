@@ -21,7 +21,9 @@
 //   taoQuaiBanDo(the) -> Promise<{ trung(tia) -> { q, kc } | null, cham(q, hinhDangChon), moc }>
 //     the = { ctx, lang, diaHinh, banDo, cauHinh, cam, suong?, laLanhDia?(x, y), dvTl, hTl, be: { ten, hoSo, lop },
 //             mayChu (dt_may_chu.js / dt_may_chu_sb.js: gio, quaiGiu, quaiDanh, quaiKet),
-//             vung ({ quanhDau, ngheQuanh, tlBan, hoiLai } của dt3d_vung.js), lop (DOM phủ cảnh), baoGoiY(chu) }
+//             vung ({ quanhDau, ngheQuanh, tlBan, hoiLai } của dt3d_vung.js), lop (DOM phủ cảnh), baoGoiY(chu),
+//             (TC_D06D) khiXem(fn): chạm quái -> thanh dưới đọc fn() lấy thông số + nút ⚔️ Đánh; chonTl(): chọn Thủ lĩnh }
+//     trả thêm conNghi() (ms còn nghỉ), dongHo(ms) cho thông số Thủ lĩnh ở thanh dưới
 //   dt3d_dieu_khien.js gọi trung / cham qua ui.trungQuai / ui.chamQuai.
 // LUẬT NỐI: lõi KC_DT_QUAI_BAN_DO, KC_DT_LUOI, KC_DT_BAN_DO (SANG); lang.lenhDi; ctx.nghiVe (dt3d_canh.js).
 // BƯỚC: TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ)
@@ -133,10 +135,27 @@ export async function taoQuaiBanDo(the) {
     mayChu.quaiKet(ten, r.id, ket || "tha", null, giuKetNoi);
   }
 
+  // TC_D06D: thông số quái cho ô "đang xem" ở thanh dưới (null: quái đã chạy / mất -> thanh về người đang chọn)
+  const SUC = { xanh: "Yếu hơn Thủ lĩnh", vang: "Ngang sức Thủ lĩnh", do: "Mạnh hơn Thủ lĩnh" };
+  function thongTin(r) {
+    const p = viTri(r);
+    if (!ghi.has(r.id) || p.mat || p.trangThai === "chay") return null;
+    const tt = { anh: "👾", ten: tenLoai(r.ma) + " · Lv " + r.lv, dong: DAU_MAU[mau(r)] + " " + SUC[mau(r)], nut: [] };
+    if (cuaBan(r)) tt.phu = "⚔️ Đang giao chiến với Thủ lĩnh của " + r.khoa.ten;
+    else if (dangToi === r) tt.phu = "⚔️ " + dvTl.ten + " đang tiến tới";
+    else if (conNghi() > 0) tt.phu = "⛺ " + dvTl.ten + " đang nghỉ · còn " + dongHo(conNghi());
+    else {
+      tt.phu = "Đang lang thang";
+      tt.nut.push({ id: "d3DanhQuai", chu: "⚔️<span class=\"d3Chu\"> Đánh</span>", nhan: "Thủ lĩnh đánh " + tenLoai(r.ma), bam: () => { if (the.chonTl) the.chonTl(); cham(r, { vaiTro: "thu_linh" }); } });
+    }
+    return tt;
+  }
+
   function cham(r, chonH) {
     if (trongTran) return;
     const p = viTri(r);
     if (p.mat || p.trangThai === "chay") return;
+    if (the.khiXem) the.khiXem(() => thongTin(r)); // TC_D06D
     const nhan = DAU_MAU[mau(r)] + " " + tenLoai(r.ma) + " · Lv " + r.lv;
     if (cuaBan(r)) { the.baoGoiY("⚔️ " + nhan + " đang giao chiến với Thủ lĩnh của " + r.khoa.ten + "."); return; }
     if (!chonH || chonH.vaiTro !== "thu_linh") { the.baoGoiY(chonH ? nhan + " · ❌ Chỉ Thủ lĩnh 👑 đánh quái" : nhan); return; }
@@ -288,7 +307,7 @@ export async function taoQuaiBanDo(the) {
   }
 
   return {
-    trung, cham,
+    trung, cham, conNghi, dongHo,
     moc: { // kịch bản thử Chrome
       ds: () => [...ghi.values()].map(r => { const p = viTri(r), h = hinh.get(r.id);
         return { id: r.id, ma: r.ma, lv: r.lv, x: p.x, z: p.z, nhaX: r.x, nhaZ: r.z, trangThai: p.mat ? "mat" : p.trangThai, hien: !!(h && h.vo.visible), mau: mau(r),
@@ -307,4 +326,4 @@ export async function taoQuaiBanDo(the) {
     }
   };
 }
-// 30/10/2026 17:30 - BƯỚC: TC_D06C1
+// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06D (thông số quái + nút ⚔️ Đánh ở thanh dưới)

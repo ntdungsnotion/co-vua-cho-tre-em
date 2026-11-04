@@ -53,23 +53,35 @@
     </div>
   </div>
 
+  <!-- TC_D06D: thanh điều khiển cuối màn hình (đang xem | lệnh | chung), dt/3d/dt3d_thanh_duoi.js -->
   <div class="d3Duoi">
     <div class="d3Khung" id="d3GoiY" role="status" aria-live="polite">Đang dựng làng…</div>
-    <div class="d3HangNut">
-      <span class="d3Khung d3Do" id="d3Chon">Chưa chọn ai</span>
-      <span class="d3Khung d3Do d3Pt" id="d3KhamPha" hidden>🗺️ Đã khám phá 0%</span>
-      <span class="d3Khung d3Do" id="d3Fps">… khung/giây</span>
-    </div>
-    <div class="d3HangNut">
-      <button class="d3Nut d3Khung" id="d3VeLang" type="button" aria-label="Về lều trại">🏕️<span class="d3Chu"> Về lều</span></button>
-      <button class="d3Nut d3Khung" id="d3SoiDat" type="button" aria-label="Chọn chỗ dựng Lều trại" aria-pressed="false" hidden>🏕️<span class="d3Chu"> Dựng lều</span></button>
-      <button class="d3Nut d3Khung" id="d3KhamPhaNut" type="button" aria-label="Nông dân đi khám phá" hidden>🔭<span class="d3Chu"> Đi khám phá</span></button>
-      <button class="d3Nut d3Khung" id="d3DoHoa" type="button">✨ Đồ họa: Đẹp</button>
-      <button class="d3Nut d3Khung" id="d3DoiHinh" type="button" aria-label="Thử ngoại hình">🎨<span class="d3Chu"> Ngoại hình</span></button>
-      <button class="d3Nut d3Khung" id="d3ThuTran" type="button" aria-label="Xem động tác trận">⚔️<span class="d3Chu"> Động tác trận</span></button>
-      <button class="d3Nut d3Khung" id="d3Tua" type="button" aria-label="Tua nhanh 3 giờ">⏩<span class="d3Chu"> Tua 3 giờ</span></button>
-      <button class="d3Nut d3Khung" id="d3ThemNd" type="button" aria-label="Thêm nông dân thử">➕🧑‍🌾 <span id="d3SoNd">0</span></button>
-      <button class="d3Nut d3Khung" id="d3LamLai" type="button" aria-label="Vào lại làng từ đầu" hidden>🔄<span class="d3Chu"> Vào lại</span></button>
+    <div class="d3Thanh">
+      <section class="d3BangChon" aria-label="Đang xem" aria-live="polite">
+        <div class="d3BangAnh" id="d3BangAnh" aria-hidden="true">🏰</div>
+        <div class="d3BangThongTin">
+          <strong id="d3BangTen">Làng</strong>
+          <span id="d3BangDong" hidden></span>
+          <span id="d3BangPhu" hidden></span>
+          <div class="d3BangMuc" id="d3BangMuc" hidden><i id="d3BangMucDay"></i></div>
+        </div>
+      </section>
+      <div class="d3Lenh" id="d3Lenh" aria-label="Lệnh">
+        <span class="d3LenhRieng" id="d3LenhRieng"></span>
+        <button class="d3Nut d3Khung" id="d3SoiDat" type="button" aria-label="Chọn chỗ dựng Lều trại" aria-pressed="false" hidden>🏕️<span class="d3Chu"> Dựng lều</span></button>
+        <button class="d3Nut d3Khung" id="d3KhamPhaNut" type="button" aria-label="Nông dân đi khám phá" hidden>🔭<span class="d3Chu"> Đi khám phá</span></button>
+        <button class="d3Nut d3Khung" id="d3DoiHinh" type="button" aria-label="Thử ngoại hình">🎨<span class="d3Chu"> Ngoại hình</span></button>
+        <button class="d3Nut d3Khung" id="d3ThuTran" type="button" aria-label="Xem động tác trận">⚔️<span class="d3Chu"> Động tác trận</span></button>
+        <button class="d3Nut d3Khung" id="d3Tua" type="button" aria-label="Tua nhanh 3 giờ">⏩<span class="d3Chu"> Tua 3 giờ</span></button>
+        <button class="d3Nut d3Khung" id="d3ThemNd" type="button" aria-label="Thêm nông dân thử">➕🧑‍🌾 <span id="d3SoNd">0</span></button>
+        <button class="d3Nut d3Khung" id="d3LamLai" type="button" aria-label="Vào lại làng từ đầu" hidden>🔄<span class="d3Chu"> Vào lại</span></button>
+      </div>
+      <div class="d3Chung" aria-label="Cả làng">
+        <span class="d3Khung d3Do d3Pt" id="d3KhamPha" hidden>🗺️ Đã khám phá 0%</span>
+        <span class="d3Khung d3Do" id="d3Fps">… khung/giây</span>
+        <button class="d3Nut d3Khung" id="d3VeLang" type="button" aria-label="Về lều trại">🏕️<span class="d3Chu"> Về lều</span></button>
+        <button class="d3Nut d3Khung" id="d3DoHoa" type="button">✨ Đồ họa: Đẹp</button>
+      </div>
     </div>
   </div>
 
@@ -84,4 +96,4 @@
   <script type="module" src="dt/3d/dt3d_thu.js"></script>
 </body>
 </html>
-<!-- 30/10/2026 - BƯỚC: TC_D06A -->
+<!-- 30/10/2026 - BƯỚC: TC_D06A; 04/11/2026 - TC_D06D thanh điều khiển cuối màn hình -->

@@ -619,7 +619,7 @@ export async function vaoThungLung(the) {
     + " · 🧑‍🌾 " + giaChu(SINH.gia, 1) + " / " + SINH.giay + " giây.";
   function moLeu(mo) {
     leuMo = !!mo;
-    if (leuMo) { menuMo = false; ruongMo = null; baoGoiY(loiLeu()); }
+    if (leuMo) { menuMo = false; ruongMo = null; baoGoiY(loiLeu()); if (uiDk.xemCt) uiDk.xemCt(leuBe); } // TC_D06D: thanh dưới xem Lều
     capNhatNut();
   }
 
@@ -639,7 +639,7 @@ export async function vaoThungLung(the) {
     + (n.ct.gatLuc != null ? " · 🌱 " + giaChu(MR.giaTrongLai, 1) : "") + ".";
   function moRuong(n) {
     ruongMo = n || null;
-    if (ruongMo) { menuMo = false; leuMo = false; baoGoiY(loiRuong(ruongMo)); }
+    if (ruongMo) { menuMo = false; leuMo = false; baoGoiY(loiRuong(ruongMo)); if (uiDk.xemCt) uiDk.xemCt(ruongMo.ct); } // TC_D06D
     capNhatNut();
   }
   async function trongLai() {
@@ -790,7 +790,7 @@ export async function vaoThungLung(the) {
       menuMo = !menuMo;
       if (menuMo) leuMo = false; // TC_D03B1
       capNhatNut();
-      if (menuMo) baoGoiY("🔨 Con muốn xây gì? Tường cọc gỗ rào kín làng thành lãnh địa, Cổng cho người của con đi qua, Tháp canh nhìn thật xa. (Ai đang được chọn sẽ đi xây, không thì Thủ lĩnh.)");
+      if (menuMo) baoGoiY("🔨 Xây gì? Tường cọc gỗ rào kín làng thành lãnh địa, Cổng cho người của mình đi qua, Tháp canh nhìn thật xa. " + (dk.dangChon() ? dk.dangChon().dv.ten : "Nông dân") + " sẽ đi xây."); // TC_D06D: chỉ nông dân đang chọn mở được menu
       return;
     }
     batChonCho(!cheDo);
@@ -896,6 +896,19 @@ export async function vaoThungLung(the) {
     ngheQuanh: f => ngheQuanh.push(f), hoiLai: () => chuKy(),
     tlBan: chu => { for (const b of ban.values()) if (b.dv.chu === chu && b.dv.vaiTro === "thu_linh") return b; return null; },
     phaHuy,
+    // TC_D06D: thông số riêng của công trình cho ô "đang xem" ở thanh dưới; chọn người khác thì đóng phần Lều / ruộng
+    thongTinCt(ct) {
+      if (ct.cuaMinh === false || !ct.xong) return null;
+      if (ct === leuBe) return "👥 " + lang.danSo() + "/" + lang.choO() + (hang ? " · ⏳ " + hang.so + " người, người kế sau " + conGiaySinh() + " giây" : " · 🧑‍🌾 " + giaChu(SINH.gia, 1) + " / " + SINH.giay + " giây");
+      if (ct.loai === "ruong") { const n = lang.ruong().find(r => r.ct === ct); return n ? loiLua(n) + " · 🧑‍🌾 " + lang.donVi.filter(d => d.viec === n).length : null; }
+      if (LA_KHO[ct.loai]) { const t = LA_KHO[ct.loai]; return "Sức chứa " + TN[t].ten + " " + lang.sucChua(t) + " " + TN[t].bieuTuong; }
+      if (ct.loai === "nha_o") return "+" + (CT.nha_o.choO || 0) + " chỗ ở · 👥 " + lang.danSo() + "/" + lang.choO();
+      if (ct.loai === "thap_canh") return "Nhìn xa " + BD.tamNhinCt(CB, "thap_canh", lang.chungLoai) + " ô";
+      if (LA_CHOI[ct.loai]) return "Cất " + catChu(ct.loai);
+      if (ct.loai === "cong") return "Người của mình đi qua được";
+      return null;
+    },
+    dongXem() { if (leuMo || ruongMo) { leuMo = false; ruongMo = null; capNhatNut(); } },
     moc: {
       cong: vao.cong, lanDau: vao.lanDau, mayChu,
       muc: (x, z) => suong.muc(Math.floor(x), Math.floor(z)), demDaKham: () => suong.demDaKham(),
@@ -931,3 +944,4 @@ export async function vaoThungLung(the) {
   };
 }
 // 30/10/2026 13:56 - BƯỚC: TC_D06A (khai laLanhDia cho quái tránh lãnh địa); 30/10/2026 17:30 - TC_D06C1 (quái chung: quanhDau, ngheQuanh, tlBan, Thủ lĩnh bạn đánh quái)
+// 04/11/2026 - BƯỚC: TC_D06D (thongTinCt + dongXem cho thanh dưới; câu menu Xây: chỉ nông dân đang chọn đi xây)
