@@ -31,6 +31,7 @@ import { taoBoNhanVat } from "./dt3d_nhan_vat.js";
 import { taoDieuKhien } from "./dt3d_dieu_khien.js";
 import { vaoThungLung } from "./dt3d_vung.js";
 import { taoQuaiBanDo } from "./dt3d_quai_ban_do.js";
+import { taoThanhDuoi } from "./dt3d_thanh_duoi.js";
 
 const NV = window.KC_NV, LANG = window.KC_DT_LANG, BD = window.KC_DT_BAN_DO;
 const $ = id => document.getElementById(id);
@@ -111,8 +112,10 @@ const boNv = taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam: loai => CH
 ctx.moiKhung(dt => boNv.capNhat(dt));
 const goiY = $("d3GoiY");
 const baoGoiY = chu => { goiY.textContent = chu; };
-const uiDk = { baoGoiY, baoChon: chu => { $("d3Chon").textContent = chu; }, lop: $("d3ChuNoi"),
-  chamCongTrinh: tia => congTrinhVe.chon(tia) };
+let thanh = null; // TC_D06D: thanh điều khiển cuối màn hình (dt3d_thanh_duoi.js), dựng ngay sau dk
+const uiDk = { baoGoiY, lop: $("d3ChuNoi"), chamCongTrinh: tia => congTrinhVe.chon(tia),
+  // chọn người -> ô "đang xem" về người đó; phần Lều / ruộng đang mở thì đóng (nút của chúng thôi hiện)
+  baoChon: () => { if (thanh) thanh.xem(null); if (vung) { vung.dongXem(); vung.moc.capNhatNut(); } } };
 const dk = taoDieuKhien(ctx, cam, lang, taiNguyen, boNv, diaHinh, uiDk);
 
 let soNongDan = 0;
@@ -136,7 +139,8 @@ if (VUNG) {
   // TC_D06A: quái lang thang; chạm quái khi đang chọn Thủ lĩnh -> màn chiến đấu
   try {
     quaiBd = await taoQuaiBanDo({ ctx, cam, lang, diaHinh, banDo, cauHinh, suong: vung.suong, laLanhDia: vung.laLanhDia, dvTl, hTl,
-      be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY, mayChu: vung.mayChu, vung }); // TC_D06C1: quái chung từ máy chủ
+      be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY, mayChu: vung.mayChu, vung, // TC_D06C1: quái chung từ máy chủ
+      khiXem: fn => { if (thanh) thanh.xem(fn); }, chonTl: () => dk.chon(hTl) }); // TC_D06D: thông số quái + nút ⚔️ Đánh ở thanh dưới
     uiDk.trungQuai = quaiBd.trung; uiDk.chamQuai = quaiBd.cham;
   } catch (e) { console.warn("Chưa dựng được quái trên bản đồ", e); } // thiếu quái vẫn chơi làng được
 } else {
@@ -145,43 +149,74 @@ if (VUNG) {
   for (const p of banDo.batDau.nongDan || []) themNongDan(p.x, p.z);
 }
 
-// Khi chọn nông dân, bảng kỹ năng ở đáy phải cập nhật ngay (không chờ vòng hỏi máy chủ).
-if (vung) {
-  const baoChonCu = uiDk.baoChon;
-  uiDk.baoChon = chu => { baoChonCu(chu); if (vung.moc && vung.moc.capNhatNut) vung.moc.capNhatNut(); };
-}
-
-// Bảng điều khiển công trình kiểu AoE: chỉ hiện khi chọn nhà của chính mình.
-const PHA_HUY_MO = false; // bật lại khi SQL nhận lệnh phá hủy (bước sau)
-const bang = $("d3BangDieuKhien"), bangTen = $("d3BangTen"), bangThai = $("d3BangTrangThai"), bangAnh = $("d3BangAnh"), nutPhaHuy = $("d3PhaHuy");
-let ctDangChon = null;
+// ---------------- Thanh điều khiển cuối màn hình (TC_D06D) ----------------
+// Ô "đang xem": thứ vừa chạm (nhà, Lều, ruộng, cây / mỏ, quái); chạm đất / chọn người thì về người đang chọn.
+const TEN_CL = { nhan: "Nhân tộc", quy: "Quỷ tộc", tien: "Tiên tộc" };
+const PHA_HUY_MO = false; // bật lại khi SQL nhận lệnh phá hủy (bước sau); máy chủ chưa biết -> tải lại công trình hiện lại (03/11/2026)
 const bieuTuongCt = { leu: "🏕️", tuong: "🧱", cong: "🚪", thap_canh: "🗼", nha_o: "🏠", ruong: "🌾", kho_go: "📦", kho_da: "📦", kho_vang: "📦", vua_luong_thuc: "🍖", choi_hai_luom: "🧺", choi_mo: "⛏️" };
-function capBang(ct) {
-  ctDangChon = ct;
-  if (!bang || !bangTen || !bangThai || !bangAnh || !ct || ct.cuaMinh === false) { if (bang) bang.hidden = true; return; }
-  const mau = cauHinh.congTrinh[ct.loai] || {};
-  bang.hidden = false; bangAnh.textContent = bieuTuongCt[ct.loai] || "🏗️"; bangTen.textContent = mau.ten || ct.loai;
+const BT_NGUON = { cay: "🌳", mo_da: "🪨", mo_vang: "🪙", mo_sat: "⛓️", bai_ca: "🐟", bui_trai_cay: "🍓", ruong: "🌾" };
+const LAM = { cay: "🪓 Đang chặt cây", mo_da: "⛏️ Đang đào đá", mo_vang: "⛏️ Đang đào vàng", mo_sat: "⛏️ Đang đào sắt", bai_ca: "🎣 Đang bắt cá", bui_trai_cay: "🍓 Đang hái trái cây", ruong: "🌾 Đang gặt lúa" };
+const TRANG_DV = { di: "🚶 Đang đi", dung: "Đứng chờ", toi_viec: "🚶 Đang tới chỗ làm", toi_xay: "🚶 Đang tới chỗ xây", ve_kho: "🎒 Đang mang đồ về kho" };
+const pt = so => Math.round((so || 0) * 100) + "%";
+const tenCt = ct => (cauHinh.congTrinh[ct.loai] || {}).ten || ct.loai;
+const thoiGian = ms => { const p = Math.max(1, Math.ceil(ms / 60000)); return p >= 60 ? Math.floor(p / 60) + " giờ " + (p % 60) + " phút" : p + " phút"; };
+function ttDonVi(h) {
+  const dv = h.dv, laTl = h.vaiTro === "thu_linh", xay = dv.trangThai === "xay" && dv.xay;
+  const tt = { anh: laTl ? "👑" : "🧑‍🌾", ten: dv.ten, muc: xay ? dv.xay.tienDo : null };
+  const nghi = laTl && !dv.laBan && quaiBd ? quaiBd.conNghi() : 0;
+  tt.phu = nghi > 0 ? "⛺ Đang nghỉ ở Lều · còn " + quaiBd.dongHo(nghi)
+    : xay ? "🔨 Đang xây " + tenCt(dv.xay) + " · " + pt(dv.xay.tienDo)
+      : dv.ranh ? "💤 Đang rảnh" : dv.trangThai === "lam" && dv.viec ? LAM[dv.viec.loai] || "Đang làm" : TRANG_DV[dv.trangThai] || "";
+  if (laTl) tt.dong = "Thủ lĩnh" + (dv.laBan ? "" : " · " + TEN_CL[lang.chungLoai]);
+  else {
+    const m = dv.mang || {}, t = m.so && CH.taiNguyen[m.loai];
+    tt.dong = "Nông dân" + (t ? " · mang " + m.so + "/" + lang.sucMang() + " " + t.bieuTuong : "");
+    if (!xay && t) tt.muc = m.so / lang.sucMang();
+  }
+  if (dv.laBan) tt.dong += " · của " + dv.chu;
+  return tt;
+}
+function ttCongTrinh(ct) {
+  if (!lang.congTrinh.includes(ct)) return null; // đã mất (phá hủy, ruộng thành cỏ)
+  const cuaMinh = ct.cuaMinh !== false, nguoi = lang.donVi.filter(d => d.xay === ct).length;
+  const tt = { anh: bieuTuongCt[ct.loai] || "🏗️", ten: tenCt(ct), nut: [] };
   if (ct.phaHuyLuc != null) {
     const con = Math.max(0, Math.ceil((30000 - (lang.bayGio() - ct.phaHuyLuc)) / 1000));
-    bangThai.textContent = con ? "Đang hư hỏng · biến mất sau " + con + " giây" : "Đã biến mất";
-    if (nutPhaHuy) nutPhaHuy.hidden = true;
-  } else {
-    bangThai.textContent = ct.xong ? "Đã hoàn thành" : "Đang xây · " + Math.round((ct.tienDo || 0) * 100) + "%";
-    // Tạm ẩn: phá hủy mới chạy trên máy bé, máy chủ chưa biết -> tải lại / hỏi lại máy chủ công trình hiện lại (03/11/2026)
-    if (nutPhaHuy) nutPhaHuy.hidden = !(PHA_HUY_MO && ct.xong);
-  }
+    tt.dong = con ? "Đang hư hỏng · biến mất sau " + con + " giây" : "Đã biến mất";
+  } else if (!ct.xong) { tt.dong = "🔨 Đang xây · " + pt(ct.tienDo) + (nguoi ? " · 🧑‍🌾 " + nguoi : ""); tt.muc = ct.tienDo || 0; }
+  else tt.dong = "Đã hoàn thành";
+  tt.phu = !cuaMinh ? "Của " + (ct.chu || "bạn") : vung ? vung.thongTinCt(ct) : null;
+  if (PHA_HUY_MO && vung && cuaMinh && ct.xong && ct.phaHuyLuc == null) tt.nut.push({ id: "d3PhaHuy", lop: "d3NutPhaHuy", chu: "✖<span class=\"d3Chu\"> Phá hủy</span>", nhan: "Phá hủy " + tenCt(ct), bam: () => {
+    if (!confirm("Phá hủy công trình này? Công trình sẽ hư dần và biến mất sau 30 giây.")) return;
+    if (vung.phaHuy(ct)) baoGoiY("Công trình đang sụp dần. Vẫn điều khiển được làng.");
+  } });
+  return tt;
 }
-uiDk.chonCongTrinh = capBang;
-if (nutPhaHuy) nutPhaHuy.addEventListener("click", () => {
-  if (!ctDangChon || !vung || ctDangChon.cuaMinh === false || ctDangChon.phaHuyLuc != null) return;
-  if (!confirm("Phá hủy công trình này? Công trình sẽ hư dần và biến mất sau 30 giây.")) return;
-  if (vung.phaHuy(ctDangChon)) {
-    // Không giữ bảng phủ lên khu điều khiển sau khi ra lệnh; công trình tự hư ở nền.
-    capBang(null);
-    baoGoiY("Công trình đang sụp dần. Vẫn điều khiển được làng.");
-  }
-});
-setInterval(() => { if (bang && ctDangChon && !bang.hidden) capBang(ctDangChon); }, 250);
+function ttNguon(n) {
+  if (!lang.dangSong(n) && n.trangThai !== "mam") return null; // cạn rồi
+  const t = CH.taiNguyen[n.taiNguyen] || {}, nguoi = lang.donVi.filter(d => d.viec === n).length;
+  const tt = { anh: BT_NGUON[n.loai] || "🌿", ten: (CH.nguon[n.loai] || {}).ten || n.loai };
+  if (n.trangThai === "mam") { tt.dong = "🌱 Mầm cây · lớn sau " + thoiGian(n.lucLon - lang.bayGio()); return tt; }
+  tt.dong = "Còn " + n.con + "/" + n.toiDa + " " + (t.bieuTuong || "");
+  tt.muc = n.con / Math.max(1, n.toiDa);
+  tt.phu = nguoi ? "🧑‍🌾 " + nguoi + " người đang làm" : "Chưa ai làm";
+  return tt;
+}
+// Không xem gì: người đang chọn; không chọn ai: cả làng
+function ttMacDinh() {
+  const c = dk.dangChon();
+  if (c) return ttDonVi(c);
+  const nd = lang.donVi.filter(d => d.vaiTro === "nong_dan" && !d.laBan).length;
+  return { anh: "🏰", ten: $("d3TenVuong").textContent, dong: "🧑‍🌾 " + nd + " nông dân" };
+}
+thanh = taoThanhDuoi($, ttMacDinh);
+uiDk.chonCongTrinh = ct => thanh.xem(ct ? () => ttCongTrinh(ct) : null);
+uiDk.xemCt = ct => thanh.xem(() => ttCongTrinh(ct));
+uiDk.xemNguon = n => thanh.xem(() => ttNguon(n));
+if (vung) {
+  const loiBanCu = uiDk.loiBan; // chạm người của bạn: xem thông số (không ra lệnh được)
+  uiDk.loiBan = h => { thanh.xem(() => ttDonVi(h)); return loiBanCu ? loiBanCu(h) : null; };
+}
 $("d3TenVuong").textContent = be.tenVuongQuoc ? "Vương quốc " + be.tenVuongQuoc : VUNG ? banDo.ten + " · Cổng " + vung.vao.cong.so : "Thung lũng khởi đầu";
 
 // ---------------- Thanh tài nguyên ----------------
@@ -215,7 +250,6 @@ $("d3Tua").addEventListener("click", () => {
   const g = Math.round(lang.lechGio / LANG.GIO_MS), ng = CH.nguon;
   baoGoiY("⏩ Đã tua 3 giờ. Cây: " + ng.cay.mocLaiGio + " giờ · cá: " + ng.bai_ca.mocLaiGio + " giờ · trái cây: " + ng.bui_trai_cay.mocLaiGio + " giờ · mỏ: " + ng.mo_da.mocLaiGio + " giờ.");
 });
-const TEN_CL = { nhan: "Nhân tộc", quy: "Quỷ tộc", tien: "Tiên tộc" };
 $("d3DoiHinh").addEventListener("click", () => {
   // Thử ngoại hình: đổi lần lượt chủng loại / giới / màu (chỉ trong trang thử, không lưu)
   const h = { ...hoSoTl }, thuTu = ["nhan", "quy", "tien"], k = (thuTu.indexOf(h.chungLoai) + 1) % 3;
@@ -279,3 +313,4 @@ $("d3Tai").hidden = true;
 if (vung) vung.batDau();
 else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc. Chạm đất để đi.");
 // 30/10/2026 - BƯỚC: TC_D06A; 30/10/2026 17:30 - TC_D06C1 (quái nhận mayChu + vung); 03/11/2026 23:3x - TC_D06C1 (tạm ẩn nút Phá hủy)
+// 04/11/2026 - BƯỚC: TC_D06D (thanh điều khiển cuối màn hình: ô đang xem người / nhà / nguồn / quái, nút theo thứ đang xem)

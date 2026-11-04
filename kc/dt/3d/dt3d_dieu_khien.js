@@ -13,7 +13,8 @@
 //         (TC_D02B3b) loiBan(hinh) -> câu báo khi chạm người của bạn khác (dv.laBan: không chọn được),
 //         (TC_D03A) chamO(hinh đang chọn | null, ô) -> true nếu phần trang đã xử lý cú chạm đất (móng đang xây;
 //         TC_D03B1: Lều trại, gọi cả khi chưa chọn ai),
-//         (TC_D06A) trungQuai(tia) -> { q, kc } | null + chamQuai(q, hình đang chọn | null): quái trên bản đồ }
+//         (TC_D06A) trungQuai(tia) -> { q, kc } | null + chamQuai(q, hình đang chọn | null): quái trên bản đồ,
+//         (TC_D06D) xemNguon(n): chạm nguồn mà không giao việc -> thanh dưới hiện thông số nguồn }
 //   datCheDoCham(fn(ô {x, y, px, pz}, "cham" | "re")): chế độ chạm riêng (soi đất, chọn chỗ dựng)
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), cam.khiCham / camera (dt3d_camera.js), taiNguyen.chon
 //           (dt3d_tai_nguyen.js), boNhanVat.dsHinh (dt3d_nhan_vat.js), diaHinh.matDat / doCaoDi,
@@ -94,6 +95,7 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
         else ui.baoGoiY("Chưa tới chỗ đó được. Chọn chỗ khác nhé.");
         return;
       }
+      if (ui.xemNguon) ui.xemNguon(n); // TC_D06D: thông số cây / mỏ / bãi cá ở thanh dưới (Thủ lĩnh vẫn đi tới đó)
       if (!dangChon) { ui.baoGoiY("Chạm nông dân 🧑‍🌾 trước, rồi chạm vào đây để giao việc nhé!"); return; }
     }
     // 3) chạm đất -> đi tới
@@ -149,3 +151,4 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
   return { chon, dangChon: () => dangChon, datCheDoCham(fn) { cheDoRieng = fn || null; } };
 }
 // 30/10/2026 - BƯỚC: TC_D06A; 03/11/2026 23:2x - TC_D06C1 (chạm công trình mở bảng mà không chặn Lều / móng / ruộng)
+// 04/11/2026 - BƯỚC: TC_D06D (xemNguon: chạm nguồn hiện thông số ở thanh dưới)
