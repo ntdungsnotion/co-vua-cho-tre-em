@@ -128,6 +128,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 @media (prefers-reduced-motion: reduce) { .d3TranNhanh { animation: none; } }
 /* 30/10/2026 - BƯỚC: TC_D06A (nhãn cấp quái, màn chiến đấu phủ); 04/11/2026 - TC_D06D (thanh điều khiển cuối màn hình); 04/11/2026 - TC_D06C2a (nhãn quái hung dữ); 04/11/2026 23:xx - TC_D06C2b (nút ⚔️ góc trên phải, nhãn máu nông dân) */
 
+/* TC_D06C2d: bong bóng "⚔️ Đánh" trên đầu quái (máy tính rê chuột / điện thoại chạm quái), dòng nhỏ = ai sẽ đánh */
+.d3DanhDau { position: fixed; left: 0; top: 0; z-index: 8; display: grid; justify-items: center; gap: 0; min-width: 88px; min-height: 48px;
+  padding: 4px 12px 5px; border-radius: 14px; border: 2px solid #ffd27a; cursor: pointer; color: #fff;
+  font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.05rem; line-height: 1.15;
+  background: linear-gradient(180deg, #c3302f, #8a1620); box-shadow: 0 4px 12px rgba(0, 0, 0, .45); }
+.d3DanhDau small { font-size: .72rem; font-weight: 700; color: #ffe6b0; white-space: nowrap; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+.d3DanhDau::after { content: ""; position: absolute; left: 50%; bottom: -8px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: #ffd27a; }
+.d3DanhDau:hover, .d3DanhDau:focus-visible { background: linear-gradient(180deg, #e0413c, #a01c26); outline: none; }
+@media (min-width: 900px) { .d3DanhDau { font-size: 1.15rem; min-width: 100px; } }
 /* TC_D06C2d: danh sách trận nông dân vs quái (bấm ⚔️ khi có từ 2 trận) */
 .d3BangTran { position: fixed; z-index: 20; top: calc(68px + env(safe-area-inset-top)); right: 12px; width: min(440px, calc(100vw - 24px));
   max-height: calc(100vh - 220px); overflow-y: auto; padding: 10px; box-sizing: border-box; display: grid; gap: 8px; border-color: #ff6b6b; }
@@ -146,4 +155,4 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 @media (max-width: 600px) { .d3BangTran { top: calc(62px + env(safe-area-inset-top)); right: 8px; width: calc(100vw - 16px); max-height: calc(100vh - 250px); }
   .d3BtDong1 b { font-size: .92rem; } }
 @media (min-width: 900px) { .d3BangTran { width: 480px; } .d3BtDong1 { min-height: 64px; } .d3BtDong1 b { font-size: 1.1rem; } }
-/* 05/11/2026 - BƯỚC: TC_D06C2d (👥 dân số ở thanh trên, danh sách trận) */
+/* 05/11/2026 - BƯỚC: TC_D06C2d (👥 dân số ở thanh trên, danh sách trận, bong bóng ⚔️ Đánh trên đầu quái) */

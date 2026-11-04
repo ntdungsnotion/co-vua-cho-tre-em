@@ -297,6 +297,7 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   nhinVe: (x, z) => cam.nhinVe(x, z),
   zoom: z => cam.datZoom(z),
   lang, // kịch bản thử đọc / chỉnh trạng thái lõi (vd làm cạn nhanh một cây)
+  chonDv: id => { const h = boNv.dsHinh.find(k => k.dv.idMayChu === id || k.dv === dvTl && id === 'tl'); dk.chon(h || null); return !!h; }, // TC_D06C2d: thử chọn người
   vung: vung && vung.moc, // thung lũng thật
   quai: quaiBd && quaiBd.moc // TC_D06A: quái trên bản đồ
 };
