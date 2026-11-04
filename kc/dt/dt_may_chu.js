@@ -51,8 +51,10 @@
 //     đường đi tính ở máy bé bằng KC_DT_QUAI_BAN_DO.viTri) + nghiDen (giờ hết nghỉ của Thủ lĩnh); quaiGiu(ten, id, x, z),
 //     quaiDanh(ten, id), quaiKet(ten, id, ket, nghiGiay): khoá quái cho một bé, kết quả, giờ nghỉ khi thua. quaiBu sinh quái hoang
 //     (quaiBanDo.soQuai) + quái quanh mỗi Lều trại (quanhLeu), thả khoá quá hạn, sinh lại sau hoiSinhGiay.
-// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1
-// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30
+//   TC_D06C2a - QUÁI HUNG DỮ: quái sinh ở ô ngoài vùng sáng của mọi bé thì hung (tỉ lệ quaiBanDo.hung.tiLe), bản ghi có hung;
+//     quaiGiu(ten, id, x, z, lao): lao = quái hung tự lao vào Thủ lĩnh (khoá trang "lao", được xa chỗ ở tới hung.duoiToiDa + giuLechO).
+// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a
+// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1)
 // ================================================================
 (function (goc) {
@@ -329,11 +331,20 @@
     // Ô quái đứng / đi được: như lõi trang (dt3d_quai_ban_do.js): không chặn, không ruộng, không lãnh địa, không sát lều
     const quaiDiDuoc = leu => (x, y) => LUOI.diDuoc(lang.luoi, x, y) && !laRuong(x, y) && !lanhDia.chuO(x, y, null)
       && !leu.some(l => Math.hypot(l.x - x - 0.5, l.z - y - 0.5) < CQ.khongGanLeu);
-    const banGhiQuai = q => ({ id: q.id, ma: q.ma, lv: q.lv, x: q.x, z: q.z, hat: q.hat, sinhLuc: q.sinhLuc, khoa: q.khoa ? { ...q.khoa } : null, chay: q.chay ? { ...q.chay } : null });
+    const banGhiQuai = q => ({ id: q.id, ma: q.ma, lv: q.lv, x: q.x, z: q.z, hat: q.hat, sinhLuc: q.sinhLuc, hung: !!q.hung, khoa: q.khoa ? { ...q.khoa } : null, chay: q.chay ? { ...q.chay } : null });
     // Quái còn trên bản đồ hoặc vừa bỏ chạy (máy bé vẽ nốt lúc chạy); quái chờ sinh lại thì không trả
     const dsQuai = bay => (tt.quai || []).filter(q => !q.chay || bay < q.chay.luc + CQ.chayGiay * 1000 + 10000).map(banGhiQuai);
+    // TC_D06C2a: ô (x, y) có nằm trong vùng sáng của bé nào không (đơn vị + công trình đã xong của mọi bé, như SQL kc_dt_soi)
+    function sangAi() {
+      const soi = [];
+      for (const d of tt.donVi) { const p = viTri(d), be = tt.be[d.chu]; soi.push({ x: p.x, z: p.z, r: BD.tamNhin(CB, d.loai, be && be.chungLoai) }); }
+      for (const ct of tt.congTrinh) if (ct.xongLuc) { const be = tt.be[ct.chu]; soi.push({ x: ct.x + ct.rong / 2, z: ct.y + ct.sau / 2, r: BD.tamNhinCt(CB, ct.loai, be && be.chungLoai) }); }
+      return (x, y) => soi.some(n => (x + 0.5 - n.x) ** 2 + (y + 0.5 - n.z) ** 2 <= n.r * n.r);
+    }
+    let sangNay = null; // sangAi() của lần quaiBu đang chạy
     function datQuai(q, c, bay) {
       q.ma = QB.chonLoai(CQ, Math.random()); q.lv = c.lv; q.x = c.x + 0.5; q.z = c.y + 0.5;
+      q.hung = QB.coHung(CQ, !!(sangNay && sangNay(c.x, c.y)), Math.random()); // TC_D06C2a
       q.hat = Math.floor(Math.random() * 2147483647); q.sinhLuc = bay; q.khoa = null; q.chay = null;
     }
     function quaiBu(bay) {
@@ -342,6 +353,7 @@
       if (tt.quaiBuLuc && bay - tt.quaiBuLuc < CQ.buGiay * 1000) return;
       tt.quaiBuLuc = bay;
       const leu = dsLeu(), dd = quaiDiDuoc(leu);
+      sangNay = sangAi();
       for (const q of tt.quai) if (q.khoa && bay - q.khoa.luc > (q.khoa.trang === "danh" ? CQ.khoaDanhGiay : CQ.khoaToiGiay) * 1000) q.khoa = null;
       tt.quai = tt.quai.filter(q => q.leu == null || leu.some(l => l.id === q.leu && l.xong));
       const henLai = q => { q.chay = { x: q.x, z: q.z, huong: 0, luc: bay + (CQ.thuLaiGiay - CQ.hoiSinhGiay) * 1000 }; }; // mất ngay, sinh lại sau thuLaiGiay
@@ -406,7 +418,8 @@
 
       // TC_D06C1: bé chạm quái (Thủ lĩnh bắt đầu tiến tới): giữ quái đứng ở (x, z) cho mọi bé thấy; mỗi bé giữ một con.
       // -> { ok, quai } | { ok: false, ma: dang_nghi (nghiDen) | quai_mat | dang_danh (chu) }
-      async quaiGiu(ten, id, x, z) {
+      // TC_D06C2a: lao = true: quái hung dữ tự lao vào Thủ lĩnh (khoá trang "lao"; chỗ đứng được xa chỗ ở tới hung.duoiToiDa + giuLechO)
+      async quaiGiu(ten, id, x, z, lao) {
         ten = tenChuan(ten);
         const be = tt.be[ten];
         if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
@@ -418,8 +431,10 @@
         if (q.khoa && q.khoa.ten !== ten) return { ok: false, ma: "dang_danh", chu: q.khoa.ten, lyDo: "Quái này đang giao chiến với bạn khác." };
         for (const k of tt.quai) if (k !== q && k.khoa && k.khoa.ten === ten) k.khoa = null;
         let px = Number(x), pz = Number(z);
-        if (!Number.isFinite(px) || !Number.isFinite(pz) || Math.hypot(px - q.x, pz - q.z) > CQ.banKinhLangThang + CQ.giuLechO) { px = q.x; pz = q.z; }
-        if (!q.khoa) q.khoa = { ten, x: px, z: pz, trang: "toi", luc: bay };
+        const laoDuoc = !!(lao && q.hung && CQ.hung && !q.khoa); // TC_D06C2a
+        const xa = laoDuoc ? CQ.hung.duoiToiDa + CQ.giuLechO : CQ.banKinhLangThang + CQ.giuLechO;
+        if (!Number.isFinite(px) || !Number.isFinite(pz) || Math.hypot(px - q.x, pz - q.z) > xa) { px = q.x; pz = q.z; }
+        if (!q.khoa) q.khoa = { ten, x: px, z: pz, trang: laoDuoc ? "lao" : "toi", luc: bay };
         luu();
         return { ok: true, quai: banGhiQuai(q), gio: bay };
       },
@@ -663,7 +678,8 @@
       async xoaHet() { tt = { phienBan: PHIEN_BAN, be: {}, donVi: [], congTrinh: [], nguon: {}, soId: 0 }; luu(); return { ok: true }; },
       _trangThai: () => tt, _lanhDia: lanhDia,
       // TC_D06C1 (chỉ kiểm thử): dời chỗ ở một quái tới (x, z), lang thang lại từ bây giờ; buộc quaiBu chạy ở lần gọi tới
-      _dichQuai(id, x, z) { const q = (tt.quai || []).find(k => k.id === id); if (!q) return false; q.x = x; q.z = z; q.sinhLuc = gio(); q.khoa = null; q.chay = null; luu(); return true; },
+      // TC_D06C2a: hung = true / false thì đặt luôn quái hung dữ / hiền (không truyền: giữ nguyên)
+      _dichQuai(id, x, z, hung) { const q = (tt.quai || []).find(k => k.id === id); if (!q) return false; q.x = x; q.z = z; q.sinhLuc = gio(); q.khoa = null; q.chay = null; if (hung != null) q.hung = !!hung; luu(); return true; },
       _buNgay() { tt.quaiBuLuc = 0; }
     };
     return api;
@@ -671,4 +687,4 @@
 
   goc.KC_DT_MAY_CHU = { taoMayChuGia };
 })(typeof window !== "undefined" ? window : globalThis);
-// 30/10/2026 17:30 - BƯỚC: TC_D06C1
+// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (quái hung dữ)

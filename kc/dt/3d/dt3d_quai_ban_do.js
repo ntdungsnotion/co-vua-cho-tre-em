@@ -17,6 +17,11 @@
 //              đổi máy vẫn nghỉ), nhãn "⛺ m:ss" trên đầu; rút lui giữa trận / thôi đi tới: thả quái, không phạt
 //            - chạm quái khi chưa chọn Thủ lĩnh: chỉ báo tên + cấp
 //            - mất mạng: vẫn đánh được quái đang thấy (máy chủ không trả lời thì giữ như đã giữ)
+//            - TC_D06C2a QUÁI HUNG DỮ (máy chủ đánh dấu lúc sinh, khối quaiBanDo.hung): vòng đỏ dưới chân, nhãn "😠 Lv n"
+//              nền đỏ sẫm. Thủ lĩnh rảnh (không đang tới / đánh quái, không nghỉ) vào tầm nhìn quái (hung.tamNhin) thì
+//              Thủ lĩnh dừng, KÈN LỆNH (dt3d_am_thanh.js kenLenh), máy chủ khoá quái trạng thái "lao" (mọi bé thấy quái
+//              lao tới), tới nơi thì màn chiến đấu tự mở, QUÁI ĐÁNH TRƯỚC (?quaiTruoc=1). Trong lúc quái lao bé cho Thủ
+//              lĩnh chạy đi được: quái tới nơi không thấy Thủ lĩnh thì thả. Đánh / rút / thả xong con đó miễn hung.mienGiay giây.
 // HÀM KHAI RA:
 //   taoQuaiBanDo(the) -> Promise<{ trung(tia) -> { q, kc } | null, cham(q, hinhDangChon), moc }>
 //     the = { ctx, lang, diaHinh, banDo, cauHinh, cam, suong?, laLanhDia?(x, y), dvTl, hTl, be: { ten, hoSo, lop },
@@ -26,12 +31,13 @@
 //     trả thêm conNghi() (ms còn nghỉ), dongHo(ms) cho thông số Thủ lĩnh ở thanh dưới
 //   dt3d_dieu_khien.js gọi trung / cham qua ui.trungQuai / ui.chamQuai.
 // LUẬT NỐI: lõi KC_DT_QUAI_BAN_DO, KC_DT_LUOI, KC_DT_BAN_DO (SANG); lang.lenhDi; ctx.nghiVe (dt3d_canh.js).
-// BƯỚC: TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ)
-// NGÀY: 30/10/2026; 30/10/2026 17:30
+// BƯỚC: TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ); TC_D06C2a (quái hung dữ)
+// NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026
 // ================================================================
 import * as THREE from "three";
 import { taoQuai3d } from "./dt3d_quai.js";
 import { NHIP_DANH } from "./dt3d_nhan_vat.js";
+import { taoAmThanh } from "./dt3d_am_thanh.js";
 
 const QB = window.KC_DT_QUAI_BAN_DO, LUOI = window.KC_DT_LUOI, BD = window.KC_DT_BAN_DO;
 const CAO_QUAI = 0.95; // quái trên bản đồ cao chừng này (ô), thấp hơn Thủ lĩnh
@@ -53,6 +59,13 @@ export async function taoQuaiBanDo(the) {
   let nghiDen = vung.quanhDau.nghiDen || 0;
   let dangToi = null;   // bản ghi quái Thủ lĩnh đang tiến tới
   let trongTran = null; // { r, khung, fr, ket, nghiGiay }
+  // TC_D06C2a: quái hung dữ
+  const hung = ch.hung || null;
+  const mien = new Map(); // id quái -> Date.now() hết miễn: vừa đánh / rút / thả thì con đó chưa lao lại ngay
+  const datMien = id => { if (hung) mien.set(id, Date.now() + hung.mienGiay * 1000); };
+  let am = null; // bộ tiếng (kèn lệnh); tạo một lần, mở ở lần chạm đầu
+  try { am = taoAmThanh(); } catch (e) { am = null; }
+  let soLao = 0; // số lần quái lao vào Thủ lĩnh (kịch bản thử Chrome đọc)
   const giuTren = id => (dangToi && dangToi.id === id) || (trongTran && trongTran.r.id === id);
   function nhanDs(ds) {
     const con = new Set(), bay = Date.now(), cu = (ch.buGiay + cauHinh.banDo.chuKyGui * 2) * 1000;
@@ -90,8 +103,14 @@ export async function taoQuaiBanDo(the) {
     const chu = CHU_QUAI[r.ma] ? CHU_QUAI[r.ma]() : ""; if (chu) q3.datChu(chu);
     const vo = new THREE.Group(); vo.add(q3.nhom);
     const trung = new THREE.Mesh(hinhTrung, vlTrung); trung.userData.id = r.id; vo.add(trung);
+    if (r.hung) { // TC_D06C2a: vòng đỏ dưới chân quái hung dữ
+      const vong = new THREE.Mesh(new THREE.RingGeometry(0.62, 0.86, 32).rotateX(-Math.PI / 2),
+        new THREE.MeshBasicMaterial({ color: 0xff3b3b, transparent: true, opacity: 0.85, depthWrite: false }));
+      vong.position.y = 0.04; vong.renderOrder = 2; vo.add(vong);
+    }
     ctx.canh.add(vo);
     const nhan = document.createElement("div"); nhan.className = "d3LvQuai"; nhan.hidden = true;
+    if (r.hung) nhan.dataset.hung = "1";
     the.lop.appendChild(nhan);
     const h = { khoa: r.id + ":" + r.sinhLuc, q3, vo, trung, nhan, chu, mo: 1, nhat: -1 };
     hinh.set(r.id, h);
@@ -114,9 +133,9 @@ export async function taoQuaiBanDo(the) {
   const datNhan = (el, x, y, z) => { const [sx, sy, truoc] = raManHinh(x, y, z); el.hidden = !truoc; el.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, -100%)`; };
 
   // ---------- đánh quái ----------
-  function giuQuai(r, p) {
-    r.khoa = { ten: tenMinh, x: p.x, z: p.z, trang: "toi", luc: gio() }; dung(r.id);
-    mayChu.quaiGiu(ten, r.id, p.x, p.z).then(kq => {
+  function giuQuai(r, p, lao) { // lao (TC_D06C2a): quái hung dữ tự lao tới p
+    r.khoa = { ten: tenMinh, x: p.x, z: p.z, trang: lao ? "lao" : "toi", luc: gio() }; dung(r.id);
+    mayChu.quaiGiu(ten, r.id, p.x, p.z, !!lao).then(kq => {
       if (kq.ok) { if (r.khoa && kq.quai && kq.quai.khoa) r.khoa = kq.quai.khoa; return; }
       if (!LOI_DUNG[kq.ma]) return; // lỗi mạng: đánh trên máy như đã giữ
       r.khoa = null;
@@ -131,7 +150,7 @@ export async function taoQuaiBanDo(the) {
   }
   function thaQuai(r, ket, giuKetNoi) { // ket: "tha" | "rut"
     if (r.khoa && r.khoa.ten === tenMinh) r.khoa = null;
-    dung(r.id);
+    dung(r.id); datMien(r.id);
     mayChu.quaiKet(ten, r.id, ket || "tha", null, giuKetNoi);
   }
 
@@ -140,12 +159,13 @@ export async function taoQuaiBanDo(the) {
   function thongTin(r) {
     const p = viTri(r);
     if (!ghi.has(r.id) || p.mat || p.trangThai === "chay") return null;
-    const tt = { anh: "👾", ten: tenLoai(r.ma) + " · Lv " + r.lv, dong: DAU_MAU[mau(r)] + " " + SUC[mau(r)], nut: [] };
+    const tt = { anh: r.hung ? "😠" : "👾", ten: tenLoai(r.ma) + " · Lv " + r.lv, dong: DAU_MAU[mau(r)] + " " + SUC[mau(r)], nut: [] };
     if (cuaBan(r)) tt.phu = "⚔️ Đang giao chiến với Thủ lĩnh của " + r.khoa.ten;
+    else if (dangToi === r && r.khoa && r.khoa.trang === "lao") tt.phu = "😠 Đang lao vào " + dvTl.ten + "!";
     else if (dangToi === r) tt.phu = "⚔️ " + dvTl.ten + " đang tiến tới";
     else if (conNghi() > 0) tt.phu = "⛺ " + dvTl.ten + " đang nghỉ · còn " + dongHo(conNghi());
     else {
-      tt.phu = "Đang lang thang";
+      tt.phu = r.hung ? "😠 Hung dữ: thấy Thủ lĩnh là lao tới" : "Đang lang thang";
       tt.nut.push({ id: "d3DanhQuai", chu: "⚔️<span class=\"d3Chu\"> Đánh</span>", nhan: "Thủ lĩnh đánh " + tenLoai(r.ma), bam: () => { if (the.chonTl) the.chonTl(); cham(r, { vaiTro: "thu_linh" }); } });
     }
     return tt;
@@ -184,13 +204,14 @@ export async function taoQuaiBanDo(the) {
   function moTran(r) {
     dangToi = null;
     dungTl();
-    const k = r.khoa;
+    const k = r.khoa, quaiTruoc = k.trang === "lao"; // TC_D06C2a: quái lao vào thì quái đánh trước
     dvTl.huongMuon = Math.atan2(k.x - dvTl.x, k.z - dvTl.z);
     k.trang = "danh"; dung(r.id);
     baoDanh(r, 0);
     const h = hinh.get(r.id);
     const ts = new URLSearchParams({ nhung: "1", quai: r.ma, lv: String(r.lv), cl: be.hoSo.chungLoai || "nhan", gioi: be.hoSo.gioi || "nam",
       lop: String(be.lop || 2), ten: be.ten || "", tl: dvTl.ten || "", chu: (h && h.chu) || "" });
+    if (quaiTruoc) ts.set("quaiTruoc", "1");
     const khung = document.createElement("div"); khung.className = "d3Tran";
     const fr = document.createElement("iframe");
     fr.title = "Trận đấu"; fr.allow = "autoplay"; fr.src = new URL("../thu_tran_dau.html?" + ts, import.meta.url).href;
@@ -212,7 +233,7 @@ export async function taoQuaiBanDo(the) {
     const { r, khung, ket, nghiGiay } = trongTran;
     trongTran = null; khung.remove(); ctx.nghiVe = false;
     const ten2 = tenLoai(r.ma), k = r.khoa || { x: r.x, z: r.z };
-    dung(r.id);
+    dung(r.id); datMien(r.id);
     if (ket === "be" || ket === null) {
       r.chay = { x: k.x, z: k.z, huong: Math.atan2(k.x - dvTl.x, k.z - dvTl.z), luc: gio() }; r.khoa = null;
       mayChu.quaiKet(ten, r.id, ket === "be" ? "be" : "hoa", null);
@@ -243,12 +264,20 @@ export async function taoQuaiBanDo(the) {
     if (dangToi && !trongTran) {
       const r = dangToi, k = r.khoa, c = dvTl.duong[dvTl.duong.length - 1];
       if (!k || k.ten !== tenMinh) dangToi = null;
+      else if (k.trang === "lao") { // TC_D06C2a: quái hung dữ đang lao tới: tới nơi mà Thủ lĩnh còn đứng gần thì vào trận
+        if (viTri(r).trangThai !== "lao") {
+          if (Math.hypot(dvTl.x - k.x, dvTl.z - k.z) <= ch.vaoTranCach) moTran(r);
+          else { thaQuai(r); dangToi = null; the.baoGoiY("🏃 " + dvTl.ten + " đã thoát khỏi " + tenLoai(r.ma) + "!"); }
+        }
+      }
       else if (Math.hypot(dvTl.x - k.x, dvTl.z - k.z) <= ch.vaoTranCach) moTran(r);
       else if (dvTl.trangThai !== "di" || (c && Math.hypot(c.x - k.x, c.z - k.z) > 2.5)) {
         thaQuai(r); dangToi = null;
         if (dvTl.trangThai !== "di") the.baoGoiY("❌ Chưa tới được chỗ " + tenLoai(r.ma) + ".");
       }
     }
+    // TC_D06C2a: quái hung dữ thấy Thủ lĩnh (rảnh: không đang tới quái, không đánh, không nghỉ) thì kèn lệnh + lao tới
+    if (hung && !dangToi && !trongTran && conNghi() <= 0) laoNeuThay();
     // hình theo bản ghi + giờ máy chủ
     const con = new Set(), danhNay = new Set();
     for (const r of ghi.values()) {
@@ -283,9 +312,10 @@ export async function taoQuaiBanDo(the) {
       h.q3.capNhat(dt, t + r.id);
       if (p.trangThai === "chay") { if (Math.abs(h.mo - p.mo) > 0.02) { h.mo = p.mo; h.q3.datMo(Math.max(0, p.mo)); } h.nhan.hidden = true; }
       else {
-        const chu = (p.trangThai === "danh" && cuaBan(r) ? "⚔️ " : "") + "Lv " + r.lv, m = mau(r);
+        const chu = (p.trangThai === "danh" && cuaBan(r) ? "⚔️ " : "") + (r.hung ? "😠 " : "") + "Lv " + r.lv, m = mau(r);
         if (h.nhan.textContent !== chu) h.nhan.textContent = chu;
         if (h.nhan.dataset.mau !== m) h.nhan.dataset.mau = m;
+        const lao = p.trangThai === "lao" ? "1" : ""; if ((h.nhan.dataset.lao || "") !== lao) h.nhan.dataset.lao = lao;
         datNhan(h.nhan, p.x, y + CAO_QUAI + 0.35, p.z);
       }
     }
@@ -297,6 +327,32 @@ export async function taoQuaiBanDo(the) {
     if (n > 0 && hTl.vo.visible) { nhanNghi.textContent = "⛺ " + dongHo(n); const p = hTl.vo.position; datNhan(nhanNghi, p.x, p.y + 2.1, p.z); }
     else if (!nhanNghi.hidden) nhanNghi.hidden = true;
   });
+
+  // TC_D06C2a: tìm quái hung dữ gần Thủ lĩnh nhất đang thấy Thủ lĩnh (lõi diemLao: trong tầm nhìn quái, không đuổi xa
+  // chỗ ở, không vào lãnh địa / sát Lều); có thì dừng Thủ lĩnh, kèn lệnh, máy chủ khoá quái trạng thái "lao"
+  function laoNeuThay() {
+    if (!hTl.vo.visible) return;
+    const bay = Date.now();
+    let tot = null;
+    for (const r of ghi.values()) {
+      if (!r.hung || r.khoa || r.chay || (mien.get(r.id) || 0) > bay) continue;
+      const p = viTri(r);
+      if (!thay(p)) continue;
+      const K = QB.diemLao(ch, r, p, dvTl, diDuoc);
+      if (!K) continue;
+      const d = Math.hypot(p.x - dvTl.x, p.z - dvTl.z);
+      if (!tot || d < tot.d) tot = { r, K, d };
+    }
+    if (!tot) return;
+    const r = tot.r;
+    dungTl();
+    dvTl.huongMuon = Math.atan2(tot.K.x - dvTl.x, tot.K.z - dvTl.z);
+    giuQuai(r, tot.K, true);
+    dangToi = r; soLao++;
+    if (am) am.kenLenh();
+    if (the.khiXem) the.khiXem(() => thongTin(r));
+    the.baoGoiY("📯 " + tenLoai(r.ma) + " hung dữ lao vào " + dvTl.ten + "!");
+  }
 
   // chạm: tia trúng quái đang hiện (không tính quái đang bỏ chạy)
   function trung(tia) {
@@ -311,14 +367,18 @@ export async function taoQuaiBanDo(the) {
     moc: { // kịch bản thử Chrome
       ds: () => [...ghi.values()].map(r => { const p = viTri(r), h = hinh.get(r.id);
         return { id: r.id, ma: r.ma, lv: r.lv, x: p.x, z: p.z, nhaX: r.x, nhaZ: r.z, trangThai: p.mat ? "mat" : p.trangThai, hien: !!(h && h.vo.visible), mau: mau(r),
-          khoa: r.khoa && r.khoa.ten, nhan: h && !h.nhan.hidden ? h.nhan.textContent : null }; }),
+          hung: !!r.hung, khoa: r.khoa && r.khoa.ten, khoaTrang: r.khoa && r.khoa.trang, nhan: h && !h.nhan.hidden ? h.nhan.textContent : null }; }),
       conNghi, nghiDen: () => nghiDen, dangToi: () => dangToi && dangToi.id, trongTran: () => !!trongTran,
+      soLao: () => soLao, kenLenh: () => (am && am.thongKe ? (am.thongKe().daKeu || {}).kenLenh || 0 : 0), // TC_D06C2a
       cham: (id, chonTl) => { const r = ghi.get(id); if (r) cham(r, chonTl ? { vaiTro: "thu_linh" } : null); return !!r; },
-      // đặt chỗ ở một quái ngay cạnh Thủ lĩnh (chỉ máy chủ giả: thử nhanh, khỏi đi xa)
-      keBen: id => {
-        const r = ghi.get(id), x = Math.floor(dvTl.x) + 1.5, z = Math.floor(dvTl.z) + 0.5;
-        if (!r || !mayChu._dichQuai || !mayChu._dichQuai(id, x, z)) return false;
-        Object.assign(r, { x, z, sinhLuc: gio(), khoa: null, chay: null }); dung(id); return true;
+      // đặt chỗ ở một quái cách Thủ lĩnh (dx, dz) ô (mặc định 1 ô bên phải; chỉ máy chủ giả: thử nhanh, khỏi đi xa);
+      // hung = true / false (TC_D06C2a): đặt luôn quái hung dữ / hiền
+      keBen: (id, dx, dz, hungMoi) => {
+        const r = ghi.get(id), x = Math.floor(dvTl.x) + 0.5 + (dx == null ? 1 : dx), z = Math.floor(dvTl.z) + 0.5 + (dz || 0);
+        if (!r || !mayChu._dichQuai || !mayChu._dichQuai(id, x, z, hungMoi)) return false;
+        const hd = hungMoi == null ? r.hung : !!hungMoi;
+        if (hd !== !!r.hung) xoaHinh(id); // vẽ lại (vòng đỏ)
+        Object.assign(r, { x, z, sinhLuc: gio(), khoa: null, chay: null, hung: hd }); dung(id); mien.delete(id); return true;
       },
       chamDiem: id => { const r = ghi.get(id); if (!r) return null; const p = viTri(r); return cam.chieu(p.x, diaHinh.doCaoDi(p.x, p.z) + 0.5, p.z); },
       hoiLai: () => vung.hoiLai(),
@@ -326,4 +386,4 @@ export async function taoQuaiBanDo(the) {
     }
   };
 }
-// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06D (thông số quái + nút ⚔️ Đánh ở thanh dưới)
+// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06D (thông số quái + nút ⚔️ Đánh ở thanh dưới); 04/11/2026 - TC_D06C2a (quái hung dữ)

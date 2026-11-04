@@ -16,8 +16,8 @@
 //            Lõi không chọn câu (nhận từ dt_cau_hoi.js qua moLuot), không đụng DOM, không đọc đồng hồ:
 //            mọi hàm nhận thời điểm t (mili giây) từ ngoài => kiểm thử node chạy tua nhanh được.
 //            Mọi con số đọc từ du_lieu/cau_hinh_tran_dau.json.
-// BƯỚC: TC_D05
-// NGÀY: 29/10/2026
+// BƯỚC: TC_D05; TC_D06C2a (quaiTruoc: quái đánh lượt đầu)
+// NGÀY: 29/10/2026; 04/11/2026
 // PHỤ THUỘC: dt/dt_quai.js (KC_DT_QUAI)
 // ================================================================
 (function (goc) {
@@ -40,7 +40,8 @@
     return Math.round(Math.max(ch.satThuong.toiThieu, goc0));
   }
 
-  // tc: { ch, chungLoai, quai (KC_DT_QUAI.taoQuai), lop, thongTha (bỏ trống: theo lớp), rng }
+  // tc: { ch, chungLoai, quai (KC_DT_QUAI.taoQuai), lop, thongTha (bỏ trống: theo lớp), rng,
+  //       quaiTruoc (TC_D06C2a: quái hung dữ lao vào Thủ lĩnh thì quái tấn công lượt đầu, đổi chỗ lượt lẻ / chẵn) }
   function taoTran(tc) {
     const QU = goc.KC_DT_QUAI, ch = tc.ch, rng = tc.rng || Math.random;
     const lop = Math.max(1, Math.min(12, Math.floor(tc.lop) || 1));
@@ -59,7 +60,7 @@
       if (ketThuc) return null;
       if (luot && !luot.ketQua) return luot.info;
       soLuot++;
-      const tanCong = soLuot % 2 === 1 ? "be" : "quai";
+      const tanCong = (soLuot % 2 === 1) !== !!tc.quaiTruoc ? "be" : "quai"; // TC_D06C2a: quaiTruoc = lượt lẻ quái đánh
       const han = t + giayBe * 1000;
       const tl = QU.traLoi(quai, cau, ch, rng, tanCong === "quai" ? "tanCong" : "phongThu");
       let tQuai = t + QU.giayTraLoi(quai, ch, rng, nghi) * 1000;
@@ -167,4 +168,4 @@
 
   goc.KC_DT_TRAN_DAU = { taoTran, chiSoThuLinh, tiLeNe, satThuong };
 })(typeof window !== "undefined" ? window : globalThis);
-// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (đồng hồ bé theo cấp quái: T.giayBe)
+// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (đồng hồ bé theo cấp quái: T.giayBe); 04/11/2026 - TC_D06C2a (quaiTruoc)

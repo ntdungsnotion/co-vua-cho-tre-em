@@ -25,8 +25,9 @@
 //     ruộng có trongLuc / con / gatLuc; vaoVung vang.gat (số ruộng gặt hết lúc vắng mặt).
 //   TC_D06C1: quaiGiu(ten, id, x, z), quaiDanh(ten, id), quaiKet(ten, id, ket, nghiGiay, giu) (quái chung, như dt_may_chu.js);
 //     vaoVung / layQuanh trả quai[] + nghiDen; lỗi trả thêm chu (bé đang đánh quái) / nghiDen.
-// BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1
-// NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30
+//   TC_D06C2a: quaiGiu(ten, id, x, z, lao) gửi thêm p_lao (quái hung dữ tự lao vào Thủ lĩnh; cần SQL TC_D06C2a)
+// BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a
+// NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
 // ================================================================
 (function (goc) {
@@ -98,7 +99,7 @@
       async trongLai(ten, id) { return goi("kc_dt_trong_lai", { p_id: id }); }, // TC_D03B2
       async luuKhamPha(ten, chuoi, giu) { return goi("kc_dt_luu_kham_pha", { p_mat_na: chuoi }, giu); },
       // TC_D06C1: quái chung (giữ khi Thủ lĩnh tiến tới, vào trận, kết quả / thả)
-      async quaiGiu(ten, id, x, z) { return goi("kc_dt_quai_giu", { p_id: id, p_x: x, p_z: z }); },
+      async quaiGiu(ten, id, x, z, lao) { return goi("kc_dt_quai_giu", { p_id: id, p_x: x, p_z: z, p_lao: !!lao }); }, // TC_D06C2a: p_lao
       async quaiDanh(ten, id) { return goi("kc_dt_quai_danh", { p_id: id }); },
       async quaiKet(ten, id, ket, nghiGiay, giu) { return goi("kc_dt_quai_ket", { p_id: id, p_ket: ket, p_nghi_giay: Number.isFinite(nghiGiay) ? Math.round(nghiGiay) : null }, giu); }
     };
@@ -106,4 +107,4 @@
 
   goc.KC_DT_MAY_CHU_SB = { taoMayChuSupabase };
 })(typeof window !== "undefined" ? window : globalThis);
-// 30/10/2026 17:30 - BƯỚC: TC_D06C1
+// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (p_lao)

@@ -27,8 +27,11 @@
 //             quanh?: { x, z } (Lều cần quái quanh làng; không có = quái hoang), capLang (cấp làng cao nhất vùng), rng () -> 0..1 }
 //   chonLoai(ch, r) -> mã loại theo tỉ lệ; lvToiDa(ch, capLang); lvQuai(ch, capLang, kc tới cổng, r 0..1) -> lv;
 //   mauKhung(ch, lvQuai, capThuLinh) -> "xanh" | "vang" | "do"; kcCong(cong, x, z)
-// BƯỚC: TC_D06A; TC_D06C1 (quái chung: vị trí tính từ bản ghi máy chủ + giờ máy chủ, quái quanh làng)
-// NGÀY: 30/10/2026; 30/10/2026 17:30
+//   TC_D06C2a (QUÁI HUNG DỮ, khối quaiBanDo.hung): bản ghi có thêm hung (true / false); khoa.trang "lao" = quái hung dữ
+//     đang lao từ chỗ nó đứng lúc khoá (khoa.luc) tới (khoa.x, khoa.z) với tốc độ hung.tocDoLao (viTri trả trangThai "lao",
+//     tới nơi thì "giu"); coHung(ch, sang, r) -> quái mới sinh có hung không; diemLao(ch, q, p, tl, diDuoc) -> { x, z } | null
+// BƯỚC: TC_D06A; TC_D06C1 (quái chung: vị trí tính từ bản ghi máy chủ + giờ máy chủ, quái quanh làng); TC_D06C2a (quái hung dữ)
+// NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026
 // ================================================================
 (function (goc) {
   "use strict";
@@ -99,6 +102,13 @@
       const s = ch.tocDoChay * t;
       return { x: q.chay.x + Math.sin(q.chay.huong) * s, z: q.chay.z + Math.cos(q.chay.huong) * s, huong: q.chay.huong, trangThai: "chay", mo: 1 - t / ch.chayGiay, mat: false };
     }
+    if (q.khoa && q.khoa.trang === "lao") { // TC_D06C2a: quái hung dữ lao từ chỗ đang đi (lúc khoá) tới chỗ máy chủ ghi
+      const A = viTri(ch, Object.assign({}, q, { khoa: null }), q.khoa.luc, diDuoc);
+      const dx = q.khoa.x - A.x, dz = q.khoa.z - A.z, L = Math.hypot(dx, dz);
+      const s = tocDoLao(ch) * Math.max(0, (bay - q.khoa.luc) / 1000);
+      if (L > 1e-3 && s < L) return { x: A.x + dx * s / L, z: A.z + dz * s / L, huong: Math.atan2(dx, dz), trangThai: "lao", mo: 1, mat: false };
+      return { x: q.khoa.x, z: q.khoa.z, huong: L > 1e-3 ? Math.atan2(dx, dz) : null, trangThai: "giu", mo: 1, mat: false };
+    }
     if (q.khoa) return { x: q.khoa.x, z: q.khoa.z, huong: null, trangThai: q.khoa.trang === "danh" ? "danh" : "giu", mo: 1, mat: false };
     const T = ch.chuKyGiay, tong = Math.max(0, (bay - q.sinhLuc) / 1000);
     const k = Math.floor(tong / T), tk = tong - k * T;
@@ -142,6 +152,25 @@
     return null; // thung lũng chật: máy chủ thử lại sau thuLaiGiay
   }
 
-  goc.KC_DT_QUAI_BAN_DO = { viTri, chonCho, chonLoai, lvToiDa, lvQuai, mauKhung, kcCong, ngauNhien };
+  // ---------- TC_D06C2a: QUÁI HUNG DỮ ----------
+  const tocDoLao = ch => (ch.hung && ch.hung.tocDoLao) || ch.tocDoChay;
+  // Quái mới sinh có hung dữ không: ô sinh nằm ngoài vùng sáng của MỌI bé (sang = false) thì hung với tỉ lệ hung.tiLe
+  // (người dùng 04/11/2026: "50% quái nằm ngoài vùng sáng của tất cả tài khoản trên bản đồ hiện tại"). r: số 0..1
+  const coHung = (ch, sang, r) => !!(ch.hung && !sang && r < ch.hung.tiLe);
+  // Quái hung dữ (bản ghi q, đang ở p) thấy Thủ lĩnh ở tl thì lao tới đâu: điểm cách Thủ lĩnh hung.dungCach ô về phía quái.
+  // null = không lao: không hung / đang bị giữ / Thủ lĩnh ngoài tầm nhìn quái (hung.tamNhin) / điểm đó xa chỗ ở hơn
+  // hung.duoiToiDa ô (quái không đuổi xa nhà) / điểm không đi được (lãnh địa, sát Lều, ruộng) / đường thẳng bị chặn
+  function diemLao(ch, q, p, tl, diDuoc) {
+    const h = ch.hung;
+    if (!h || !q.hung || q.khoa || q.chay || !p || (p.trangThai !== "dung" && p.trangThai !== "di")) return null;
+    const d = Math.hypot(p.x - tl.x, p.z - tl.z);
+    if (d > h.tamNhin) return null;
+    const K = d <= h.dungCach ? { x: p.x, z: p.z } : { x: tl.x + (p.x - tl.x) / d * h.dungCach, z: tl.z + (p.z - tl.z) / d * h.dungCach };
+    if (Math.hypot(K.x - q.x, K.z - q.z) > h.duoiToiDa) return null;
+    if (!diDuoc(Math.floor(K.x), Math.floor(K.z)) || !thongDuong(diDuoc, p.x, p.z, K.x, K.z)) return null;
+    return K;
+  }
+
+  goc.KC_DT_QUAI_BAN_DO = { viTri, chonCho, chonLoai, lvToiDa, lvQuai, mauKhung, kcCong, ngauNhien, coHung, diemLao, tocDoLao };
 })(typeof window !== "undefined" ? window : globalThis);
-// 30/10/2026 17:30 - BƯỚC: TC_D06C1
+// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (quái hung dữ lao vào Thủ lĩnh)
