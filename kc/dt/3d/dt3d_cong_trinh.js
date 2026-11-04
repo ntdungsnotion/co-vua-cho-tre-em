@@ -274,7 +274,7 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
       }
     });
     let demRuong = 0;
-    ctx.moiKhung(dt => {
+    ctx.moiKhung((dt, t) => { // TC_D06C2d: thêm t (nhà sụp rung theo thời gian; trước đây t chưa khai báo -> lỗi mỗi khung khi phá hủy)
       if (tuongDoi) veTuong();
       const veLaiRuong = (demRuong += dt) >= 0.25;
       if (veLaiRuong) demRuong = 0;
@@ -347,3 +347,4 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     } };
 }
 // 01/11/2026 17:53 - BƯỚC: TC_D06C1 giao diện công trình + trạng thái phá hủy
+// 05/11/2026 - BƯỚC: TC_D06C2d (sửa lỗi t chưa khai báo ở hiệu ứng nhà sụp)

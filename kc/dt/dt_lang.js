@@ -599,12 +599,7 @@
       const k = congTrinh.indexOf(ct);
       if (k < 0) return false;
       congTrinh.splice(k, 1);
-      for (let oy = ct.y; oy < ct.y + ct.sau; oy++) for (let ox = ct.x; ox < ct.x + ct.rong; ox++) {
-        if (!trongBan(ox, oy)) continue;
-        const i = chiSo(ox, oy);
-        danh[i] = 0; congChu.delete(i); congKhac.delete(i);
-        if (!nguonO.has(i)) LUOI.datChan(luoi, ox, oy, false);
-      }
+      boO(ct.x, ct.y, ct.rong, ct.sau);
       if (leu && leu.ct === ct) leu = null;
       const rn = ct.loai === "ruong" && ruongNguon.get(-ct.id); // TC_D03B2: bãi thành cỏ -> người đang làm ở đó thôi việc
       if (rn) { rn.trangThai = "het"; rn.con = 0; ruongNguon.delete(-ct.id); }
@@ -613,6 +608,15 @@
       return true;
     }
     // Ô cổng: vẫn là chỗ dành (không mọc cây, không xây đè) nhưng không chặn lưới; ghi chủ để chặn người khác
+    // Trả các ô của một công trình đã bỏ về đất trống (TC_D06C2d: máy chủ giả dùng khi phá hủy, không giữ công trình trong lõi)
+    function boO(x, y, rong, sau) {
+      for (let oy = y; oy < y + sau; oy++) for (let ox = x; ox < x + rong; ox++) {
+        if (!trongBan(ox, oy)) continue;
+        const i = chiSo(ox, oy);
+        danh[i] = 0; congChu.delete(i); congKhac.delete(i);
+        if (!nguonO.has(i)) LUOI.datChan(luoi, ox, oy, false);
+      }
+    }
     function datCong(x, y, rong, sau, chu, cuaMinh) {
       for (let oy = y; oy < y + sau; oy++) for (let ox = x; ox < x + rong; ox++) {
         if (!trongBan(ox, oy)) continue;
@@ -857,7 +861,7 @@
       },
       mocLaiNguon, nguonDaCan: () => [...daCan.keys()], datMocTheoMayChu(bat) { mocMayChu = !!bat; },
       themCongTrinh, xongCongTrinh, lenhXay, xayTiep, boCongTrinh, choQua, oQuanh, khamPhaTuDo,
-      datCong, laCongKhac: (x, y) => congKhac.has(chiSo(x, y)), chuCong: (x, y) => (congChu.has(chiSo(x, y)) ? congChu.get(chiSo(x, y)) : null),
+      datCong, boO, laCongKhac: (x, y) => congKhac.has(chiSo(x, y)), chuCong: (x, y) => (congChu.has(chiSo(x, y)) ? congChu.get(chiSo(x, y)) : null),
       // Nối sương mù (TC_D02B2b): biet(x, y) ô đã khám phá; capNhat() soi lại sương; timBien(dv) -> ô để đi khám phá tiếp
       datBiet(fnBiet, fnCapNhat, fnTimBien) { biet = fnBiet || null; capNhatBiet = fnCapNhat || null; timKhamPha = fnTimBien || null; },
       bayGio, get lechGio() { return lechGio; },
@@ -873,3 +877,4 @@
   goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS, tocDoXay, duocXay, sucChuaCt, nhanCat, choOCt, chiemCho, mauRuong, giaiDoanRuong, sanLuongRuong };
 })(typeof window !== "undefined" ? window : globalThis);
 // 28/10/2026 19:05 - BƯỚC: TC_D03B2; 04/11/2026 23:xx - TC_D06C2b (boDonVi, dungDanh / thoiDanh: nông dân đánh quái)
+// 05/11/2026 - BƯỚC: TC_D06C2d (boO: trả ô công trình bị phá hủy về đất trống)

@@ -140,7 +140,7 @@ if (VUNG) {
   try {
     quaiBd = await taoQuaiBanDo({ ctx, cam, lang, diaHinh, banDo, cauHinh, suong: vung.suong, laLanhDia: vung.laLanhDia, dvTl, hTl,
       be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY, mayChu: vung.mayChu, vung, // TC_D06C1: quái chung từ máy chủ
-      khiXem: fn => { if (thanh) thanh.xem(fn); }, chonTl: () => dk.chon(hTl), // TC_D06D: thông số quái + nút ⚔️ Đánh ở thanh dưới
+      khiXem: fn => { if (thanh) thanh.xem(fn); }, chonTl: () => dk.chon(hTl), dangChon: () => dk.dangChon(), // TC_D06D; TC_D06C2d: ⚔️ Đánh sai nông dân
       boNv, boChon: dv => { const c = dk.dangChon(); if (c && c.dv === dv) dk.chon(null); } }); // TC_D06C2b: dân hết máu bỏ chạy
     uiDk.trungQuai = quaiBd.trung; uiDk.chamQuai = quaiBd.cham;
   } catch (e) { console.warn("Chưa dựng được quái trên bản đồ", e); } // thiếu quái vẫn chơi làng được
@@ -153,7 +153,6 @@ if (VUNG) {
 // ---------------- Thanh điều khiển cuối màn hình (TC_D06D) ----------------
 // Ô "đang xem": thứ vừa chạm (nhà, Lều, ruộng, cây / mỏ, quái); chạm đất / chọn người thì về người đang chọn.
 const TEN_CL = { nhan: "Nhân tộc", quy: "Quỷ tộc", tien: "Tiên tộc" };
-const PHA_HUY_MO = false; // bật lại khi SQL nhận lệnh phá hủy (bước sau); máy chủ chưa biết -> tải lại công trình hiện lại (03/11/2026)
 const bieuTuongCt = { leu: "🏕️", tuong: "🧱", cong: "🚪", thap_canh: "🗼", nha_o: "🏠", ruong: "🌾", kho_go: "📦", kho_da: "📦", kho_vang: "📦", vua_luong_thuc: "🍖", choi_hai_luom: "🧺", choi_mo: "⛏️" };
 const BT_NGUON = { cay: "🌳", mo_da: "🪨", mo_vang: "🪙", mo_sat: "⛓️", bai_ca: "🐟", bui_trai_cay: "🍓", ruong: "🌾" };
 const LAM = { cay: "🪓 Đang chặt cây", mo_da: "⛏️ Đang đào đá", mo_vang: "⛏️ Đang đào vàng", mo_sat: "⛏️ Đang đào sắt", bai_ca: "🎣 Đang bắt cá", bui_trai_cay: "🍓 Đang hái trái cây", ruong: "🌾 Đang gặt lúa" };
@@ -184,14 +183,15 @@ function ttCongTrinh(ct) {
   const cuaMinh = ct.cuaMinh !== false, nguoi = lang.donVi.filter(d => d.xay === ct).length;
   const tt = { anh: bieuTuongCt[ct.loai] || "🏗️", ten: tenCt(ct), nut: [] };
   if (ct.phaHuyLuc != null) {
-    const con = Math.max(0, Math.ceil((30000 - (lang.bayGio() - ct.phaHuyLuc)) / 1000));
+    const con = Math.max(0, Math.ceil(((vung ? vung.PHA_HUY_GIAY : 30) * 1000 - (lang.bayGio() - ct.phaHuyLuc)) / 1000));
     tt.dong = con ? "Đang hư hỏng · biến mất sau " + con + " giây" : "Đã biến mất";
   } else if (!ct.xong) { tt.dong = "🔨 Đang xây · " + pt(ct.tienDo) + (nguoi ? " · 🧑‍🌾 " + nguoi : ""); tt.muc = ct.tienDo || 0; }
   else tt.dong = "Đã hoàn thành";
   tt.phu = !cuaMinh ? "Của " + (ct.chu || "bạn") : vung ? vung.thongTinCt(ct) : null;
-  if (PHA_HUY_MO && vung && cuaMinh && ct.xong && ct.phaHuyLuc == null) tt.nut.push({ id: "d3PhaHuy", lop: "d3NutPhaHuy", chu: "✖<span class=\"d3Chu\"> Phá hủy</span>", nhan: "Phá hủy " + tenCt(ct), bam: () => {
-    if (!confirm("Phá hủy công trình này? Công trình sẽ hư dần và biến mất sau 30 giây.")) return;
-    if (vung.phaHuy(ct)) baoGoiY("Công trình đang sụp dần. Vẫn điều khiển được làng.");
+  // TC_D06C2d: nút Phá hủy bật lại (máy chủ ghi nhận); Lều trại không phá được
+  if (vung && vung.duocPhaHuy(ct)) tt.nut.push({ id: "d3PhaHuy", lop: "d3NutPhaHuy", chu: "✖<span class=\"d3Chu\"> Phá hủy</span>", nhan: "Phá hủy " + tenCt(ct), bam: () => {
+    if (!confirm("Phá hủy " + tenCt(ct) + "? Công trình sụp dần rồi biến mất sau " + vung.PHA_HUY_GIAY + " giây, không hoàn lại tài nguyên.")) return;
+    vung.phaHuy(ct).then(ok => { if (ok) baoGoiY("💥 " + tenCt(ct) + " đang sụp dần."); });
   } });
   return tt;
 }
@@ -318,3 +318,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 30/10/2026 - BƯỚC: TC_D06A; 30/10/2026 17:30 - TC_D06C1 (quái nhận mayChu + vung); 03/11/2026 23:3x - TC_D06C1 (tạm ẩn nút Phá hủy)
 // 04/11/2026 - BƯỚC: TC_D06D (thanh điều khiển cuối màn hình: ô đang xem người / nhà / nguồn / quái, nút theo thứ đang xem)
 // 04/11/2026 23:xx - BƯỚC: TC_D06C2b (nông dân đánh quái: boNv / boChon cho quái, máu nông dân ở thanh dưới)
+// 05/11/2026 - BƯỚC: TC_D06C2d (nút Phá hủy bật lại qua máy chủ; ⚔️ Đánh ở thanh dưới sai nông dân)
