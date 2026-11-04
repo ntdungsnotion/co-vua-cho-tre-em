@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#14204a">
-  <title>Làng 3D (thử) - Đấu Trường Tri Thức</title>
+  <title>Làng 3D thử - Đấu Trường Tri Thức</title>
   <link rel="icon" href="data:,">
 
 
@@ -39,13 +39,13 @@
   </script>
 </head>
 <body>
-  <div id="d3Canh" aria-label="Thung lũng 3D: kéo để xem, chạm để chọn và ra lệnh"></div>
+  <div id="d3Canh" aria-label="Làng 3D: kéo để xem, chạm để chọn và ra lệnh"></div>
   <div id="d3ChuNoi"></div>
 
   <div class="d3Tren">
-    <a class="d3Nut d3Khung" href="dautruongtrithuc.html" aria-label="Về sảnh Đấu Trường">⬅</a>
-    <div class="d3Ten d3Khung" id="d3TenVuong">Thung Lũng Khởi Đầu</div>
-    <div class="d3Kho d3Khung" aria-label="Tài nguyên">
+    <a class="d3Nut d3Khung" href="dautruongtrithuc.html" aria-label="Về sảnh">⬅</a>
+    <div class="d3Ten d3Khung" id="d3TenVuong">Thung lũng khởi đầu</div>
+    <div class="d3Kho d3Khung" aria-label="Kho tài nguyên">
       <span class="d3Tn" title="Gỗ">🪵 <b id="d3Go">0</b></span>
       <span class="d3Tn" title="Đá">🪨 <b id="d3Da">0</b></span>
       <span class="d3Tn" title="Vàng">🪙 <b id="d3Vang">0</b></span>
@@ -54,26 +54,26 @@
   </div>
 
   <div class="d3Duoi">
-    <div class="d3Khung" id="d3GoiY" role="status" aria-live="polite">Đang dựng thung lũng…</div>
+    <div class="d3Khung" id="d3GoiY" role="status" aria-live="polite">Đang dựng làng…</div>
     <div class="d3HangNut">
       <span class="d3Khung d3Do" id="d3Chon">Chưa chọn ai</span>
       <span class="d3Khung d3Do d3Pt" id="d3KhamPha" hidden>🗺️ Đã khám phá 0%</span>
       <span class="d3Khung d3Do" id="d3Fps">… khung/giây</span>
     </div>
     <div class="d3HangNut">
-      <button class="d3Nut d3Khung" id="d3VeLang" type="button" aria-label="Về lều">🏕️<span class="d3Chu"> Về lều</span></button>
+      <button class="d3Nut d3Khung" id="d3VeLang" type="button" aria-label="Về lều trại">🏕️<span class="d3Chu"> Về lều</span></button>
       <button class="d3Nut d3Khung" id="d3SoiDat" type="button" aria-label="Chọn chỗ dựng Lều trại" aria-pressed="false" hidden>🏕️<span class="d3Chu"> Dựng lều</span></button>
       <button class="d3Nut d3Khung" id="d3KhamPhaNut" type="button" aria-label="Nông dân đi khám phá" hidden>🔭<span class="d3Chu"> Đi khám phá</span></button>
       <button class="d3Nut d3Khung" id="d3DoHoa" type="button">✨ Đồ họa: Đẹp</button>
       <button class="d3Nut d3Khung" id="d3DoiHinh" type="button" aria-label="Thử ngoại hình">🎨<span class="d3Chu"> Ngoại hình</span></button>
-      <button class="d3Nut d3Khung" id="d3ThuTran" type="button" aria-label="Thử động tác trận">⚔️<span class="d3Chu"> Động tác trận</span></button>
+      <button class="d3Nut d3Khung" id="d3ThuTran" type="button" aria-label="Xem động tác trận">⚔️<span class="d3Chu"> Động tác trận</span></button>
       <button class="d3Nut d3Khung" id="d3Tua" type="button" aria-label="Tua nhanh 3 giờ">⏩<span class="d3Chu"> Tua 3 giờ</span></button>
-      <button class="d3Nut d3Khung" id="d3ThemNd" type="button" aria-label="Thêm nông dân">➕🧑‍🌾 <span id="d3SoNd">0</span></button>
-      <button class="d3Nut d3Khung" id="d3LamLai" type="button" aria-label="Vào lại thung lũng từ đầu" hidden>🔄<span class="d3Chu"> Vào lại</span></button>
+      <button class="d3Nut d3Khung" id="d3ThemNd" type="button" aria-label="Thêm nông dân thử">➕🧑‍🌾 <span id="d3SoNd">0</span></button>
+      <button class="d3Nut d3Khung" id="d3LamLai" type="button" aria-label="Vào lại làng từ đầu" hidden>🔄<span class="d3Chu"> Vào lại</span></button>
     </div>
   </div>
 
-  <div id="d3Tai"><div id="d3TaiChu">Đang dựng thung lũng…</div></div>
+  <div id="d3Tai"><div id="d3TaiChu">Đang dựng làng…</div></div>
 
   <script src="chung/nv_ve.js"></script>
   <script src="dt/dt_luoi.js"></script>

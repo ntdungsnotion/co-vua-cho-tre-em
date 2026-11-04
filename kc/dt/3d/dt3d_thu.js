@@ -85,14 +85,14 @@ const tienTai = {};
 function baoTai(ten, da, tong) {
   tienTai[ten] = [da, tong];
   let a = 0, b = 0; for (const k in tienTai) { a += tienTai[k][0]; b += tienTai[k][1]; }
-  chuTai.textContent = "Đang dựng thung lũng… " + Math.round(100 * a / Math.max(b, 1)) + "%";
+  chuTai.textContent = "Đang dựng làng… " + Math.round(100 * a / Math.max(b, 1)) + "%";
 }
 const [banDo, cauHinh, glbLang, glbNv] = await Promise.all([
   fetch(duongDan(VUNG ? "../du_lieu/vung_dat.json" : "../du_lieu/lang_thu_3d.json"), { cache: "no-cache" }).then(r => r.json()),
   fetch(duongDan("../du_lieu/cau_hinh.json"), { cache: "no-cache" }).then(r => r.json()),
   taiGlb(duongDan("../mo_hinh/lang.glb"), baoTai),
   taiGlb(duongDan("../mo_hinh/nhan_vat.glb"), baoTai)
-]).catch(e => { chuTai.textContent = "Chưa tải được thung lũng. Con kiểm tra mạng rồi tải lại trang nhé!"; throw e; });
+]).catch(e => { chuTai.textContent = "Chưa tải được làng. Kiểm tra mạng rồi tải lại trang nhé!"; throw e; });
 let soByte = 0; for (const k in tienTai) soByte += tienTai[k][1];
 
 // ---------------- Lõi + các phần vẽ ----------------
@@ -131,7 +131,7 @@ if (VUNG) {
   const mayChu = GAME ? taoMayChuThat() : null; // trang thử ?vung: máy chủ giả trên máy
   try {
     vung = await vaoThungLung({ ctx, cam, lang, banDo, cauHinh, diaHinh, boNv, dk, uiDk, be: { ...be, ten: be.ten || "khach" }, themNongDan, $, baoGoiY, kho, mayChu, capNhatKho: () => capNhatKho() });
-  } catch (e) { chuTai.textContent = e.lyDo || "Chưa vào được thung lũng. Con tải lại trang nhé!"; throw e; }
+  } catch (e) { chuTai.textContent = e.lyDo || "Chưa vào được làng. Tải lại trang nhé!"; throw e; }
   dvTl = vung.dvTl; hTl = vung.hTl;
   // TC_D06A: quái lang thang; chạm quái khi đang chọn Thủ lĩnh -> màn chiến đấu
   try {
@@ -178,11 +178,11 @@ if (nutPhaHuy) nutPhaHuy.addEventListener("click", () => {
   if (vung.phaHuy(ctDangChon)) {
     // Không giữ bảng phủ lên khu điều khiển sau khi ra lệnh; công trình tự hư ở nền.
     capBang(null);
-    baoGoiY("Công trình đang sụp dần. Con vẫn điều khiển được làng.");
+    baoGoiY("Công trình đang sụp dần. Vẫn điều khiển được làng.");
   }
 });
 setInterval(() => { if (bang && ctDangChon && !bang.hidden) capBang(ctDangChon); }, 250);
-$("d3TenVuong").textContent = be.tenVuongQuoc ? "Vương quốc " + be.tenVuongQuoc : VUNG ? banDo.ten + " · Cổng " + vung.vao.cong.so : "Thung Lũng Khởi Đầu";
+$("d3TenVuong").textContent = be.tenVuongQuoc ? "Vương quốc " + be.tenVuongQuoc : VUNG ? banDo.ten + " · Cổng " + vung.vao.cong.so : "Thung lũng khởi đầu";
 
 // ---------------- Thanh tài nguyên ----------------
 const O_KHO = { go: "d3Go", da: "d3Da", vang: "d3Vang", luong_thuc: "d3Lt" };
@@ -198,13 +198,13 @@ if (GAME) {
   $("d3Tua").hidden = $("d3ThemNd").hidden = true;
   $("d3LamLai").hidden = false;
   $("d3LamLai").addEventListener("click", async () => {
-    if (!confirm("Xoá lều, nông dân, chỗ đã khám phá và vào lại thung lũng từ đầu?")) return;
+    if (!confirm("Xoá lều, nông dân, chỗ đã khám phá và vào lại làng từ đầu?")) return;
     await vung.mayChu.xoaHet(); location.reload();
   });
 } else $("d3VeLang").addEventListener("click", () => cam.nhinVe(banDo.leu.x, banDo.leu.z + 2));
 const VIEC_LAN_LUOT = ["cay", "cay", "mo_da", "mo_vang", "bai_ca", "bui_trai_cay"];
 $("d3ThemNd").addEventListener("click", () => {
-  if (soNongDan >= 40) { baoGoiY("Thử tối đa 40 nông dân thôi."); return; }
+  if (soNongDan >= 40) { baoGoiY("Chỉ thử được tối đa 40 nông dân."); return; }
   const dv = themNongDan(banDo.leu.x + 1, banDo.leu.z + 2);
   const n = lang.nguonGanNhat(VIEC_LAN_LUOT[soNongDan % VIEC_LAN_LUOT.length], dv.x, dv.z, 60);
   if (n) lang.giaoViec(dv, n);
@@ -213,8 +213,7 @@ $("d3Tua").addEventListener("click", () => {
   lang.tuaNhanh(3 * LANG.GIO_MS);
   taiNguyen.veLaiMam();
   const g = Math.round(lang.lechGio / LANG.GIO_MS), ng = CH.nguon;
-  baoGoiY("⏩ Đã tua thêm 3 giờ (tổng " + g + " giờ). Mầm cây lớn sau " + ng.cay.mocLaiGio + " giờ, bãi cá mới sau " + ng.bai_ca.mocLaiGio +
-    " giờ, bụi trái cây " + ng.bui_trai_cay.mocLaiGio + " giờ, mỏ mới sau " + ng.mo_da.mocLaiGio + " giờ.");
+  baoGoiY("⏩ Đã tua 3 giờ. Cây: " + ng.cay.mocLaiGio + " giờ · cá: " + ng.bai_ca.mocLaiGio + " giờ · trái cây: " + ng.bui_trai_cay.mocLaiGio + " giờ · mỏ: " + ng.mo_da.mocLaiGio + " giờ.");
 });
 const TEN_CL = { nhan: "Nhân tộc", quy: "Quỷ tộc", tien: "Tiên tộc" };
 $("d3DoiHinh").addEventListener("click", () => {
@@ -227,7 +226,7 @@ $("d3DoiHinh").addEventListener("click", () => {
   boNv.xoa(hTl); hTl = boNv.tao(dvTl, "thu_linh", hoSoTl); hTl.huong = huong;
   if (dangChonTl) dk.chon(hTl);
   lang.datChungLoai(hoSoTl.chungLoai);
-  baoGoiY("Thử ngoại hình: " + TEN_CL[hoSoTl.chungLoai] + ", " + (hoSoTl.gioi === "nu" ? "bé gái" : "bé trai") + ". " +
+  baoGoiY("Đang xem " + TEN_CL[hoSoTl.chungLoai] + ", " + (hoSoTl.gioi === "nu" ? "bé gái" : "bé trai") + ". " +
     (VUNG ? (hoSoTl.chungLoai === "tien" ? "Tiên tộc nhìn xa hơn 1 ô." : "Thủ lĩnh nhìn xa " + BD.tamNhin(cauHinh.banDo, "thu_linh", hoSoTl.chungLoai) + " ô.")
       : "Nông dân " + TEN_CL[hoSoTl.chungLoai] + " mang mỗi chuyến " + lang.sucMang() + "."));
 });
@@ -238,8 +237,8 @@ const TEN_DONG_TAC = { "1H_Melee_Attack_Slice_Diagonal": "Chém chéo", "Spellca
 let goiTran = null;
 $("d3ThuTran").addEventListener("click", async () => {
   if (hTl.dien) return;
-  baoGoiY("Đang tải gói động tác trận…");
-  try { goiTran = goiTran || (await taiGlb(duongDan("../mo_hinh/dong_tac_tran.glb"))).animations; } catch (e) { baoGoiY("Chưa tải được gói động tác trận."); return; }
+  baoGoiY("Đang tải động tác trận…");
+  try { goiTran = goiTran || (await taiGlb(duongDan("../mo_hinh/dong_tac_tran.glb"))).animations; } catch (e) { baoGoiY("Chưa tải được động tác trận."); return; }
   boNv.themDongTac(goiTran);
   dvTl.duong.length = 0;
   boNv.dien(hTl, Object.keys(TEN_DONG_TAC), ten => baoGoiY("⚔️ " + (TEN_DONG_TAC[ten] || ten)),
@@ -267,7 +266,7 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
 ctx.khiDo(so => {
   Object.assign(window.__dt3d, so);
   fpsEl.textContent = so.fps + " khung/giây";
-  if (!NHE && so.fps < 24) { if (++chamLien === 4) baoGoiY("Máy hơi chậm: bấm nút ✨ để chuyển đồ họa sang Nhẹ nhé."); } else chamLien = 0;
+  if (!NHE && so.fps < 24) { if (++chamLien === 4) baoGoiY("Máy hơi chậm. Bấm ✨ để chọn đồ họa Nhẹ nhé."); } else chamLien = 0;
 });
 
 capNhatKho();
@@ -278,5 +277,5 @@ ctx.batDau(cam.camera);
 window.__dt3d.taiMs = Math.round(performance.now() - t0);
 $("d3Tai").hidden = true;
 if (vung) vung.batDau();
-else baoGoiY("Chạm vào nông dân 🧑‍🌾 rồi chạm cây, mỏ, bãi cá hoặc bụi trái cây để giao việc. Kéo để xem quanh làng, chụm hai ngón (hoặc lăn chuột) để phóng to.");
+else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc. Chạm đất để đi.");
 // 30/10/2026 - BƯỚC: TC_D06A; 30/10/2026 17:30 - TC_D06C1 (quái nhận mayChu + vung); 03/11/2026 23:3x - TC_D06C1 (tạm ẩn nút Phá hủy)
