@@ -362,15 +362,40 @@
 
     // ---------------- Nông dân + Thủ lĩnh ----------------
     const donVi = [];
+    let soIdDv = 0; // TC_D06C2b: id đơn vị tăng dần (bỏ đơn vị giữa chừng không trùng id)
     const kho = {}; for (const k in CH.taiNguyen) kho[k] = 0;
     const sucMang = () => CH.sucMang[chungLoai];
 
     function themDonVi(vaiTro, x, z, ten) {
       const o = LUOI.oTrongGan(luoi, Math.floor(x), Math.floor(z));
-      const dv = { id: donVi.length + 1, vaiTro, ten, x: o.x + 0.5, z: o.y + 0.5, huongMuon: 0, trangThai: "dung", duong: [], viec: null,
+      const dv = { id: ++soIdDv, vaiTro, ten, x: o.x + 0.5, z: o.y + 0.5, huongMuon: 0, trangThai: "dung", duong: [], viec: null,
         mang: { loai: null, so: 0 }, mangTu: {}, henLam: 0, ranh: false, chay: false, dich: null, xay: null, tuKhamPha: false };
       donVi.push(dv);
       return dv;
+    }
+    // TC_D06C2b: bỏ một đơn vị khỏi làng (nông dân hết máu bỏ chạy = mất hẳn người dân, cả đồ đang vác)
+    function boDonVi(dv) {
+      const i = donVi.indexOf(dv);
+      if (i < 0) return false;
+      donVi.splice(i, 1);
+      dv.duong = []; dv.viec = null; dv.xay = null; dv.hangXay = []; dv.mang = { loai: null, so: 0 }; dv.mangTu = {};
+      phat({ loai: "bo_don_vi", dv });
+      return true;
+    }
+    // TC_D06C2b: nông dân dừng lại đánh quái (đứng yên, động tác "danh"); nhớ việc đang làm để đánh xong làm tiếp.
+    // lenhDi tới ô đang đứng trước (máy chủ nhớ đúng chỗ), rồi trạng thái "danh" (lõi để yên, không tự đi)
+    function dungDanh(dv, x, z) {
+      const viecCu = dv.viec;
+      lenhDi(dv, LUOI.oCuaDiem(dv.x, dv.z));
+      dv.duong = []; dv.dich = null; dv.trangThai = "danh"; dv.ranh = false; dv.viecCu = viecCu || null;
+      if (Number.isFinite(x)) dv.huongMuon = Math.atan2(x - dv.x, z - dv.z);
+    }
+    // Đánh xong (thắng / hòa / rút): làm tiếp việc cũ nếu nguồn còn, không thì đứng chờ việc (dấu "!")
+    function thoiDanh(dv) {
+      const n = dv.viecCu; dv.viecCu = null;
+      if (dv.trangThai !== "danh") return;
+      if (n && (dangSong(n) || choRuong(n)) && giaoViec(dv, n)) return;
+      nghi(dv);
     }
     // ---------------- Sương mù: ô đã biết (TC_D02B2b) ----------------
     // biet(x, y): bé đã khám phá ô này chưa (trang game nối vào sương mù dt_ban_do.js). Không nối
@@ -839,7 +864,7 @@
       tuaNhanh(ms) { lechGio += ms; xuLyHen(); },
       get chungLoai() { return chungLoai; }, datChungLoai(cl) { if (CH.sucMang[cl] != null) chungLoai = cl; }, sucMang,
       nghe(f) { nghe.push(f); },
-      themDonVi, lenhDi, giaoViec, capNhat, xuLyHen, nguonGanNhat, nguonSatBen, coKe, dangSong, sucChua, danSo, choO,
+      themDonVi, boDonVi, dungDanh, thoiDanh, lenhDi, giaoViec, capNhat, xuLyHen, nguonGanNhat, nguonSatBen, coKe, dangSong, sucChua, danSo, choO,
       duocXay, tocDoXay: (ct, n) => tocDoXay(CHF, ct, n),
       nguonTaiO: (x, y) => nguonO.get(chiSo(x, y)) || null
     };
@@ -847,4 +872,4 @@
 
   goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS, tocDoXay, duocXay, sucChuaCt, nhanCat, choOCt, chiemCho, mauRuong, giaiDoanRuong, sanLuongRuong };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 19:05 - BƯỚC: TC_D03B2
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2; 04/11/2026 23:xx - TC_D06C2b (boDonVi, dungDanh / thoiDanh: nông dân đánh quái)

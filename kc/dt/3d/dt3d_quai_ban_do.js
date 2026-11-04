@@ -22,6 +22,15 @@
 //              Thủ lĩnh dừng, KÈN LỆNH (dt3d_am_thanh.js kenLenh), máy chủ khoá quái trạng thái "lao" (mọi bé thấy quái
 //              lao tới), tới nơi thì màn chiến đấu tự mở, QUÁI ĐÁNH TRƯỚC (?quaiTruoc=1). Trong lúc quái lao bé cho Thủ
 //              lĩnh chạy đi được: quái tới nơi không thấy Thủ lĩnh thì thả. Đánh / rút / thả xong con đó miễn hung.mienGiay giây.
+//            - TC_D06C2b NÔNG DÂN ĐÁNH QUÁI (người dùng 04/11/2026): quái hung dữ thấy nông dân của bé (bé đang mở game) thì
+//              KÈN LỆNH + lao vào, nông dân đứng lại; tới nơi thì nông dân TỰ ĐÁNH (dt/dt_dan_danh.js: đúng 50%, luật trận
+//              dt_tran_dau.js, chỉ số theo tộc cau_hinh_tran_dau.json nongDan) ngay trên bản đồ (động tác chém, quái chớp, nhãn
+//              "⚔️ ❤️ máu" trên đầu dân, tiếng chém / trúng khi cảnh nằm trong khung hình). Thanh dưới KHÔNG đổi (bé có thể đang
+//              xem thứ khác); góc trên bên phải hiện nút ⚔️ (số trận): bấm là VÀO ĐIỀU KHIỂN trận đó (màn chiến đấu đánh tiếp
+//              từ máu + lượt đang có; quái còn đang lao thì vào ngay khi quái tới). Chọn nông dân rồi chạm quái = sai dân đi đánh
+//              (tới nơi mở màn chiến đấu). Thắng / hòa: quái bỏ chạy, dân làm tiếp việc cũ, máu còn lại máy chủ giữ (không tự hồi).
+//              Thua: dân hết máu BỎ CHẠY khỏi bản đồ = mất hẳn người dân (cả đồ đang vác). Bé ra lệnh cho dân đang đánh đi chỗ
+//              khác = rút lui (thả quái, giữ máu).
 // HÀM KHAI RA:
 //   taoQuaiBanDo(the) -> Promise<{ trung(tia) -> { q, kc } | null, cham(q, hinhDangChon), moc }>
 //     the = { ctx, lang, diaHinh, banDo, cauHinh, cam, suong?, laLanhDia?(x, y), dvTl, hTl, be: { ten, hoSo, lop },
@@ -31,8 +40,10 @@
 //     trả thêm conNghi() (ms còn nghỉ), dongHo(ms) cho thông số Thủ lĩnh ở thanh dưới
 //   dt3d_dieu_khien.js gọi trung / cham qua ui.trungQuai / ui.chamQuai.
 // LUẬT NỐI: lõi KC_DT_QUAI_BAN_DO, KC_DT_LUOI, KC_DT_BAN_DO (SANG); lang.lenhDi; ctx.nghiVe (dt3d_canh.js).
-// BƯỚC: TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ); TC_D06C2a (quái hung dữ)
-// NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026
+//   TC_D06C2b: the thêm boNv (bộ vẽ nhân vật: dân bỏ chạy), boChon(dv) (bỏ chọn dân vừa mất); trả thêm mauDan(dv) ->
+//     { hp, toiDa } cho thông số nông dân ở thanh dưới; moc thêm danDs(), vaoDan(idDv), laoDan(idQuai, idDv).
+// BƯỚC: TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ); TC_D06C2a (quái hung dữ); TC_D06C2b (nông dân đánh quái)
+// NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // ================================================================
 import * as THREE from "three";
 import { taoQuai3d } from "./dt3d_quai.js";
@@ -40,6 +51,7 @@ import { NHIP_DANH } from "./dt3d_nhan_vat.js";
 import { taoAmThanh } from "./dt3d_am_thanh.js";
 
 const QB = window.KC_DT_QUAI_BAN_DO, LUOI = window.KC_DT_LUOI, BD = window.KC_DT_BAN_DO;
+const QU = window.KC_DT_QUAI, DD = window.KC_DT_DAN_DANH; // TC_D06C2b: nông dân tự đánh (trang phải nạp dt_quai.js, dt_tran_dau.js, dt_dan_danh.js)
 const CAO_QUAI = 0.95; // quái trên bản đồ cao chừng này (ô), thấp hơn Thủ lĩnh
 const CHU_QUAI = { slime_so: () => String(1 + Math.floor(Math.random() * 9)), nam_chu_cai: () => "ABCDEFGHKLMNPRST"[Math.floor(Math.random() * 16)], dom_dom: () => "?" };
 const DAU_MAU = { xanh: "🟢", vang: "🟡", do: "🔴" };
@@ -66,7 +78,8 @@ export async function taoQuaiBanDo(the) {
   let am = null; // bộ tiếng (kèn lệnh); tạo một lần, mở ở lần chạm đầu
   try { am = taoAmThanh(); } catch (e) { am = null; }
   let soLao = 0; // số lần quái lao vào Thủ lĩnh (kịch bản thử Chrome đọc)
-  const giuTren = id => (dangToi && dangToi.id === id) || (trongTran && trongTran.r.id === id);
+  const danh = new Map(); // TC_D06C2b: id nông dân -> trận của nông dân { dv, r, giai: "toi" | "lao" | "danh" | "be", td, nhan, ... }
+  const giuTren = id => (dangToi && dangToi.id === id) || (trongTran && trongTran.r.id === id) || [...danh.values()].some(f => f.r.id === id);
   function nhanDs(ds) {
     const con = new Set(), bay = Date.now(), cu = (ch.buGiay + cauHinh.banDo.chuKyGui * 2) * 1000;
     for (const r of ds || []) {
@@ -161,6 +174,7 @@ export async function taoQuaiBanDo(the) {
     if (!ghi.has(r.id) || p.mat || p.trangThai === "chay") return null;
     const tt = { anh: r.hung ? "😠" : "👾", ten: tenLoai(r.ma) + " · Lv " + r.lv, dong: DAU_MAU[mau(r)] + " " + SUC[mau(r)], nut: [] };
     if (cuaBan(r)) tt.phu = "⚔️ Đang giao chiến với Thủ lĩnh của " + r.khoa.ten;
+    else if (danCuaQuai(r)) tt.phu = "⚔️ Đang giao chiến với " + danCuaQuai(r).dv.ten; // TC_D06C2b
     else if (dangToi === r && r.khoa && r.khoa.trang === "lao") tt.phu = "😠 Đang lao vào " + dvTl.ten + "!";
     else if (dangToi === r) tt.phu = "⚔️ " + dvTl.ten + " đang tiến tới";
     else if (conNghi() > 0) tt.phu = "⛺ " + dvTl.ten + " đang nghỉ · còn " + dongHo(conNghi());
@@ -178,7 +192,10 @@ export async function taoQuaiBanDo(the) {
     if (the.khiXem) the.khiXem(() => thongTin(r)); // TC_D06D
     const nhan = DAU_MAU[mau(r)] + " " + tenLoai(r.ma) + " · Lv " + r.lv;
     if (cuaBan(r)) { the.baoGoiY("⚔️ " + nhan + " đang giao chiến với Thủ lĩnh của " + r.khoa.ten + "."); return; }
-    if (!chonH || chonH.vaiTro !== "thu_linh") { the.baoGoiY(chonH ? nhan + " · ❌ Chỉ Thủ lĩnh 👑 đánh quái" : nhan); return; }
+    const fq = danCuaQuai(r); // TC_D06C2b
+    if (fq) { the.baoGoiY("⚔️ " + nhan + " đang giao chiến với " + fq.dv.ten + "."); return; }
+    if (chonH && chonH.vaiTro === "nong_dan" && !chonH.dv.laBan) { danDiDanh(r, chonH.dv, p, nhan); return; } // TC_D06C2b: sai dân đi đánh
+    if (!chonH || chonH.vaiTro !== "thu_linh") { the.baoGoiY(nhan); return; }
     if (conNghi() > 0) { the.baoGoiY("⛺ " + dvTl.ten + " đang nghỉ ở Lều · còn " + dongHo(conNghi())); return; }
     if (dangToi && dangToi !== r) thaQuai(dangToi);
     if (!(r.khoa && r.khoa.ten === tenMinh)) giuQuai(r, p);
@@ -231,6 +248,7 @@ export async function taoQuaiBanDo(the) {
   function dongTran() {
     if (!trongTran) return;
     const { r, khung, ket, nghiGiay } = trongTran;
+    if (trongTran.dan) { const f = trongTran.dan, hp = trongTran.hpBe; trongTran = null; khung.remove(); ctx.nghiVe = false; xongDanDieuKhien(f, ket, hp); return; } // TC_D06C2b
     trongTran = null; khung.remove(); ctx.nghiVe = false;
     const ten2 = tenLoai(r.ma), k = r.khoa || { x: r.x, z: r.z };
     dung(r.id); datMien(r.id);
@@ -248,17 +266,19 @@ export async function taoQuaiBanDo(the) {
   }
   window.addEventListener("message", e => {
     if (!trongTran || e.source !== trongTran.fr.contentWindow || !e.data) return;
+    if (Number.isFinite(e.data.hpBe)) trongTran.hpBe = e.data.hpBe; // TC_D06C2b: máu nông dân lúc kết / rút
     if (e.data.loai === "dt-tran-ket") ghiKet(e.data.thang, e.data.nghiGiay);
     else if (e.data.loai === "dt-tran-dong") dongTran();
   });
   // rời trang giữa lúc đang tới / đang đánh: thả quái cho bạn khác (gửi kiểu giữ kết nối)
   addEventListener("pagehide", () => {
-    const r = trongTran ? trongTran.r : dangToi;
-    if (r && r.khoa && r.khoa.ten === tenMinh) mayChu.quaiKet(ten, r.id, "rut", null, true);
+    const r = trongTran && !trongTran.dan ? trongTran.r : dangToi;
+    if (r && r.khoa && r.khoa.ten === tenMinh && !r.khoa.dv) mayChu.quaiKet(ten, r.id, "rut", null, true);
+    for (const f of danh.values()) mayChu.quaiKet(ten, f.r.id, "rut", null, true, { dv: f.dv.idMayChu, mau: mauHienTai(f) }); // TC_D06C2b
   });
 
   // ---------- mỗi khung ----------
-  const tlDangDanh = new Set(); // tên bạn có Thủ lĩnh đang được vẽ đánh quái
+  const tlDangDanh = new Set(); // người của bạn (Thủ lĩnh / nông dân, TC_D06C2b) đang được vẽ đánh quái
   ctx.moiKhung((dt, t) => {
     // tiến tới quái: đủ gần thì vào trận; Thủ lĩnh dừng / đổi hướng khác thì thôi (thả quái)
     if (dangToi && !trongTran) {
@@ -278,6 +298,8 @@ export async function taoQuaiBanDo(the) {
     }
     // TC_D06C2a: quái hung dữ thấy Thủ lĩnh (rảnh: không đang tới quái, không đánh, không nghỉ) thì kèn lệnh + lao tới
     if (hung && !dangToi && !trongTran && conNghi() <= 0) laoNeuThay();
+    if (hung) laoVaoDan(); // TC_D06C2b: quái hung dữ thấy nông dân
+    capNhatDan(dt); // TC_D06C2b: trận của nông dân (tự đánh trên bản đồ)
     // hình theo bản ghi + giờ máy chủ
     const con = new Set(), danhNay = new Set();
     for (const r of ghi.values()) {
@@ -292,14 +314,17 @@ export async function taoQuaiBanDo(the) {
       h.p = p;
       let huong = p.huong;
       // bé khác giữ / đánh quái này: quay về phía Thủ lĩnh bạn; đang đánh thì Thủ lĩnh bạn chém, quái chớp + nảy theo nhịp
-      const ban = cuaBan(r) ? vung.tlBan(r.khoa.ten) : null;
+      const ban = cuaBan(r) ? (r.khoa.dv != null && vung.dvBan ? vung.dvBan(r.khoa.dv) : vung.tlBan(r.khoa.ten)) : null; // TC_D06C2b: nông dân bạn
       if (ban) {
         huong = Math.atan2(ban.dv.x - p.x, ban.dv.z - p.z);
-        if (p.trangThai === "danh") { ban.dv.danhQuai = { x: p.x, z: p.z }; danhNay.add(r.khoa.ten); }
+        if (p.trangThai === "danh") { ban.dv.danhQuai = { x: p.x, z: p.z }; danhNay.add(ban); }
       }
+      const fm = danCuaQuai(r); // TC_D06C2b: nông dân của mình đang đánh con này
+      if (fm) huong = Math.atan2(fm.dv.x - p.x, fm.dv.z - p.z);
+      const dangGiao = p.trangThai === "danh" && (cuaBan(r) || (fm && fm.giai === "danh"));
       if (!hien) { h.nhan.hidden = true; continue; }
       let y = diaHinh.doCaoDi(p.x, p.z);
-      if (p.trangThai === "danh" && cuaBan(r)) {
+      if (dangGiao) {
         const nhat = Math.floor((t + r.id * 0.37) / NHIP_DANH), pha = (t + r.id * 0.37) / NHIP_DANH - nhat;
         if (nhat !== h.nhat && pha > 0.45) { h.nhat = nhat; h.q3.chop(0.15); }
         if (pha > 0.45 && pha < 0.75) y += Math.sin((pha - 0.45) / 0.3 * Math.PI) * 0.18;
@@ -312,7 +337,7 @@ export async function taoQuaiBanDo(the) {
       h.q3.capNhat(dt, t + r.id);
       if (p.trangThai === "chay") { if (Math.abs(h.mo - p.mo) > 0.02) { h.mo = p.mo; h.q3.datMo(Math.max(0, p.mo)); } h.nhan.hidden = true; }
       else {
-        const chu = (p.trangThai === "danh" && cuaBan(r) ? "⚔️ " : "") + (r.hung ? "😠 " : "") + "Lv " + r.lv, m = mau(r);
+        const chu = (dangGiao ? "⚔️ " : "") + (r.hung ? "😠 " : "") + "Lv " + r.lv, m = mau(r);
         if (h.nhan.textContent !== chu) h.nhan.textContent = chu;
         if (h.nhan.dataset.mau !== m) h.nhan.dataset.mau = m;
         const lao = p.trangThai === "lao" ? "1" : ""; if ((h.nhan.dataset.lao || "") !== lao) h.nhan.dataset.lao = lao;
@@ -320,8 +345,8 @@ export async function taoQuaiBanDo(the) {
       }
     }
     for (const id of [...hinh.keys()]) if (!con.has(id)) xoaHinh(id);
-    for (const chu of tlDangDanh) if (!danhNay.has(chu)) { const b = vung.tlBan(chu); if (b) b.dv.danhQuai = null; }
-    tlDangDanh.clear(); for (const chu of danhNay) tlDangDanh.add(chu);
+    for (const b of tlDangDanh) if (!danhNay.has(b)) b.dv.danhQuai = null;
+    tlDangDanh.clear(); for (const b of danhNay) tlDangDanh.add(b);
     // nghỉ ở Lều
     const n = conNghi();
     if (n > 0 && hTl.vo.visible) { nhanNghi.textContent = "⛺ " + dongHo(n); const p = hTl.vo.position; datNhan(nhanNghi, p.x, p.y + 2.1, p.z); }
@@ -354,6 +379,232 @@ export async function taoQuaiBanDo(the) {
     the.baoGoiY("📯 " + tenLoai(r.ma) + " hung dữ lao vào " + dvTl.ten + "!");
   }
 
+  // ================= TC_D06C2b: NÔNG DÂN ĐÁNH QUÁI =================
+  const ND = chTran.nongDan || {};
+  const clBe = () => (be.hoSo && be.hoSo.chungLoai) || lang.chungLoai || "nhan";
+  const toiDaDan = () => { const c = (ND.chiSo || {})[clBe()] || (ND.chiSo || {}).nhan; return c ? c.hp : 0; };
+  // máu nông dân: dv.mau (máy chủ giữ, null = đầy); không tự hồi (người dùng 04/11/2026: chỉ phù thủy chữa)
+  function mauDan(dv) { const toiDa = toiDaDan(); return { hp: dv.mau == null ? toiDa : Math.max(0, Math.min(toiDa, dv.mau)), toiDa }; }
+  const mauHienTai = f => (f.td ? f.td.hp().be : mauDan(f.dv).hp);
+  const danCuaQuai = r => { if (!r.khoa || r.khoa.ten !== tenMinh || r.khoa.dv == null) return null; for (const f of danh.values()) if (f.r === r) return f; return null; };
+  const dsDanMinh = () => lang.donVi.filter(d => d.vaiTro === "nong_dan" && !d.laBan && d.idMayChu != null);
+  let soDanMat = 0, soDanThang = 0, kenLuc = 0;
+  const keu = () => { if (am && Date.now() - kenLuc > 4000) { kenLuc = Date.now(); am.kenLenh(); } }; // nhiều con lao cùng lúc: một hồi kèn
+
+  // nút ⚔️ ở góc trên bên phải (người dùng 04/11/2026: thanh dưới giữ thứ bé đang xem; kiếm hiện ở góc trên cùng bên phải)
+  const nutTran = document.createElement("button");
+  nutTran.type = "button"; nutTran.className = "d3Nut d3Khung d3TranNhanh"; nutTran.hidden = true;
+  nutTran.setAttribute("aria-label", "Vào trận nông dân đang đánh quái");
+  (document.querySelector(".d3Tren") || document.body).appendChild(nutTran);
+  nutTran.addEventListener("click", e => {
+    e.stopPropagation();
+    if (trongTran) return;
+    const ds = [...danh.values()].filter(f => f.giai === "danh" || f.giai === "lao");
+    const f = ds.find(k => k.giai === "danh") || ds[0];
+    if (f) vaoDieuKhien(f);
+  });
+  function veNut() {
+    const n = [...danh.values()].filter(f => f.giai === "danh" || f.giai === "lao").length;
+    if (nutTran.hidden !== !n) nutTran.hidden = !n;
+    const chu = "⚔️" + (n > 1 ? " " + n : "");
+    if (nutTran.textContent !== chu) nutTran.textContent = chu;
+  }
+
+  function moDan(dv, r, giai) {
+    const nhan = document.createElement("div"); nhan.className = "d3MauDan"; nhan.hidden = true; the.lop.appendChild(nhan);
+    const f = { dv, r, giai, td: null, nhan, quaiTruoc: giai === "lao", muonVao: false };
+    danh.set(dv.id, f);
+    return f;
+  }
+  function dongDan(f) { danh.delete(f.dv.id); f.nhan.remove(); veNut(); }
+
+  // giữ quái cho nông dân f trên máy chủ (khoá có dv); bị từ chối thì thôi
+  function giuQuaiDan(r, p, lao, f) {
+    r.khoa = { ten: tenMinh, dv: f.dv.idMayChu, x: p.x, z: p.z, trang: lao ? "lao" : "toi", luc: gio() }; dung(r.id);
+    mayChu.quaiGiu(ten, r.id, p.x, p.z, !!lao, f.dv.idMayChu).then(kq => {
+      if (kq.ok) { if (r.khoa && kq.quai && kq.quai.khoa) r.khoa = kq.quai.khoa; return; }
+      if (!LOI_DUNG[kq.ma] && kq.ma !== "khong_phai_nguoi") return; // lỗi mạng: đánh trên máy như đã giữ
+      if (danh.get(f.dv.id) !== f || f.giai === "be") return;
+      r.khoa = kq.ma === "dang_danh" && kq.chu ? { ten: kq.chu, x: p.x, z: p.z, trang: "danh", luc: gio() } : null;
+      if (kq.ma === "quai_mat") ghi.delete(r.id);
+      lang.thoiDanh(f.dv); dongDan(f);
+    });
+  }
+  function thaDan(f, ket, thongBao) { // ket "rut" | "tha": thả quái, dân giữ máu, làm tiếp việc cũ
+    const r = f.r, hp = mauHienTai(f);
+    if (r.khoa && r.khoa.ten === tenMinh) r.khoa = null;
+    dung(r.id); datMien(r.id);
+    f.dv.mau = hp < mauDan(f.dv).toiDa || f.dv.mau != null ? hp : null;
+    mayChu.quaiKet(ten, r.id, ket || "tha", null, false, { dv: f.dv.idMayChu, mau: hp });
+    lang.thoiDanh(f.dv); dongDan(f);
+    if (thongBao) the.baoGoiY(thongBao);
+  }
+
+  // quái hung dữ thấy nông dân: lao vào (mỗi khung nhiều nhất một con mới)
+  function laoVaoDan() {
+    const bay = Date.now();
+    let tot = null;
+    for (const r of ghi.values()) {
+      if (!r.hung || r.khoa || r.chay || (mien.get(r.id) || 0) > bay) continue;
+      const p = viTri(r);
+      if (!thay(p)) continue;
+      for (const dv of dsDanMinh()) {
+        if (danh.has(dv.id) || dv.trangThai === "danh") continue;
+        const K = QB.diemLao(ch, r, p, dv, diDuoc);
+        if (!K) continue;
+        const d = Math.hypot(p.x - dv.x, p.z - dv.z);
+        if (!tot || d < tot.d) tot = { r, K, d, dv };
+      }
+    }
+    if (!tot) return;
+    const f = moDan(tot.dv, tot.r, "lao");
+    lang.dungDanh(tot.dv, tot.K.x, tot.K.z); // dân đứng lại, quay về phía quái
+    giuQuaiDan(tot.r, tot.K, true, f);
+    soLao++; keu(); veNut();
+    the.baoGoiY("📯 " + tenLoai(tot.r.ma) + " hung dữ lao vào " + tot.dv.ten + "!");
+  }
+
+  // chọn nông dân rồi chạm quái: dân đi tới, tới nơi mở màn chiến đấu (bé tự chọn đánh)
+  function danDiDanh(r, dv, p, nhan) {
+    const cu = danh.get(dv.id);
+    if (cu) { if (cu.r === r) return; if (cu.giai === "toi") thaDan(cu, "tha"); else { the.baoGoiY("⚔️ " + dv.ten + " đang đánh quái."); return; } }
+    if (r.khoa && r.khoa.ten === tenMinh) { the.baoGoiY("⚔️ " + nhan + " đang giao chiến."); return; }
+    const f = moDan(dv, r, "toi");
+    f.muonVao = true;
+    giuQuaiDan(r, p, false, f);
+    if (Math.hypot(dv.x - r.khoa.x, dv.z - r.khoa.z) <= ch.vaoTranCach) return; // đã đứng sát
+    if (!lang.lenhDi(dv, { x: Math.floor(r.khoa.x), y: Math.floor(r.khoa.z) })) { thaDan(f, "tha", "❌ Chỗ đó chưa tới được."); return; }
+    the.baoGoiY("⚔️ " + dv.ten + " tiến về " + nhan);
+  }
+
+  function baoDanhDan(f, lan) {
+    mayChu.quaiDanh(ten, f.r.id, f.dv.idMayChu).then(kq => {
+      if (kq.ok || danh.get(f.dv.id) !== f) return;
+      if (kq.ma === "xa_qua" && lan < 3) setTimeout(() => baoDanhDan(f, lan + 1), 2000);
+    });
+  }
+  function batDauDanh(f) {
+    const r = f.r, k = r.khoa;
+    lang.dungDanh(f.dv, k.x, k.z);
+    k.trang = "danh"; dung(r.id);
+    f.giai = "danh";
+    f.td = DD.taoTuDanh({ ch: chTran, chungLoai: clBe(), quai: QU.taoQuai(r.ma, r.lv, chTran), hp: mauDan(f.dv).hp, quaiTruoc: f.quaiTruoc, t: Date.now() });
+    baoDanhDan(f, 0);
+    veNut();
+    if (f.muonVao) vaoDieuKhien(f);
+  }
+
+  // điểm (x, z) có nằm trong khung hình không (tiếng đánh chỉ kêu khi bé đang nhìn thấy cảnh)
+  const trongKhung = (x, z) => { const [sx, sy, truoc] = raManHinh(x, diaHinh.doCaoDi(x, z) + 0.6, z); return truoc && sx >= 0 && sy >= 0 && sx <= canvas.clientWidth && sy <= canvas.clientHeight; };
+  function tiengLuot(f, k) {
+    if (!am || ctx.nghiVe || !trongKhung(f.dv.x, f.dv.z)) return;
+    const x = 0;
+    if (k.satThuong > 0) { am.chem(x); am.trung(x, k.chiMang, 0.12); }
+    else if (k.kieu === "ne") { am.chem(x); am.ne(x, 0.1); }
+    else am.hut(x);
+  }
+
+  function ketThucDan(f, thang, hp) {
+    const r = f.r, dv = f.dv, ten2 = tenLoai(r.ma), k = r.khoa || { x: r.x, z: r.z };
+    dung(r.id); datMien(r.id);
+    if (thang === "quai") { // hết máu: bỏ chạy khỏi bản đồ = mất hẳn người dân
+      r.khoa = null;
+      mayChu.quaiKet(ten, r.id, "quai", null, false, { dv: dv.idMayChu, mau: 0 });
+      dongDan(f); danBoChay(dv, k); soDanMat++;
+      the.baoGoiY("💨 " + dv.ten + " hết máu, bỏ chạy khỏi thung lũng · mất 1 dân");
+      return;
+    }
+    r.chay = { x: k.x, z: k.z, huong: Math.atan2(k.x - dv.x, k.z - dv.z), luc: gio() }; r.khoa = null;
+    dv.mau = hp;
+    mayChu.quaiKet(ten, r.id, thang === "be" ? "be" : "hoa", null, false, { dv: dv.idMayChu, mau: hp });
+    lang.thoiDanh(dv); dongDan(f);
+    if (thang === "be") soDanThang++;
+    the.baoGoiY((thang === "be" ? "🏆 " + dv.ten + " thắng · " : "🤝 Hòa · ") + ten2 + " bỏ chạy · ❤️ " + hp + "/" + mauDan(dv).toiDa);
+  }
+  // dân hết máu: bỏ khỏi làng, hình chạy ra xa (ngược phía quái) rồi mất
+  const chayDi = [];
+  function danBoChay(dv, k) {
+    lang.boDonVi(dv);
+    if (the.boChon) the.boChon(dv);
+    const h = the.boNv && the.boNv.dsHinh.find(x => x.dv === dv);
+    if (!h) return;
+    const g = Math.atan2(dv.x - k.x, dv.z - k.z);
+    dv.trangThai = "dung"; dv.chay = true; dv.duong = [{ x: dv.x + Math.sin(g) * 6, z: dv.z + Math.cos(g) * 6 }]; dv.huongMuon = g;
+    chayDi.push({ dv, h, g, con: 2.2 });
+    if (am && trongKhung(dv.x, dv.z)) am.chayTron(0);
+  }
+
+  function vaoDieuKhien(f) {
+    if (trongTran) return;
+    if (f.giai !== "danh") { f.muonVao = true; the.baoGoiY("⚔️ Vào trận khi " + tenLoai(f.r.ma) + " tới chỗ " + f.dv.ten); return; }
+    const c = f.td.chuyen(), r = f.r, h = hinh.get(r.id);
+    f.giai = "be"; veNut();
+    const quaiTruoc = (c.soLuot % 2 === 0) === f.quaiTruoc; // lượt sau (soLuot + 1) quái đánh trước?
+    const ts = new URLSearchParams({ nhung: "1", vai: "nong_dan", quai: r.ma, lv: String(r.lv), cl: clBe(), gioi: "nam",
+      lop: String(be.lop || 2), ten: be.ten || "", tl: f.dv.ten || "Nông dân", chu: (h && h.chu) || "",
+      hp: String(c.hpBe), hpQuai: String(c.hpQuai), luot: String(c.soLuot), nd: String(f.dv.id) });
+    if (quaiTruoc) ts.set("quaiTruoc", "1");
+    const khung = document.createElement("div"); khung.className = "d3Tran";
+    const fr = document.createElement("iframe");
+    fr.title = "Trận đấu"; fr.allow = "autoplay"; fr.src = new URL("../thu_tran_dau.html?" + ts, import.meta.url).href;
+    khung.appendChild(fr); document.body.appendChild(khung);
+    trongTran = { r, khung, fr, ket: undefined, dan: f, hpBe: c.hpBe };
+    ctx.nghiVe = true;
+    fr.focus();
+  }
+  function xongDanDieuKhien(f, ket, hp) {
+    if (danh.get(f.dv.id) !== f) return;
+    const m = Number.isFinite(hp) ? hp : mauHienTai(f);
+    f.td = null;
+    if (ket === "be" || ket === null || ket === "quai") ketThucDan(f, ket === "quai" ? "quai" : ket, ket === "quai" ? 0 : m);
+    else { f.dv.mau = m; thaDan(f, "rut", "🏃 " + f.dv.ten + " rút lui · ❤️ " + m + "/" + mauDan(f.dv).toiDa); }
+  }
+
+  function capNhatDan(dt) {
+    const bay = Date.now();
+    for (const f of [...danh.values()]) {
+      const dv = f.dv, r = f.r, k = r.khoa;
+      if (!lang.donVi.includes(dv) || !ghi.has(r.id)) { dongDan(f); continue; }
+      if (f.giai === "be") continue; // bé đang điều khiển trong màn chiến đấu
+      if (!k || k.ten !== tenMinh) { lang.thoiDanh(dv); dongDan(f); continue; } // máy chủ đã thả
+      const gan = Math.hypot(dv.x - k.x, dv.z - k.z) <= ch.vaoTranCach + 0.3;
+      if (f.giai === "lao") {
+        if (viTri(r).trangThai !== "lao") {
+          if (gan && dv.trangThai === "danh") batDauDanh(f);
+          else thaDan(f, "tha", "🏃 " + dv.ten + " đã thoát khỏi " + tenLoai(r.ma) + "!");
+        }
+      } else if (f.giai === "toi") {
+        if (gan) batDauDanh(f);
+        else if (dv.trangThai !== "di") thaDan(f, "tha", dv.trangThai === "dung" ? "❌ " + dv.ten + " chưa tới được chỗ " + tenLoai(r.ma) + "." : null);
+      } else if (f.giai === "danh") {
+        if (dv.trangThai !== "danh") { thaDan(f, "rut", "🏃 " + dv.ten + " rút lui · ❤️ " + mauHienTai(f) + "/" + mauDan(dv).toiDa); continue; } // bé sai dân đi chỗ khác
+        dv.huongMuon = Math.atan2(k.x - dv.x, k.z - dv.z);
+        for (const kq of f.td.capNhat(bay)) {
+          tiengLuot(f, kq);
+          const h = hinh.get(r.id); if (h && kq.tanCong === "be" && kq.satThuong > 0) h.q3.chop(0.15);
+          if (kq.ketThuc) { ketThucDan(f, kq.ketThuc.thang, f.td.hp().be); break; }
+        }
+      }
+    }
+    // nhãn máu trên đầu nông dân đang bị tấn công / đang đánh
+    for (const f of danh.values()) {
+      if (f.giai === "toi" || f.giai === "be" || !thay(f.dv)) { if (!f.nhan.hidden) f.nhan.hidden = true; continue; }
+      const m = mauHienTai(f), td = mauDan(f.dv).toiDa, chu = "⚔️ ❤️ " + m + "/" + td;
+      if (f.nhan.textContent !== chu) f.nhan.textContent = chu;
+      const thap = m / Math.max(1, td) < 0.3 ? "1" : ""; if ((f.nhan.dataset.thap || "") !== thap) f.nhan.dataset.thap = thap;
+      datNhan(f.nhan, f.dv.x, diaHinh.doCaoDi(f.dv.x, f.dv.z) + 2.0, f.dv.z);
+    }
+    // dân bỏ chạy: chạy ra xa rồi mất
+    for (let i = chayDi.length - 1; i >= 0; i--) {
+      const c = chayDi[i];
+      c.con -= dt;
+      c.dv.x += Math.sin(c.g) * 3 * dt; c.dv.z += Math.cos(c.g) * 3 * dt;
+      c.dv.duong = [{ x: c.dv.x + Math.sin(c.g), z: c.dv.z + Math.cos(c.g) }];
+      if (c.con <= 0) { the.boNv.xoa(c.h); chayDi.splice(i, 1); }
+    }
+    veNut();
+  }
+
   // chạm: tia trúng quái đang hiện (không tính quái đang bỏ chạy)
   function trung(tia) {
     const ds = [...hinh.values()].filter(h => h.vo.visible && h.p && h.p.trangThai !== "chay").map(h => h.trung);
@@ -363,7 +614,7 @@ export async function taoQuaiBanDo(the) {
   }
 
   return {
-    trung, cham, conNghi, dongHo,
+    trung, cham, conNghi, dongHo, mauDan, // TC_D06C2b: mauDan
     moc: { // kịch bản thử Chrome
       ds: () => [...ghi.values()].map(r => { const p = viTri(r), h = hinh.get(r.id);
         return { id: r.id, ma: r.ma, lv: r.lv, x: p.x, z: p.z, nhaX: r.x, nhaZ: r.z, trangThai: p.mat ? "mat" : p.trangThai, hien: !!(h && h.vo.visible), mau: mau(r),
@@ -382,8 +633,24 @@ export async function taoQuaiBanDo(the) {
       },
       chamDiem: id => { const r = ghi.get(id); if (!r) return null; const p = viTri(r); return cam.chieu(p.x, diaHinh.doCaoDi(p.x, p.z) + 0.5, p.z); },
       hoiLai: () => vung.hoiLai(),
-      ghiKet, dongTran, khung: () => trongTran && trongTran.fr
+      ghiKet, dongTran, khung: () => trongTran && trongTran.fr,
+      // TC_D06C2b: trận nông dân
+      danDs: () => [...danh.values()].map(f => ({ dv: f.dv.idMayChu, ten: f.dv.ten, quai: f.r.id, giai: f.giai, hp: mauHienTai(f), toiDa: mauDan(f.dv).toiDa, soLuot: f.td ? f.td.soLuot() : 0 })),
+      mauDan, danMat: () => soDanMat, danThang: () => soDanThang, nutTran: () => ({ hien: !nutTran.hidden, so: nutTran.textContent }),
+      vaoDan: idDv => { const f = [...danh.values()].find(k => k.dv.idMayChu === idDv); if (f) vaoDieuKhien(f); return !!f; },
+      bamNutTran: () => nutTran.click(),
+      dsDan: () => lang.donVi.filter(d => d.vaiTro === "nong_dan" && !d.laBan).map(d => ({ id: d.idMayChu, ten: d.ten, x: d.x, z: d.z, trangThai: d.trangThai, mau: d.mau == null ? null : d.mau })),
+      // đặt quái (máy chủ giả) cạnh nông dân idDv cách (dx, dz) ô
+      keBenDan: (id, idDv, dx, dz, hungMoi) => {
+        const r = ghi.get(id), dv = lang.donVi.find(d => d.idMayChu === idDv);
+        if (!r || !dv || !mayChu._dichQuai) return false;
+        const x = Math.floor(dv.x) + 0.5 + (dx == null ? 2 : dx), z = Math.floor(dv.z) + 0.5 + (dz || 0);
+        if (!mayChu._dichQuai(id, x, z, hungMoi)) return false;
+        const hd = hungMoi == null ? r.hung : !!hungMoi; if (hd !== !!r.hung) xoaHinh(id);
+        Object.assign(r, { x, z, sinhLuc: gio(), khoa: null, chay: null, hung: hd }); dung(id); mien.delete(id); return true;
+      },
+      chamBangDan: (id, idDv) => { const r = ghi.get(id), dv = lang.donVi.find(d => d.idMayChu === idDv); if (!r || !dv) return false; cham(r, { vaiTro: "nong_dan", dv }); return true; }
     }
   };
 }
-// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06D (thông số quái + nút ⚔️ Đánh ở thanh dưới); 04/11/2026 - TC_D06C2a (quái hung dữ)
+// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06D (thông số quái + nút ⚔️ Đánh ở thanh dưới); 04/11/2026 - TC_D06C2a (quái hung dữ); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái)

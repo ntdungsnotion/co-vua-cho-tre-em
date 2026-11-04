@@ -115,4 +115,13 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   .d3Thanh .d3Nut { min-height: 46px; }
 }
 @media (prefers-reduced-motion: reduce) { .d3Ranh { animation: none; } }
-/* 30/10/2026 - BƯỚC: TC_D06A (nhãn cấp quái, màn chiến đấu phủ); 04/11/2026 - TC_D06D (thanh điều khiển cuối màn hình); 04/11/2026 - TC_D06C2a (nhãn quái hung dữ) */
+/* TC_D06C2b: nông dân đánh quái. Nút ⚔️ góc trên bên phải (cuối thanh trên): bấm vào trận đang diễn ra; nhãn máu trên đầu dân */
+.d3TranNhanh { margin-left: auto; flex: 0 0 auto; font-size: 1.35rem; min-width: 52px; min-height: 48px; background: rgba(150, 22, 30, .92);
+  border-color: #ff6b6b; color: #fff; animation: d3TranNhay .7s ease-in-out infinite alternate; }
+@keyframes d3TranNhay { to { box-shadow: 0 0 0 5px rgba(255, 90, 90, .45); transform: scale(1.06); } }
+.d3MauDan { position: absolute; left: 0; top: 0; pointer-events: none; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: .95rem;
+  line-height: 1; padding: 4px 8px; border-radius: 10px; border: 2px solid #ffc24b; background: rgba(20, 32, 74, .88); color: #fff; white-space: nowrap; }
+.d3MauDan[data-thap="1"] { border-color: #ff6b6b; background: rgba(110, 16, 24, .9); }
+@media (min-width: 900px) { .d3TranNhanh { font-size: 1.6rem; min-width: 64px; min-height: 52px; } }
+@media (prefers-reduced-motion: reduce) { .d3TranNhanh { animation: none; } }
+/* 30/10/2026 - BƯỚC: TC_D06A (nhãn cấp quái, màn chiến đấu phủ); 04/11/2026 - TC_D06D (thanh điều khiển cuối màn hình); 04/11/2026 - TC_D06C2a (nhãn quái hung dữ); 04/11/2026 23:xx - TC_D06C2b (nút ⚔️ góc trên phải, nhãn máu nông dân) */
