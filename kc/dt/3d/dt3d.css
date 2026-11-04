@@ -78,6 +78,11 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3LvQuai[data-mau="vang"] { border-color: #ffc24b; color: #ffe7a6; }
 .d3LvQuai[data-mau="do"] { border-color: #ff6b6b; color: #ffc4c4; }
 .d3NghiTl { border-color: #b9c3ec; color: #fff6dc; }
+/* TC_D06C2a: quái hung dữ: nền đỏ sẫm (nhãn "😠 Lv n"); đang lao tới thì nhãn nảy */
+.d3LvQuai[data-hung="1"] { background: rgba(110, 16, 24, .9); }
+.d3LvQuai[data-lao="1"] { animation: d3Lao .35s ease-in-out infinite alternate; }
+@keyframes d3Lao { to { margin-top: -6px; } }
+@media (prefers-reduced-motion: reduce) { .d3LvQuai[data-lao="1"] { animation: none; } }
 .d3Tran { position: fixed; inset: 0; z-index: 30; background: #14204a; }
 .d3Tran iframe { width: 100%; height: 100%; border: 0; display: block; }
 /* Màn chờ tải */
@@ -110,4 +115,4 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   .d3Thanh .d3Nut { min-height: 46px; }
 }
 @media (prefers-reduced-motion: reduce) { .d3Ranh { animation: none; } }
-/* 30/10/2026 - BƯỚC: TC_D06A (nhãn cấp quái, màn chiến đấu phủ); 04/11/2026 - TC_D06D (thanh điều khiển cuối màn hình) */
+/* 30/10/2026 - BƯỚC: TC_D06A (nhãn cấp quái, màn chiến đấu phủ); 04/11/2026 - TC_D06D (thanh điều khiển cuối màn hình); 04/11/2026 - TC_D06C2a (nhãn quái hung dữ) */

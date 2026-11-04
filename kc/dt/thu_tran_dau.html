@@ -22,8 +22,9 @@
              TC_D06A (?nhung=1&quai=&lv=&cl=&gioi=&lop=&ten=&tl=&chu=: MÀN CHIẾN ĐẤU THẬT mở từ bản đồ Thung Lũng
              (khung phủ của 3d/dt3d_quai_ban_do.js): vào trận ngay, không hộp chọn / nút thử chiêu, trình độ lưu
              riêng từng bé "kc_dt_trinh_do_<tên>", xong trận postMessage "dt-tran-ket" cho bản đồ, nút "⬅ Về thung
-             lũng" / "🏃 Rút lui" postMessage "dt-tran-dong")
-       NGÀY: 29/10/2026; 29/10/2026 22:47; 30/10/2026; 30/10/2026 06:00; 30/10/2026 (TC_D06A)
+             lũng" / "🏃 Rút lui" postMessage "dt-tran-dong");
+             TC_D06C2a (&quaiTruoc=1: quái hung dữ lao vào Thủ lĩnh, quái tấn công lượt đầu)
+       NGÀY: 29/10/2026; 29/10/2026 22:47; 30/10/2026; 30/10/2026 06:00; 30/10/2026 (TC_D06A); 04/11/2026 (TC_D06C2a)
        PHỤ THUỘC: chung/nv_ve.js, dt/dt_trinh_do.js, dt/dt_sinh_toan.js, dt/dt_sinh_tieng_anh.js,
                   dt/dt_cau_hoi.js, dt/dt_quai.js, dt/dt_tran_dau.js, dt/dt_ve_quai.js,
                   dt/du_lieu/cau_hinh_tran_dau.json, dt/du_lieu/cau_hinh_trinh_do.json, tu_vung/kho_tu.json
@@ -359,7 +360,8 @@
     function vaoTran() {
       $("manKet").classList.add("an");
       const q = QU.taoQuai(chon.quai, chon.lv, chTran);
-      T = TR.taoTran({ ch: chTran, chungLoai: chon.cl, quai: q, lop: chon.lop, thongTha: chon.thongTha == null ? undefined : chon.thongTha });
+      T = TR.taoTran({ ch: chTran, chungLoai: chon.cl, quai: q, lop: chon.lop, thongTha: chon.thongTha == null ? undefined : chon.thongTha,
+        quaiTruoc: NHUNG && TS.get("quaiTruoc") === "1" }); // TC_D06C2a: quái hung dữ lao vào thì quái đánh trước
       chuQuai = NHUNG && TS.get("chu") ? TS.get("chu").slice(0, 2) : CHU_QUAI[chon.quai] ? CHU_QUAI[chon.quai]() : "";
       hieuUng = null; ketThucLuc = 0; clearTimeout(henTiep);
       $("tenBe").textContent = (NHUNG && TS.get("tl")) || "Thủ lĩnh";
@@ -693,4 +695,4 @@
   </script>
 </body>
 </html>
-<!-- 30/10/2026 - BƯỚC: TC_D06A (chế độ nhúng từ bản đồ) -->
+<!-- 30/10/2026 - BƯỚC: TC_D06A (chế độ nhúng từ bản đồ); 04/11/2026 - TC_D06C2a (quaiTruoc) -->

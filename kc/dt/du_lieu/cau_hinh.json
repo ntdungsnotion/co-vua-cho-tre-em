@@ -75,7 +75,9 @@
     "hoiSinhGiay": 120, "thuLaiGiay": 30, "lanThuSinh": 200, "vaoTranCach": 1.6,
     "khoaToiGiay": 60, "khoaDanhGiay": 600, "giuLechO": 2, "danhCachO": 4, "buGiay": 5, "nghiToiDaGiay": 600,
     "mauKhung": { "xanhDenLech": 0, "vangDenLech": 1 },
-    "capThuLinh": 1
+    "capThuLinh": 1,
+    "_ghiChuHung": "TC_D06C2a (người dùng 04/11/2026: 'làm quái tự động tấn công'; '50% quái nằm ngoài vùng sáng của tất cả tài khoản trên bản đồ hiện tại'; quái lao vào Thủ lĩnh thì tự vào trận, quái đánh trước). Máy chủ quyết lúc SINH quái: ô sinh ngoài vùng sáng của mọi bé thì hung dữ với tỉ lệ tiLe (sinh lại thì quyết lại). tamNhin = quái hung thấy Thủ lĩnh gần hơn bấy nhiêu ô thì lao tới (Thủ lĩnh thấy 6 ô nên luôn thấy quái trước). dungCach = quái lao tới chỗ cách Thủ lĩnh bấy nhiêu ô. duoiToiDa = quái không lao xa chỗ ở quá bấy nhiêu ô (Thủ lĩnh đứng xa hơn thì quái để yên). tocDoLao = ô mỗi giây khi lao. mienGiay = sau một trận / rút lui / thả, quái đó không lao lại Thủ lĩnh trong bấy nhiêu giây. Bỏ khối này thì không có quái hung dữ.",
+    "hung": { "tiLe": 0.5, "tamNhin": 3.5, "dungCach": 0.9, "duoiToiDa": 8, "tocDoLao": 2.6, "mienGiay": 12 }
   },
   "_ghiChuChoi": "TC_D03C (người dùng 28/10/2026: 'làm Chòi hái lượm; chòi vàng, đá, sắt (3 tài nguyên chung 1 chòi)'): congTrinh.*.cat = các loại tài nguyên công trình đó NHẬN CẤT nhưng KHÔNG thêm sức chứa (không có sucChua): chòi chỉ là chỗ cất sát chỗ làm cho nông dân đi ít hơn; đồ cất vẫn tính vào sức chứa Lều + kho. Chòi hái lượm: Lương thực (trái cây, cá, ruộng); Chòi mỏ: Đá, Vàng, Sắt."
 }

@@ -29,7 +29,8 @@
 // BƯỚC: TC_D05B3 (người dùng 29/10/2026: "bổ sung âm thanh cho chiến đấu"; 30/10/2026: "thiếu nhạc
 //        nền", "giao việc cho agy làm thư viện âm thanh để sau này mình gắn bối cảnh sân khấu, hiệu ứng
 //        trong cài đặt")
-// NGÀY: 30/10/2026; 30/10/2026 06:30 (thư viện + nhạc nền)
+//        TC_D06C2a: kenLenh() kèn lệnh khi quái hung dữ lao vào Thủ lĩnh (dùng trên bản đồ, dt3d_quai_ban_do.js)
+// NGÀY: 30/10/2026; 30/10/2026 06:30 (thư viện + nhạc nền); 04/11/2026 (kèn lệnh)
 // ================================================================
 const KHOA = "kc_dt_tieng", KHOA_NHAC = "kc_dt_nhac";
 const TOI_DA = 64; // không mở tiếng mới khi đã có ngần này nguồn đang kêu
@@ -37,7 +38,7 @@ const AM_NHAC = 0.16; // nhạc nhỏ hơn tiếng hiệu ứng (người dùng 
 const URL_THU_VIEN = new URL("../am_thanh/thu_vien.json", import.meta.url).href;
 const ngau = (a, b) => a + Math.random() * (b - a);
 // tên tiếng tự tạo mà tham số đầu KHÔNG phải vị trí x
-const KHONG_X = { chuChieu: 1, thang: 1, thua: 1 };
+const KHONG_X = { chuChieu: 1, thang: 1, thua: 1, kenLenh: 1 };
 
 export function taoAmThanh() {
   let ac = null, tong = null, guiVang = null, nhieu = null, dangKeu = 0, busNhac = null;
@@ -321,6 +322,15 @@ export function taoAmThanh() {
       if (!duoc("thua", 1)) return;
       [67, 64, 60].forEach((n, i) => ton({ tre: tre + i * 0.32, giay: i === 2 ? 0.9 : 0.36, kieu: "triangle", tu: not(n), den: i === 2 ? not(n) * 0.97 : not(n), am: 0.18, len: 0.02, vang: 0.4 }));
     },
+    // TC_D06C2a: kèn lệnh "tu… tuuu" khi quái hung dữ lao vào Thủ lĩnh (hai hơi kèn trầm, rung nhẹ, vang xa)
+    kenLenh(tre = 0) {
+      if (!duoc("kenLenh", 2)) return;
+      [[43, 0, 0.45], [50, 0.55, 1.3]].forEach(([n, t, giay]) => {
+        ton({ tre: tre + t, giay, kieu: "sawtooth", tu: not(n), den: not(n) * 1.01, am: 0.09, len: 0.08, vang: 0.6 });
+        ton({ tre: tre + t, giay, kieu: "triangle", tu: not(n + 12), am: 0.12, len: 0.08, vang: 0.6 });
+        ton({ tre: tre + t, giay: giay * 0.9, kieu: "sine", tu: not(n - 12), am: 0.2, len: 0.1 });
+      });
+    },
     // quái bỏ chạy: bước chân lạch bạch
     chayTron(x, tre = 0) {
       if (!duoc("chayTron", 0.5)) return;
@@ -443,4 +453,4 @@ export function taoAmThanh() {
   }
   return am;
 }
-// 30/10/2026 - BƯỚC: TC_D05B3
+// 30/10/2026 - BƯỚC: TC_D05B3; 04/11/2026 - TC_D06C2a (kèn lệnh)
