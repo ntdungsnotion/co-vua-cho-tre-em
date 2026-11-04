@@ -205,6 +205,7 @@ export async function vaoThungLung(the) {
     const p = viTriCua(d), l = d.lenh;
     const dv = themNongDan(p.x, p.z);
     dv.idMayChu = d.id; dsNd.push(dv);
+    dv.mau = Number.isFinite(d.mau) ? d.mau : null; // TC_D06C2b: máu nông dân máy chủ giữ (null = đầy, không tự hồi)
     const n = l && l.viec != null ? lang.nguonTheoMa(l.viec) : null;
     const ctXay = l && Number.isInteger(l.xay) ? ctMinh(l.xay) : null;
     if (ctXay) lang.lenhXay(dv, ctXay, (l.hang || []).map(ctMinh).filter(Boolean)); // TC_D03A: đang xây thì xây tiếp
@@ -895,6 +896,7 @@ export async function vaoThungLung(the) {
     quanhDau: { quai: quanh.quai || vao.quai || [], nghiDen: vao.nghiDen || 0 },
     ngheQuanh: f => ngheQuanh.push(f), hoiLai: () => chuKy(),
     tlBan: chu => { for (const b of ban.values()) if (b.dv.chu === chu && b.dv.vaiTro === "thu_linh") return b; return null; },
+    dvBan: id => ban.get(id) || null, // TC_D06C2b: nông dân của bạn đang đánh quái (id máy chủ)
     phaHuy,
     // TC_D06D: thông số riêng của công trình cho ô "đang xem" ở thanh dưới; chọn người khác thì đóng phần Lều / ruộng
     thongTinCt(ct) {
@@ -943,5 +945,5 @@ export async function vaoThungLung(the) {
     }
   };
 }
-// 30/10/2026 13:56 - BƯỚC: TC_D06A (khai laLanhDia cho quái tránh lãnh địa); 30/10/2026 17:30 - TC_D06C1 (quái chung: quanhDau, ngheQuanh, tlBan, Thủ lĩnh bạn đánh quái)
+// 30/10/2026 13:56 - BƯỚC: TC_D06A (khai laLanhDia cho quái tránh lãnh địa); 30/10/2026 17:30 - TC_D06C1 (quái chung: quanhDau, ngheQuanh, tlBan, Thủ lĩnh bạn đánh quái); 04/11/2026 23:xx - TC_D06C2b (dv.mau, dvBan)
 // 04/11/2026 - BƯỚC: TC_D06D (thongTinCt + dongXem cho thanh dưới; câu menu Xây: chỉ nông dân đang chọn đi xây)

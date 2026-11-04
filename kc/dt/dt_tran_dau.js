@@ -16,8 +16,8 @@
 //            Lõi không chọn câu (nhận từ dt_cau_hoi.js qua moLuot), không đụng DOM, không đọc đồng hồ:
 //            mọi hàm nhận thời điểm t (mili giây) từ ngoài => kiểm thử node chạy tua nhanh được.
 //            Mọi con số đọc từ du_lieu/cau_hinh_tran_dau.json.
-// BƯỚC: TC_D05; TC_D06C2a (quaiTruoc: quái đánh lượt đầu)
-// NGÀY: 29/10/2026; 04/11/2026
+// BƯỚC: TC_D05; TC_D06C2a (quaiTruoc: quái đánh lượt đầu); TC_D06C2b (bên bé là nông dân: chiSoNongDan, tc.be, hpQuai, soLuotDau)
+// NGÀY: 29/10/2026; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_quai.js (KC_DT_QUAI)
 // ================================================================
 (function (goc) {
@@ -26,6 +26,14 @@
   function chiSoThuLinh(chungLoai, ch) {
     const c = ch.thuLinh[chungLoai] || ch.thuLinh.nhan;
     return { hpToiDa: c.hp, hp: c.hp, mpToiDa: c.mp, mp: 0, str: c.str, int: c.int, agi: c.agi, def: c.def, uyLuc: c.uyLuc, chiSoDanh: c.chiSoDanh };
+  }
+  // TC_D06C2b: chỉ số nông dân theo chủng loại (cau_hinh_tran_dau.json nongDan.chiSo); hp = máu còn lại (máy chủ giữ,
+  // không tự hồi; bỏ trống = đầy)
+  function chiSoNongDan(chungLoai, ch, hp) {
+    const ds = (ch.nongDan && ch.nongDan.chiSo) || {}, c = ds[chungLoai] || ds.nhan;
+    if (!c) return chiSoThuLinh(chungLoai, ch);
+    const con = Number.isFinite(hp) ? Math.max(0, Math.min(c.hp, Math.round(hp))) : c.hp;
+    return { hpToiDa: c.hp, hp: con, mpToiDa: c.mp, mp: 0, str: c.str, int: c.int, agi: c.agi, def: c.def, uyLuc: c.uyLuc, chiSoDanh: c.chiSoDanh, nongDan: true };
   }
 
 
@@ -41,17 +49,21 @@
   }
 
   // tc: { ch, chungLoai, quai (KC_DT_QUAI.taoQuai), lop, thongTha (bỏ trống: theo lớp), rng,
-  //       quaiTruoc (TC_D06C2a: quái hung dữ lao vào Thủ lĩnh thì quái tấn công lượt đầu, đổi chỗ lượt lẻ / chẵn) }
+  //       quaiTruoc (TC_D06C2a: quái hung dữ lao vào Thủ lĩnh thì quái tấn công lượt đầu, đổi chỗ lượt lẻ / chẵn),
+  //       TC_D06C2b: be (chỉ số bên bé đã dựng sẵn, vd chiSoNongDan; bỏ trống = Thủ lĩnh theo chủng loại),
+  //       hpQuai (máu quái còn lại khi bé vào điều khiển giữa trận nông dân tự đánh), soLuotDau (số lượt đã đánh: lượt
+  //       tiếp theo giữ đúng bên tấn công, soLuotToiDa tính cả các lượt đó) }
   function taoTran(tc) {
     const QU = goc.KC_DT_QUAI, ch = tc.ch, rng = tc.rng || Math.random;
     const lop = Math.max(1, Math.min(12, Math.floor(tc.lop) || 1));
     const thongTha = tc.thongTha != null ? !!tc.thongTha : lop <= ch.thongTha.denLop;
-    const be = Object.assign(chiSoThuLinh(tc.chungLoai, ch), { combo: 0 });
+    const be = Object.assign(tc.be ? Object.assign({}, tc.be) : chiSoThuLinh(tc.chungLoai, ch), { combo: 0 });
     const quai = Object.assign({}, tc.quai, { combo: 0 });
+    if (Number.isFinite(tc.hpQuai)) quai.hp = Math.max(1, Math.min(quai.hpToiDa || quai.hp, Math.round(tc.hpQuai))); // TC_D06C2b
     // thời gian tối đa của bé mỗi lượt (theo cấp quái; Thong thả nhân cả bé lẫn quái để quái vẫn nhanh hơn bé)
     const nghi = thongTha ? ch.thongTha.heSoNghi : 1, giayBe = QU.giayBe(quai.lv, ch) * nghi;
     const tongKet = { soLuot: 0, beDung: 0, beBam: 0, comboCaoNhat: 0, satThuongGay: 0, satThuongNhan: 0 };
-    let luot = null, ketThuc = null, soLuot = 0;
+    let luot = null, ketThuc = null, soLuot = Math.max(0, Math.floor(tc.soLuotDau) || 0); // TC_D06C2b: soLuotDau
 
     function benCua(ten) { return ten === "be" ? be : quai; }
 
@@ -166,6 +178,6 @@
     };
   }
 
-  goc.KC_DT_TRAN_DAU = { taoTran, chiSoThuLinh, tiLeNe, satThuong };
+  goc.KC_DT_TRAN_DAU = { taoTran, chiSoThuLinh, chiSoNongDan, tiLeNe, satThuong };
 })(typeof window !== "undefined" ? window : globalThis);
-// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (đồng hồ bé theo cấp quái: T.giayBe); 04/11/2026 - TC_D06C2a (quaiTruoc)
+// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (đồng hồ bé theo cấp quái: T.giayBe); 04/11/2026 - TC_D06C2a (quaiTruoc); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái)

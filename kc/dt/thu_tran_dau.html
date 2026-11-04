@@ -24,6 +24,9 @@
              riêng từng bé "kc_dt_trinh_do_<tên>", xong trận postMessage "dt-tran-ket" cho bản đồ, nút "⬅ Về thung
              lũng" / "🏃 Rút lui" postMessage "dt-tran-dong");
              TC_D06C2a (&quaiTruoc=1: quái hung dữ lao vào Thủ lĩnh, quái tấn công lượt đầu)
+             TC_D06C2b (&vai=nong_dan&hp=&hpQuai=&luot=&nd=: bé VÀO ĐIỀU KHIỂN nông dân đang đánh quái trên bản đồ: chỉ số
+             nông dân theo tộc, đánh tiếp từ máu hai bên + số lượt đã đánh; thua = nông dân bỏ chạy (không nghỉ Lều);
+             "dt-tran-ket" / "dt-tran-dong" gửi kèm hpBe = máu nông dân còn)
        NGÀY: 29/10/2026; 29/10/2026 22:47; 30/10/2026; 30/10/2026 06:00; 30/10/2026 (TC_D06A); 04/11/2026 (TC_D06C2a)
        PHỤ THUỘC: chung/nv_ve.js, dt/dt_trinh_do.js, dt/dt_sinh_toan.js, dt/dt_sinh_tieng_anh.js,
                   dt/dt_cau_hoi.js, dt/dt_quai.js, dt/dt_tran_dau.js, dt/dt_ve_quai.js,
@@ -290,7 +293,11 @@
 
     // hồ sơ Thủ lĩnh cho sân 3D; ?tuong=<mã trong du_lieu/tuong.json> để xem thử một tướng bất kỳ (TC_D05B1)
     const TUONG_THU = new URLSearchParams(location.search).get("tuong");
-    function hoSoBe() { const h = { chungLoai: chon.cl, gioi: chon.gioi || "nam" }; if (TUONG_THU) h.tuong = TUONG_THU; return h; }
+    const LA_DAN = NHUNG && TS.get("vai") === "nong_dan"; // TC_D06C2b: bé điều khiển nông dân
+    function hoSoBe() {
+      if (LA_DAN && NV.hoSoNongDan) return Object.assign(NV.hoSoNongDan(chon.cl, +TS.get("nd") || 0), { nongDan: true });
+      const h = { chungLoai: chon.cl, gioi: chon.gioi || "nam" }; if (TUONG_THU) h.tuong = TUONG_THU; return h;
+    }
 
     // ---------- lưu ở máy này ----------
     function docLuu() { try { return JSON.parse(localStorage.getItem(KHOA) || "null"); } catch (e) { return null; } }
@@ -360,11 +367,14 @@
     function vaoTran() {
       $("manKet").classList.add("an");
       const q = QU.taoQuai(chon.quai, chon.lv, chTran);
+      const so = k => { const v = TS.get(k); return v == null || v === "" ? NaN : Number(v); };
       T = TR.taoTran({ ch: chTran, chungLoai: chon.cl, quai: q, lop: chon.lop, thongTha: chon.thongTha == null ? undefined : chon.thongTha,
-        quaiTruoc: NHUNG && TS.get("quaiTruoc") === "1" }); // TC_D06C2a: quái hung dữ lao vào thì quái đánh trước
+        quaiTruoc: NHUNG && TS.get("quaiTruoc") === "1", // TC_D06C2a: quái hung dữ lao vào thì quái đánh trước
+        be: LA_DAN ? TR.chiSoNongDan(chon.cl, chTran, so("hp")) : undefined, // TC_D06C2b: nông dân, đánh tiếp từ máu + lượt đang có
+        hpQuai: LA_DAN ? so("hpQuai") : undefined, soLuotDau: LA_DAN ? so("luot") : undefined });
       chuQuai = NHUNG && TS.get("chu") ? TS.get("chu").slice(0, 2) : CHU_QUAI[chon.quai] ? CHU_QUAI[chon.quai]() : "";
       hieuUng = null; ketThucLuc = 0; clearTimeout(henTiep);
-      $("tenBe").textContent = (NHUNG && TS.get("tl")) || "Thủ lĩnh";
+      $("tenBe").textContent = (NHUNG && TS.get("tl")) || (LA_DAN ? "Nông dân" : "Thủ lĩnh");
       $("tenQuai").innerHTML = "<small></small> "; $("tenQuai").querySelector("small").textContent = "Lv " + q.lv;
       $("tenQuai").appendChild(document.createTextNode(q.ten));
       if (san3d) san3d.datTran({ hoSo: hoSoBe(), quai: chon.quai, chu: chuQuai });
@@ -500,15 +510,15 @@
     function moKetThuc(k) {
       const q = T.quai().ten, tk = k.tongKet;
       $("manKet").classList.remove("an");
-      $("tdKet").textContent = k.thang === "be" ? "Thắng · " + q + " bỏ chạy" : k.thang === "quai" ? "Thua · Thủ lĩnh về Lều nghỉ" : "Hòa · " + q + " chạy mất";
+      $("tdKet").textContent = k.thang === "be" ? "Thắng · " + q + " bỏ chạy" : k.thang === "quai" ? (LA_DAN ? "Thua · Nông dân bỏ chạy" : "Thua · Thủ lĩnh về Lều nghỉ") : "Hòa · " + q + " chạy mất";
       $("ketTong").innerHTML = "";
       [["Số lượt", tk.soLuot], ["Câu đúng", tk.beDung + " / " + tk.beBam], ["Combo cao nhất", tk.comboCaoNhat], ["Sát thương gây / nhận", tk.satThuongGay + " / " + tk.satThuongNhan]].forEach(([a, b]) => {
         const d = document.createElement("div"); d.textContent = a; const x = document.createElement("b"); x.textContent = b; d.appendChild(x); $("ketTong").appendChild(d);
       });
       clearInterval(demNghi);
-      const coNghi = k.thang === "quai";
+      const coNghi = k.thang === "quai" && !LA_DAN; // TC_D06C2b: nông dân thua thì bỏ chạy, không nghỉ
       if (NHUNG) { // trận thật: báo bản đồ ngay (tải lại / đóng giữa chừng vẫn tính), chỉ còn nút về thung lũng
-        baoBanDo({ loai: "dt-tran-ket", thang: k.thang, nghiGiay: coNghi ? Math.max(0, (k.nghiDen - bayGio()) / 1000) : 0 });
+        baoBanDo({ loai: "dt-tran-ket", thang: k.thang, nghiGiay: coNghi ? Math.max(0, (k.nghiDen - bayGio()) / 1000) : 0, hpBe: T.be().hp });
         $("nutDauLai").classList.add("an"); $("nutDoiTran").classList.add("an"); $("nutBoNghi").classList.add("an"); $("nutVeBanDo").classList.remove("an");
         $("ketNghi").classList.toggle("an", !coNghi);
         if (coNghi) { const s = Math.ceil(chTran.thua.nghiGiay); $("ketNghi").textContent = "⛺ " + Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
@@ -624,8 +634,8 @@
         document.title = "Trận đấu - Đấu Trường Tri Thức";
         $("nutChonTran").classList.add("an"); $("nutRutLui").classList.remove("an");
         document.querySelector(".dau h1").firstChild.textContent = "⚔️ Trận đấu";
-        $("nutRutLui").addEventListener("click", () => { clearTimeout(henTiep); baoBanDo({ loai: "dt-tran-dong" }); });
-        $("nutVeBanDo").addEventListener("click", () => baoBanDo({ loai: "dt-tran-dong" }));
+        $("nutRutLui").addEventListener("click", () => { clearTimeout(henTiep); baoBanDo({ loai: "dt-tran-dong", hpBe: T ? T.be().hp : undefined }); });
+        $("nutVeBanDo").addEventListener("click", () => baoBanDo({ loai: "dt-tran-dong", hpBe: T ? T.be().hp : undefined }));
       }
       if (!hs || hs.lop !== chon.lop) hs = TD.taoHoSo(chon.lop, chTD);
       const m = /#quai=(\w+)/.exec(location.hash); if (!NHUNG && m && chTran.quai.loai[m[1]]) chon.quai = m[1];
@@ -695,4 +705,4 @@
   </script>
 </body>
 </html>
-<!-- 30/10/2026 - BƯỚC: TC_D06A (chế độ nhúng từ bản đồ); 04/11/2026 - TC_D06C2a (quaiTruoc) -->
+<!-- 30/10/2026 - BƯỚC: TC_D06A (chế độ nhúng từ bản đồ); 04/11/2026 - TC_D06C2a (quaiTruoc); 04/11/2026 23:xx - TC_D06C2b (vai=nong_dan) -->

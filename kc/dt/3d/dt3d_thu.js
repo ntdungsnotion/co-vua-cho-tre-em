@@ -140,7 +140,8 @@ if (VUNG) {
   try {
     quaiBd = await taoQuaiBanDo({ ctx, cam, lang, diaHinh, banDo, cauHinh, suong: vung.suong, laLanhDia: vung.laLanhDia, dvTl, hTl,
       be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY, mayChu: vung.mayChu, vung, // TC_D06C1: quái chung từ máy chủ
-      khiXem: fn => { if (thanh) thanh.xem(fn); }, chonTl: () => dk.chon(hTl) }); // TC_D06D: thông số quái + nút ⚔️ Đánh ở thanh dưới
+      khiXem: fn => { if (thanh) thanh.xem(fn); }, chonTl: () => dk.chon(hTl), // TC_D06D: thông số quái + nút ⚔️ Đánh ở thanh dưới
+      boNv, boChon: dv => { const c = dk.dangChon(); if (c && c.dv === dv) dk.chon(null); } }); // TC_D06C2b: dân hết máu bỏ chạy
     uiDk.trungQuai = quaiBd.trung; uiDk.chamQuai = quaiBd.cham;
   } catch (e) { console.warn("Chưa dựng được quái trên bản đồ", e); } // thiếu quái vẫn chơi làng được
 } else {
@@ -165,12 +166,14 @@ function ttDonVi(h) {
   const tt = { anh: laTl ? "👑" : "🧑‍🌾", ten: dv.ten, muc: xay ? dv.xay.tienDo : null };
   const nghi = laTl && !dv.laBan && quaiBd ? quaiBd.conNghi() : 0;
   tt.phu = nghi > 0 ? "⛺ Đang nghỉ ở Lều · còn " + quaiBd.dongHo(nghi)
+    : dv.trangThai === "danh" ? "⚔️ Đang đánh quái" // TC_D06C2b
     : xay ? "🔨 Đang xây " + tenCt(dv.xay) + " · " + pt(dv.xay.tienDo)
       : dv.ranh ? "💤 Đang rảnh" : dv.trangThai === "lam" && dv.viec ? LAM[dv.viec.loai] || "Đang làm" : TRANG_DV[dv.trangThai] || "";
   if (laTl) tt.dong = "Thủ lĩnh" + (dv.laBan ? "" : " · " + TEN_CL[lang.chungLoai]);
   else {
     const m = dv.mang || {}, t = m.so && CH.taiNguyen[m.loai];
-    tt.dong = "Nông dân" + (t ? " · mang " + m.so + "/" + lang.sucMang() + " " + t.bieuTuong : "");
+    const mau = !dv.laBan && quaiBd && quaiBd.mauDan ? quaiBd.mauDan(dv) : null; // TC_D06C2b: máu nông dân (không tự hồi)
+    tt.dong = "Nông dân" + (mau ? " · ❤️ " + mau.hp + "/" + mau.toiDa : "") + (t ? " · mang " + m.so + "/" + lang.sucMang() + " " + t.bieuTuong : "");
     if (!xay && t) tt.muc = m.so / lang.sucMang();
   }
   if (dv.laBan) tt.dong += " · của " + dv.chu;
@@ -314,3 +317,4 @@ if (vung) vung.batDau();
 else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc. Chạm đất để đi.");
 // 30/10/2026 - BƯỚC: TC_D06A; 30/10/2026 17:30 - TC_D06C1 (quái nhận mayChu + vung); 03/11/2026 23:3x - TC_D06C1 (tạm ẩn nút Phá hủy)
 // 04/11/2026 - BƯỚC: TC_D06D (thanh điều khiển cuối màn hình: ô đang xem người / nhà / nguồn / quái, nút theo thứ đang xem)
+// 04/11/2026 23:xx - BƯỚC: TC_D06C2b (nông dân đánh quái: boNv / boChon cho quái, máu nông dân ở thanh dưới)

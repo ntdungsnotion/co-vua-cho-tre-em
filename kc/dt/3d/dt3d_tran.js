@@ -120,7 +120,7 @@ async function tao(vungVe, { nhe } = {}) {
     const vo = tuong ? tuong.vo : hBe && hBe.vo;
     if (vo && khoa === khoaBe) { vo.visible = true; return; }
     khoaBe = khoa;
-    const lan = ++lanDung, tt = boTuong && chonTuong(hoSo);
+    const lan = ++lanDung, tt = boTuong && !hoSo.nongDan && chonTuong(hoSo); // TC_D06C2b: nông dân đánh quái -> hình nông dân KayKit
     if (tt) { // tải tướng (lần đầu ~1 MB); trong lúc tải giữ tướng cũ trên sân
       taiTuong(tt.tep).then(glb => {
         if (lan !== lanDung) return; // bé đã đổi tướng khác trong lúc tải
@@ -136,7 +136,7 @@ async function tao(vungVe, { nhe } = {}) {
   }
   function dungKayKit(hoSo) {
     if (hBe) boNv.xoa(hBe);
-    hBe = boNv.tao(dvBe, "thu_linh", hoSo);
+    hBe = boNv.tao(dvBe, hoSo.nongDan ? "nong_dan" : "thu_linh", hoSo);
     hBe.vo.scale.setScalar(TI_BE);
     hBe.vuKhiMacDinh = "1H_Axe"; if (hBe.vuKhi["1H_Axe"]) hBe.vuKhi["1H_Axe"].visible = true;
     vlBe = []; hBe.goc.traverse(o => { if (o.isMesh && o.material.emissive && vlBe.indexOf(o.material) < 0) vlBe.push(o.material); });
@@ -283,6 +283,7 @@ async function tao(vungVe, { nhe } = {}) {
       dvBe.x = X_BE; dvBe.z = 0;
       const hs = NV.chuanHoa(hoSo || {});
       if (hoSo && hoSo.tuong) hs.tuong = hoSo.tuong; // chuanHoa (dùng chung) không biết trường tuong
+      if (hoSo && hoSo.nongDan) hs.nongDan = true; // TC_D06C2b
       dungBe(hs);
       kieu = KIEU_TOC[hs.chungLoai] || KIEU_TOC.nhan;
       if (haoQuang) canh.remove(haoQuang.nhom);
@@ -454,3 +455,4 @@ async function tao(vungVe, { nhe } = {}) {
 window.KC_DT_SAN3D = { tao };
 window.dispatchEvent(new Event("dt-san3d"));
 // 29/10/2026 - BƯỚC: TC_D05
+// 04/11/2026 23:xx - BƯỚC: TC_D06C2b (hoSo.nongDan: nông dân đánh quái dùng hình nông dân)

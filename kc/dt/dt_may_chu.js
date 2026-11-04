@@ -53,8 +53,12 @@
 //     (quaiBanDo.soQuai) + quái quanh mỗi Lều trại (quanhLeu), thả khoá quá hạn, sinh lại sau hoiSinhGiay.
 //   TC_D06C2a - QUÁI HUNG DỮ: quái sinh ở ô ngoài vùng sáng của mọi bé thì hung (tỉ lệ quaiBanDo.hung.tiLe), bản ghi có hung;
 //     quaiGiu(ten, id, x, z, lao): lao = quái hung tự lao vào Thủ lĩnh (khoá trang "lao", được xa chỗ ở tới hung.duoiToiDa + giuLechO).
-// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a
-// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026
+//   TC_D06C2b - NÔNG DÂN ĐÁNH QUÁI: quaiGiu(ten, id, x, z, lao, dv) / quaiDanh(ten, id, dv) / quaiKet(ten, id, ket, nghiGiay, giu, dan)
+//     với dv = id nông dân của bé (không có = Thủ lĩnh): khoá quái ghi thêm khoa.dv; mỗi người (Thủ lĩnh / từng nông dân) giữ một
+//     con; Thủ lĩnh đang nghỉ không cản nông dân. dan = { dv, mau }: mau = máu nông dân còn (chỉ giảm, không tự hồi; donVi[].mau,
+//     null = đầy); ket "quai" với nông dân = nông dân bỏ chạy -> XOÁ người dân đó (mất cả đồ đang vác), Thủ lĩnh không nghỉ.
+// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
+// NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1)
 // ================================================================
 (function (goc) {
@@ -368,6 +372,9 @@
       for (const l of leu) if (l.xong) while (tt.quai.filter(q => q.leu === l.id).length < CQ.quanhLeu.so) if (!them(l.id)) break;
     }
     const tlCua = ten => cuaBe(ten).find(d => d.loai === "thu_linh");
+    // TC_D06C2b: người đánh quái: nông dân id dv của bé (dv không có = Thủ lĩnh)
+    const nguoiDanh = (ten, dv) => dv == null ? tlCua(ten) : cuaBe(ten).find(d => d.id === Number(dv) && d.loai === "nong_dan") || null;
+    const cungNguoi = (k, ten, dv) => k && k.ten === ten && (k.dv == null ? dv == null : k.dv === Number(dv));
 
     const api = {
       gio: () => gio(),
@@ -396,7 +403,7 @@
         const vang = b ? { giay: Math.round((bay - b.tu) / 1000), thu: b.thu, xong: b.xong, day: Object.keys(b.day), sinh: b.sinh || 0, gat: b.gat || 0 } : null;
         const cong = vung.cong.find(c => c.so === be.cong);
         return { ok: true, maVung: vung.ma, banSao: 1, cong: { so: cong.so, x: cong.x, z: cong.z }, lanDau, khamPha: be.khamPha,
-          donVi: cuaBe(ten).map(d => ({ id: d.id, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })), kho: khoCua(be), vang, gio: bay, hang: hangCua(be),
+          donVi: cuaBe(ten).map(d => ({ id: d.id, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh, mau: d.mau == null ? null : d.mau })), kho: khoCua(be), vang, gio: bay, hang: hangCua(be),
           quai: dsQuai(bay), nghiDen: be.nghiDen || 0 };
       },
 
@@ -412,39 +419,43 @@
         const thay = BD.locDonViThayDuoc(tt.donVi, cungPhe(ten), s, viTri);
         const nguon = Object.keys(tt.nguon).map(ma => ({ ma: Number(ma), con: tt.nguon[ma].con }));
         const congTrinh = tt.congTrinh.filter(ct => ct.chu === ten || s.muc(ct.x, ct.y) !== BD.DEN);
-        return { ok: true, gio: gio(), nguon, congTrinh, donVi: thay.map(d => ({ id: d.id, chu: d.chu, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })),
+        return { ok: true, gio: gio(), nguon, congTrinh, donVi: thay.map(d => ({ id: d.id, chu: d.chu, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh, mau: d.mau == null ? null : d.mau })),
           hang: hangCua(tt.be[ten]), quai: dsQuai(bay), nghiDen: tt.be[ten].nghiDen || 0 };
       },
 
       // TC_D06C1: bé chạm quái (Thủ lĩnh bắt đầu tiến tới): giữ quái đứng ở (x, z) cho mọi bé thấy; mỗi bé giữ một con.
       // -> { ok, quai } | { ok: false, ma: dang_nghi (nghiDen) | quai_mat | dang_danh (chu) }
       // TC_D06C2a: lao = true: quái hung dữ tự lao vào Thủ lĩnh (khoá trang "lao"; chỗ đứng được xa chỗ ở tới hung.duoiToiDa + giuLechO)
-      async quaiGiu(ten, id, x, z, lao) {
+      async quaiGiu(ten, id, x, z, lao, dv) {
         ten = tenChuan(ten);
         const be = tt.be[ten];
         if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
         const bay = gio();
         quaiBu(bay);
-        if ((be.nghiDen || 0) > bay) return { ok: false, ma: "dang_nghi", nghiDen: be.nghiDen, lyDo: "Thủ lĩnh đang nghỉ ở Lều." };
+        dv = dv == null ? null : Number(dv); // TC_D06C2b
+        if (dv != null && !nguoiDanh(ten, dv)) return { ok: false, ma: "khong_phai_nguoi", lyDo: "Đây không phải người của con." };
+        if (dv == null && (be.nghiDen || 0) > bay) return { ok: false, ma: "dang_nghi", nghiDen: be.nghiDen, lyDo: "Thủ lĩnh đang nghỉ ở Lều." };
         const q = (tt.quai || []).find(k => k.id === id);
         if (!q || q.chay) return { ok: false, ma: "quai_mat", lyDo: "Quái đã chạy mất rồi." };
         if (q.khoa && q.khoa.ten !== ten) return { ok: false, ma: "dang_danh", chu: q.khoa.ten, lyDo: "Quái này đang giao chiến với bạn khác." };
-        for (const k of tt.quai) if (k !== q && k.khoa && k.khoa.ten === ten) k.khoa = null;
+        if (q.khoa && !cungNguoi(q.khoa, ten, dv)) return { ok: false, ma: "dang_danh", chu: q.khoa.ten, lyDo: "Quái này đang giao chiến với người khác." }; // TC_D06C2b
+        for (const k of tt.quai) if (k !== q && cungNguoi(k.khoa, ten, dv)) k.khoa = null; // mỗi người giữ một con
         let px = Number(x), pz = Number(z);
         const laoDuoc = !!(lao && q.hung && CQ.hung && !q.khoa); // TC_D06C2a
         const xa = laoDuoc ? CQ.hung.duoiToiDa + CQ.giuLechO : CQ.banKinhLangThang + CQ.giuLechO;
         if (!Number.isFinite(px) || !Number.isFinite(pz) || Math.hypot(px - q.x, pz - q.z) > xa) { px = q.x; pz = q.z; }
-        if (!q.khoa) q.khoa = { ten, x: px, z: pz, trang: laoDuoc ? "lao" : "toi", luc: bay };
+        if (!q.khoa) q.khoa = Object.assign({ ten, x: px, z: pz, trang: laoDuoc ? "lao" : "toi", luc: bay }, dv != null ? { dv } : null);
         luu();
         return { ok: true, quai: banGhiQuai(q), gio: bay };
       },
       // TC_D06C1: Thủ lĩnh đã tới sát quái đang giữ -> vào trận (bé khác thấy hoạt ảnh đánh nhau). -> { ok, quai } | { ok: false, ma: khong_giu | xa_qua }
-      async quaiDanh(ten, id) {
+      async quaiDanh(ten, id, dv) {
         ten = tenChuan(ten);
         if (!tt.be[ten]) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        dv = dv == null ? null : Number(dv); // TC_D06C2b
         const bay = gio(), q = (tt.quai || []).find(k => k.id === id);
-        if (!q || q.chay || !q.khoa || q.khoa.ten !== ten) return { ok: false, ma: "khong_giu", lyDo: "Quái đã đi chỗ khác." };
-        const tl = tlCua(ten), p = tl && viTri(tl);
+        if (!q || q.chay || !cungNguoi(q.khoa, ten, dv)) return { ok: false, ma: "khong_giu", lyDo: "Quái đã đi chỗ khác." };
+        const tl = nguoiDanh(ten, dv), p = tl && viTri(tl);
         if (!p || Math.hypot(p.x - q.khoa.x, p.z - q.khoa.z) > CQ.danhCachO) return { ok: false, ma: "xa_qua", lyDo: "Thủ lĩnh chưa tới chỗ quái." };
         q.khoa.trang = "danh"; q.khoa.luc = bay;
         luu();
@@ -452,20 +463,26 @@
       },
       // TC_D06C1: kết quả trận / thôi đánh. ket: "be" | "hoa" (quái bỏ chạy) | "quai" (thua: Thủ lĩnh nghỉ nghiGiay giây,
       // tối đa nghiToiDaGiay) | "rut" | "tha" (thả quái). -> { ok, nghiDen, quai }
-      async quaiKet(ten, id, ket, nghiGiay) {
+      async quaiKet(ten, id, ket, nghiGiay, giuKetNoi, dan) {
         ten = tenChuan(ten);
         const be = tt.be[ten];
         if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        const dv = dan && dan.dv != null ? Number(dan.dv) : null, nd = dv != null ? nguoiDanh(ten, dv) : null; // TC_D06C2b
         const bay = gio(), q = (tt.quai || []).find(k => k.id === id);
-        const giu = q && !q.chay && q.khoa && q.khoa.ten === ten;
+        const giu = q && !q.chay && cungNguoi(q.khoa, ten, dv);
+        if (nd && Number.isFinite(Number(dan.mau))) { // máu nông dân chỉ giảm (không tự hồi)
+          const m = Math.max(0, Math.round(Number(dan.mau)));
+          nd.mau = nd.mau == null ? m : Math.min(nd.mau, m);
+        }
+        if (nd && ket === "quai") { tt.donVi = tt.donVi.filter(d => d !== nd); if (giu) q.khoa = null; luu(); return { ok: true, mat: true, nghiDen: be.nghiDen || 0, quai: q ? banGhiQuai(q) : null, gio: bay }; }
         if (ket === "be" || ket === "hoa") {
           if (giu) {
-            const tl = tlCua(ten), p = tl ? viTri(tl) : { x: q.khoa.x, z: q.khoa.z };
+            const tl = dv != null ? nd : tlCua(ten), p = tl ? viTri(tl) : { x: q.khoa.x, z: q.khoa.z };
             q.chay = { x: q.khoa.x, z: q.khoa.z, huong: Math.atan2(q.khoa.x - p.x, q.khoa.z - p.z), luc: bay }; q.khoa = null;
           }
         } else {
           if (giu) q.khoa = null;
-          if (ket === "quai") be.nghiDen = bay + Math.min(Math.max(Number(nghiGiay) || 0, 0), CQ.nghiToiDaGiay) * 1000;
+          if (ket === "quai" && dv == null) be.nghiDen = bay + Math.min(Math.max(Number(nghiGiay) || 0, 0), CQ.nghiToiDaGiay) * 1000;
         }
         luu();
         return { ok: true, nghiDen: be.nghiDen || 0, quai: q ? banGhiQuai(q) : null, gio: bay };
@@ -656,7 +673,7 @@
         }
         ct.baoXong = true;
         luu();
-        const moi = ct.loai === "leu" ? cuaBe(ten).filter(d => d.loai === "nong_dan").map(d => ({ id: d.id, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh })) : [];
+        const moi = ct.loai === "leu" ? cuaBe(ten).filter(d => d.loai === "nong_dan").map(d => ({ id: d.id, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh, mau: d.mau == null ? null : d.mau })) : [];
         return { ok: true, donVi: moi };
       },
 
@@ -687,4 +704,4 @@
 
   goc.KC_DT_MAY_CHU = { taoMayChuGia };
 })(typeof window !== "undefined" ? window : globalThis);
-// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (quái hung dữ)
+// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (quái hung dữ); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái)
