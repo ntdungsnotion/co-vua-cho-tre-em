@@ -6,11 +6,19 @@
 // HÀM KHAI RA:
 //   docDoHoa() -> "dep" | "nhe";  luuDoHoa(chế độ)
 //   taoCanh(vungVe, { nhe }) -> ctx { THREE, renderer, canh, nhe, nang,
-//        moiKhung(fn(dt, t)), datNangTheo(vector3), batDau(camera), khiDo(fn({fps, lenhVe, tamGiac})) }
+//        moiKhung(fn(dt, t)), datNangTheo(vector3), batDau(camera), khiDo(fn({fps, lenhVe, tamGiac})),
+//        chayNenDuoc (gán true để bật CHẠY NỀN), buToiDa (giây), chayNen (đang chạy nền: chỉ đọc), khiDongBang(fn(giây)) }
+//   CHẠY NỀN (05/11/2026, người dùng: sang thẻ / ứng dụng khác rồi quay lại thì đừng bắt chờ tải lại cả trang):
+//   trình duyệt thôi gọi vòng vẽ khi trang bị ẩn. ctx.chayNenDuoc = true thì lúc trang ẩn một nhịp đếm chạy trong
+//   Web Worker (không bị bóp chậm như setInterval của trang) gọi các hàm moiKhung mỗi giây theo đúng thời gian thật
+//   (chia lát 0,1 giây, không vẽ) -> lõi làng, gửi / hỏi máy chủ vẫn chạy như đang mở. Quay lại: khung đầu chạy bù
+//   phần còn thiếu. Trang bị trình duyệt ĐÓNG BĂNG (điện thoại) lâu hơn buToiDa giây thì không chạy bù (bỏ phần đó;
+//   dt3d_vung.js thấy lâu không liên lạc máy chủ thì tự tải lại trang để lấy phần máy chủ tính bù).
 //   bam(x, y), nhieu(x, y), mem(a, b, x), taoNgauNhien(hạt)
 // LUẬT NỐI: phần này không gọi phần nào khác.
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C)
-// NGÀY: 23/10/2026 (sửa 29/10/2026 TC_D05: ctx.ve cho hậu kỳ Bloom; 30/10/2026 TC_D06A: ctx.nghiVe)
+// NGÀY: 23/10/2026 (sửa 29/10/2026 TC_D05: ctx.ve cho hậu kỳ Bloom; 30/10/2026 TC_D06A: ctx.nghiVe;
+//       05/11/2026 TC_D06F: chạy nền khi trang ẩn, chạy bù khi quay lại)
 // ================================================================
 import * as THREE from "three";
 
@@ -64,10 +72,15 @@ export function taoCanh(vungVe, { nhe }) {
     nghiVe: false, // true: chạy cập nhật nhưng không vẽ (TC_D06A, đang ở màn chiến đấu)
     khiDo(fn) { dsDo.push(fn); },
     datNangTheo(dich) { nang.position.copy(dich).add(lechNang); nang.target.position.copy(dich); },
+    chayNenDuoc: false, buToiDa: 30, chayNen: false, khiDongBang: null, // khiDongBang(giây): thấy trang bị đóng băng quá buToiDa
     batDau(camera) {
       ctx.camera = camera;
+      dongHo.getDelta();
       renderer.setAnimationLoop(() => {
-        const dt = Math.min(dongHo.getDelta(), 0.1), t = dongHo.elapsedTime;
+        let dt = dongHo.getDelta();
+        if (vuaAn) { vuaAn = false; if (dt > 0.1) { chayBu(dt - 0.1); dt = 0.1; } } // vừa quay lại: chạy bù phần lúc ẩn chưa chạy
+        dt = Math.min(dt, 0.1);
+        const t = dongHo.elapsedTime;
         for (const f of dsCapNhat) f(dt, t);
         if (ctx.nghiVe) return; // TC_D06A: màn chiến đấu phủ lên: lõi vẫn chạy, thôi vẽ cho nhẹ máy
         if (ctx.ve) ctx.ve(); else renderer.render(canh, camera);
@@ -80,6 +93,34 @@ export function taoCanh(vungVe, { nhe }) {
       });
     }
   };
+  // ---------- CHẠY NỀN khi trang ẩn (05/11/2026) ----------
+  let vuaAn = false, nhip = null;
+  // chạy các hàm moiKhung cho `giay` giây thật, lát 0,1 giây, không vẽ; quá buToiDa (trang bị đóng băng) thì bỏ
+  function chayBu(giay) {
+    if (!ctx.chayNenDuoc || !(giay > 0)) return;
+    if (giay > ctx.buToiDa) { if (ctx.khiDongBang) ctx.khiDongBang(giay); return; } // trang vừa bị đóng băng lâu: báo, không chạy bù
+    const t = dongHo.elapsedTime;
+    for (let con = giay; con > 1e-6; con -= 0.1) { const d = Math.min(con, 0.1); for (const f of dsCapNhat) f(d, t); }
+  }
+  function nhipNen() { if (document.hidden && ctx.camera) chayBu(dongHo.getDelta()); }
+  function batNhip() {
+    if (nhip) return;
+    try {
+      const url = URL.createObjectURL(new Blob(["setInterval(() => postMessage(0), 1000);"], { type: "text/javascript" }));
+      const w = new Worker(url);
+      URL.revokeObjectURL(url);
+      w.onmessage = nhipNen;
+      nhip = { dung: () => w.terminate() };
+    } catch (e) { const id = setInterval(nhipNen, 1000); nhip = { dung: () => clearInterval(id) }; } // không tạo được Worker
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (!ctx.chayNenDuoc || !ctx.camera) return;
+    if (document.hidden) { ctx.chayNen = true; dongHo.getDelta(); batNhip(); return; }
+    if (nhip) { nhip.dung(); nhip = null; }
+    chayBu(dongHo.getDelta()); // phần từ nhịp cuối tới giờ (không chờ khung vẽ đầu)
+    ctx.chayNen = false; vuaAn = true;
+  });
   return ctx;
 }
 // 30/10/2026 13:56 - BƯỚC: TC_D06A (ctx.nghiVe)
+// 05/11/2026 - BƯỚC: TC_D06F (chạy nền khi trang ẩn, chạy bù khi quay lại)

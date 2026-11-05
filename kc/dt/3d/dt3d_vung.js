@@ -29,7 +29,8 @@
 //              kèm công trình đang xây để máy chủ giữ tiến độ. Thu hoạch gửi lúc ĐỒ VỀ KHO (sự kiện "cat" kèm
 //              nguồn) -> kho máy chủ = kho trên máy, không vượt sức chứa; kho đầy thì báo. Vào lại sau khi vắng
 //              mặt: báo phần dân làng đã làm (vao.vang). Ẩn trang quá vangMat.sauGiay giây rồi mở lại: tải lại
-//              trang để lấy phần máy chủ đã tính bù. Lời báo mới theo giọng chuyên nghiệp (Ke_Hoach_Dau_Truong mục 11).
+//              trang để lấy phần máy chủ đã tính bù. (TC_D06F: nay trang ẩn vẫn chạy nền, chỉ tải lại khi trình duyệt
+//              đóng băng trang làm mất liên lạc máy chủ quá vangMat.sauGiay giây.) Lời báo mới theo giọng chuyên nghiệp (Ke_Hoach_Dau_Truong mục 11).
 //              Góp ý người dùng thử: đang chọn chỗ xây thì chuột phải / Esc (máy tính), giữ ngón ~0,7 giây (điện
 //              thoại) = bỏ chỗ đầu đoạn tường, lần nữa = thôi xây; cổng có nút "🔄 Xoay cổng" (phím R) đổi ngang / dọc.
 //              Nút "🔭 Đi khám phá" chỉ hiện khi cau_hinh lang.khamPhaTuDo.mo (người dùng: tự dò đường dành cho
@@ -266,7 +267,8 @@ export async function vaoThungLung(the) {
   dongBoBan(quanh.donVi);
 
   // ---------------- Gửi máy chủ ----------------
-  const gui = (dv, lenh) => { if (!dangNap && dv.idMayChu) mayChu.guiLenh(ten, dv.idMayChu, lenh); };
+  let daDongBang = false; // TC_D06F: trang vừa bị đóng băng lâu -> chờ tải lại, không gửi gì nữa
+  const gui = (dv, lenh) => { if (!dangNap && !daDongBang && dv.idMayChu) mayChu.guiLenh(ten, dv.idMayChu, lenh); };
   let gom = {};
   // Phần máy chủ cắt bớt (bạn lấy trước / nhanh quá tốc độ): trừ dần khỏi kho trên máy (đồ còn đang
   // vác thì trừ khi về kho) -> kho trên máy luôn khớp máy chủ, không phải chờ tải lại
@@ -279,7 +281,7 @@ export async function vaoThungLung(the) {
   }
   const guiThuHoach = giu => {
     const ds = Object.keys(gom).map(ma => ({ ma: Number(ma), so: gom[ma] }));
-    if (!ds.length) return Promise.resolve();
+    if (!ds.length || daDongBang) return Promise.resolve();
     gom = {};
     // máy chủ thật trả trữ lượng còn lại: bạn khác lấy trước thì cây / mỏ trên máy mình vơi theo
     return mayChu.guiThuHoach(ten, ds, giu).then(kq => {
@@ -308,13 +310,13 @@ export async function vaoThungLung(the) {
   let dangHoi = false;
   const ngheQuanh = []; // TC_D06C1: phần quái nhận quai[] + nghiDen mỗi lần hỏi lại
   async function chuKy() {
-    if (dangHoi) return;
+    if (dangHoi || daDongBang) return;
     dangHoi = true;
     try {
       await guiThuHoach();
       for (const { ct, dv } of [...choBaoXong.values()]) await xongCt(ct, dv, true); // TC_D03A
       const q = await mayChu.layQuanh(ten);
-      if (q && q.ok) { dongBoNguon(q.nguon); dongBoCongTrinh(q.congTrinh); dongBoBan(q.donVi); dongBoMinh(q); for (const f of ngheQuanh) f(q); }
+      if (q && q.ok) { lienLac = Date.now(); dongBoNguon(q.nguon); dongBoCongTrinh(q.congTrinh); dongBoBan(q.donVi); dongBoMinh(q); for (const f of ngheQuanh) f(q); }
     } finally { dangHoi = false; }
   }
   // TC_D03B1: nông dân Lều trại vừa sinh (máy chủ tạo theo giờ máy chủ) -> thêm vào làng, đứng chờ việc (dấu "!")
@@ -825,14 +827,21 @@ export async function vaoThungLung(the) {
   // TC_D06C2d (người dùng 05/11/2026): bỏ ô "🗺️ Đã khám phá n%"
   let demSoi = 0, demLuu = 0, demGui = 0, demNut = 0, demXay = 0, daLuu = -1;
   const luuKhamPha = giu => {
-    if (suong.phienBan === daLuu) return;
+    if (suong.phienBan === daLuu || daDongBang) return;
     daLuu = suong.phienBan;
     mayChu.luuKhamPha(ten, suong.xuat(), giu);
   };
   const roiTrang = () => { luuKhamPha(true); guiThuHoach(true); }; // rời trang: gửi kiểu giữ kết nối
-  // TC_D03A: ẩn trang lâu (khoá máy, sang ứng dụng khác) thì máy chủ đã tính bù phần việc lúc vắng: tải lại trang
-  let anLuc = 0;
-  const anLau = () => anLuc && Date.now() - anLuc >= cauHinh.lang.vangMat.sauGiay * 1000;
+  // TC_D03A: lâu không liên lạc máy chủ thì máy chủ coi bé vắng mặt và tính bù phần việc: phải tải lại trang để lấy.
+  // TC_D06F (05/11/2026): lúc trang ẩn game vẫn CHẠY NỀN (dt3d_canh.js) nên vẫn hỏi máy chủ đều -> quay lại chơi tiếp
+  // ngay. Chỉ tải lại khi trình duyệt đã đóng băng trang (điện thoại khoá máy / sang ứng dụng khác lâu) quá vangMat.sauGiay.
+  const SAU_GIAY = cauHinh.lang.vangMat.sauGiay;
+  ctx.chayNenDuoc = true; ctx.buToiDa = SAU_GIAY; // đóng băng lâu hơn: máy chủ đã coi là vắng, tải lại
+  let lienLac = Date.now(), anLuc = 0, khoAn = null;
+  const matLienLac = () => daDongBang || Date.now() - lienLac >= (SAU_GIAY - 2) * 1000;
+  // Trang bị đóng băng lâu (thức dậy có khi còn đang ẩn): thôi gửi / hỏi máy chủ (máy chủ sẽ tính bù lúc vắng), hiện lại thì tải lại
+  ctx.khiDongBang = () => { daDongBang = true; if (!document.hidden) taiLai(); };
+  const taiLai = () => { baoGoiY("⏳ Đang cập nhật phần dân làng làm khi vắng mặt…"); location.reload(); };
   ctx.moiKhung(dt => {
     if ((demSoi += dt) >= 0.2) { demSoi = 0; soiLai(); capNhatLd(); }
     if ((demLuu += dt) >= CB.chuKyLuuKhamPha) { demLuu = 0; luuKhamPha(); }
@@ -849,9 +858,16 @@ export async function vaoThungLung(the) {
   });
   addEventListener("pagehide", roiTrang);
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { anLuc = Date.now(); roiTrang(); return; }
-    if (anLau()) { location.reload(); return; }
-    anLuc = 0;
+    if (document.hidden) { anLuc = Date.now(); khoAn = { ...lang.kho }; roiTrang(); return; }
+    if (matLienLac()) { taiLai(); return; }
+    // TC_D06F: ẩn lâu mà làng vẫn chạy nền: báo phần dân làng làm được
+    const giay = anLuc ? Math.round((Date.now() - anLuc) / 1000) : 0;
+    if (giay >= 60 && khoAn) {
+      const thu = Object.keys(TN).filter(t => (lang.kho[t] || 0) > (khoAn[t] || 0)).map(t => "+" + (lang.kho[t] - (khoAn[t] || 0)) + " " + TN[t].bieuTuong);
+      const tg = giay >= 3600 ? Math.floor(giay / 3600) + " giờ " + Math.floor((giay % 3600) / 60) + " phút" : Math.floor(giay / 60) + " phút";
+      baoGoiY("⏳ Vắng mặt " + tg + ", dân làng vẫn làm việc" + (thu.length ? ": " + thu.join(" · ") : "") + ".");
+    }
+    anLuc = 0; khoAn = null;
   });
   $("d3SoiDat").hidden = false;
   capNhatNut();

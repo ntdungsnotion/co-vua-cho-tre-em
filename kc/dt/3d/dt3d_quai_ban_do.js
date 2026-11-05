@@ -388,8 +388,9 @@ export async function taoQuaiBanDo(the) {
       }
     }
     // TC_D06C2a: quái hung dữ thấy Thủ lĩnh (rảnh: không đang tới quái, không đánh, không nghỉ) thì kèn lệnh + lao tới
-    if (hung && !dangToi && !trongTran && conNghi() <= 0) laoNeuThay();
-    if (hung) laoVaoDan(); // TC_D06C2b: quái hung dữ thấy nông dân
+    // TC_D06F: trang đang ẩn (làng chạy nền) thì quái hung dữ không lao vào (bé không thấy để đánh / chạy)
+    if (hung && !ctx.chayNen && !dangToi && !trongTran && conNghi() <= 0) laoNeuThay();
+    if (hung && !ctx.chayNen) laoVaoDan(); // TC_D06C2b: quái hung dữ thấy nông dân
     capNhatDan(dt); // TC_D06C2b: trận của nông dân (tự đánh trên bản đồ)
     // hình theo bản ghi + giờ máy chủ
     const con = new Set(), danhNay = new Set();
