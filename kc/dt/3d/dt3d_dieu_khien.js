@@ -41,8 +41,6 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
   const canvas = ctx.renderer.domElement;
   let dangChon = null;
 
-  const vongChon = new THREE.Mesh(new THREE.RingGeometry(0.36, 0.47, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: "#ffd24a", transparent: true, opacity: 0.95, depthWrite: false }));
-  vongChon.visible = false; ctx.canh.add(vongChon);
   const vongDich = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.32, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: "#7dff9a", transparent: true, depthWrite: false }));
   vongDich.visible = false; ctx.canh.add(vongDich);
   let tDich = 0;
@@ -50,11 +48,11 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
 
   function chon(h) {
     dangChon = h;
-    vongChon.visible = !!h;
     if (!h) { ui.baoChon("Chưa chọn ai"); return; }
     const laTl = h.vaiTro === "thu_linh";
     ui.baoChon((laTl ? "👑 " : "🧑‍🌾 ") + h.dv.ten);
     ui.baoGoiY((ui.loiChon && ui.loiChon(h)) || (laTl ? "Chạm đất để Thủ lĩnh đi." : "Chạm cây, mỏ, cá hoặc bụi quả để giao việc. Chạm đất để đi."));
+    if (ui.den) ui.den.dat(h.vo); // TC_D06C2e: đèn chiếu người đang chọn (baoChon ở trên đã tắt đèn cũ)
   }
 
   // Chế độ chạm riêng (TC_D02B2a: "🔍 Soi đất"): chạm đất -> gọi fn(ô) thay cho ra lệnh đi
@@ -84,7 +82,14 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     }
     // TC_D06C1: chạm công trình -> mở bảng điều khiển kiểu AoE (chạm chỗ khác: đóng). KHÔNG dừng ở đây:
     // Lều vẫn hiện nút sinh nông dân, móng vẫn gọi nông dân vào xây, ruộng vẫn báo... như bước 3 dưới (03/11/2026)
-    if (ui.chamCongTrinh && ui.chonCongTrinh) ui.chonCongTrinh(ui.chamCongTrinh(tia) || null);
+    if (ui.chamCongTrinh && ui.chonCongTrinh) {
+      const ct = ui.chamCongTrinh(tia) || null;
+      ui.chonCongTrinh(ct);
+      if (ui.den) { // TC_D06C2e: chạm công trình -> đèn chiếu công trình; chạm chỗ khác -> đèn về người đang chọn (hoặc tắt)
+        const hct = ct && ui.hinhCongTrinh && ui.hinhCongTrinh(ct);
+        ui.den.dat(hct ? hct.nhom : (dangChon ? dangChon.vo : null));
+      }
+    }
     // 2) chạm nguồn tài nguyên
     let n = taiNguyen.chon(tia);
     if (n && ui.thayNguon && !ui.thayNguon(n)) n = null; // nguồn còn trong sương đen: bé chưa thấy
@@ -124,7 +129,6 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
   const raManHinh = (x, y, z) => { vt.set(x, y, z).project(cam.camera); return [(vt.x + 1) / 2 * canvas.clientWidth, (1 - vt.y) / 2 * canvas.clientHeight]; };
 
   ctx.moiKhung((dt, t) => {
-    if (dangChon) { const p = dangChon.vo.position; vongChon.position.set(p.x, p.y + 0.06, p.z); vongChon.rotation.y = t; }
     if (vongDich.visible) { tDich += dt; const k = 1 + tDich * 3; vongDich.scale.set(k, 1, k); vongDich.material.opacity = 1 - tDich * 1.6; if (tDich > 0.6) vongDich.visible = false; }
     for (let i = dsNoi.length - 1; i >= 0; i--) {
       const u = dsNoi[i]; u.t += dt;

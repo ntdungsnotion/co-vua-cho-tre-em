@@ -280,6 +280,7 @@ export async function taoQuaiBanDo(the) {
     const p = viTri(r);
     if (p.mat || p.trangThai === "chay") return;
     if (the.khiXem) the.khiXem(() => thongTin(r)); // TC_D06D
+    const hq = hinh.get(r.id); if (hq && the.den) the.den(hq.vo); // TC_D06C2e: đèn chiếu quái đang chọn
     const nhan = DAU_MAU[mau(r)] + " " + tenLoai(r.ma) + " · Lv " + r.lv;
     if (cuaBan(r)) { the.baoGoiY("⚔️ " + nhan + " đang giao chiến với Thủ lĩnh của " + r.khoa.ten + "."); return; }
     const fq = danCuaQuai(r); // TC_D06C2b

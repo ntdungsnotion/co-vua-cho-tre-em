@@ -31,6 +31,7 @@ import { taoBoNhanVat } from "./dt3d_nhan_vat.js";
 import { taoDieuKhien } from "./dt3d_dieu_khien.js";
 import { vaoThungLung } from "./dt3d_vung.js";
 import { taoQuaiBanDo } from "./dt3d_quai_ban_do.js";
+import { taoDenChon } from "./dt3d_den_chon.js";
 import { taoThanhDuoi } from "./dt3d_thanh_duoi.js";
 
 const NV = window.KC_NV, LANG = window.KC_DT_LANG, BD = window.KC_DT_BAN_DO;
@@ -113,7 +114,8 @@ ctx.moiKhung(dt => boNv.capNhat(dt));
 const goiY = $("d3GoiY");
 const baoGoiY = chu => { goiY.textContent = chu; };
 let thanh = null; // TC_D06D: thanh điều khiển cuối màn hình (dt3d_thanh_duoi.js), dựng ngay sau dk
-const uiDk = { baoGoiY, lop: $("d3ChuNoi"), chamCongTrinh: tia => congTrinhVe.chon(tia),
+const denChon = taoDenChon(ctx); // TC_D06C2e
+const uiDk = { baoGoiY, lop: $("d3ChuNoi"), chamCongTrinh: tia => congTrinhVe.chon(tia), den: denChon, hinhCongTrinh: ct => congTrinhVe.hinhCt(ct.id),
   // chọn người -> ô "đang xem" về người đó; phần Lều / ruộng đang mở thì đóng (nút của chúng thôi hiện)
   baoChon: () => { if (thanh) thanh.xem(null); if (vung) { vung.dongXem(); vung.moc.capNhatNut(); } } };
 const dk = taoDieuKhien(ctx, cam, lang, taiNguyen, boNv, diaHinh, uiDk);
@@ -139,7 +141,7 @@ if (VUNG) {
   // TC_D06A: quái lang thang; chạm quái khi đang chọn Thủ lĩnh -> màn chiến đấu
   try {
     quaiBd = await taoQuaiBanDo({ ctx, cam, lang, diaHinh, banDo, cauHinh, suong: vung.suong, laLanhDia: vung.laLanhDia, dvTl, hTl,
-      be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY, mayChu: vung.mayChu, vung, // TC_D06C1: quái chung từ máy chủ
+      be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY, den: o => denChon.dat(o), mayChu: vung.mayChu, vung, // TC_D06C1: quái chung từ máy chủ
       khiXem: fn => { if (thanh) thanh.xem(fn); }, chonTl: () => dk.chon(hTl), dangChon: () => dk.dangChon(), // TC_D06D; TC_D06C2d: ⚔️ Đánh sai nông dân
       boNv, boChon: dv => { const c = dk.dangChon(); if (c && c.dv === dv) dk.chon(null); } }); // TC_D06C2b: dân hết máu bỏ chạy
     uiDk.trungQuai = quaiBd.trung; uiDk.chamQuai = quaiBd.cham;
