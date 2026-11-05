@@ -320,6 +320,7 @@ export async function taoQuaiBanDo(the) {
     const ts = new URLSearchParams({ nhung: "1", quai: r.ma, lv: String(r.lv), cl: be.hoSo.chungLoai || "nhan", gioi: be.hoSo.gioi || "nam",
       lop: String(be.lop || 2), ten: be.ten || "", tl: dvTl.ten || "", chu: (h && h.chu) || "" });
     if (quaiTruoc) ts.set("quaiTruoc", "1");
+    if (dvTl.mau != null) ts.set("hp", String(dvTl.mau)); // TC_D06C2g: máu Thủ lĩnh còn lại (không tự hồi)
     const khung = document.createElement("div"); khung.className = "d3Tran";
     const fr = document.createElement("iframe");
     fr.title = "Trận đấu"; fr.allow = "autoplay"; fr.src = new URL("../thu_tran_dau.html?" + ts, import.meta.url).href;
@@ -340,20 +341,28 @@ export async function taoQuaiBanDo(the) {
     if (!trongTran) return;
     const { r, khung, ket, nghiGiay } = trongTran;
     if (trongTran.dan) { const f = trongTran.dan, hp = trongTran.hpBe; trongTran = null; khung.remove(); ctx.nghiVe = false; xongDanDieuKhien(f, ket, hp); return; } // TC_D06C2b
+    const trongTran0Hp = trongTran.hpBe; // TC_D06C2g
     trongTran = null; khung.remove(); ctx.nghiVe = false;
     const ten2 = tenLoai(r.ma), k = r.khoa || { x: r.x, z: r.z };
     dung(r.id); datMien(r.id);
     if (ket === "be" || ket === null) {
       r.chay = { x: k.x, z: k.z, huong: Math.atan2(k.x - dvTl.x, k.z - dvTl.z), luc: gio() }; r.khoa = null;
-      mayChu.quaiKet(ten, r.id, ket === "be" ? "be" : "hoa", null);
+      const hp = trongTran0Hp; if (Number.isFinite(hp)) dvTl.mau = hp; // TC_D06C2g: máu Thủ lĩnh giữ nguyên sau trận
+      mayChu.quaiKet(ten, r.id, ket === "be" ? "be" : "hoa", null, false, Number.isFinite(hp) ? { mau: hp } : null);
       the.baoGoiY((ket === "be" ? "🏆 Thắng · " : "🤝 Hòa · ") + ten2 + " bỏ chạy");
     } else if (ket === "quai") {
-      r.khoa = null;
+      r.khoa = null; dvTl.mau = null; // TC_D06C2g: thua -> nghỉ ở Lều, nghỉ xong đủ máu
       mayChu.quaiKet(ten, r.id, "quai", nghiGiay).then(kq => { if (kq.ok && Number.isFinite(kq.nghiDen)) nghiDen = kq.nghiDen; });
       const l = lang.leu;
       if (l) lang.lenhDi(dvTl, { x: Math.floor(l.x), y: l.ct.y + l.ct.sau }); // trước cửa Lều
       the.baoGoiY("⛺ " + dvTl.ten + (l ? " về Lều nghỉ · " : " nghỉ · ") + dongHo(conNghi()));
-    } else { thaQuai(r, "rut"); the.baoGoiY("🏃 " + dvTl.ten + " rút lui"); }
+    } else {
+      if (Number.isFinite(trongTran0Hp)) { // TC_D06C2g: rút lui vẫn giữ máu đã mất
+        dvTl.mau = Math.min(trongTran0Hp, dvTl.mau == null ? Infinity : dvTl.mau);
+        mayChu.quaiKet(ten, -1, "tha", null, false, { mau: dvTl.mau });
+      }
+      thaQuai(r, "rut"); the.baoGoiY("🏃 " + dvTl.ten + " rút lui");
+    }
   }
   window.addEventListener("message", e => {
     if (!trongTran || e.source !== trongTran.fr.contentWindow || !e.data) return;
@@ -749,6 +758,8 @@ export async function taoQuaiBanDo(the) {
 
   return {
     trung, cham: chamUi, conNghi, dongHo, mauDan, // TC_D06C2b: mauDan; TC_D06C2d: chạm quái qua chamUi (bong bóng ⚔️ Đánh)
+    // TC_D06C2g (trụ phòng thủ, dt3d_tru.js): Thủ lĩnh đang tới / đang đánh quái thì trụ không khai chiến; thua trụ thì nghỉ
+    banThuLinh: () => !!(dangToi || (trongTran && !trongTran.dan)), datNghi: ms => { nghiDen = Math.max(nghiDen, ms); }, dungTl,
     moc: { // kịch bản thử Chrome
       ds: () => [...ghi.values()].map(r => { const p = viTri(r), h = hinh.get(r.id);
         return { id: r.id, ma: r.ma, lv: r.lv, x: p.x, z: p.z, nhaX: r.x, nhaZ: r.z, trangThai: p.mat ? "mat" : p.trangThai, hien: !!(h && h.vo.visible), mau: mau(r),
@@ -793,3 +804,4 @@ export async function taoQuaiBanDo(the) {
 }
 // 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06D (thông số quái + nút ⚔️ Đánh ở thanh dưới); 04/11/2026 - TC_D06C2a (quái hung dữ); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái)
 // 05/11/2026 - BƯỚC: TC_D06C2d (⚔️ Đánh sai nông dân; danh sách trận khi có từ 2 trận)
+// 05/11/2026 - BƯỚC: TC_D06C2g (máu Thủ lĩnh còn lại vào / ra trận quái; banThuLinh, datNghi, dungTl cho trụ phòng thủ)

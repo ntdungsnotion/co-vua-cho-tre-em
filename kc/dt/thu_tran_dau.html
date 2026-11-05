@@ -27,6 +27,9 @@
              TC_D06C2b (&vai=nong_dan&hp=&hpQuai=&luot=&nd=: bé VÀO ĐIỀU KHIỂN nông dân đang đánh quái trên bản đồ: chỉ số
              nông dân theo tộc, đánh tiếp từ máu hai bên + số lượt đã đánh; thua = nông dân bỏ chạy (không nghỉ Lều);
              "dt-tran-ket" / "dt-tran-dong" gửi kèm hpBe = máu nông dân còn)
+             TC_D06C2g (&hp=: Thủ lĩnh vào trận quái với máu còn lại; &tru=1&tran=&loaiTru=&tenTru=&cap=&mauBe=&mauBeToiDa=&mauTru=
+             &mauTruToiDa=&giayBe=&nghi=: TRẬN TRỤ: trụ của bé khác khai chiến, máy chủ giữ câu + chấm, gọi qua bản đồ bằng postMessage
+             "dt-tru-hoi" / "dt-tru-dap"; lượt trụ: câu theo trình độ của bé; lượt bé: câu của trụ, sai / hết giờ bị phản đòn)
        NGÀY: 29/10/2026; 29/10/2026 22:47; 30/10/2026; 30/10/2026 06:00; 30/10/2026 (TC_D06A); 04/11/2026 (TC_D06C2a)
        PHỤ THUỘC: chung/nv_ve.js, dt/dt_trinh_do.js, dt/dt_sinh_toan.js, dt/dt_sinh_tieng_anh.js,
                   dt/dt_cau_hoi.js, dt/dt_quai.js, dt/dt_tran_dau.js, dt/dt_ve_quai.js,
@@ -294,6 +297,21 @@
     // hồ sơ Thủ lĩnh cho sân 3D; ?tuong=<mã trong du_lieu/tuong.json> để xem thử một tướng bất kỳ (TC_D05B1)
     const TUONG_THU = new URLSearchParams(location.search).get("tuong");
     const LA_DAN = NHUNG && TS.get("vai") === "nong_dan"; // TC_D06C2b: bé điều khiển nông dân
+    // TC_D06C2g: TRẬN TRỤ (?tru=1&tran=<id>): trụ của bé khác khai chiến Thủ lĩnh. MÁY CHỦ giữ câu + đáp án của trụ, chấm lượt bé,
+    // quyết trụ đúng / sai ở lượt trụ (luật dt/dt_tru_tran.js). Trang này không tự gọi máy chủ: nhờ bản đồ (dt3d_tru.js) gọi hộ
+    // qua postMessage { loai: "dt-tru-hoi", so, ham: "luot" | "tra", ts } -> { loai: "dt-tru-dap", so, kq }.
+    const TRU = NHUNG && TS.get("tru") === "1", ID_TRAN = Number(TS.get("tran"));
+    let soHoi = 0;
+    const choDap = new Map();
+    window.addEventListener("message", e => {
+      if (e.source !== window.parent || !e.data || e.data.loai !== "dt-tru-dap") return;
+      const f = choDap.get(e.data.so); if (f) { choDap.delete(e.data.so); f(e.data.kq || { ok: false }); }
+    });
+    const hoiBanDo = (ham, ts) => new Promise(res => {
+      const so = ++soHoi; choDap.set(so, res);
+      baoBanDo({ loai: "dt-tru-hoi", so, ham, ts: Object.assign({ tran: ID_TRAN }, ts) });
+      setTimeout(() => { if (choDap.delete(so)) res({ ok: false, ma: "mang", lyDo: "Không kết nối được máy chủ." }); }, 12000);
+    });
     function hoSoBe() {
       if (LA_DAN && NV.hoSoNongDan) return Object.assign(NV.hoSoNongDan(chon.cl, +TS.get("nd") || 0), { nongDan: true });
       const h = { chungLoai: chon.cl, gioi: chon.gioi || "nam" }; if (TUONG_THU) h.tuong = TUONG_THU; return h;
@@ -363,14 +381,134 @@
       $("nutDongChon").addEventListener("click", () => $("manChon").classList.add("an"));
     }
 
+    // ---------- TC_D06C2g: trận trụ ----------
+    // T giả: cùng các hàm trang dùng (be, quai, luot, dangLuot, ketThuc, capNhat, quaiDaBam...), kết quả lượt do máy chủ trả
+    let tru = null; // { luot { so, tanCong, han, tTru?, daGui, beDung, tBam }, ket, tk }
+    function taoTranTru() {
+      const so = k => Math.max(0, Math.round(Number(TS.get(k)) || 0));
+      const be = { hp: so("mauBe"), hpToiDa: Math.max(1, so("mauBeToiDa")), mp: 0, mpToiDa: 1, combo: 0 };
+      const q = { ten: TS.get("tenTru") || "Trụ tên", lv: so("cap") || 1, hp: so("mauTru"), hpToiDa: Math.max(1, so("mauTruToiDa")), mp: 0, mpToiDa: 1, combo: 0, mon: "bat_ky" };
+      tru = { luot: null, ket: null, tk: { soLuot: 0, beDung: 0, beBam: 0, comboCaoNhat: 0, satThuongGay: 0, satThuongNhan: 0 } };
+      return {
+        be: () => be, quai: () => q, giayBe: Number(TS.get("giayBe")) || 15, // giây (đồng hồ lượt bé)
+        luot: () => tru.luot && { so: tru.luot.so, tanCong: tru.luot.tanCong, han: tru.luot.han, thongTha: false },
+        dangLuot: () => !!tru.luot && !tru.luot.daGui && !tru.ket,
+        ketThuc: () => tru.ket, tongKet: () => Object.assign({}, tru.tk),
+        quaiDaBam: () => false,
+        capNhat(t) { // hết giờ bé (lượt bé) / tới lúc trụ bấm (lượt trụ): gửi máy chủ
+          const l = tru.luot;
+          if (!l || l.daGui || tru.ket) return null;
+          if (l.tanCong === "be" && t > l.han) guiTru({ chon: null });
+          else if (l.tanCong === "quai" && t >= l.tTru) guiTru({ beDung: !!l.beDung });
+          return null;
+        },
+        beBam: () => ({ nhan: false })
+      };
+    }
+    function vaoTranTru() {
+      $("manKet").classList.add("an");
+      T = taoTranTru();
+      chuQuai = "";
+      hieuUng = null; ketThucLuc = 0; clearTimeout(henTiep);
+      $("tenBe").textContent = TS.get("tl") || "Thủ lĩnh";
+      $("tenQuai").innerHTML = "<small></small> "; $("tenQuai").querySelector("small").textContent = "Lv " + T.quai().lv;
+      $("tenQuai").appendChild(document.createTextNode(T.quai().ten));
+      if (san3d) san3d.datTran({ hoSo: hoSoBe(), quai: chon.quai, chu: "" });
+      veThanh();
+      moLuotMoi();
+    }
+    function hienCau(c, beDanh) {
+      $("bangLuot").classList.remove("an");
+      $("bangLuot").classList.toggle("quai", !beDanh);
+      $("bangLuot").textContent = beDanh ? "⚔️ Tấn công" : "🛡️ Phòng thủ";
+      if (san3d) san3d.nghi(!beDanh);
+      const hinh = $("cHinh"); hinh.textContent = c.hinhChu || "";
+      hinh.classList.toggle("an", !c.hinhChu);
+      $("cNoiDung").textContent = c.noiDung;
+      $("nutNghe").classList.toggle("an", !c.amThanh);
+      docTo(c.amThanh);
+      $("cDapAn").innerHTML = "";
+      c.dapAn.forEach((d, i) => { const b = document.createElement("button"); b.textContent = d; b.addEventListener("click", () => beBam(i)); $("cDapAn").appendChild(b); });
+      $("cKetQua").innerHTML = "";
+    }
+    async function moLuotTru(lan) {
+      clearTimeout(henTiep); beThu = false; quaiThu = false;
+      const kq = await hoiBanDo("luot", {});
+      if (!kq.ok) {
+        if (kq.ma === "het_tran" || (lan || 0) >= 3) { baoBanDo({ loai: "dt-tran-dong", hpBe: T.be().hp }); return; }
+        $("cKetQua").textContent = "⚠️ " + (kq.lyDo || "Mất kết nối") + " · đang thử lại…";
+        henTiep = setTimeout(() => moLuotTru((lan || 0) + 1), 2000); return;
+      }
+      const l = kq.luot, t = bayGio();
+      if (l.ben === "tru") { // trụ tấn công: câu ngẫu nhiên theo trình độ của bé (bé phòng thủ), trụ bấm sau giayTru giây
+        const ds = Object.keys(NG), mon = ds[Math.floor(Math.random() * ds.length)];
+        cauNay = bo.cauTiep(hs, mon).cau;
+        tru.luot = { so: l.so, tanCong: "quai", tMo: t, tTru: t + (Number(l.giayTru) || 4) * 1000, han: t + (Number(l.giayTru) || 4) * 1000, daGui: false };
+        hienCau(cauNay, false);
+      } else { // bé tấn công: câu của trụ (máy chủ không gửi đáp án)
+        cauNay = Object.assign({ dung: [], loiGiai: "" }, l.cau || { noiDung: "…", dapAn: [] });
+        tru.luot = { so: l.so, tanCong: "be", tMo: t, han: t + (Number(l.han) || 15) * 1000, daGui: false };
+        hienCau(cauNay, true);
+      }
+      capNhatDongHo();
+    }
+    function beBamTru(i) {
+      const l = tru && tru.luot;
+      if (!l || l.daGui || l.daChon != null || tru.ket) return;
+      l.daChon = i;
+      const nut = $("cDapAn").children;
+      for (let j = 0; j < nut.length; j++) nut[j].disabled = true;
+      if (nut[i]) nut[i].classList.add("da-chon");
+      tru.tk.beBam++;
+      if (l.tanCong === "be") { guiTru({ chon: i }); return; }
+      // phòng thủ: câu của bé, chấm ngay tại máy; đúng thì vào thế thủ, trụ bấm sớm hơn (bé khỏi chờ)
+      l.beDung = cauNay.dung.indexOf(i) >= 0;
+      bo.traLoi(hs, cauNay, i); luu();
+      if (l.beDung) { tru.tk.beDung++; beThu = true; if (san3d) san3d.thu("be", true); }
+      l.tTru = Math.min(l.tTru, bayGio() + chTran.tuaKhiDaBamGiay * 1000);
+    }
+    async function guiTru(tl, lan) {
+      const l = tru.luot; if (!l) return;
+      l.daGui = true;
+      const kq = await hoiBanDo("tra", tl);
+      if (!kq.ok) {
+        if (kq.ma === "het_tran" || (lan || 0) >= 3) { baoBanDo({ loai: "dt-tran-dong", hpBe: T.be().hp }); return; }
+        $("cKetQua").textContent = "⚠️ " + (kq.lyDo || "Mất kết nối") + " · đang thử lại…";
+        setTimeout(() => guiTru(tl, (lan || 0) + 1), 2000); return;
+      }
+      const r = kq.kq, be = T.be(), q = T.quai(), beDanh = r.ben === "be";
+      be.hp = r.mau.be; q.hp = r.mau.tru;
+      if (beDanh) {
+        cauNay.dung = Number.isInteger(r.dapAnDung) ? [r.dapAnDung] : []; cauNay.loiGiai = r.loiGiai || "";
+        if (r.kieu === "trung") { tru.tk.beDung++; tru.tk.satThuongGay += r.satThuong; }
+        if (r.phanDon) tru.tk.satThuongNhan += r.phanDon;
+      } else tru.tk.satThuongNhan += r.satThuong;
+      tru.tk.soLuot = r.so;
+      const k = { so: r.so, tanCong: beDanh ? "be" : "quai", kieu: r.kieu === "sai" ? "hut" : r.kieu, satThuong: r.satThuong || 0, chiMang: false, neThu: false,
+        beChon: l.daChon != null ? l.daChon : null, quaiChon: null, dapAnDung: cauNay.dung[0], loiGiai: beDanh ? r.loiGiai : cauNay.loiGiai || "",
+        mp: { be: 0, quai: 0 }, hp: { be: be.hp, quai: q.hp }, combo: { be: 0, quai: 0 }, phanDon: r.phanDon || 0, tKet: bayGio() };
+      if (r.ket) {
+        tru.ket = { thang: r.ket === "be" ? "be" : r.ket === "tru" ? "quai" : null, lyDo: r.ket, tongKet: Object.assign({}, tru.tk),
+          nghiDen: bayGio() + (Number(TS.get("nghi")) || 120) * 1000 };
+        k.ketThuc = tru.ket;
+      }
+      xuLyKetQua(k);
+    }
+    function textTru(k) {
+      const q = T.quai().ten;
+      if (k.tanCong === "be") return k.kieu === "trung" ? "Trúng · −" + k.satThuong + " HP" : (k.kieu === "het_gio" ? "Hết giờ" : "Trả lời sai") + " · " + q + " phản đòn −" + k.phanDon + " HP";
+      return k.kieu === "trung" ? "Trúng tên · −" + k.satThuong + " HP" : k.kieu === "do" ? "Đỡ được" : q + " bắn trượt";
+    }
+
     // ---------- trận ----------
     function vaoTran() {
+      if (TRU) return vaoTranTru(); // TC_D06C2g
       $("manKet").classList.add("an");
       const q = QU.taoQuai(chon.quai, chon.lv, chTran);
       const so = k => { const v = TS.get(k); return v == null || v === "" ? NaN : Number(v); };
       T = TR.taoTran({ ch: chTran, chungLoai: chon.cl, quai: q, lop: chon.lop, thongTha: chon.thongTha == null ? undefined : chon.thongTha,
         quaiTruoc: NHUNG && TS.get("quaiTruoc") === "1", // TC_D06C2a: quái hung dữ lao vào thì quái đánh trước
-        be: LA_DAN ? TR.chiSoNongDan(chon.cl, chTran, so("hp")) : undefined, // TC_D06C2b: nông dân, đánh tiếp từ máu + lượt đang có
+        be: LA_DAN ? TR.chiSoNongDan(chon.cl, chTran, so("hp")) : NHUNG && Number.isFinite(so("hp")) ? tlConMau(so("hp")) : undefined, // TC_D06C2b: nông dân, đánh tiếp từ máu + lượt đang có; TC_D06C2g: máu Thủ lĩnh còn lại
         hpQuai: LA_DAN ? so("hpQuai") : undefined, soLuotDau: LA_DAN ? so("luot") : undefined });
       chuQuai = NHUNG && TS.get("chu") ? TS.get("chu").slice(0, 2) : CHU_QUAI[chon.quai] ? CHU_QUAI[chon.quai]() : "";
       hieuUng = null; ketThucLuc = 0; clearTimeout(henTiep);
@@ -382,6 +520,9 @@
       moLuotMoi();
     }
 
+    // TC_D06C2g: Thủ lĩnh vào trận với máu còn lại (máy chủ giữ, không tự hồi)
+    function tlConMau(hp) { const c = TR.chiSoThuLinh(chon.cl, chTran); c.hp = Math.max(1, Math.min(c.hpToiDa, Math.round(hp))); return c; }
+
     function monCuaQuai() {
       const m = T.quai().mon;
       if (m === "bat_ky") { const ds = Object.keys(NG); return ds[Math.floor(Math.random() * ds.length)]; }
@@ -389,6 +530,7 @@
     }
 
     function moLuotMoi() {
+      if (TRU) return moLuotTru(); // TC_D06C2g
       const mon = monCuaQuai();
       const x = bo.cauTiep(hs, mon);
       cauNay = x.cau; beThu = false; quaiThu = false; clearTimeout(henTiep);
@@ -418,6 +560,7 @@
     }
 
     function beBam(i) {
+      if (TRU) return beBamTru(i); // TC_D06C2g
       if (!T || !T.dangLuot()) return;
       const r = T.beBam(i, bayGio());
       if (r.nhan) {
@@ -432,6 +575,7 @@
     }
 
     function textKetQua(k) {
+      if (TRU) return textTru(k); // TC_D06C2g
       const q = T.quai().ten, be = k.tanCong === "be";
       const cm = k.chiMang ? " · Chí mạng" : "";
       if (be) return ({ trung: (k.neThu ? q + " né hụt · " : "Trúng · ") + "−" + k.satThuong + " HP" + cm, so_ho: "Trúng sơ hở · −" + k.satThuong + " HP" + cm, ne: q + " né được", hut: "Đánh hụt", het_gio: "Hết giờ · đánh hụt" })[k.kieu];
@@ -462,6 +606,10 @@
         if (k.mp.quai) soBay("quai", "+" + k.mp.quai + " MP", "mp", 0.55);
         veThanh();
       }, 320);
+      if (k.phanDon) setTimeout(() => { // TC_D06C2g: bé trả lời sai / hết giờ ở lượt tấn công -> trụ phản đòn
+        if (san3d) san3d.ketQua({ tanCong: "quai", kieu: "trung", satThuong: k.phanDon, beChon: null, combo: null });
+        setTimeout(() => soBay("be", "−" + k.phanDon, ""), 450);
+      }, 950);
       if (k.ketThuc) { ketThucLuc = bayGio(); setTimeout(() => { if (san3d) san3d.ketThuc(k.ketThuc.thang); }, 700); setTimeout(() => moKetThuc(k.ketThuc), 2600); }
       else { // tự sang lượt sau (người dùng 29/10/2026); bé sai / không trả lời thì đọc lời giải lâu hơn
         const beDung = k.beChon != null && cauNay.dung.indexOf(k.beChon) >= 0;
@@ -510,7 +658,8 @@
     function moKetThuc(k) {
       const q = T.quai().ten, tk = k.tongKet;
       $("manKet").classList.remove("an");
-      $("tdKet").textContent = k.thang === "be" ? "Thắng · " + q + " bỏ chạy" : k.thang === "quai" ? (LA_DAN ? "Thua · Nông dân bỏ chạy" : "Thua · Thủ lĩnh về Lều nghỉ") : "Hòa · " + q + " chạy mất";
+      $("tdKet").textContent = TRU ? (k.thang === "be" ? "Thắng · " + q + " sụp đổ" : k.thang === "quai" ? "Thua · Thủ lĩnh về Lều nghỉ" : "Hòa · " + q + " vẫn đứng") // TC_D06C2g
+        : k.thang === "be" ? "Thắng · " + q + " bỏ chạy" : k.thang === "quai" ? (LA_DAN ? "Thua · Nông dân bỏ chạy" : "Thua · Thủ lĩnh về Lều nghỉ") : "Hòa · " + q + " chạy mất";
       $("ketTong").innerHTML = "";
       [["Số lượt", tk.soLuot], ["Câu đúng", tk.beDung + " / " + tk.beBam], ["Combo cao nhất", tk.comboCaoNhat], ["Sát thương gây / nhận", tk.satThuongGay + " / " + tk.satThuongNhan]].forEach(([a, b]) => {
         const d = document.createElement("div"); d.textContent = a; const x = document.createElement("b"); x.textContent = b; d.appendChild(x); $("ketTong").appendChild(d);
@@ -521,7 +670,10 @@
         baoBanDo({ loai: "dt-tran-ket", thang: k.thang, nghiGiay: coNghi ? Math.max(0, (k.nghiDen - bayGio()) / 1000) : 0, hpBe: T.be().hp });
         $("nutDauLai").classList.add("an"); $("nutDoiTran").classList.add("an"); $("nutBoNghi").classList.add("an"); $("nutVeBanDo").classList.remove("an");
         $("ketNghi").classList.toggle("an", !coNghi);
-        if (coNghi) { const s = Math.ceil(chTran.thua.nghiGiay); $("ketNghi").textContent = "⛺ " + Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+        if (coNghi) { // TC_D06C2g: thua trụ nghỉ theo &nghi=
+          const s = Math.ceil(TRU ? Number(TS.get("nghi")) || 120 : chTran.thua.nghiGiay);
+          $("ketNghi").textContent = "⛺ " + Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+        }
         $("nutVeBanDo").focus();
         return;
       }
@@ -631,6 +783,7 @@
         const q = TS.get("quai");
         chon = { quai: chTran.quai.loai[q] ? q : "slime_so", lv: Math.max(1, Math.min(10, +TS.get("lv") || 1)), lop: Math.max(1, Math.min(12, +TS.get("lop") || 2)),
           cl: chTran.thuLinh[TS.get("cl")] ? TS.get("cl") : "nhan", gioi: TS.get("gioi") === "nu" ? "nu" : "nam", thongTha: null };
+        if (TRU) chon.quai = /^tru_\w+$/.test(TS.get("loaiTru") || "") ? TS.get("loaiTru") : "tru_ten"; // TC_D06C2g: đối thủ là trụ (sân 3D dt3d_quai.js)
         document.title = "Trận đấu - Đấu Trường Tri Thức";
         $("nutChonTran").classList.add("an"); $("nutRutLui").classList.remove("an");
         document.querySelector(".dau h1").firstChild.textContent = "⚔️ Trận đấu";
@@ -706,3 +859,4 @@
 </body>
 </html>
 <!-- 30/10/2026 - BƯỚC: TC_D06A (chế độ nhúng từ bản đồ); 04/11/2026 - TC_D06C2a (quaiTruoc); 04/11/2026 23:xx - TC_D06C2b (vai=nong_dan) -->
+<!-- 05/11/2026 - BƯỚC: TC_D06C2g (trận trụ ?tru=1, máu Thủ lĩnh &hp=) -->

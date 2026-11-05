@@ -156,3 +156,16 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   .d3BtDong1 b { font-size: .92rem; } }
 @media (min-width: 900px) { .d3BangTran { width: 480px; } .d3BtDong1 { min-height: 64px; } .d3BtDong1 b { font-size: 1.1rem; } }
 /* 05/11/2026 - BƯỚC: TC_D06C2d (👥 dân số ở thanh trên, danh sách trận, bong bóng ⚔️ Đánh trên đầu quái) */
+/* TC_D06C2g: bảng xem câu phòng thủ của trụ (chủ trụ chạm trụ -> 📜 7 câu): điện thoại phủ gần hết màn hình, máy tính hộp giữa */
+.d3BangCau { position: fixed; z-index: 25; left: 12px; right: 12px; top: 64px; bottom: 120px; overflow: auto; padding: 12px 14px; color: #fff6dc; }
+.d3BangCauDau { display: flex; align-items: center; gap: 10px; position: sticky; top: -12px; background: rgba(20, 32, 74, .96); padding: 4px 0 8px; }
+.d3BangCauDau b { flex: 1; font-family: "Baloo 2", sans-serif; font-size: 1.05rem; color: var(--vang); }
+.d3BangCauDau .d3Nut { min-width: 44px; min-height: 44px; }
+.d3BangCau ol { margin: 0; padding-left: 1.6em; }
+.d3BangCau li { margin: 0 0 12px; line-height: 1.35; }
+.d3BangCauDa { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.d3BangCauDa span { padding: 2px 10px; border-radius: 10px; background: rgba(255, 255, 255, .12); }
+.d3BangCauDa span.dung { background: #2f9e55; color: #fff; font-weight: 700; }
+.d3BangCauDa span.dung::before { content: "✓ "; }
+@media (min-width: 900px) { .d3BangCau { left: 50%; right: auto; width: 560px; transform: translateX(-50%); top: 90px; bottom: 150px; } .d3BangCauDau b { font-size: 1.25rem; } }
+/* 05/11/2026 - BƯỚC: TC_D06C2g (bảng câu phòng thủ của trụ) */
