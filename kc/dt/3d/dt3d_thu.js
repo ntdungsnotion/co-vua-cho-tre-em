@@ -115,7 +115,7 @@ const goiY = $("d3GoiY");
 const baoGoiY = chu => { goiY.textContent = chu; };
 let thanh = null; // TC_D06D: thanh điều khiển cuối màn hình (dt3d_thanh_duoi.js), dựng ngay sau dk
 const denChon = taoDenChon(ctx, diaHinh.doCaoDi); // TC_D06C2e
-const uiDk = { baoGoiY, lop: $("d3ChuNoi"), chamCongTrinh: tia => congTrinhVe.chon(tia), den: denChon, hinhCongTrinh: ct => congTrinhVe.hinhCt(ct.id),
+const uiDk = { baoGoiY, lop: $("d3ChuNoi"), chamCongTrinh: tia => congTrinhVe.chon(tia), den: denChon, hinhCongTrinh: ct => congTrinhVe.hinhCt(ct.id) || (congTrinhVe.diemTuong(ct) && { nhom: congTrinhVe.diemTuong(ct) }),
   // chọn người -> ô "đang xem" về người đó; phần Lều / ruộng đang mở thì đóng (nút của chúng thôi hiện)
   baoChon: () => { if (thanh) thanh.xem(null); if (vung) { vung.dongXem(); vung.moc.capNhatNut(); } } };
 const dk = taoDieuKhien(ctx, cam, lang, taiNguyen, boNv, diaHinh, uiDk);

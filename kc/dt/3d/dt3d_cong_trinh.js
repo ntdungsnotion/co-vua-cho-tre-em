@@ -335,15 +335,28 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
       if (den) den.intensity = 5 + Math.sin(t * 11) * 1.2 + Math.sin(t * 17) * 0.8;
     });
   }
+  // TC_D06C2f: chạm hàng rào (tường cọc gỗ) — cọc nằm trong 1 InstancedMesh nên không có nhóm riêng: bắn tia vào cọc
+  // (mỗi ô 5 cọc liền nhau, cùng thứ tự với vòng lặp veTuong), không trúng cọc thì xét ô đất dưới tia
+  const chonTuong = tia => {
+    if (coc && coc.count) {
+      const t = tia.intersectObject(coc, false)[0];
+      if (t && t.instanceId != null) { const ct = [...dsTuong.values()][Math.floor(t.instanceId / CHO_COC.length)]; if (ct) return ct; }
+    }
+    const d = diaHinh.matDat && tia.intersectObject(diaHinh.matDat, false)[0];
+    if (d) { const x = Math.floor(d.point.x), y = Math.floor(d.point.z); for (const ct of dsTuong.values()) if (ct.x === x && ct.y === y) return ct; }
+    return null;
+  };
   return { leu, lua, hinhCt: id => dsCt.get(id) || null,
+    diemTuong: ct => (ct && dsTuong.has(ct.id) ? { x: ct.x + 0.5, z: ct.y + 0.5, r: 0.8 } : null), // điểm cho đèn chiếu
     chon: tia => {
-      const hs = tia.intersectObjects([...dsCt.values()].map(h => h.nhom), true);
-      for (const x of hs) {
+      const ctN = [...dsCt.values()].map(h => h.nhom), hs0 = ctN.length ? tia.intersectObjects(ctN, true) : [];
+      if (!hs0.length) return chonTuong(tia);
+      for (const x of hs0) {
         let o = x.object;
         while (o && !o.userData.congTrinh) o = o.parent;
         if (o && o.userData.congTrinh) return o.userData.congTrinh;
       }
-      return null;
+      return chonTuong(tia);
     } };
 }
 // 01/11/2026 17:53 - BƯỚC: TC_D06C1 giao diện công trình + trạng thái phá hủy
