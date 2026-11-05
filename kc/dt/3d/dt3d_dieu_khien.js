@@ -78,17 +78,26 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     if (trungNv) {
       const h = trungNv.object.userData.hinh;
       if (h.dv.laBan) { ui.baoGoiY((ui.loiBan && ui.loiBan(h)) || "Đây là người của bạn khác."); return; }
+      if (h === dangChon && !(ui.den && ui.den.dangChieu() !== h.vo)) { boChonTatCa(); return; } // chạm lại người đang chọn: bỏ chọn (điện thoại)
       chon(h); return;
     }
     // TC_D06C1: chạm công trình -> mở bảng điều khiển kiểu AoE (chạm chỗ khác: đóng). KHÔNG dừng ở đây:
     // Lều vẫn hiện nút sinh nông dân, móng vẫn gọi nông dân vào xây, ruộng vẫn báo... như bước 3 dưới (03/11/2026)
+    // TC_D06C2e: đang chiếu một vật PHỤ (công trình / quái / cây / mỏ, không phải người đang chọn) -> chạm đất chỉ để BỎ vật đó
+    // (không ra lệnh đi); người đang chọn vẫn còn. Chạm đất lần nữa mới ra lệnh đi. Chuột phải: bỏ chọn tất cả.
+    const phuTruoc = !!(ui.den && ui.den.dangChieu() && ui.den.dangChieu() !== (dangChon && dangChon.vo));
+    let ct = null;
     if (ui.chamCongTrinh && ui.chonCongTrinh) {
-      const ct = ui.chamCongTrinh(tia) || null;
+      ct = ui.chamCongTrinh(tia) || null;
       ui.chonCongTrinh(ct);
-      if (ui.den) { // TC_D06C2e: chạm công trình -> đèn chiếu công trình; chạm chỗ khác -> đèn về người đang chọn (hoặc tắt)
+      if (ui.den) { // chạm công trình -> đèn chiếu công trình; chạm chỗ khác -> đèn về người đang chọn (hoặc tắt)
         const hct = ct && ui.hinhCongTrinh && ui.hinhCongTrinh(ct);
         ui.den.dat(hct ? hct.nhom : (dangChon ? dangChon.vo : null));
       }
+    }
+    if (phuTruoc && !ct && !taiNguyen.chon(tia) && tia.intersectObject(diaHinh.matDat, false)[0]) {
+      ui.baoGoiY(dangChon ? "Đã bỏ chọn. Chạm đất lần nữa để " + dangChon.dv.ten + " đi." : "Đã bỏ chọn.");
+      return;
     }
     // 2) chạm nguồn tài nguyên
     let n = taiNguyen.chon(tia);
@@ -117,6 +126,18 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
       } else ui.baoGoiY("Không đi tới chỗ đó được.");
     } else if (!dangChon) ui.baoGoiY("Chạm Thủ lĩnh hoặc nông dân để chọn.");
   });
+
+  // Chuột phải (máy tính): bỏ chọn tất cả (đang đặt công trình thì phần đó tự lùi một bước, không bỏ chọn)
+  canvas.addEventListener("contextmenu", e => {
+    e.preventDefault();
+    setTimeout(() => { if (cheDoRieng) return; boChonTatCa(); }, 0);
+  });
+  function boChonTatCa() {
+    chon(null);
+    if (ui.chonCongTrinh) ui.chonCongTrinh(null);
+    if (ui.den) ui.den.dat(null);
+    ui.baoGoiY("Đã bỏ chọn.");
+  }
 
   // --- Chữ nổi "+10 🪵" + dấu "!" ---
   const dsNoi = [], dauRanh = new Map(), vt = new THREE.Vector3();
@@ -152,7 +173,7 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     const o = oDuoiTay(e); if (o) cheDoRieng(o, "re");
   });
 
-  return { chon, dangChon: () => dangChon, datCheDoCham(fn) { cheDoRieng = fn || null; } };
+  return { chon, boChonTatCa, dangChon: () => dangChon, datCheDoCham(fn) { cheDoRieng = fn || null; } };
 }
 // 30/10/2026 - BƯỚC: TC_D06A; 03/11/2026 23:2x - TC_D06C1 (chạm công trình mở bảng mà không chặn Lều / móng / ruộng)
 // 04/11/2026 - BƯỚC: TC_D06D (xemNguon: chạm nguồn hiện thông số ở thanh dưới)

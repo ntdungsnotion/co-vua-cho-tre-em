@@ -3,7 +3,7 @@
 // CHỨC NĂNG: Vật đang chọn (nhân vật, quái, công trình, cây, mỏ...) có một vòng sáng tròn trên mặt đất, đúng dưới chân,
 //            giữ nguyên cho tới khi bỏ chọn. (Người dùng 05/11/2026: không cần cột sáng, chỉ cần vòng sáng dưới đất.)
 // HÀM KHAI RA:
-//   taoDenChon(ctx, doCao(x, z)) -> { dat(vat | null) }
+//   taoDenChon(ctx, doCao(x, z)) -> { dat(vat | null), dangChieu() -> vật / điểm đang được chiếu | null }
 //     vat: THREE.Object3D (người, quái, công trình) HOẶC { x, z, r } (điểm trên đất: cây, mỏ, bụi quả); null = tắt.
 //   Vật bị ẩn (sương đen, quái chạy mất) hoặc bị gỡ khỏi cảnh thì đèn tự tắt. Các lưới ẩn (vùng bấm) và vòng đỏ
 //   dưới chân quái không tính vào kích thước.
@@ -60,5 +60,5 @@ export function taoDenChon(ctx, doCao) {
     vet.visible = true; vet.position.set(x, y + 0.06, z); vet.scale.setScalar(rong * nhap);
     vet.material.opacity = bat * (0.85 + Math.sin(t * 3.2) * 0.12);
   });
-  return { dat };
+  return { dat, dangChieu: () => diem || vat };
 }
