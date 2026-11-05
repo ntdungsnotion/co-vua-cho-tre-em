@@ -76,7 +76,7 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     const trungNv = tia.intersectObjects(boNhanVat.dsHinh.filter(h => h.vo.visible).map(h => h.trung), false)[0];
     // TC_D06A: chạm quái (gần mắt hơn nhân vật) -> phần quái xử lý (đánh / xem cấp)
     const trungQuai = ui.trungQuai && ui.trungQuai(tia);
-    if (trungQuai && (!trungNv || trungQuai.kc < trungNv.distance)) { ui.chamQuai(trungQuai.q, dangChon); return; }
+    if (trungQuai && (!trungNv || trungQuai.kc < trungNv.distance)) { ui.chamQuai(trungQuai.q, dangChon, e); return; } // TC_D06C2d: e (chuột / ngón tay)
     if (trungNv) {
       const h = trungNv.object.userData.hinh;
       if (h.dv.laBan) { ui.baoGoiY((ui.loiBan && ui.loiBan(h)) || "Đây là người của bạn khác."); return; }
@@ -152,3 +152,4 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
 }
 // 30/10/2026 - BƯỚC: TC_D06A; 03/11/2026 23:2x - TC_D06C1 (chạm công trình mở bảng mà không chặn Lều / móng / ruộng)
 // 04/11/2026 - BƯỚC: TC_D06D (xemNguon: chạm nguồn hiện thông số ở thanh dưới)
+// 05/11/2026 - BƯỚC: TC_D06C2d (chamQuai nhận sự kiện con trỏ: điện thoại chạm quái -> bong bóng ⚔️ Đánh)

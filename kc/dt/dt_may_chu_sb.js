@@ -29,6 +29,7 @@
 //   TC_D06C2b: nông dân đánh quái: quaiGiu(..., lao, dv) / quaiDanh(ten, id, dv) gửi p_dv (id nông dân; không có = Thủ lĩnh);
 //     quaiKet(ten, id, ket, nghiGiay, giu, dan) gửi p_dv + p_mau (dan = { dv, mau }: máu nông dân còn; ket "quai" = nông dân bỏ
 //     chạy, máy chủ xoá người dân đó). Cần SQL TC_D06C2b. donVi[].mau = máu nông dân (null = đầy).
+//   TC_D06C2d: phaHuy(ten, id) -> kc_dt_pha_huy (phá hủy công trình đã xong của bé; Lều trại: la_leu).
 // BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
@@ -58,7 +59,8 @@
       quai_mat: "Quái đã chạy mất rồi.",
       dang_danh: "Quái này đang giao chiến với bạn khác.",
       khong_giu: "Quái đã đi chỗ khác.",
-      xa_qua: "Thủ lĩnh chưa tới chỗ quái."
+      xa_qua: "Thủ lĩnh chưa tới chỗ quái.",
+      la_leu: "Không phá được Lều trại: đó là nhà chính của làng." // TC_D06C2d
     };
     // Tên đưa vào câu lý do: loại nguồn (còn cây ở đây), tài nguyên thiếu (gỗ), loại nhà đã đủ (Tháp canh)
     const tenTrongLyDo = kq => (kq.loaiNguon ? tenNguon(kq.loaiNguon)
@@ -100,6 +102,7 @@
       async xayXong(ten, id) { return goi("kc_dt_xay_xong", { p_id: id }); },
       async sinhNongDan() { return goi("kc_dt_sinh_nong_dan", {}); }, // TC_D03B1
       async trongLai(ten, id) { return goi("kc_dt_trong_lai", { p_id: id }); }, // TC_D03B2
+      async phaHuy(ten, id) { return goi("kc_dt_pha_huy", { p_id: id }); }, // TC_D06C2d: cần SQL TC_D06C2d
       async luuKhamPha(ten, chuoi, giu) { return goi("kc_dt_luu_kham_pha", { p_mat_na: chuoi }, giu); },
       // TC_D06C1: quái chung (giữ khi Thủ lĩnh tiến tới, vào trận, kết quả / thả)
       // TC_D06C2a: p_lao; TC_D06C2b: p_dv (nông dân đánh quái) chỉ gửi khi có, để SQL cũ vẫn nhận lời gọi của Thủ lĩnh
@@ -115,3 +118,4 @@
   goc.KC_DT_MAY_CHU_SB = { taoMayChuSupabase };
 })(typeof window !== "undefined" ? window : globalThis);
 // 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (p_lao); 04/11/2026 23:xx - TC_D06C2b (p_dv, p_mau)
+// 05/11/2026 - BƯỚC: TC_D06C2d (phaHuy)

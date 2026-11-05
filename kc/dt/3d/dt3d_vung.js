@@ -80,13 +80,18 @@ export async function vaoThungLung(the) {
   const CB = cauHinh.banDo, CT = cauHinh.congTrinh, W = banDo.rong, H = banDo.cao;
   const ten = be.ten, tenChuan = String(ten).trim().toLowerCase();
   const R = CT.leu.rong, S = CT.leu.sau;
-  const phaHuy = ct => {
-    if (!ct || ct.cuaMinh === false || !ct.xong || ct.phaHuyLuc != null) return false;
+  // Phá hủy công trình của mình (Codex TC_D06C1; TC_D06C2d: máy chủ ghi nhận trước, bạn khác thấy mất, tải lại không hiện lại).
+  // Máy chủ xoá ngay (không hoàn tài nguyên; Lều trại không phá được); máy bé cho công trình sụp dần PHA_HUY_GIAY giây rồi mới bỏ.
+  const PHA_HUY_GIAY = 30;
+  const duocPhaHuy = ct => !!ct && ct.cuaMinh !== false && ct.xong && ct.loai !== "leu" && ct.phaHuyLuc == null && !ct.dangPha;
+  const phaHuy = async ct => {
+    if (!duocPhaHuy(ct) || !mayChu.phaHuy) return false;
+    ct.dangPha = true;
+    const kq = await mayChu.phaHuy(ten, ct.id);
+    ct.dangPha = false;
+    if (!kq.ok) { baoGoiY("❌ " + kq.lyDo); return false; }
     ct.phaHuyLuc = lang.bayGio();
-    baoGoiY("Công trình đang hư hỏng và sẽ biến mất sau 30 giây.");
-    setTimeout(() => {
-      if (ct.phaHuyLuc != null && lang.congTrinh.includes(ct)) lang.boCongTrinh(ct);
-    }, 30000);
+    setTimeout(() => { if (lang.congTrinh.includes(ct)) lang.boCongTrinh(ct); capNhatNut(); }, PHA_HUY_GIAY * 1000);
     return true;
   };
 
@@ -685,9 +690,8 @@ export async function vaoThungLung(the) {
     capNhatNut();
     return kq;
   }
-  const chipDan = document.createElement("span"); // 👥 dân số / chỗ ở (+ số đang chờ sinh)
-  chipDan.className = "d3Khung d3Do"; chipDan.id = "d3DanSo"; chipDan.hidden = true;
-  $("d3KhamPha").parentNode.insertBefore(chipDan, $("d3KhamPha").nextSibling);
+  // 👥 dân + quân / tối đa ở THANH TRÊN cạnh tài nguyên (TC_D06C2d, người dùng 05/11/2026: không ở thanh dưới)
+  const chipDan = $("d3DanSo"), soDan = $("d3DanSoSo");
   const nutSinh = document.createElement("button");
   nutSinh.className = "d3Nut d3Khung"; nutSinh.type = "button"; nutSinh.id = "d3SinhNd"; nutSinh.hidden = true;
   nutSinh.addEventListener("click", () => sinhNd());
@@ -761,8 +765,9 @@ export async function vaoThungLung(the) {
     // TC_D03B1: dân số luôn hiện khi có lều; nút sinh nông dân khi mở Lều (chạm Lều trại)
     chipDan.hidden = !xongLeu;
     if (xongLeu) {
-      const c = "👥 " + lang.danSo() + "/" + lang.choO() + (hang ? " · ⏳" + hang.so + " (" + conGiaySinh() + "s)" : "");
-      if (chipDan.textContent !== c) { chipDan.textContent = c; chipDan.setAttribute("aria-label", "Dân số " + lang.danSo() + " trên " + lang.choO() + " chỗ ở" + (hang ? ", " + hang.so + " người đang chờ sinh" : "")); }
+      const c = lang.danSo() + "/" + lang.choO();
+      if (soDan.textContent !== c) { soDan.textContent = c; chipDan.setAttribute("aria-label", "Dân và quân " + lang.danSo() + " trên tối đa " + lang.choO()); }
+      chipDan.dataset.day = lang.danSo() >= lang.choO() ? "1" : ""; // hết chỗ ở: số đỏ
     }
     if (!xongLeu || cheDo || menuMo) leuMo = false;
     // TC_D03B2: ruộng đang xem đã thành cỏ (mất) / đang xây / mở menu thì đóng; bãi thì có nút trồng lại
@@ -817,12 +822,8 @@ export async function vaoThungLung(the) {
     : leuBe ? "Chạm mặt đất để " + h.dv.ten + " đi tới đó." : "Chạm mặt đất để " + h.dv.ten + " đi khám phá. Bấm 🏕️ để chọn chỗ dựng Lều trại.");
 
   // ---------------- Mỗi khung: soi sương, lưu, gửi, báo tiến độ dựng ----------------
-  const chuPt = $("d3KhamPha"), tongO = W * H;
-  let demSoi = 0, demLuu = 0, demGui = 0, demNut = 0, demXay = 0, daLuu = -1, ptCu = -1;
-  const capNhatPt = () => {
-    const pt = Math.round(1000 * suong.demDaKham() / tongO) / 10;
-    if (pt !== ptCu) { ptCu = pt; chuPt.textContent = "🗺️ Đã khám phá " + pt.toLocaleString("vi-VN") + "%"; }
-  };
+  // TC_D06C2d (người dùng 05/11/2026): bỏ ô "🗺️ Đã khám phá n%"
+  let demSoi = 0, demLuu = 0, demGui = 0, demNut = 0, demXay = 0, daLuu = -1;
   const luuKhamPha = giu => {
     if (suong.phienBan === daLuu) return;
     daLuu = suong.phienBan;
@@ -833,7 +834,7 @@ export async function vaoThungLung(the) {
   let anLuc = 0;
   const anLau = () => anLuc && Date.now() - anLuc >= cauHinh.lang.vangMat.sauGiay * 1000;
   ctx.moiKhung(dt => {
-    if ((demSoi += dt) >= 0.2) { demSoi = 0; soiLai(); capNhatPt(); capNhatLd(); }
+    if ((demSoi += dt) >= 0.2) { demSoi = 0; soiLai(); capNhatLd(); }
     if ((demLuu += dt) >= CB.chuKyLuuKhamPha) { demLuu = 0; luuKhamPha(); }
     if ((demGui += dt) >= CB.chuKyGui) { demGui = 0; chuKy(); }
     veBan();
@@ -852,8 +853,6 @@ export async function vaoThungLung(the) {
     if (anLau()) { location.reload(); return; }
     anLuc = 0;
   });
-  capNhatPt();
-  chuPt.hidden = false;
   $("d3SoiDat").hidden = false;
   capNhatNut();
   dangNap = false;
@@ -897,7 +896,7 @@ export async function vaoThungLung(the) {
     ngheQuanh: f => ngheQuanh.push(f), hoiLai: () => chuKy(),
     tlBan: chu => { for (const b of ban.values()) if (b.dv.chu === chu && b.dv.vaiTro === "thu_linh") return b; return null; },
     dvBan: id => ban.get(id) || null, // TC_D06C2b: nông dân của bạn đang đánh quái (id máy chủ)
-    phaHuy,
+    phaHuy, duocPhaHuy, PHA_HUY_GIAY,
     // TC_D06D: thông số riêng của công trình cho ô "đang xem" ở thanh dưới; chọn người khác thì đóng phần Lều / ruộng
     thongTinCt(ct) {
       if (ct.cuaMinh === false || !ct.xong) return null;
@@ -947,3 +946,4 @@ export async function vaoThungLung(the) {
 }
 // 30/10/2026 13:56 - BƯỚC: TC_D06A (khai laLanhDia cho quái tránh lãnh địa); 30/10/2026 17:30 - TC_D06C1 (quái chung: quanhDau, ngheQuanh, tlBan, Thủ lĩnh bạn đánh quái); 04/11/2026 23:xx - TC_D06C2b (dv.mau, dvBan)
 // 04/11/2026 - BƯỚC: TC_D06D (thongTinCt + dongXem cho thanh dưới; câu menu Xây: chỉ nông dân đang chọn đi xây)
+// 05/11/2026 - BƯỚC: TC_D06C2d (👥 lên thanh trên, bỏ % khám phá, phá hủy công trình qua máy chủ)
