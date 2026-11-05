@@ -8,8 +8,8 @@
 //              trang phục từng thời kỳ, danh hiệu, cần gì để lên, mở thêm gì.
 //            - Các đấu trường môn học (dt/du_lieu/the_gioi.json).
 //            Nhân vật vẽ bằng bộ vẽ DÙNG CHUNG toàn app (chung/nv_ve.js).
-// BƯỚC: TC_D01 (bản đầu TC_D00: 3 kỷ nguyên, nay thay bằng 4 thời kỳ); TC_D02B2b ("Tiếp tục" vào thung lũng 3D)
-// NGÀY: 21/10/2026; 27/10/2026
+// BƯỚC: TC_D01 (bản đầu TC_D00: 3 kỷ nguyên, nay thay bằng 4 thời kỳ); TC_D02B2b ("Tiếp tục" vào thung lũng 3D); TC_D09 (Thủ lĩnh lưu theo tài khoản trên máy chủ)
+// NGÀY: 21/10/2026; 27/10/2026; 05/11/2026
 // PHỤ THUỘC: kc_auth.js (sự kiện kcSanSang), chung/nv_*.js, chung/loc_ten.js,
 //            dt/dt_tien_do.js, dt/dt_tao_nhan_vat.js
 // ================================================================
@@ -21,6 +21,7 @@
   var NV = window.KC_NV, SK = window.KC_SAN_KHAU;
   var duLieu = null;      // { theGioi, chungLoai, thoiKy }
   var tenDangNhap = null;
+  var maPhien = ""; // TC_D09: mã phiên đăng nhập chung, gửi kèm khi gọi máy chủ
   var tienDo = null, hoSo = null;
   var kyDangXem = "do_da";
 
@@ -289,7 +290,7 @@
   function moTao(sua) {
     $("dtMoDau").hidden = true; $("dtSanhPhu").hidden = true; $("dtManLeu").hidden = true;
     window.KC_DT_TAO.mo({
-      tenDangNhap: tenDangNhap, dsChungLoai: duLieu.chungLoai.chungLoai, tenChiSo: duLieu.chungLoai.tenChiSo,
+      tenDangNhap: tenDangNhap, maPhien: maPhien, goiRpc: window.kcGoiRpc, dsChungLoai: duLieu.chungLoai.chungLoai, tenChiSo: duLieu.chungLoai.tenChiSo,
       tienDo: sua ? tienDo : null, hoSo: sua ? hoSo : null,
       xong: function (td, hs) { tienDo = td; hoSo = hs; vaoThungLung(); },
       huy: hienSanh
@@ -328,7 +329,13 @@
   function khoiDong(taiKhoan) {
     if (tenDangNhap || !taiKhoan || !taiKhoan.tenDangNhap) return; // chỉ khởi động một lần
     tenDangNhap = taiKhoan.tenDangNhap;
-    Promise.all([taiJson("dt/du_lieu/the_gioi.json"), taiJson("dt/du_lieu/chung_loai.json"), taiJson("dt/du_lieu/thoi_ky.json")])
+    maPhien = taiKhoan.maPhien || "";
+    // TC_D09: hỏi máy chủ Thủ lĩnh của tài khoản (đổi máy vẫn còn); chờ tối đa 5 giây, quá thì dùng bộ đệm trên máy
+    var hoiMayChu = new Promise(function (xong) {
+      setTimeout(xong, 5000);
+      window.KC_DT_TIEN_DO.dongBo(tenDangNhap, maPhien, window.kcGoiRpc).then(xong, xong);
+    });
+    Promise.all([taiJson("dt/du_lieu/the_gioi.json"), taiJson("dt/du_lieu/chung_loai.json"), taiJson("dt/du_lieu/thoi_ky.json"), hoiMayChu])
       .then(function (kq) {
         if (!kq[0].dauTruong || !kq[1].chungLoai || !kq[2].thoiKy || kq[2].thoiKy.length !== 4) throw new Error("Thiếu dữ liệu");
         duLieu = { theGioi: kq[0], chungLoai: kq[1], thoiKy: kq[2] };
