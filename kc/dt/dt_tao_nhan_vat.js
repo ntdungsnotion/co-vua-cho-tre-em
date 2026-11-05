@@ -6,8 +6,10 @@
 //            màu da, màu áo, lớp đang học; hình xem trước lớn đổi ngay theo lựa chọn.
 //            Bấm "Vào vương quốc": lưu ngoại hình (dùng chung toàn app) + tiến độ game.
 //            Dùng lại được để SỬA Thủ lĩnh (điền sẵn lựa chọn cũ).
-// BƯỚC: TC_D01
-// NGÀY: 21/10/2026
+//            TC_D09: lưu xong thì GỬI LÊN MÁY CHỦ (tuyChon.goiRpc + maPhien) rồi mới vào vương quốc,
+//            để đổi máy / trình duyệt vẫn còn Thủ lĩnh. Mất mạng: vẫn vào, lần mở sau tự gửi lại.
+// BƯỚC: TC_D01; TC_D09
+// NGÀY: 21/10/2026; 05/11/2026
 // PHỤ THUỘC: chung/nv_ve.js, chung/nv_ho_so.js, chung/nv_san_khau.js, chung/loc_ten.js,
 //            dt/dt_tien_do.js
 // ================================================================
@@ -22,7 +24,8 @@
   var TU_THE_XEM = [["vay", "👋 Vẫy tay"], ["dung", "🧍 Đứng"], ["di", "🚶 Đi"], ["nhay", "🦘 Nhảy"]];
 
   var tt = null;      // trạng thái màn tạo
-  var tuyChon = null; // { tenDangNhap, dsChungLoai, tenChiSo, xong, huy }
+  var tuyChon = null; // { tenDangNhap, maPhien, goiRpc, dsChungLoai, tenChiSo, xong, huy }
+  var dangGui = false;
   var daGan = false;
 
   function $(id) { return document.getElementById(id); }
@@ -168,13 +171,24 @@
     var cu = tuyChon.tienDo || {};
     var td = {
       tenVuongQuoc: kqVQ.ten, tenThuLinh: kqTL.ten, chungLoai: tt.hoSo.chungLoai, lop: tt.lop,
-      thoiKy: cu.thoiKy || "do_da", taoLuc: cu.taoLuc
+      thoiKy: cu.thoiKy || "do_da", taoLuc: cu.taoLuc, chuaGui: true
     };
+    if (dangGui) return;
     var okHs = goc.KC_NV_HO_SO.luu(tuyChon.tenDangNhap, tt.hoSo);
     var okTd = goc.KC_DT_TIEN_DO.luu(tuyChon.tenDangNhap, td);
     if (!okHs || !okTd) return baoLoi("Máy chưa lưu được (trình duyệt đang chặn bộ nhớ). Con nhờ bố mẹ kiểm tra nhé.");
-    dong();
-    if (tuyChon.xong) tuyChon.xong(goc.KC_DT_TIEN_DO.doc(tuyChon.tenDangNhap), goc.KC_NV_HO_SO.doc(tuyChon.tenDangNhap));
+    var tc = tuyChon;
+    var xong = function () {
+      dangGui = false; $("dtNutVao").disabled = false;
+      dong();
+      if (tc.xong) tc.xong(goc.KC_DT_TIEN_DO.doc(tc.tenDangNhap), goc.KC_NV_HO_SO.doc(tc.tenDangNhap));
+    };
+    if (typeof tc.goiRpc !== "function") return xong();
+    // TC_D09: chờ máy chủ ghi xong (tối đa 6 giây) rồi mới rời trang, kẻo trình duyệt cắt ngang lời gửi
+    dangGui = true; $("dtNutVao").disabled = true; $("dtLoiTao").textContent = "Đang cất vương quốc lên máy chủ...";
+    var daXong = false, mot = function () { if (!daXong) { daXong = true; xong(); } };
+    setTimeout(mot, 6000);
+    goc.KC_DT_TIEN_DO.gui(tc.tenDangNhap, tc.maPhien, tc.goiRpc).then(mot, mot);
   }
 
   function dong() {
