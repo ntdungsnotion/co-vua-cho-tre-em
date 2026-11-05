@@ -19,7 +19,8 @@
 //        TC_D05B1 (Thủ lĩnh = tướng người thật dt3d_tuong.js; tải lỗi thì KayKit như cũ);
 //        TC_D05B2 (chiêu phủ vùng rộng dt3d_chieu_vung.js + bộ hạt card đồ hoạ dt3d_hat.js);
 //        TC_D05B3 (âm thanh chiến đấu dt3d_am_thanh.js: mỗi động tác / chiêu một tiếng; nhạc nền bối cảnh tran / thang / thua)
-// NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026; 30/10/2026 06:00
+//        TC_D06C2g (đối thủ là trụ: tru_ten bắn tên từ sàn, không nhảy; thua thì sụp thành đống gạch, hòa thì đứng nguyên)
+// NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026; 30/10/2026 06:00; 05/11/2026
 // ================================================================
 import * as THREE from "three";
 import { taoCanh, docDoHoa, bam } from "./dt3d_canh.js";
@@ -46,7 +47,8 @@ const KIEU_TOC = {
   tien: { mau: "#7fd8ff", mau2: "#e2c8ff", chieu: "LÔI THẦN GIÁNG", phep: true }
 };
 // đòn của quái: dom_dom bắn tia sáng từ xa, còn lại lao tới
-const KIEU_QUAI = { slime_so: { mau: "#86ff6e" }, nam_chu_cai: { mau: "#c995ff" }, dom_dom: { mau: "#fff27a", xa: true } };
+const KIEU_QUAI = { slime_so: { mau: "#86ff6e" }, nam_chu_cai: { mau: "#c995ff" }, dom_dom: { mau: "#fff27a", xa: true },
+  tru_ten: { mau: "#ffe6a0", xa: true } }; // TC_D06C2g: Trụ tên bắn tên từ sàn (không nhảy)
 
 function anhTron(ve, co = 64) { const cv = document.createElement("canvas"); cv.width = cv.height = co; ve(cv.getContext("2d"), co); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; }
 
@@ -348,9 +350,9 @@ async function tao(vungVe, { nhe } = {}) {
           else { if (!dangThu) dien("dung"); am.hut(dvBe.x + 0.6); hu.khoi(V(dvBe.x + 0.6, 0.1, 0.2), "#cdbf9c", 5, 0.6, false); }
         };
         if (kq.xa) { // đom đóm bắn tia sáng
-          them(0.25, p => { qn.position.y = Math.sin(p * Math.PI) * 0.35; });
+          if (!quai.laTru) them(0.25, p => { qn.position.y = Math.sin(p * Math.PI) * 0.35; });
           them(0.01, () => {
-            const tu = tamQuai(), den = tamBe();
+            const tu = quai.laTru ? V(qn.position.x - 0.2, quai.cao * TI_QUAI * 0.92, 0.3) : tamQuai(), den = tamBe(); // trụ: tên bay từ cây nỏ trên sàn
             if (ne) den.x -= 1.6; else if (!trung && k.beChon == null) den.set(den.x + 0.6, 0.05, 0.3);
             hu.chop(tu, kq.mau, 1.5, 0.3); am.tia(tu.x);
             hu.phong(tu, den, { mau: kq.mau, mau2: "#ffffff", giay: 0.38, co: 0.26, cong: 0.3, khiToi: p => { if (!ne) beChiu(p); } });
@@ -376,6 +378,11 @@ async function tao(vungVe, { nhe } = {}) {
       } else {
         if (thang === "be") { dien("mung"); am.doanKet(true); if (haoQuang) haoQuang.bat(2); them(0.01, () => { hu.songXung(V(dvBe.x, 0, 0), kieu.mau, 2.4, 0.8); hu.chop(V(dvBe.x, 1.2, 0.2), kieu.mau2, 3, 0.5); }, 0.2); }
         const q = quai;
+        if (q.laTru) { // TC_D06C2g: trụ thua sụp thành đống gạch (hòa: trụ đứng nguyên)
+          if (thang === "be") { them(0.01, () => { am.trung(q.nhom.position.x, true); hu.khoi(V(q.nhom.position.x, 0.3, 0.1), "#b9a68a", 14, 1.2, false); hu.rung(0.08, 0.5); }, 0.5);
+            them(1.4, p => { q.nhom.scale.set(TI_QUAI * (1 + p * 0.35), TI_QUAI * Math.max(0.12, 1 - p), TI_QUAI * (1 + p * 0.35)); q.nhom.rotation.z = Math.sin(p * 30) * 0.05 * (1 - p); }, 0.5); }
+          return;
+        }
         them(0.01, () => { am.chayTron(q.nhom.position.x); hu.khoi(V(q.nhom.position.x, 0.1, 0.1), "#cdbf9c", 6, 0.7, false); }, 0.6);
         them(1.2, p => { q.nhom.position.x = X_QUAI + p * 5; q.nhom.position.y = Math.abs(Math.sin(p * Math.PI * 4)) * 0.35; q.nhom.rotation.y = Math.PI / 2; q.datMo(1 - p); }, 0.6);
       }

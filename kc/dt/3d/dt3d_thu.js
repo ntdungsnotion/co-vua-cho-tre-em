@@ -33,6 +33,7 @@ import { vaoThungLung } from "./dt3d_vung.js";
 import { taoQuaiBanDo } from "./dt3d_quai_ban_do.js";
 import { taoDenChon } from "./dt3d_den_chon.js";
 import { taoThanhDuoi } from "./dt3d_thanh_duoi.js";
+import { taoTruBanDo } from "./dt3d_tru.js"; // TC_D06C2g: trụ phòng thủ (05/11/2026)
 
 const NV = window.KC_NV, LANG = window.KC_DT_LANG, BD = window.KC_DT_BAN_DO;
 const $ = id => document.getElementById(id);
@@ -130,7 +131,7 @@ function themNongDan(x, z) {
 }
 
 // Thủ lĩnh + nông dân: làng mẫu đặt sẵn; thung lũng thật lấy từ máy chủ (dt3d_vung.js)
-let hoSoTl = be.hoSo, dvTl, hTl, vung = null, quaiBd = null;
+let hoSoTl = be.hoSo, dvTl, hTl, vung = null, quaiBd = null, truBd = null;
 if (VUNG) {
   let kho = null; try { localStorage.setItem("kc_dt_thu", "1"); kho = localStorage; } catch (e) { /* bị chặn: giữ trong bộ nhớ */ }
   const mayChu = GAME ? taoMayChuThat() : null; // trang thử ?vung: máy chủ giả trên máy
@@ -146,6 +147,10 @@ if (VUNG) {
       boNv, boChon: dv => { const c = dk.dangChon(); if (c && c.dv === dv) dk.chon(null); } }); // TC_D06C2b: dân hết máu bỏ chạy
     uiDk.trungQuai = quaiBd.trung; uiDk.chamQuai = quaiBd.cham;
   } catch (e) { console.warn("Chưa dựng được quái trên bản đồ", e); } // thiếu quái vẫn chơi làng được
+  // TC_D06C2g: trụ phòng thủ (trụ của bạn khai chiến Thủ lĩnh trong tầm; trụ của mình tự chọn câu)
+  try {
+    if (window.KC_DT_TRU_TRAN && vung.mayChu.truKhai) truBd = taoTruBanDo({ ctx, lang, cauHinh, mayChu: vung.mayChu, dvTl, vung, quaiBd, be: { ...be, ten: be.ten || "khach" }, baoGoiY });
+  } catch (e) { console.warn("Chưa dựng được trụ phòng thủ", e); }
 } else {
   dvTl = lang.themDonVi("thu_linh", banDo.batDau.thuLinh.x, banDo.batDau.thuLinh.z, be.tenThuLinh || "Thủ lĩnh");
   hTl = boNv.tao(dvTl, "thu_linh", hoSoTl);
@@ -155,7 +160,7 @@ if (VUNG) {
 // ---------------- Thanh điều khiển cuối màn hình (TC_D06D) ----------------
 // Ô "đang xem": thứ vừa chạm (nhà, Lều, ruộng, cây / mỏ, quái); chạm đất / chọn người thì về người đang chọn.
 const TEN_CL = { nhan: "Nhân tộc", quy: "Quỷ tộc", tien: "Tiên tộc" };
-const bieuTuongCt = { leu: "🏕️", tuong: "🧱", cong: "🚪", thap_canh: "🗼", nha_o: "🏠", ruong: "🌾", kho_go: "📦", kho_da: "📦", kho_vang: "📦", vua_luong_thuc: "🍖", choi_hai_luom: "🧺", choi_mo: "⛏️" };
+const bieuTuongCt = { leu: "🏕️", tuong: "🧱", cong: "🚪", thap_canh: "🗼", tru_ten: "🏹", nha_o: "🏠", ruong: "🌾", kho_go: "📦", kho_da: "📦", kho_vang: "📦", vua_luong_thuc: "🍖", choi_hai_luom: "🧺", choi_mo: "⛏️" };
 const BT_NGUON = { cay: "🌳", mo_da: "🪨", mo_vang: "🪙", mo_sat: "⛓️", bai_ca: "🐟", bui_trai_cay: "🍓", ruong: "🌾" };
 const LAM = { cay: "🪓 Đang chặt cây", mo_da: "⛏️ Đang đào đá", mo_vang: "⛏️ Đang đào vàng", mo_sat: "⛏️ Đang đào sắt", bai_ca: "🎣 Đang bắt cá", bui_trai_cay: "🍓 Đang hái trái cây", ruong: "🌾 Đang gặt lúa" };
 const TRANG_DV = { di: "🚶 Đang đi", dung: "Đứng chờ", toi_viec: "🚶 Đang tới chỗ làm", toi_xay: "🚶 Đang tới chỗ xây", ve_kho: "🎒 Đang mang đồ về kho" };
@@ -190,6 +195,8 @@ function ttCongTrinh(ct) {
   } else if (!ct.xong) { tt.dong = "🔨 Đang xây · " + pt(ct.tienDo) + (nguoi ? " · 🧑‍🌾 " + nguoi : ""); tt.muc = ct.tienDo || 0; }
   else tt.dong = "Đã hoàn thành";
   tt.phu = !cuaMinh ? "Của " + (ct.chu || "bạn") : vung ? vung.thongTinCt(ct) : null;
+  const ttTru = truBd ? truBd.thongTin(ct) : null; // TC_D06C2g: máu, tầm, câu của trụ; đống gạch
+  if (ttTru) { if (ttTru.dong) tt.dong = ttTru.dong; if (ttTru.phu) tt.phu = ttTru.phu; tt.nut.push(...ttTru.nut); if (ct.hongLuc != null) return tt; }
   // TC_D06C2d: nút Phá hủy bật lại (máy chủ ghi nhận); Lều trại không phá được
   if (vung && vung.duocPhaHuy(ct)) tt.nut.push({ id: "d3PhaHuy", lop: "d3NutPhaHuy", chu: "✖<span class=\"d3Chu\"> Phá hủy</span>", nhan: "Phá hủy " + tenCt(ct), bam: () => {
     if (!confirm("Phá hủy " + tenCt(ct) + "? Công trình sụp dần rồi biến mất sau " + vung.PHA_HUY_GIAY + " giây, không hoàn lại tài nguyên.")) return;
@@ -301,7 +308,10 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   lang, // kịch bản thử đọc / chỉnh trạng thái lõi (vd làm cạn nhanh một cây)
   chonDv: id => { const h = boNv.dsHinh.find(k => k.dv.idMayChu === id || k.dv === dvTl && id === 'tl'); dk.chon(h || null); return !!h; }, // TC_D06C2d: thử chọn người
   vung: vung && vung.moc, // thung lũng thật
-  quai: quaiBd && quaiBd.moc // TC_D06A: quái trên bản đồ
+  quai: quaiBd && quaiBd.moc, // TC_D06A: quái trên bản đồ
+  tru: truBd && truBd.moc, // TC_D06C2g: trụ phòng thủ
+  ttCt: id => { const ct = lang.congTrinh.find(c => c.id === id); return ct ? ttCongTrinh(ct) : null; }, // thông số thanh dưới của công trình
+  mauTl: () => dvTl.mau
 };
 ctx.khiDo(so => {
   Object.assign(window.__dt3d, so);
@@ -322,3 +332,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 04/11/2026 - BƯỚC: TC_D06D (thanh điều khiển cuối màn hình: ô đang xem người / nhà / nguồn / quái, nút theo thứ đang xem)
 // 04/11/2026 23:xx - BƯỚC: TC_D06C2b (nông dân đánh quái: boNv / boChon cho quái, máu nông dân ở thanh dưới)
 // 05/11/2026 - BƯỚC: TC_D06C2d (nút Phá hủy bật lại qua máy chủ; ⚔️ Đánh ở thanh dưới sai nông dân)
+// 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ dt3d_tru.js: thanh dưới trụ, móc __dt3d.tru / ttCt / mauTl)

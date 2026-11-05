@@ -5,6 +5,7 @@
 //            - nam_chu_cai: nấm mũ đỏ chấm trắng, chữ cái trên mũ
 //            - dom_dom: đom đóm bay, đuôi phát sáng, cánh vỗ
 //            Mắt to tròn, động tác nhún / lắc / bay lơ lửng. Dễ thương vừa phải, không đáng sợ.
+//            TC_D06C2g: tru_ten = Trụ tên (đối thủ trận trụ): chân đá, thân gỗ, nỏ lớn, cờ; laTru = true.
 // HÀM KHAI RA:
 //   taoQuai3d(ma, { nhe }) -> { nhom (gốc ở chân, mặt nhìn +z), cao, capNhat(dt, t),
 //        chop(giây) (chớp trắng khi trúng), datChu(chữ), datMo(0..1) }
@@ -127,7 +128,38 @@ function domDom(nhe) {
   };
 }
 
-const BANG = { slime_so: slime, nam_chu_cai: nam, dom_dom: domDom };
+// TC_D06C2g: TRỤ TÊN (đối thủ trong trận trụ): chân đá, thân gỗ, sàn có lan can, mái nhọn, cây nỏ lớn trên sàn, cờ đỏ.
+// Không nhún nhảy (là công trình); chữ trên đầu = tên chủ trụ (ẩn nếu không có).
+function truTen() {
+  const nhom = new THREE.Group();
+  const vlDa = new THREE.MeshStandardMaterial({ color: "#8d8a86", roughness: 0.9 });
+  const vlGo = new THREE.MeshStandardMaterial({ color: "#8a5a32", roughness: 0.8 });
+  const vlGoSang = new THREE.MeshStandardMaterial({ color: "#b37a45", roughness: 0.8 });
+  const vlMai = new THREE.MeshStandardMaterial({ color: "#7a2f22", roughness: 0.7 });
+  const vlCo = new THREE.MeshStandardMaterial({ color: "#d8332a", roughness: 0.6, side: THREE.DoubleSide });
+  const khoi = (geo, vl, x, y, z) => { const m = new THREE.Mesh(geo, vl); m.position.set(x, y, z); m.castShadow = true; nhom.add(m); return m; };
+  khoi(new THREE.CylinderGeometry(0.55, 0.65, 0.5, 8), vlDa, 0, 0.25, 0);
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) khoi(new THREE.CylinderGeometry(0.06, 0.08, 1.4, 6), vlGo, sx * 0.32, 1.15, sz * 0.32);
+  khoi(new THREE.BoxGeometry(1.0, 0.1, 1.0), vlGoSang, 0, 1.85, 0);
+  for (const [x, z, r, s] of [[0, -0.47, 1.0, 0.06], [0, 0.47, 1.0, 0.06], [-0.47, 0, 0.06, 1.0], [0.47, 0, 0.06, 1.0]]) khoi(new THREE.BoxGeometry(r, 0.28, s), vlGo, x, 2.03, z);
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) khoi(new THREE.CylinderGeometry(0.035, 0.035, 0.55, 5), vlGo, sx * 0.45, 2.3, sz * 0.45);
+  const mai = khoi(new THREE.ConeGeometry(0.85, 0.6, 4), vlMai, 0, 2.85, 0); mai.rotation.y = Math.PI / 4;
+  // cây nỏ lớn quay về phía bé (+z): cánh cung cong + thân nỏ + mũi tên
+  const no = new THREE.Group(); no.position.set(0, 2.15, 0.2); nhom.add(no);
+  const cung = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.035, 6, 16, Math.PI), vlGo); cung.rotation.z = Math.PI; cung.position.z = 0.25; no.add(cung);
+  const than = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.7), vlGoSang); no.add(than);
+  const ten = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 5), vlDa); ten.rotation.x = Math.PI / 2; ten.position.z = 0.45; no.add(ten);
+  const can = khoi(new THREE.CylinderGeometry(0.02, 0.02, 0.9, 4), vlGo, 0.38, 3.2, -0.38);
+  const co = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.26), vlCo); co.position.set(0.59, 3.5, -0.38); nhom.add(co);
+  const chu = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
+  chu.scale.set(0.6, 0.6, 1); chu.position.y = 3.95; chu.visible = false; nhom.add(chu);
+  return {
+    nhom, cao: 2.4, vlChop: [vlGo, vlGoSang, vlDa], chu, laTru: true,
+    capNhat(dt, t) { co.rotation.y = Math.sin(t * 3) * 0.25; can.rotation.z = 0; }
+  };
+}
+
+const BANG = { slime_so: slime, nam_chu_cai: nam, dom_dom: domDom, tru_ten: truTen };
 
 export function taoQuai3d(ma, { nhe } = {}) {
   const q = (BANG[ma] || slime)(nhe);
@@ -135,7 +167,7 @@ export function taoQuai3d(ma, { nhe } = {}) {
   let chopCon = 0;
   q.nhom.traverse(o => { if (o.isMesh) o.castShadow = !nhe && o.castShadow; });
   return {
-    nhom: q.nhom, cao: q.cao,
+    nhom: q.nhom, cao: q.cao, laTru: !!q.laTru, // TC_D06C2g
     capNhat(dt, t) {
       q.capNhat(dt, t);
       if (chopCon > 0) {
@@ -146,6 +178,7 @@ export function taoQuai3d(ma, { nhe } = {}) {
     },
     chop(giay) { chopCon = giay || 0.25; },
     datChu(chu) {
+      if (q.laTru) { q.chu.visible = !!chu; if (!chu) return; } // TC_D06C2g: trụ không có chữ trên mình
       const cu = q.chu.material.map; const vien = { slime_so: "#1d4d22", nam_chu_cai: "#5a1410", dom_dom: "#fff3b0" }[ma] || "#1d1630";
       q.chu.material.map = anhChu(chu, ma === "dom_dom" ? "#7a4b00" : "#fff6a8", vien); q.chu.material.needsUpdate = true; if (cu) cu.dispose();
     },

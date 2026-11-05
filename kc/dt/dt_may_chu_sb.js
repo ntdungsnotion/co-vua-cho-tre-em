@@ -30,6 +30,8 @@
 //     quaiKet(ten, id, ket, nghiGiay, giu, dan) gửi p_dv + p_mau (dan = { dv, mau }: máu nông dân còn; ket "quai" = nông dân bỏ
 //     chạy, máy chủ xoá người dân đó). Cần SQL TC_D06C2b. donVi[].mau = máu nông dân (null = đầy).
 //   TC_D06C2d: phaHuy(ten, id) -> kc_dt_pha_huy (phá hủy công trình đã xong của bé; Lều trại: la_leu).
+//   TC_D06C2g: truCau / truKhai / truLuot / truTra / truRut (trụ phòng thủ, như dt_may_chu.js); quaiKet(..., dan = { mau }) không có dv
+//     = máu Thủ lĩnh còn lại (giữ nguyên sau trận, không tự hồi). vaoVung trả congTrinh (số công trình từ bảng kc_dt_loai_cong_trinh).
 // BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
@@ -60,7 +62,10 @@
       dang_danh: "Quái này đang giao chiến với bạn khác.",
       khong_giu: "Quái đã đi chỗ khác.",
       xa_qua: "Thủ lĩnh chưa tới chỗ quái.",
-      la_leu: "Không phá được Lều trại: đó là nhà chính của làng." // TC_D06C2d
+      la_leu: "Không phá được Lều trại: đó là nhà chính của làng.", // TC_D06C2d
+      // TC_D06C2g: trụ phòng thủ
+      khong_tru: "Không có trụ ở đây.", chua_cau: "Trụ chưa có câu hỏi.", dang_tran: "Thủ lĩnh đang giao chiến.", mien: "Trụ vừa giao chiến.",
+      bao_ho: "Làng đang có vòng sáng bảo hộ.", het_tran: "Trận đã kết thúc.", cau: "Câu hỏi không đúng."
     };
     // Tên đưa vào câu lý do: loại nguồn (còn cây ở đây), tài nguyên thiếu (gỗ), loại nhà đã đủ (Tháp canh)
     const tenTrongLyDo = kq => (kq.loaiNguon ? tenNguon(kq.loaiNguon)
@@ -109,9 +114,16 @@
       async quaiGiu(ten, id, x, z, lao, dv) { return goi("kc_dt_quai_giu", Object.assign({ p_id: id, p_x: x, p_z: z, p_lao: !!lao }, dv != null ? { p_dv: dv } : null)); },
       async quaiDanh(ten, id, dv) { return goi("kc_dt_quai_danh", Object.assign({ p_id: id }, dv != null ? { p_dv: dv } : null)); },
       async quaiKet(ten, id, ket, nghiGiay, giu, dan) {
-        const them = dan && dan.dv != null ? { p_dv: dan.dv, p_mau: Number.isFinite(dan.mau) ? Math.max(0, Math.round(dan.mau)) : null } : null;
+        const mau = dan && Number.isFinite(dan.mau) ? Math.max(0, Math.round(dan.mau)) : null;
+        const them = dan && dan.dv != null ? { p_dv: dan.dv, p_mau: mau } : mau != null ? { p_mau: mau } : null; // TC_D06C2g: máu Thủ lĩnh (không có p_dv)
         return goi("kc_dt_quai_ket", Object.assign({ p_id: id, p_ket: ket, p_nghi_giay: Number.isFinite(nghiGiay) ? Math.round(nghiGiay) : null }, them), giu);
-      }
+      },
+      // TC_D06C2g: trụ phòng thủ (luật dt/dt_tru_tran.js; máy chủ giữ đáp án câu của trụ, chấm lượt bé)
+      async truCau(ten, id, ds) { return goi("kc_dt_tru_cau", { p_id: id, p_cau: ds }); },
+      async truKhai(ten, id) { return goi("kc_dt_tru_khai", { p_id: id }); },
+      async truLuot(ten, idTran) { return goi("kc_dt_tru_luot", { p_tran: idTran }); },
+      async truTra(ten, idTran, tl) { return goi("kc_dt_tru_tra", { p_tran: idTran, p_chon: tl && Number.isInteger(tl.chon) ? tl.chon : null, p_be_dung: !!(tl && tl.beDung) }); },
+      async truRut(ten, idTran, giu) { return goi("kc_dt_tru_rut", { p_tran: idTran }, giu); }
     };
   }
 
@@ -119,3 +131,4 @@
 })(typeof window !== "undefined" ? window : globalThis);
 // 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (p_lao); 04/11/2026 23:xx - TC_D06C2b (p_dv, p_mau)
 // 05/11/2026 - BƯỚC: TC_D06C2d (phaHuy)
+// 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ; p_mau của Thủ lĩnh)
