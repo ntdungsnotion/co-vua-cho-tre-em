@@ -47,7 +47,7 @@
 // LUẬT NỐI: lõi KC_DT_QUAI_BAN_DO, KC_DT_LUOI, KC_DT_BAN_DO (SANG); lang.lenhDi; ctx.nghiVe (dt3d_canh.js).
 //   TC_D06C2b: the thêm boNv (bộ vẽ nhân vật: dân bỏ chạy), boChon(dv) (bỏ chọn dân vừa mất); trả thêm mauDan(dv) ->
 //     { hp, toiDa } cho thông số nông dân ở thanh dưới; moc thêm danDs(), vaoDan(idDv), laoDan(idQuai, idDv).
-// BƯỚC: TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ); TC_D06C2a (quái hung dữ); TC_D06C2b (nông dân đánh quái)
+// BƯỚC: TC_D06F (05/11/2026: trang ẩn thì quái hung không lao); TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ); TC_D06C2a (quái hung dữ); TC_D06C2b (nông dân đánh quái)
 // NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // ================================================================
 import * as THREE from "three";

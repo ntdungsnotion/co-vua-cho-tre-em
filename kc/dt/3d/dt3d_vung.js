@@ -61,7 +61,7 @@
 //       chủ: thấy bạn đi lại, nhà của bạn, mọc lại theo giờ máy chủ, trừ kho phần máy chủ cắt);
 //       TC_D02C (menu Xây: tường, cổng, tháp canh; lãnh địa); TC_D03A (nông dân xây, tiến độ máy chủ, vắng mặt, sức chứa);
 //       TC_D03B1 (4 kho, nhà ở, dân số, Lều sinh nông dân); TC_D03B2 (ruộng); TC_D03C (Chòi hái lượm, Chòi mỏ)
-// NGÀY: 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 12:17; 28/10/2026 15:30; 28/10/2026 19:05; 28/10/2026 23:35
+// NGÀY (05/11/2026 TC_D06F: chạy nền, chỉ tải lại khi trang bị đóng băng): 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 12:17; 28/10/2026 15:30; 28/10/2026 19:05; 28/10/2026 23:35
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_may_chu.js (KC_DT_MAY_CHU), dt3d_suong_mu.js, dt3d_o_xay.js
 // ================================================================
 import { taoVeSuong } from "./dt3d_suong_mu.js";
