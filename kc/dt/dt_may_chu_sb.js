@@ -30,6 +30,7 @@
 //     quaiKet(ten, id, ket, nghiGiay, giu, dan) gửi p_dv + p_mau (dan = { dv, mau }: máu nông dân còn; ket "quai" = nông dân bỏ
 //     chạy, máy chủ xoá người dân đó). Cần SQL TC_D06C2b. donVi[].mau = máu nông dân (null = đầy).
 //   TC_D06C2d: phaHuy(ten, id) -> kc_dt_pha_huy (phá hủy công trình đã xong của bé; Lều trại: la_leu).
+//   TC_D06C4: quaiThang(ten, id, dan) (thắng quái + rơi đồ, RPC kc_dt_quai_thang), bangRoiDo() (kc_dt_doc_roi_do).
 //   TC_D06C2g: truCau / truKhai / truLuot / truTra / truRut (trụ phòng thủ, như dt_may_chu.js); quaiKet(..., dan = { mau }) không có dv
 //     = máu Thủ lĩnh còn lại (giữ nguyên sau trận, không tự hồi). vaoVung trả congTrinh (số công trình từ bảng kc_dt_loai_cong_trinh).
 // BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
@@ -120,6 +121,12 @@
         const them = dan && dan.dv != null ? { p_dv: dan.dv, p_mau: mau } : mau != null ? { p_mau: mau } : null; // TC_D06C2g: máu Thủ lĩnh (không có p_dv)
         return goi("kc_dt_quai_ket", Object.assign({ p_id: id, p_ket: ket, p_nghi_giay: Number.isFinite(nghiGiay) ? Math.round(nghiGiay) : null }, them), giu);
       },
+      // TC_D06C4: bé thắng quái -> quái bỏ chạy + đồ rơi vào kho / túi đồ (cần SQL TC_D06C4: repo_rieng SQL/supabase_tc_d06c4_roi_do.sql)
+      async quaiThang(ten, id, dan) {
+        const mau = dan && Number.isFinite(dan.mau) ? Math.max(0, Math.round(dan.mau)) : null;
+        return goi("kc_dt_quai_thang", Object.assign({ p_id: id, p_mau: mau }, dan && dan.dv != null ? { p_dv: dan.dv } : null));
+      },
+      async bangRoiDo() { return goi("kc_dt_doc_roi_do", {}); },
       // TC_D06C2g: trụ phòng thủ (luật dt/dt_tru_tran.js; máy chủ giữ đáp án câu của trụ, chấm lượt bé)
       async truCau(ten, id, ds) { return goi("kc_dt_tru_cau", { p_id: id, p_cau: ds }); },
       // TC_D06C2h: p_dv chỉ gửi khi nông dân vào trận (Thủ lĩnh gọi như cũ); truBan = trụ tự bắn một phát nông dân
@@ -137,3 +144,4 @@
 // 05/11/2026 - BƯỚC: TC_D06C2d (phaHuy)
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ; p_mau của Thủ lĩnh)
 // 06/11/2026 - BƯỚC: TC_D06C2h (truBan, truKhai p_dv: trụ tự bắn nông dân; cần SQL TC_D06C2h)
+// 06/11/2026 - BƯỚC: TC_D06C4 (quaiThang, bangRoiDo; cần SQL TC_D06C4)

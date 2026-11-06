@@ -47,7 +47,9 @@
 // LUẬT NỐI: lõi KC_DT_QUAI_BAN_DO, KC_DT_LUOI, KC_DT_BAN_DO (SANG); lang.lenhDi; ctx.nghiVe (dt3d_canh.js).
 //   TC_D06C2b: the thêm boNv (bộ vẽ nhân vật: dân bỏ chạy), boChon(dv) (bỏ chọn dân vừa mất); trả thêm mauDan(dv) ->
 //     { hp, toiDa } cho thông số nông dân ở thanh dưới; moc thêm danDs(), vaoDan(idDv), laoDan(idQuai, idDv).
-// BƯỚC: TC_D06F (05/11/2026: trang ẩn thì quái hung không lao); TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ); TC_D06C2a (quái hung dữ); TC_D06C2b (nông dân đánh quái)
+//   TC_D06C4: the thêm capNhatKho() (vẽ lại thanh tài nguyên), oKho(ma) -> ô tài nguyên trên thanh (đồ rơi bay tới). Thắng quái gọi
+//     mayChu.quaiThang (máy chủ gieo đồ, cộng kho) thay quaiKet "be"; đồ rơi bật ra từ quái rồi bay lên thanh; xem quái thấy "🎁 Có thể rơi".
+// BƯỚC: TC_D06C4 (06/11/2026: quái rơi đồ); TC_D06F (05/11/2026: trang ẩn thì quái hung không lao); TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ); TC_D06C2a (quái hung dữ); TC_D06C2b (nông dân đánh quái)
 // NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // ================================================================
 import * as THREE from "three";
@@ -107,6 +109,13 @@ export async function taoQuaiBanDo(the) {
   const diDuoc = (x, y) => LUOI.diDuoc(lang.luoi, x, y) && !lang.ruongTaiO(x, y) && !(the.laLanhDia && the.laLanhDia(x, y)) && !leuGan(x, y);
   const viTri = r => QB.viTri(ch, r, gio(), diDuoc);
   const tenLoai = ma => (chTran.quai.loai[ma] || {}).ten || ma;
+  // TC_D06C4: bảng rơi đồ (máy chủ thật: bảng Supabase; không đọc được thì số mặc định du_lieu/roi_do.json)
+  const RD = window.KC_DT_ROI_DO;
+  let bangRoi = null;
+  (mayChu.bangRoiDo ? mayChu.bangRoiDo() : Promise.resolve(null)).then(kq => kq && kq.ok ? kq : null).catch(() => null)
+    .then(kq => kq || fetch(new URL("../du_lieu/roi_do.json", import.meta.url), { cache: "no-cache" }).then(r => r.json()).catch(() => null))
+    .then(b => { bangRoi = b; });
+  const coTheRoi = ma => RD && bangRoi ? RD.oRoi(bangRoi, ma).map(o => RD.bieuTuong(bangRoi, o[0])).filter((b, i, a) => a.indexOf(b) === i).join("") : "";
   const capTl = () => ch.capThuLinh;
   const mau = r => QB.mauKhung(ch, r.lv, capTl());
   const cuaBan = r => r.khoa && r.khoa.ten !== tenMinh;
@@ -177,7 +186,8 @@ export async function taoQuaiBanDo(the) {
   function thongTin(r) {
     const p = viTri(r);
     if (!ghi.has(r.id) || p.mat || p.trangThai === "chay") return null;
-    const tt = { anh: r.hung ? "😠" : "👾", ten: tenLoai(r.ma) + " · Lv " + r.lv, dong: DAU_MAU[mau(r)] + " " + SUC[mau(r)], nut: [] };
+    const roiCo = coTheRoi(r.ma); // TC_D06C4
+    const tt = { anh: r.hung ? "😠" : "👾", ten: tenLoai(r.ma) + " · Lv " + r.lv, dong: DAU_MAU[mau(r)] + " " + SUC[mau(r)] + (roiCo ? " · 🎁 " + roiCo : ""), nut: [] };
     if (cuaBan(r)) tt.phu = "⚔️ Đang giao chiến với Thủ lĩnh của " + r.khoa.ten;
     else if (danCuaQuai(r)) tt.phu = "⚔️ Đang giao chiến với " + danCuaQuai(r).dv.ten; // TC_D06C2b
     else if (dangToi === r && r.khoa && r.khoa.trang === "lao") tt.phu = "😠 Đang lao vào " + dvTl.ten + "!";
@@ -348,8 +358,11 @@ export async function taoQuaiBanDo(the) {
     if (ket === "be" || ket === null) {
       r.chay = { x: k.x, z: k.z, huong: Math.atan2(k.x - dvTl.x, k.z - dvTl.z), luc: gio() }; r.khoa = null;
       const hp = trongTran0Hp; if (Number.isFinite(hp)) dvTl.mau = hp; // TC_D06C2g: máu Thủ lĩnh giữ nguyên sau trận
-      mayChu.quaiKet(ten, r.id, ket === "be" ? "be" : "hoa", null, false, Number.isFinite(hp) ? { mau: hp } : null);
-      the.baoGoiY((ket === "be" ? "🏆 Thắng · " : "🤝 Hòa · ") + ten2 + " bỏ chạy");
+      const dan = Number.isFinite(hp) ? { mau: hp } : null;
+      const loiBao = (ket === "be" ? "🏆 Thắng · " : "🤝 Hòa · ") + ten2 + " bỏ chạy";
+      if (ket === "be" && mayChu.quaiThang) mayChu.quaiThang(ten, r.id, dan).then(kq => nhanRoi(kq, k, loiBao)); // TC_D06C4: rơi đồ
+      else mayChu.quaiKet(ten, r.id, ket === "be" ? "be" : "hoa", null, false, dan);
+      the.baoGoiY(loiBao);
     } else if (ket === "quai") {
       r.khoa = null; dvTl.mau = null; // TC_D06C2g: thua -> nghỉ ở Lều, nghỉ xong đủ máu
       mayChu.quaiKet(ten, r.id, "quai", nghiGiay).then(kq => { if (kq.ok && Number.isFinite(kq.nghiDen)) nghiDen = kq.nghiDen; });
@@ -661,6 +674,57 @@ export async function taoQuaiBanDo(the) {
     else am.hut(x);
   }
 
+  // ===== TC_D06C4: ĐỒ RƠI =====
+  // Máy chủ đã cộng kho; trên máy cộng phần được (kho trên máy đi trước máy chủ phần đồ chưa gửi, nên cộng thêm chứ không ghi đè),
+  // không quá sức chứa trên máy. Đồ bật ra từ chỗ quái rồi bay tới ô tài nguyên trên thanh; kho đầy thì mờ dần tại chỗ.
+  let soLanRoi = 0, dsRoiCuoi = []; // kịch bản thử Chrome đọc
+  const giamDong = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function nhanRoi(kq, k, loiBao) {
+    if (!kq || !kq.ok || !Array.isArray(kq.roi) || !kq.roi.length) return;
+    soLanRoi++; dsRoiCuoi = kq.roi;
+    for (const d of kq.roi) {
+      if (d.nhom !== "tai_nguyen" || !(d.ma in lang.kho) || !(d.duoc > 0)) continue;
+      const tran = lang.sucChua ? lang.sucChua(d.ma) : Infinity;
+      lang.kho[d.ma] = Math.max(lang.kho[d.ma] || 0, Math.min((lang.kho[d.ma] || 0) + d.duoc, Number.isFinite(tran) && tran > 0 ? tran : Infinity));
+    }
+    const mat = kq.roi.filter(d => d.duoc < d.so);
+    const chu = "🎁 " + kq.roi.filter(d => d.duoc > 0).map(d => "+" + d.duoc + " " + d.bieuTuong).join(" · ")
+      + (mat.length ? (kq.roi.some(d => d.duoc > 0) ? " · " : "") + "📦 Kho đầy, rơi mất " + mat.map(d => (d.so - d.duoc) + " " + d.bieuTuong).join(" ") : "");
+    the.baoGoiY(loiBao + " · " + chu);
+    for (const d of kq.roi) { const o = d.duoc > 0 && the.oKho ? the.oKho(d.ma) : null; if (o && o.hidden) o.hidden = false; } // ô Sắt hiện trước để đồ bay tới
+    const [sx, sy, truoc] = raManHinh(k.x, diaHinh.doCaoDi(k.x, k.z) + CAO_QUAI, k.z);
+    const rc = canvas.getBoundingClientRect();
+    kq.roi.forEach((d, i) => setTimeout(() => bayRoi(d, truoc ? rc.left + sx : innerWidth / 2, truoc ? rc.top + sy : innerHeight / 2, i, kq.roi.length), i * 160));
+    setTimeout(() => { if (the.capNhatKho) the.capNhatKho(); }, 900 + kq.roi.length * 160);
+  }
+  function bayRoi(d, x0, y0, i, n) {
+    const el = document.createElement("div");
+    el.className = "d3Roi" + (d.duoc < d.so ? " d3RoiMat" : "");
+    el.textContent = d.bieuTuong + " +" + (d.duoc < d.so ? d.so : d.duoc);
+    el.style.left = x0 + "px"; el.style.top = y0 + "px";
+    document.body.appendChild(el);
+    const o = d.duoc > 0 && the.oKho ? the.oKho(d.ma) : null, r = o && !o.hidden ? o.getBoundingClientRect() : null;
+    const lech = (i - (n - 1) / 2) * 46; // các món tỏa ngang khi bật ra
+    const xong = () => el.remove();
+    if (!el.animate || giamDong() || !r) { // giảm chuyển động / kho đầy / không có ô: hiện số rồi mờ tại chỗ
+      if (el.animate) el.animate([{ opacity: 0, transform: "translate(-50%, -50%) scale(.6)" }, { opacity: 1, transform: `translate(calc(-50% + ${lech}px), -120%) scale(1)`, offset: 0.25 },
+        { opacity: 0, transform: `translate(calc(-50% + ${lech}px), -160%) scale(1)` }], { duration: 1400, easing: "ease-out" }).onfinish = xong;
+      else setTimeout(xong, 1400);
+      return;
+    }
+    const dx = r.left + r.width / 2 - x0, dy = r.top + r.height / 2 - y0;
+    el.animate([
+      { transform: "translate(-50%, -50%) scale(.5)", opacity: 0 },
+      { transform: `translate(calc(-50% + ${lech}px), calc(-50% - 70px)) scale(1.15)`, opacity: 1, offset: 0.3 },
+      { transform: `translate(calc(-50% + ${lech}px), calc(-50% - 60px)) scale(1)`, opacity: 1, offset: 0.45 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.55)`, opacity: 0.9 }
+    ], { duration: 1150, easing: "cubic-bezier(.45,.05,.55,.95)" }).onfinish = () => {
+      xong();
+      o.classList.remove("d3TnNhan"); void o.offsetWidth; o.classList.add("d3TnNhan"); // ô trên thanh nảy nhẹ
+      if (the.capNhatKho) the.capNhatKho();
+    };
+  }
+
   function ketThucDan(f, thang, hp) {
     const r = f.r, dv = f.dv, ten2 = tenLoai(r.ma), k = r.khoa || { x: r.x, z: r.z };
     dung(r.id); datMien(r.id);
@@ -673,10 +737,12 @@ export async function taoQuaiBanDo(the) {
     }
     r.chay = { x: k.x, z: k.z, huong: Math.atan2(k.x - dv.x, k.z - dv.z), luc: gio() }; r.khoa = null;
     dv.mau = hp;
-    mayChu.quaiKet(ten, r.id, thang === "be" ? "be" : "hoa", null, false, { dv: dv.idMayChu, mau: hp });
+    const loiBao = (thang === "be" ? "🏆 " + dv.ten + " thắng · " : "🤝 Hòa · ") + ten2 + " bỏ chạy · ❤️ " + hp + "/" + mauDan(dv).toiDa;
+    if (thang === "be" && mayChu.quaiThang) mayChu.quaiThang(ten, r.id, { dv: dv.idMayChu, mau: hp }).then(kq => nhanRoi(kq, k, loiBao)); // TC_D06C4
+    else mayChu.quaiKet(ten, r.id, thang === "be" ? "be" : "hoa", null, false, { dv: dv.idMayChu, mau: hp });
     lang.thoiDanh(dv); dongDan(f);
     if (thang === "be") soDanThang++;
-    the.baoGoiY((thang === "be" ? "🏆 " + dv.ten + " thắng · " : "🤝 Hòa · ") + ten2 + " bỏ chạy · ❤️ " + hp + "/" + mauDan(dv).toiDa);
+    the.baoGoiY(loiBao);
   }
   // dân hết máu: bỏ khỏi làng, hình chạy ra xa (ngược phía quái) rồi mất
   const chayDi = [];
@@ -783,6 +849,7 @@ export async function taoQuaiBanDo(the) {
         return { id: r.id, ma: r.ma, lv: r.lv, x: p.x, z: p.z, nhaX: r.x, nhaZ: r.z, trangThai: p.mat ? "mat" : p.trangThai, hien: !!(h && h.vo.visible), mau: mau(r),
           hung: !!r.hung, khoa: r.khoa && r.khoa.ten, khoaTrang: r.khoa && r.khoa.trang, nhan: h && !h.nhan.hidden ? h.nhan.textContent : null }; }),
       conNghi, nghiDen: () => nghiDen, dangToi: () => dangToi && dangToi.id, trongTran: () => !!trongTran,
+      soLanRoi: () => soLanRoi, dsRoiCuoi: () => dsRoiCuoi, bangRoi: () => bangRoi, // TC_D06C4
       soLao: () => soLao, kenLenh: () => (am && am.thongKe ? (am.thongKe().daKeu || {}).kenLenh || 0 : 0), // TC_D06C2a
       cham: (id, chonTl) => { const r = ghi.get(id); if (r) cham(r, chonTl ? { vaiTro: "thu_linh" } : null); return !!r; },
       // đặt chỗ ở một quái cách Thủ lĩnh (dx, dz) ô (mặc định 1 ô bên phải; chỉ máy chủ giả: thử nhanh, khỏi đi xa);
@@ -824,3 +891,4 @@ export async function taoQuaiBanDo(the) {
 // 05/11/2026 - BƯỚC: TC_D06C2d (⚔️ Đánh sai nông dân; danh sách trận khi có từ 2 trận)
 // 05/11/2026 - BƯỚC: TC_D06C2g (máu Thủ lĩnh còn lại vào / ra trận quái; banThuLinh, datNghi, dungTl cho trụ phòng thủ)
 // 06/11/2026 - BƯỚC: TC_D06C2h (trận ngoài ở nút ⚔️: trụ bắn nông dân, hàng có ⚔️ Đánh + 👀 Xem; themTranNgoai, datBanNgoai, danBoChay)
+// 06/11/2026 - BƯỚC: TC_D06C4 (thắng quái -> quaiThang, đồ rơi bay lên thanh tài nguyên, xem quái thấy có thể rơi gì)

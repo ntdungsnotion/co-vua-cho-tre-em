@@ -65,9 +65,14 @@
 //     quaiKet(..., dan = { mau }) không có dv: máu Thủ lĩnh còn lại (chỉ giảm); thua quái -> đủ máu sau nghỉ.
 //   TC_D06C2h: truBan(ten, id, dv): trụ tự bắn một phát nông dân dv (máy chủ quyết trúng, nhịp tru.nhipBanGiay); truKhai(ten, id, dv):
 //     nông dân vào trận câu hỏi với trụ (thua = mất nông dân); ct.ban = [{ luc, dv, trung }] phát bắn gần nhất (cả lượt trụ trong trận).
+//   TC_D06C4 - QUÁI RƠI ĐỒ (SQL kc_dt_quai_thang / kc_dt_doc_roi_do làm y hệt; repo_rieng dac_ta_roi_do.md): opt.roiDo = bảng rơi đồ
+//     (du_lieu/roi_do.json; không có = không rơi). quaiThang(ten, id, dan) = quaiKet(..., "be", ...) + chỉ khi chính người đó đang giữ
+//     quái thì gieo đồ (dt_roi_do.js gieo): tài nguyên vào kho (không quá sức chứa), vật phẩm vào túi đồ tài khoản -> thêm
+//     { roi: [{ ma, ten, bieuTuong, nhom, so, duoc }], kho }. bangRoiDo() -> { ok, vatPham, quai, macDinh }.
 // BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
-// PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1)
+// PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1),
+//   dt/dt_roi_do.js (KC_DT_ROI_DO, TC_D06C4: chỉ cần khi có opt.roiDo)
 // ================================================================
 (function (goc) {
   "use strict";
@@ -578,6 +583,33 @@
         return { ok: true, nghiDen: be.nghiDen || 0, quai: q ? banGhiQuai(q) : null, gio: bay };
       },
 
+      // TC_D06C4: bé (Thủ lĩnh / nông dân dan.dv) THẮNG quái đang giữ: quái bỏ chạy như quaiKet "be" + đồ rơi (chỉ khi chính người đó
+      // đang giữ quái: gọi lại lần hai không rơi nữa). -> quaiKet + { roi[], kho }
+      async quaiThang(ten, id, dan) {
+        const t = tenChuan(ten), be = tt.be[t];
+        const dv = dan && dan.dv != null ? Number(dan.dv) : null, q = (tt.quai || []).find(k => k.id === id);
+        const giu = !!(be && q && !q.chay && cungNguoi(q.khoa, t, dv));
+        const kq = await api.quaiKet(ten, id, "be", null, false, dan);
+        if (!kq.ok || !giu || !opt.roiDo || !goc.KC_DT_ROI_DO) return Object.assign(kq, { roi: [] });
+        const B = opt.roiDo, roi = [];
+        for (const d of goc.KC_DT_ROI_DO.gieo(B, q.ma, q.lv)) {
+          const vp = B.vatPham[d.ma];
+          let duoc = d.so;
+          if (vp.nhom === "tai_nguyen") {
+            duoc = d.ma in CH.lang.taiNguyen ? Math.max(0, Math.min(d.so, sucChua(t, d.ma) - (be.kho[d.ma] || 0))) : 0;
+            if (duoc > 0) be.kho[d.ma] = (be.kho[d.ma] || 0) + duoc;
+          } else {
+            tt.tuiDo = tt.tuiDo || {}; tt.tuiDo[t] = tt.tuiDo[t] || {};
+            tt.tuiDo[t][d.ma] = (tt.tuiDo[t][d.ma] || 0) + d.so;
+          }
+          roi.push({ ma: d.ma, ten: vp.ten, bieuTuong: vp.bieuTuong, nhom: vp.nhom, so: d.so, duoc });
+        }
+        luu();
+        return Object.assign(kq, { roi, kho: khoCua(be) });
+      },
+      async bangRoiDo() { const B = opt.roiDo || {}; return { ok: true, vatPham: B.vatPham || {}, quai: B.quai || {}, macDinh: B.macDinh || [], gio: gio() }; },
+      tuiDo(ten) { return Object.assign({}, (tt.tuiDo || {})[tenChuan(ten)]); }, // TC_D06C4: kiểm thử
+
       // TC_D03B1: xếp một nông dân vào hàng sinh ở Lều trại (chỉ nhà chính sinh nông dân). Trả giá lúc xếp; cần
       // lều xong, hàng chưa đủ sinh.hangToiDa, dân số + hàng chờ < chỗ ở. -> { ok, hang, kho, danSo, choO }
       async sinhNongDan(ten) {
@@ -912,3 +944,4 @@
 // 05/11/2026 - BƯỚC: TC_D06C2d (phaHuy: phá hủy công trình đã xong của bé)
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ: truCau / truKhai / truLuot / truTra / truRut; máu Thủ lĩnh sau trận quái)
 // 06/11/2026 - BƯỚC: TC_D06C2h (truBan: trụ tự bắn nông dân; truKhai(..., dv): nông dân vào trận với trụ; ct.ban: phát bắn gần nhất)
+// 06/11/2026 - BƯỚC: TC_D06C4 (quaiThang: quái rơi đồ vào kho / túi đồ; bangRoiDo)

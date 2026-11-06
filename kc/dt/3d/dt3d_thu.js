@@ -144,6 +144,7 @@ if (VUNG) {
     quaiBd = await taoQuaiBanDo({ ctx, cam, lang, diaHinh, banDo, cauHinh, suong: vung.suong, laLanhDia: vung.laLanhDia, dvTl, hTl,
       be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY, den: o => denChon.dat(o), mayChu: vung.mayChu, vung, // TC_D06C1: quái chung từ máy chủ
       khiXem: fn => { if (thanh) thanh.xem(fn); }, chonTl: () => dk.chon(hTl), dangChon: () => dk.dangChon(), // TC_D06D; TC_D06C2d: ⚔️ Đánh sai nông dân
+      capNhatKho: () => capNhatKho(), oKho: ma => $(O_KHO[ma] || "") && $(O_KHO[ma]).closest(".d3Tn"), // TC_D06C4: đồ rơi bay vào kho
       boNv, boChon: dv => { const c = dk.dangChon(); if (c && c.dv === dv) dk.chon(null); } }); // TC_D06C2b: dân hết máu bỏ chạy
     uiDk.trungQuai = quaiBd.trung; uiDk.chamQuai = quaiBd.cham;
   } catch (e) { console.warn("Chưa dựng được quái trên bản đồ", e); } // thiếu quái vẫn chơi làng được
@@ -235,8 +236,11 @@ if (vung) {
 $("d3TenVuong").textContent = be.tenVuongQuoc ? "Vương quốc " + be.tenVuongQuoc : VUNG ? banDo.ten + " · Cổng " + vung.vao.cong.so : "Thung lũng khởi đầu";
 
 // ---------------- Thanh tài nguyên ----------------
-const O_KHO = { go: "d3Go", da: "d3Da", vang: "d3Vang", luong_thuc: "d3Lt" };
-function capNhatKho() { for (const k in O_KHO) $(O_KHO[k]).textContent = lang.kho[k]; }
+const O_KHO = { go: "d3Go", da: "d3Da", vang: "d3Vang", luong_thuc: "d3Lt", sat: "d3Sat" }; // TC_D06C4: Sắt (quái rơi) hiện khi bé có
+function capNhatKho() {
+  for (const k in O_KHO) { const el = $(O_KHO[k]); if (el) el.textContent = lang.kho[k] || 0; }
+  const oSat = $("d3SatO"); if (oSat) oSat.hidden = !((lang.kho.sat || 0) > 0);
+}
 lang.nghe(su => { if (su.loai === "cat") capNhatKho(); });
 
 // ---------------- Nút ----------------
@@ -336,3 +340,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 04/11/2026 23:xx - BƯỚC: TC_D06C2b (nông dân đánh quái: boNv / boChon cho quái, máu nông dân ở thanh dưới)
 // 05/11/2026 - BƯỚC: TC_D06C2d (nút Phá hủy bật lại qua máy chủ; ⚔️ Đánh ở thanh dưới sai nông dân)
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ dt3d_tru.js: thanh dưới trụ, móc __dt3d.tru / ttCt / mauTl)
+// 06/11/2026 - BƯỚC: TC_D06C4 (ô Sắt khi có; quái nhận capNhatKho + oKho cho đồ rơi)
