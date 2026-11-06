@@ -212,4 +212,4 @@ export function taoDoRoi(the) {
     }
   };
 }
-// 06/11/2026 - BƯỚC: TC_D06C4 (14:1x: bé khác thấy đồ nhưng không nhặt được)
+// 06/11/2026 - BƯỚC: TC_D06C4 (14:1x: bé khác thấy đồ nhưng không nhặt được; 14:28: lời báo ngắn gọn "Đây không phải đồ của bạn")
