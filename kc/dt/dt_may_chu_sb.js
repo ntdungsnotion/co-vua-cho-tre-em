@@ -69,7 +69,7 @@
       khong_tru: "Không có trụ ở đây.", chua_cau: "Trụ chưa có câu hỏi.", dang_tran: "Thủ lĩnh đang giao chiến.", mien: "Trụ vừa giao chiến.",
       bao_ho: "Làng đang có vòng sáng bảo hộ.", het_tran: "Trận đã kết thúc.", cau: "Câu hỏi không đúng.",
       cho: "Trụ đang nạp tên.", // TC_D06C2h
-      do_mat: "Đồ đã mất rồi.", khong_cua_ban: "Đây không phải đồ của bạn.", kho_day: "Kho đầy rồi.", khong_phai_nguoi: "Chỉ nông dân của con mới làm được." // TC_D06C4
+      do_mat: "Đồ đã mất rồi.", khong_cua_ban: "Đây không phải đồ của bạn", kho_day: "Kho đầy rồi.", khong_phai_nguoi: "Chỉ nông dân của con mới làm được." // TC_D06C4
     };
     // Tên đưa vào câu lý do: loại nguồn (còn cây ở đây), tài nguyên thiếu (gỗ), loại nhà đã đủ (Tháp canh)
     const tenTrongLyDo = kq => (kq.loaiNguon ? tenNguon(kq.loaiNguon)

@@ -99,7 +99,7 @@ export function taoDoRoi(the) {
   function cham(id) {
     const m = ds.get(id); if (!m) return;
     const d = m.d;
-    if (!cuaMinh(d)) { baoGoiY("🚫 Đây không phải đồ của bạn · " + d.bieuTuong + " +" + d.so + " là đồ bạn khác đánh quái được."); return; }
+    if (!cuaMinh(d)) { baoGoiY("🚫 Đây không phải đồ của bạn"); return; }
     const dv = chonNguoi(d);
     if (!dv) { baoGoiY("🧺 " + d.bieuTuong + " " + d.ten + " +" + d.so + " · cần một nông dân rảnh ra nhặt."); return; }
     const dong = [...ds.values()].filter(k => cuaMinh(k.d) && Math.hypot(k.d.x - d.x, k.d.z - d.z) <= GOM_O).map(k => k.d.id);
@@ -134,7 +134,7 @@ export function taoDoRoi(the) {
       if (ma === "xa_qua" || !kq || ma === "mang") { v.hen = Date.now() + HOI_LAI_MS; return; } // máy chủ tính đường thẳng: chờ chút
       soLoi++;
       if (ma === "do_mat") { bo(m.d.id); diTiep(v); return; }
-      if (ma === "khong_cua_ban") { baoGoiY("🚫 Đây không phải đồ của bạn."); v.hang = v.hang.filter(id => id !== m.d.id); diTiep(v); return; }
+      if (ma === "khong_cua_ban") { baoGoiY("🚫 Đây không phải đồ của bạn"); v.hang = v.hang.filter(id => id !== m.d.id); diTiep(v); return; }
       if (ma === "kho_day") {
         const tn = (lang.CH && lang.CH.taiNguyen && lang.CH.taiNguyen[m.d.ma]) || { ten: m.d.ten };
         baoGoiY("📦 Kho " + tn.ten + " đầy rồi · " + m.d.bieuTuong + " vẫn nằm đó, xây thêm kho hoặc dùng bớt rồi nhặt nhé.");

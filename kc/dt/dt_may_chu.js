@@ -614,7 +614,7 @@
         tt.doRoi = (tt.doRoi || []).filter(d => d.hetLuc > bay);
         const d = tt.doRoi.find(k => k.id === id);
         if (!d) return { ok: false, ma: "do_mat", lyDo: "Đồ đã mất rồi." };
-        if (d.chu !== t) return { ok: false, ma: "khong_cua_ban", lyDo: "Đây không phải đồ của bạn." }; // bé khác thấy nhưng không nhặt được
+        if (d.chu !== t) return { ok: false, ma: "khong_cua_ban", lyDo: "Đây không phải đồ của bạn" }; // bé khác thấy nhưng không nhặt được
         const nd = tt.donVi.find(u => u.id === Number(dv) && u.chu === t && u.loai === "nong_dan");
         if (!nd) return { ok: false, ma: "khong_phai_nguoi", lyDo: "Chỉ nông dân của con mới nhặt được." };
         const p = viTri(nd);
