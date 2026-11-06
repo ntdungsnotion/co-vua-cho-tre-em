@@ -120,8 +120,11 @@ export async function vaoThungLung(the) {
   const soiLai = () => {
     const ds = lang.donVi.map(d => ({ x: d.x, z: d.z, r: BD.tamNhin(CB, d.vaiTro, lang.chungLoai) }));
     for (const c of lang.congTrinh) if (c.xong && c.chu === tenChuan) ds.push({ x: c.x + c.rong / 2, z: c.y + c.sau / 2, r: BD.tamNhinCt(CB, c.loai, lang.chungLoai) });
-    if (suong.soi(ds)) veSuong.capNhat();
+    if (suong.soi(ds)) { veSuong.capNhat(); moiSang = true; }
   };
+  // TC_D06C2i: vừa soi sáng chỗ mới -> hỏi máy chủ sớm (tối đa HOI_SOM_MS một lần) để thấy tường / nhà của bạn kịp tránh
+  let moiSang = false, hoiSomLuc = 0;
+  const HOI_SOM_MS = 2000;
   const daBiet = (x, y) => suong.daKham[y * W + x] === 1;
   lang.datBiet(daBiet, soiLai, dv => BD.timBienKhamPha(lang, suong, dv.x, dv.z,
     lang.donVi.filter(d => d !== dv && d.tuKhamPha && d.dich).map(d => d.dich), CB.cachNhauKhamPha));
@@ -356,6 +359,7 @@ export async function vaoThungLung(the) {
     if (moi) { boNv.reo(hTl, 1.5); baoGoiY("🧑‍🌾 +" + moi + " nông dân · dân số " + lang.danSo() + "/" + lang.choO() + "."); capNhatNut(); }
   }
   const daBaoDay = {}; // kho đầy: báo một lần mỗi loại tới khi kho có chỗ lại
+  const daBaoChan = new WeakMap(); // TC_D06C2i: người -> lúc báo "🚧" gần nhất
   lang.nghe(su => {
     switch (su.loai) {
       case "cat": // TC_D03A: gửi thu hoạch lúc đồ về kho (đúng số đã cất, đúng nguồn)
@@ -375,6 +379,13 @@ export async function vaoThungLung(the) {
         else baoGoiY((su.dv === dvTl ? "👑 " : "🧑‍🌾 ") + su.dv.ten + " chưa tới được một chỗ xây (cây hoặc tường chắn lối). Con bấm 🔨 Xây → Dựng tiếp nhé.");
         capNhatNut(); break;
       case "het_kham_pha": baoGoiY("🔭 " + su.dv.ten + " đã khám phá hết chỗ đi được quanh đây!"); break;
+      case "bi_chan": { // TC_D06C2i: hàng rào / nhà của bạn vừa hiện ra chắn đường (mỗi người báo tối đa 4 giây một lần)
+        if (!su.ct || su.ct.cuaMinh !== false || (daBaoChan.get(su.dv) || 0) > Date.now() - 4000) break;
+        daBaoChan.set(su.dv, Date.now());
+        const ten2 = (CT[su.ct.loai] || {}).ten || "Công trình", chu = su.ct.chu ? " của " + su.ct.chu : "";
+        baoGoiY("🚧 " + su.dv.ten + " gặp " + ten2 + chu + (su.vong ? " · đi vòng." : " · không qua được, đứng lại sát rào."));
+        break;
+      }
     }
   });
 
@@ -872,6 +883,9 @@ export async function vaoThungLung(the) {
   ctx.moiKhung(dt => {
     if ((demSoi += dt) >= 0.2) { demSoi = 0; soiLai(); capNhatLd(); }
     if ((demLuu += dt) >= CB.chuKyLuuKhamPha) { demLuu = 0; luuKhamPha(); }
+    if (moiSang && !dangHoi && Date.now() - hoiSomLuc >= HOI_SOM_MS && demGui < CB.chuKyGui - 1) { // TC_D06C2i
+      moiSang = false; hoiSomLuc = Date.now(); luuKhamPha(); demGui = CB.chuKyGui;
+    }
     if ((demGui += dt) >= CB.chuKyGui) { demGui = 0; chuKy(); }
     veBan();
     if ((demNut += dt) >= 0.5) {

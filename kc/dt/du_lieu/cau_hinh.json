@@ -36,13 +36,13 @@
   "kho": { "heSoChungLoai": { "nhan": 1, "quy": 1, "tien": 1 } },
   "_ghiChuDanSo": "Khối 'danSo' (TC_D03B1, người dùng 28/10/2026: 'số lượng nông dân và quân phụ thuộc số lượng nhà ở, nhà chính được 5, xây thêm nhà ở, mỗi nhà được 3 nông dân hoặc lính (3 nhân vật) số lượng tướng chiêu mộ không tính vào hạn mức này'; 'chỉ vào nhà chính mới sinh được nông dân'): chỗ ở = tổng congTrinh.*.choO của công trình đã xong (Lều trại 5, Nhà ở 3); 'tinh' = loại đơn vị chiếm chỗ ở (lính thêm sau; Thủ lĩnh / tướng không tính). Sinh nông dân: chỉ ở Lều trại (nhà chính), congTrinh.leu.sinh: giá, số giây mỗi người, hàng chờ tối đa; trả giá lúc xếp hàng, chạy cả khi bé vắng mặt.",
   "danSo": { "tinh": ["nong_dan"] },
-  "_ghiChuBanDo": "Khối 'banDo' (TC_D02B2a, 26/10/2026, dac_ta_ban_do.md mục 2-3, 6-7): tầm nhìn tính bằng ô; Tiên tộc nhìn xa thêm 'themTien' ô (Pháp thuật); bé mới vào: quanh cổng thung lũng đã khám phá sẵn bán kính 'banKinhCong' ô; tối đa 'soBeToiDa' bé một vùng; máy bé gửi thu hoạch gộp + hỏi lại trạng thái mỗi 'chuKyGui' giây, lưu chỗ đã khám phá mỗi 'chuKyLuuKhamPha' giây.",
+  "_ghiChuBanDo": "Khối 'banDo' (TC_D02B2a, 26/10/2026, dac_ta_ban_do.md mục 2-3, 6-7): tầm nhìn tính bằng ô; Tiên tộc nhìn xa thêm 'themTien' ô (Pháp thuật); bé mới vào: quanh cổng thung lũng đã khám phá sẵn bán kính 'banKinhCong' ô; tối đa 'soBeToiDa' bé một vùng; máy bé gửi thu hoạch gộp + hỏi lại trạng thái mỗi 'chuKyGui' giây, lưu chỗ đã khám phá mỗi 'chuKyLuuKhamPha' giây. TC_D06C2i (06/11/2026): thayNhaThemO = máy chủ trả cả công trình của bạn nằm ngoài tầm nhìn thêm bấy nhiêu ô (hình vẫn bị sương mù che) để người của bé biết tường mà đi vòng, không đi xuyên; vừa soi sáng chỗ mới thì trang hỏi máy chủ sớm (tối đa 2 giây một lần).",
   "banDo": {
     "tamNhin": { "nong_dan": 4, "thu_linh": 6, "linh": 5, "leu": 6, "nha": 3, "thap_canh": 8, "tru_ten": 6, "tuong": 1, "cong": 2 },
     "themTien": 1,
     "banKinhCong": 12,
     "soBeToiDa": 8,
-    "chuKyGui": 10,
+    "chuKyGui": 10, "thayNhaThemO": 4,
     "chuKyLuuKhamPha": 5,
     "cachNhauKhamPha": 10
   },
