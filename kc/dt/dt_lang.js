@@ -29,6 +29,7 @@
 //            ruong (TC_D03B2: ruộng của bé đổi giai đoạn mam / chin / bai; kèm ct, n)
 //            "cat" kèm tu = { mã nguồn: số } (đồ vừa cất lấy từ nguồn nào: máy bé gửi thu hoạch lúc cất)
 //            "lenh_di" kèm xay (id công trình đang tới xây) + hang (id các móng xây tiếp) cho máy chủ
+//            bi_chan (TC_D06C2i: công trình mới chặn đường đang đi; kèm ct, vong = còn đường vòng; không thì đứng lại)
 // TC_D03A: XÂY THEO SỐ NGƯỜI: mỗi khung, công trình có n người đang đứng xây thì tiến thêm
 //          dt x tocDoXay(n) (cau_hinh.json khối "xay": 1 người 100 % thời gian, 2 người 75 %...). Người bỏ
 //          đi thì công trình đứng ở % đang có; ai tới xây tiếp từ đó. Chỉ nông dân xây (Thủ lĩnh: Lều trại).
@@ -50,6 +51,7 @@
 //       như hái quả; gặt hết thành bãi (ct.gatLuc), quá coSauGiay giây thành cỏ (mất ruộng); sự kiện "ruong" khi đổi giai
 //       đoạn; giaiDoanRuong / sanLuongRuong dùng chung với máy chủ giả)
 //       TC_D03C (Chòi hái lượm / Chòi mỏ: nhanCat nhận congTrinh.*.cat = chỗ cất không thêm sức chứa)
+//       TC_D06C2i (06/11/2026: suaDuongQua - tường / nhà mới hiện ra chặn đường đang đi thì tính lại đường vòng, sự kiện bi_chan)
 // NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 28/10/2026 23:35
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI)
 // ================================================================
@@ -57,6 +59,7 @@
   "use strict";
   const GIO_MS = 3600 * 1000;
   const LAN_THU = 16; // số lần bốc chỗ ngẫu nhiên cho mỗi cây khi dựng rừng (không phải số cân bằng)
+  const SO_CHANG_TOI_DA = 200; // TC_D06C2i: chặn vòng lặp đi từng chặng qua vùng tối (không phải số cân bằng)
 
   // Ngẫu nhiên có hạt giống (mulberry32): cùng hạt -> cùng làng, kiểm thử lặp lại được
   function taoNgauNhien(hat) {
@@ -419,7 +422,15 @@
       if (!o) return false;
       const tu = LUOI.oCuaDiem(dv.x, dv.z);
       const sm = theoSuong && biet ? choPhep : null, cg = congKhac.size ? quaCongMinh : null;
-      const d = LUOI.timDuong(luoi, tu, o, ganNhat, sm && cg ? (x, y) => cg(x, y) && sm(x, y) : sm || cg);
+      let d = null;
+      if (sm) { // TC_D06C2i: địa hình máy đã biết hết (vùng tối chỉ giấu nhà của bạn): tìm đường cả qua vùng tối, chặng này
+        // chỉ đi phần qua ô đã biết (+ mép); thấy tường mới thì tính lại. Trước đây chặng chỉ tới ô đã biết gần đích nhất
+        // -> tường chắn thì đứng mãi ở mặt tường.
+        d = LUOI.timDuong(luoi, tu, o, ganNhat, cg);
+        if (d) { const k = d.findIndex(c => !sm(c.x, c.y)); if (k >= 0) d = d.slice(0, k); }
+        if (d && !d.length) d = null;
+      }
+      if (!d) d = LUOI.timDuong(luoi, tu, o, ganNhat, sm && cg ? (x, y) => cg(x, y) && sm(x, y) : sm || cg);
       if (!d) return false;
       dv.duong = (LUOI.lamMuot(luoi, tu, d) || []).map(c => ({ x: c.x + 0.5, z: c.y + 0.5 }));
       return true;
@@ -458,7 +469,7 @@
     // Có sương mù: đi từng chặng qua ô đã biết, dv.dich nhớ chỗ bé chạm để đi tiếp.
     // tuDong: lệnh do chính lõi ra (tự khám phá), không tắt chế độ tự khám phá.
     function lenhDi(dv, o, tuDong) {
-      dv.viec = null; dv.xay = null; dv.hangXay = []; dv.ranh = false; dv.trangThai = "di";
+      dv.viec = null; dv.xay = null; dv.hangXay = []; dv.ranh = false; dv.trangThai = "di"; dv.khongQua = false; dv.soChang = 0; // TC_D06C2i
       if (!tuDong) dv.tuKhamPha = false;
       dv.dich = biet ? { x: o.x, y: o.y } : null;
       const tu = { x: dv.x, z: dv.z };
@@ -471,10 +482,13 @@
       dv.dich = null;
       if (!o || (oDung.x === o.x && oDung.y === o.y)) return false;
       if (capNhatBiet) capNhatBiet();
-      const tu = { x: dv.x, z: dv.z }, kc0 = Math.hypot(oDung.x - o.x, oDung.y - o.y);
+      const tu = { x: dv.x, z: dv.z };
       if (!diToi(dv, o, true, true) || !dv.duong.length) { dv.duong = []; return false; }
       const c = oCuoi(dv);
-      if (Math.hypot(c.x - o.x, c.y - o.y) > kc0 - 0.5) { dv.duong = []; return false; } // không gần thêm: dừng
+      // TC_D06C2i: chặng đi theo đường tìm cả qua vùng tối nên có lúc phải đi xa đích một chút để vòng qua tường;
+      // chỉ dừng khi không còn bước nào (đã tới chỗ gần đích nhất đi được) hoặc đi quá nhiều chặng
+      dv.soChang = (dv.soChang || 0) + 1;
+      if ((c.x === oDung.x && c.y === oDung.y) || dv.soChang > SO_CHANG_TOI_DA) { dv.duong = []; dv.soChang = 0; return false; }
       dv.dich = o; dv.trangThai = "di";
       baoLenhDi(dv, tu);
       return true;
@@ -512,10 +526,48 @@
       if (ct.loai === "cong") datCong(ct.x, ct.y, ct.rong, ct.sau, ct.chu, ct.cuaMinh !== false);
       if (ct.loai === "ruong") moLoiRuong(ct); // TC_D03B2: ô ruộng đi được (nông dân đứng trên ruộng gặt), vẫn là chỗ dành
       congTrinh.push(ct);
+      if (ct.loai !== "ruong") suaDuongQua(ct); // TC_D06C2i: ai đang đi xuyên chỗ này thì tính lại đường vòng
       if (ct.xong && ct.loai === "leu" && ct.cuaMinh !== false) datLeuCho(ct); // lều của bạn khác (bản đồ chung) không là chỗ cất đồ của mình
       phat({ loai: "cong_trinh", ct });
       if (ct.xong) ganRuong(ct);
       return ct;
+    }
+    // TC_D06C2i: công trình mới chặn ô (nhất là tường / cổng của bạn khác vừa hiện ra khi đi vào vùng tối: máy bé chỉ biết
+    // nhà của bạn ở chỗ đã khám phá) -> người đang đi mà đường cắt qua chỗ đó tính lại đường vòng; không còn đường thì đứng
+    // lại sát rào. Người lỡ đứng trong ô bị chặn được đẩy ra ô trống gần nhất phía vừa đi tới. Sự kiện "bi_chan" { dv, ct, vong }.
+    const trongCt = (ct, x, y) => x >= ct.x && x < ct.x + (ct.rong || 1) && y >= ct.y && y < ct.y + (ct.sau || 1);
+    function duongCatQua(dv, ct) {
+      let px = dv.x, pz = dv.z;
+      for (const c of dv.duong) {
+        const n = Math.max(1, Math.ceil(Math.hypot(c.x - px, c.z - pz) * 4));
+        for (let k = 1; k <= n; k++) if (trongCt(ct, Math.floor(px + (c.x - px) * k / n), Math.floor(pz + (c.z - pz) * k / n))) return true;
+        px = c.x; pz = c.z;
+      }
+      return false;
+    }
+    function suaDuongQua(ct) {
+      if (!laVung) return;
+      for (const dv of donVi) {
+        const o = LUOI.oCuaDiem(dv.x, dv.z), dungTrong = trongCt(ct, o.x, o.y) && !LUOI.diDuoc(luoi, o.x, o.y);
+        if (dungTrong) { // đẩy ra phía sau lưng (hướng vừa đi tới)
+          const h = Number.isFinite(dv.huongMuon) ? dv.huongMuon : 0;
+          const t = LUOI.oTrongGan(luoi, o.x, o.y, { x: o.x - Math.sin(h) * 2, y: o.y - Math.cos(h) * 2 }, 6);
+          if (t) { dv.x = t.x + 0.5; dv.z = t.y + 0.5; }
+        }
+        if (!dv.duong.length || !(dungTrong || duongCatQua(dv, ct))) continue;
+        const di = dv.trangThai === "di", dich = di && dv.dich ? dv.dich : oCuoi(dv), tu = { x: dv.x, z: dv.z };
+        // còn tới được đích theo những gì máy biết (vùng tối coi như đi được) thì là vòng; không thì đi tới sát rào rồi dừng
+        const oDung = LUOI.oCuaDiem(dv.x, dv.z);
+        const vong = !(di && dv.khongQua) && !!LUOI.timDuong(luoi, oDung, dich, false, congKhac.size ? quaCongMinh : null);
+        if (diToi(dv, dich, true, di) && dv.duong.length) {
+          if (di) { if (!vong) { dv.dich = null; dv.khongQua = true; } baoLenhDi(dv, tu); }
+          phat({ loai: "bi_chan", dv, ct, vong });
+        } else {
+          dv.duong = [];
+          if (di) { dv.trangThai = "dung"; dv.dich = null; dv.ranh = true; baoLenhDi(dv, tu); }
+          phat({ loai: "bi_chan", dv, ct, vong: false });
+        }
+      }
     }
     // Nhà dựng xong không qua người của mình (nhà của bạn, máy chủ báo xong: TC_D02B3b)
     function xongCongTrinh(ct) {

@@ -323,6 +323,7 @@
       const nguonSoi = cuaBe(ten).map(d => { const p = viTri(d); return { x: p.x, z: p.z, r: BD.tamNhin(CB, d.loai, cl) }; });
       for (const ct of tt.congTrinh) if (ct.chu === ten && ct.xongLuc) nguonSoi.push({ x: ct.x + ct.rong / 2, z: ct.y + ct.sau / 2, r: BD.tamNhinCt(CB, ct.loai, cl) });
       s.soi(nguonSoi);
+      s.nguonSoi = nguonSoi; // TC_D06C2i: layQuanh trả cả nhà của bạn ngay ngoài tầm nhìn (banDo.thayNhaThemO)
       return s;
     }
     // Điều kiện ô xây được của bé (mục 4): sương, đơn vị đối thủ, lãnh địa đối thủ; cổng được đè tường của bé
@@ -503,7 +504,8 @@
         const thay = BD.locDonViThayDuoc(tt.donVi, cungPhe(ten), s, viTri);
         const nguon = Object.keys(tt.nguon).map(ma => ({ ma: Number(ma), con: tt.nguon[ma].con }));
         if (TT) boTranCu(bay); // TC_D06C2g: dọn đống gạch quá hạn, trận bỏ dở
-        const congTrinh = tt.congTrinh.filter(ct => ct.chu === ten || s.muc(ct.x, ct.y) !== BD.DEN).map(ct => ctRa(ct, ten));
+        const them = CB.thayNhaThemO || 0, gan = (x, y) => s.nguonSoi.some(n => (x + 0.5 - n.x) ** 2 + (y + 0.5 - n.z) ** 2 <= (n.r + them) ** 2);
+        const congTrinh = tt.congTrinh.filter(ct => ct.chu === ten || s.muc(ct.x, ct.y) !== BD.DEN || gan(ct.x, ct.y)).map(ct => ctRa(ct, ten));
         return { ok: true, gio: gio(), nguon, congTrinh, donVi: thay.map(d => ({ id: d.id, chu: d.chu, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh, mau: d.mau == null ? null : d.mau })),
           hang: hangCua(tt.be[ten]), quai: dsQuai(bay), nghiDen: tt.be[ten].nghiDen || 0 };
       },
