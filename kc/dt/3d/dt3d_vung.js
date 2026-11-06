@@ -99,7 +99,9 @@ export async function vaoThungLung(the) {
   };
 
   // ---------------- Vào vùng: trạng thái chung từ máy chủ ----------------
-  const mayChu = the.mayChu || MC.taoMayChuGia({ vung: banDo, cauHinh, kho: the.kho });
+  // TC_D06C4: máy chủ thử trên máy dùng bảng rơi đồ mặc định du_lieu/roi_do.json (máy chủ thật đọc bảng Supabase)
+  const roiDo = the.mayChu ? null : await fetch(new URL("../du_lieu/roi_do.json", import.meta.url), { cache: "no-cache" }).then(r => r.json()).catch(() => null);
+  const mayChu = the.mayChu || MC.taoMayChuGia({ vung: banDo, cauHinh, kho: the.kho, roiDo });
   const vao = await mayChu.vaoVung(ten, be.hoSo.chungLoai);
   if (!vao.ok) throw Object.assign(new Error(vao.lyDo), { lyDo: vao.lyDo });
   // TC_D06C2g: số công trình từ bảng kc_dt_loai_cong_trinh (máy chủ Supabase trả congTrinh): ghi đè số mặc định của cau_hinh.json;
@@ -1005,3 +1007,4 @@ export async function vaoThungLung(the) {
 // 30/10/2026 13:56 - BƯỚC: TC_D06A (khai laLanhDia cho quái tránh lãnh địa); 30/10/2026 17:30 - TC_D06C1 (quái chung: quanhDau, ngheQuanh, tlBan, Thủ lĩnh bạn đánh quái); 04/11/2026 23:xx - TC_D06C2b (dv.mau, dvBan)
 // 04/11/2026 - BƯỚC: TC_D06D (thongTinCt + dongXem cho thanh dưới; câu menu Xây: chỉ nông dân đang chọn đi xây)
 // 05/11/2026 - BƯỚC: TC_D06C2d (👥 lên thanh trên, bỏ % khám phá, phá hủy công trình qua máy chủ)
+// 06/11/2026 - BƯỚC: TC_D06C4 (máy chủ thử nhận bảng rơi đồ roi_do.json)
