@@ -1,11 +1,11 @@
 {
-  "_ghiChu": "QUÁI RƠI ĐỒ (TC_D06C4, 06/11/2026; repo_rieng dau_truong_tri_thuc/dac_ta_roi_do.md). Đây chỉ là SỐ MẶC ĐỊNH cho máy chủ thử trên máy (dt_may_chu.js, trang thử không Supabase) và trang khi chưa đọc được máy chủ. Máy chủ thật đọc bảng Supabase kc_dt_vat_pham + kc_dt_loai_quai (người dùng sửa trong Table Editor; SQL repo_rieng SQL/supabase_tc_d06c4_roi_do.sql, cùng số mặc định). vatPham: mỗi lần rơi soTu..soDen cái (quái Lv 1), mỗi Lv trên 1 cộng themMoiLv (làm tròn); nhom tai_nguyen vào kho của bé trong vùng (không quá sức chứa), vat_pham vào túi đồ tài khoản. quai: 7 ô [mã đồ, tỉ lệ %] mỗi loại quái, mỗi ô gieo riêng; macDinh = quái chưa có dòng (người dùng 06/11/2026: lương thực (thịt) 100 %, tài nguyên khác 25 %, 2 ô còn lại để vật phẩm sau này).",
+  "_ghiChu": "QUÁI RƠI ĐỒ (TC_D06C4, 06/11/2026; repo_rieng dau_truong_tri_thuc/dac_ta_roi_do.md). Đây chỉ là SỐ MẶC ĐỊNH cho máy chủ thử trên máy (dt_may_chu.js, trang thử không Supabase) và trang khi chưa đọc được máy chủ. Máy chủ thật đọc bảng Supabase kc_dt_vat_pham + kc_dt_loai_quai (người dùng sửa trong Table Editor; SQL repo_rieng SQL/supabase_tc_d06c4_roi_do.sql, cùng số mặc định). vatPham: mỗi lần rơi soTu..soDen cái (quái Lv 1), mỗi Lv trên 1 cộng themMoiLv (làm tròn); đồ NẰM TRÊN ĐẤT chỗ quái thua giayMat giây rồi mất (người dùng 06/11/2026 chọn: rơi xuống đất, nông dân ra nhặt); nông dân nhặt: nhom tai_nguyen vào kho của bé trong vùng (không quá sức chứa), vat_pham vào túi đồ tài khoản. quai: 7 ô [mã đồ, tỉ lệ %] mỗi loại quái, mỗi ô gieo riêng; macDinh = quái chưa có dòng (người dùng 06/11/2026: lương thực (thịt) 100 %, tài nguyên khác 25 %, 2 ô còn lại để vật phẩm sau này).",
   "vatPham": {
-    "luong_thuc": { "ten": "Lương thực (thịt)", "bieuTuong": "🍖", "nhom": "tai_nguyen", "soTu": 8, "soDen": 12, "themMoiLv": 2 },
-    "go":         { "ten": "Gỗ",                "bieuTuong": "🪵", "nhom": "tai_nguyen", "soTu": 4, "soDen": 6,  "themMoiLv": 1 },
-    "da":         { "ten": "Đá",                "bieuTuong": "🪨", "nhom": "tai_nguyen", "soTu": 4, "soDen": 6,  "themMoiLv": 1 },
-    "vang":       { "ten": "Vàng",              "bieuTuong": "🪙", "nhom": "tai_nguyen", "soTu": 2, "soDen": 4,  "themMoiLv": 1 },
-    "sat":        { "ten": "Sắt",               "bieuTuong": "⛓️", "nhom": "tai_nguyen", "soTu": 2, "soDen": 4,  "themMoiLv": 1 }
+    "luong_thuc": { "ten": "Lương thực (thịt)", "bieuTuong": "🍖", "nhom": "tai_nguyen", "soTu": 8, "soDen": 12, "themMoiLv": 2, "giayMat": 300 },
+    "go":         { "ten": "Gỗ",                "bieuTuong": "🪵", "nhom": "tai_nguyen", "soTu": 4, "soDen": 6,  "themMoiLv": 1, "giayMat": 300 },
+    "da":         { "ten": "Đá",                "bieuTuong": "🪨", "nhom": "tai_nguyen", "soTu": 4, "soDen": 6,  "themMoiLv": 1, "giayMat": 300 },
+    "vang":       { "ten": "Vàng",              "bieuTuong": "🪙", "nhom": "tai_nguyen", "soTu": 2, "soDen": 4,  "themMoiLv": 1, "giayMat": 300 },
+    "sat":        { "ten": "Sắt",               "bieuTuong": "⛓️", "nhom": "tai_nguyen", "soTu": 2, "soDen": 4,  "themMoiLv": 1, "giayMat": 300 }
   },
   "macDinh": [["luong_thuc", 100], ["go", 25], ["da", 25], ["vang", 25], ["sat", 25]],
   "quai": {

@@ -181,8 +181,22 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 /* 06/11/2026 - TC_D06C4: ĐỒ RƠI từ quái bay lên thanh tài nguyên (dt3d_quai_ban_do.js bayRoi) */
 .d3Roi { position: fixed; z-index: 40; pointer-events: none; transform: translate(-50%, -50%); font-family: "Baloo 2", sans-serif; font-weight: 800;
   font-size: 1.75rem; line-height: 1; white-space: nowrap; color: #fff6dc; text-shadow: 0 2px 0 #3b2208, 0 0 10px rgba(255, 214, 102, .9); }
-.d3RoiMat { color: #ffb4b4; opacity: .75; text-shadow: 0 2px 0 #3b0808; }
 .d3TnNhan { animation: d3TnNhan .45s ease-out; }
 @keyframes d3TnNhan { 0% { transform: scale(1); } 40% { transform: scale(1.25); background: rgba(255, 214, 102, .35); } 100% { transform: scale(1); } }
 @media (min-width: 900px) { .d3Roi { font-size: 2.25rem; } }
 @media (prefers-reduced-motion: reduce) { .d3TnNhan { animation: none; } }
+/* TC_D06C4 (người dùng chọn: rơi xuống đất, nông dân nhặt): món đồ nằm trên đất (dt3d_do_roi.js), chạm để nông dân ra nhặt */
+.d3DoRoi { position: absolute; left: 0; top: 0; pointer-events: auto; display: flex; align-items: center; gap: 2px; padding: 2px 8px 2px 4px; min-height: 40px;
+  border: 2px solid #ffd666; border-radius: 999px; background: rgba(40, 26, 8, .82); color: #fff6dc; font-family: "Baloo 2", sans-serif; font-weight: 800;
+  font-size: 1rem; line-height: 1; cursor: pointer; box-shadow: 0 0 12px rgba(255, 214, 102, .7); animation: d3DoRoiNhun 1.6s ease-in-out infinite; }
+.d3DoRoi[hidden] { display: none; }
+.d3DoRoiIcon { font-size: 1.5rem; }
+.d3DoRoiMoi { animation: d3DoRoiBat .55s cubic-bezier(.3, 1.6, .5, 1), d3DoRoiNhun 1.6s ease-in-out .55s infinite; }
+.d3DoRoi[data-sap="true"] { border-color: #ff8a8a; animation: d3DoRoiNhay .8s ease-in-out infinite; }
+.d3DoRoiMat { opacity: 0; transition: opacity .4s; pointer-events: none; }
+.d3DoRoiKhac { filter: grayscale(.85); opacity: .7; box-shadow: none; border-style: dashed; animation: none; } /* đồ của bé khác: thấy nhưng không nhặt */
+@keyframes d3DoRoiNhun { 0%, 100% { margin-top: 0; } 50% { margin-top: -6px; } }
+@keyframes d3DoRoiBat { 0% { margin-top: 30px; opacity: 0; scale: .4; } 60% { margin-top: -18px; opacity: 1; scale: 1.15; } 100% { margin-top: 0; scale: 1; } }
+@keyframes d3DoRoiNhay { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+@media (min-width: 900px) { .d3DoRoi { font-size: 1.15rem; min-height: 44px; } .d3DoRoiIcon { font-size: 1.8rem; } }
+@media (prefers-reduced-motion: reduce) { .d3DoRoi, .d3DoRoiMoi, .d3DoRoi[data-sap="true"] { animation: none; } }

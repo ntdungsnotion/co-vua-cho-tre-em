@@ -67,8 +67,9 @@
 //     nông dân vào trận câu hỏi với trụ (thua = mất nông dân); ct.ban = [{ luc, dv, trung }] phát bắn gần nhất (cả lượt trụ trong trận).
 //   TC_D06C4 - QUÁI RƠI ĐỒ (SQL kc_dt_quai_thang / kc_dt_doc_roi_do làm y hệt; repo_rieng dac_ta_roi_do.md): opt.roiDo = bảng rơi đồ
 //     (du_lieu/roi_do.json; không có = không rơi). quaiThang(ten, id, dan) = quaiKet(..., "be", ...) + chỉ khi chính người đó đang giữ
-//     quái thì gieo đồ (dt_roi_do.js gieo): tài nguyên vào kho (không quá sức chứa), vật phẩm vào túi đồ tài khoản -> thêm
-//     { roi: [{ ma, ten, bieuTuong, nhom, so, duoc }], kho }. bangRoiDo() -> { ok, vatPham, quai, macDinh }.
+//     quái thì gieo đồ (dt_roi_do.js gieo): đồ NẰM TRÊN ĐẤT chỗ quái, chỉ bé thắng thấy, mất sau giayMat giây -> thêm { roi[] }.
+//     nhatDo(ten, id, dv): nông dân tới sát món đồ nhặt -> kho (không quá sức chứa) / túi đồ. doRoiDs(ten): mọi đồ trên đất trong vùng (của bé + bé khác, chu = chủ đồ).
+//     bangRoiDo() -> { ok, vatPham, quai, macDinh }.
 // BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1),
@@ -388,6 +389,7 @@
     const tlCua = ten => cuaBe(ten).find(d => d.loai === "thu_linh");
     // TC_D06C2b: người đánh quái: nông dân id dv của bé (dv không có = Thủ lĩnh)
     const nguoiDanh = (ten, dv) => dv == null ? tlCua(ten) : cuaBe(ten).find(d => d.id === Number(dv) && d.loai === "nong_dan") || null;
+    const banGhiDo = d => { const vp = (opt.roiDo && opt.roiDo.vatPham[d.ma]) || {}; return { id: d.id, chu: d.chu, ma: d.ma, so: d.so, x: d.x, z: d.z, roiLuc: d.roiLuc, hetLuc: d.hetLuc, ten: vp.ten || d.ma, bieuTuong: vp.bieuTuong || "🎁", nhom: vp.nhom || "tai_nguyen" }; }; // TC_D06C4
     const cungNguoi = (k, ten, dv) => k && k.ten === ten && (k.dv == null ? dv == null : k.dv === Number(dv));
 
     // ---------------- TC_D06C2g: trụ phòng thủ ----------------
@@ -583,30 +585,56 @@
         return { ok: true, nghiDen: be.nghiDen || 0, quai: q ? banGhiQuai(q) : null, gio: bay };
       },
 
-      // TC_D06C4: bé (Thủ lĩnh / nông dân dan.dv) THẮNG quái đang giữ: quái bỏ chạy như quaiKet "be" + đồ rơi (chỉ khi chính người đó
-      // đang giữ quái: gọi lại lần hai không rơi nữa). -> quaiKet + { roi[], kho }
+      // TC_D06C4: bé (Thủ lĩnh / nông dân dan.dv) THẮNG quái đang giữ: quái bỏ chạy như quaiKet "be" + đồ rơi NẰM TRÊN ĐẤT ở giữa ô
+      // quái đứng (các món tỏa quanh, cách 0,3 ô), mất sau giayMat giây (chỉ khi chính người đó đang giữ quái: gọi lại không rơi nữa).
+      // -> quaiKet + { roi: [{ id, ma, ten, bieuTuong, nhom, so, x, z, roiLuc, hetLuc }] }
       async quaiThang(ten, id, dan) {
         const t = tenChuan(ten), be = tt.be[t];
         const dv = dan && dan.dv != null ? Number(dan.dv) : null, q = (tt.quai || []).find(k => k.id === id);
         const giu = !!(be && q && !q.chay && cungNguoi(q.khoa, t, dv));
+        const kx = giu ? q.khoa.x : 0, kz = giu ? q.khoa.z : 0;
         const kq = await api.quaiKet(ten, id, "be", null, false, dan);
         if (!kq.ok || !giu || !opt.roiDo || !goc.KC_DT_ROI_DO) return Object.assign(kq, { roi: [] });
-        const B = opt.roiDo, roi = [];
-        for (const d of goc.KC_DT_ROI_DO.gieo(B, q.ma, q.lv)) {
-          const vp = B.vatPham[d.ma];
-          let duoc = d.so;
-          if (vp.nhom === "tai_nguyen") {
-            duoc = d.ma in CH.lang.taiNguyen ? Math.max(0, Math.min(d.so, sucChua(t, d.ma) - (be.kho[d.ma] || 0))) : 0;
-            if (duoc > 0) be.kho[d.ma] = (be.kho[d.ma] || 0) + duoc;
-          } else {
-            tt.tuiDo = tt.tuiDo || {}; tt.tuiDo[t] = tt.tuiDo[t] || {};
-            tt.tuiDo[t][d.ma] = (tt.tuiDo[t][d.ma] || 0) + d.so;
-          }
-          roi.push({ ma: d.ma, ten: vp.ten, bieuTuong: vp.bieuTuong, nhom: vp.nhom, so: d.so, duoc });
-        }
+        const B = opt.roiDo, bay = gio(), ds = goc.KC_DT_ROI_DO.gieo(B, q.ma, q.lv), cx = Math.floor(kx) + 0.5, cz = Math.floor(kz) + 0.5;
+        tt.doRoi = (tt.doRoi || []).filter(d => d.hetLuc > bay);
+        const roi = ds.map((d, i) => {
+          const vp = B.vatPham[d.ma], g = 2 * Math.PI * i / ds.length, xa = ds.length > 1 ? 0.3 : 0;
+          const m = { id: ++tt.soId, chu: t, ma: d.ma, so: d.so, x: cx + xa * Math.cos(g), z: cz + xa * Math.sin(g), roiLuc: bay, hetLuc: bay + (vp.giayMat || 300) * 1000 };
+          tt.doRoi.push(m);
+          return banGhiDo(m);
+        });
         luu();
-        return Object.assign(kq, { roi, kho: khoCua(be) });
+        return Object.assign(kq, { roi });
       },
+      // TC_D06C4: nông dân dv của bé nhặt món đồ id (cách không quá lang.tamVoi + quaiBanDo.giuLechO ô) -> tài nguyên vào kho (không quá
+      // sức chứa, phần còn lại nằm lại), vật phẩm vào túi đồ. -> { ok, id, ma, duoc, con, kho } | { ok: false, ma: do_mat | khong_cua_ban | khong_phai_nguoi | xa_qua | kho_day }
+      async nhatDo(ten, id, dv) {
+        const t = tenChuan(ten), be = tt.be[t], bay = gio();
+        if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        tt.doRoi = (tt.doRoi || []).filter(d => d.hetLuc > bay);
+        const d = tt.doRoi.find(k => k.id === id);
+        if (!d) return { ok: false, ma: "do_mat", lyDo: "Đồ đã mất rồi." };
+        if (d.chu !== t) return { ok: false, ma: "khong_cua_ban", lyDo: "Đây không phải đồ của bạn." }; // bé khác thấy nhưng không nhặt được
+        const nd = tt.donVi.find(u => u.id === Number(dv) && u.chu === t && u.loai === "nong_dan");
+        if (!nd) return { ok: false, ma: "khong_phai_nguoi", lyDo: "Chỉ nông dân của con mới nhặt được." };
+        const p = viTri(nd);
+        if (Math.hypot(p.x - d.x, p.z - d.z) > CH.lang.tamVoi + CQ.giuLechO) return { ok: false, ma: "xa_qua", lyDo: "Nông dân chưa tới chỗ đồ." };
+        const vp = (opt.roiDo && opt.roiDo.vatPham[d.ma]) || { nhom: "tai_nguyen" };
+        let duoc = d.so;
+        if (vp.nhom === "tai_nguyen") {
+          duoc = d.ma in CH.lang.taiNguyen ? Math.max(0, Math.min(d.so, sucChua(t, d.ma) - (be.kho[d.ma] || 0))) : 0;
+          if (duoc <= 0) return { ok: false, ma: "kho_day", thieu: d.ma, lyDo: "Kho đầy rồi." };
+          be.kho[d.ma] = (be.kho[d.ma] || 0) + duoc;
+        } else {
+          tt.tuiDo = tt.tuiDo || {}; tt.tuiDo[t] = tt.tuiDo[t] || {};
+          tt.tuiDo[t][d.ma] = (tt.tuiDo[t][d.ma] || 0) + duoc;
+        }
+        d.so -= duoc;
+        if (d.so <= 0) tt.doRoi = tt.doRoi.filter(k => k !== d);
+        luu();
+        return { ok: true, id: d.id, ma: d.ma, duoc, con: d.so, kho: khoCua(be), gio: bay };
+      },
+      async doRoiDs(ten) { const t = tenChuan(ten), bay = gio(); tt.doRoi = (tt.doRoi || []).filter(d => d.hetLuc > bay); return { ok: true, ds: tt.doRoi.map(banGhiDo), gio: bay }; },
       async bangRoiDo() { const B = opt.roiDo || {}; return { ok: true, vatPham: B.vatPham || {}, quai: B.quai || {}, macDinh: B.macDinh || [], gio: gio() }; },
       tuiDo(ten) { return Object.assign({}, (tt.tuiDo || {})[tenChuan(ten)]); }, // TC_D06C4: kiểm thử
 
