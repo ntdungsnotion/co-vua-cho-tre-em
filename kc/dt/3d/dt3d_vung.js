@@ -180,7 +180,8 @@ export async function vaoThungLung(the) {
   // TC_D06C2g: phần trụ trong bản ghi máy chủ (máu còn, lúc thành đống gạch, có câu chưa; câu + đáp án chỉ chủ trụ nhận)
   function truMc(c) {
     if (!CT[c.loai] || !CT[c.loai].tru) return {};
-    return { mau: Number.isFinite(c.mau) ? c.mau : null, hongLuc: Number.isFinite(c.hongLuc) ? c.hongLuc : null, coCau: !!c.coCau, cau: Array.isArray(c.cau) ? c.cau : null };
+    return { mau: Number.isFinite(c.mau) ? c.mau : null, hongLuc: Number.isFinite(c.hongLuc) ? c.hongLuc : null, coCau: !!c.coCau, cau: Array.isArray(c.cau) ? c.cau : null,
+      ban: Array.isArray(c.ban) ? c.ban : null }; // TC_D06C2h: phát bắn gần nhất [{ luc (giờ máy chủ), dv (id máy chủ), trung }]
   }
   function dongBoCongTrinh(ds) {
     const con = new Set(), conMinh = new Set();

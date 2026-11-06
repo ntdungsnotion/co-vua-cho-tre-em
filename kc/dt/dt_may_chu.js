@@ -63,6 +63,8 @@
 //     truLuot / truTra(ten, idTran, { chon, beDung }) / truRut: lượt trụ / lượt bé, máy chủ giữ đáp án; máu ghi ngay; trụ thua -> hongLuc
 //     (đống gạch, xoá sau hongGiay giây); Thủ lĩnh thua -> nghỉ, nghỉ xong đủ máu. layQuanh: câu chỉ trả cho chủ trụ (coCau cho bé khác).
 //     quaiKet(..., dan = { mau }) không có dv: máu Thủ lĩnh còn lại (chỉ giảm); thua quái -> đủ máu sau nghỉ.
+//   TC_D06C2h: truBan(ten, id, dv): trụ tự bắn một phát nông dân dv (máy chủ quyết trúng, nhịp tru.nhipBanGiay); truKhai(ten, id, dv):
+//     nông dân vào trận câu hỏi với trụ (thua = mất nông dân); ct.ban = [{ luc, dv, trung }] phát bắn gần nhất (cả lượt trụ trong trận).
 // BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1)
@@ -414,6 +416,7 @@
     }
     // Máu sau mỗi lượt ghi ngay (bé đóng trang giữa trận vẫn mất máu); kết thúc: trụ thua thành đống gạch, Thủ lĩnh thua về Lều
     function ghiMauTran(tr, ct, bay) {
+      if (tr.dv != null) return ghiMauDan(tr, ct, bay); // TC_D06C2h: nông dân đánh trụ
       const tl = tlCua(tr.ten);
       if (tl) tl.mau = tr.mauBe;
       if (ct) ct.mau = tr.mauTru;
@@ -422,7 +425,26 @@
       if (tr.ket === "be" && ct) ct.hongLuc = bay;
       if (tr.ket === "tru") { tt.be[tr.ten].nghiDen = bay + CH.tru.nghiGiay * 1000; if (tl) tl.mau = null; } // nghỉ xong đủ máu
     }
-    const tranRa = t => ({ id: t.id, truId: t.truId, chu: t.chu, loai: t.loai, cap: t.cap, soCau: t.soCau, tiLe: t.tiLe, cong: t.cong, beDanh: t.beDanh,
+    // TC_D06C2h: trận trụ của NÔNG DÂN (tr.dv): máu ghi vào nông dân; thua = nông dân bỏ chạy (mất hẳn, thả quái nó giữ)
+    function boDan(ten, nd) {
+      tt.donVi = tt.donVi.filter(d => d !== nd);
+      for (const q of tt.quai || []) if (q.khoa && q.khoa.ten === ten && q.khoa.dv === nd.id) q.khoa = null;
+    }
+    function ghiMauDan(tr, ct, bay) {
+      const nd = cuaBe(tr.ten).find(d => d.id === tr.dv);
+      if (nd) nd.mau = tr.mauBe;
+      if (ct) ct.mau = tr.mauTru;
+      if (!tr.ket) return;
+      tr.ketLuc = bay;
+      if (tr.ket === "be" && ct) ct.hongLuc = bay;
+      if (tr.ket === "tru" && nd) boDan(tr.ten, nd);
+    }
+    // TC_D06C2h: các phát trụ bắn gần nhất (máy chủ trụ vẽ lại mũi tên): { luc, dv, trung }, giữ tru.giuBanGiay giây
+    function ghiBan(ct, b, bay) {
+      ct.banLuc = bay;
+      ct.ban = (ct.ban || []).filter(x => bay - x.luc < CH.tru.giuBanGiay * 1000).concat([b]).slice(-8);
+    }
+    const tranRa = t => ({ id: t.id, truId: t.truId, dv: t.dv == null ? null : t.dv, chu: t.chu, loai: t.loai, cap: t.cap, soCau: t.soCau, tiLe: t.tiLe, cong: t.cong, beDanh: t.beDanh,
       mauBe: t.mauBe, mauBeToiDa: t.mauBeToiDa, mauTru: t.mauTru, mauTruToiDa: t.mauTruToiDa, so: t.so, ket: t.ket });
     function luotRa(t) {
       if (t.ben === "tru") return { so: t.so, ben: "tru", giayTru: t.giayTru, moLuc: t.moLuc };
@@ -783,8 +805,9 @@
         ct.cau = sach; luu();
         return { ok: true, id, gio: gio() };
       },
-      // truKhai(ten, id): trụ id (của bé khác) khai chiến Thủ lĩnh của ten -> { ok, tran } | { ok: false, ma }
-      async truKhai(ten, id) {
+      // truKhai(ten, id, dv?): trụ id (của bé khác) khai chiến Thủ lĩnh của ten -> { ok, tran } | { ok: false, ma }
+      // TC_D06C2h: dv = id nông dân của ten (bé bấm ⚔️ vào đánh trụ đang bắn nông dân đó)
+      async truKhai(ten, id, dv) {
         ten = tenChuan(ten);
         const be = tt.be[ten];
         if (!be) return { ok: false, ma: "chua_vao", lyDo: "Con chưa vào thung lũng." };
@@ -793,16 +816,19 @@
         const ct = tt.congTrinh.find(c => c.id === id);
         if (!ct || !TT.laTru(CH, ct.loai) || !ct.xongLuc || ct.hongLuc || ct.chu === ten) return { ok: false, ma: "khong_tru", lyDo: "Không có trụ ở đây." };
         if (!Array.isArray(ct.cau) || !ct.cau.length) return { ok: false, ma: "chua_cau", lyDo: "Trụ chưa có câu hỏi." };
-        if ((be.nghiDen || 0) > bay) return { ok: false, ma: "dang_nghi", nghiDen: be.nghiDen, lyDo: "Thủ lĩnh đang nghỉ ở Lều." };
+        const nd = dv != null ? nguoiDanh(ten, dv) : null; // TC_D06C2h
+        if (dv != null && !nd) return { ok: false, ma: "khong_phai_nguoi", lyDo: "Đây không phải người của con." };
+        if (!nd && (be.nghiDen || 0) > bay) return { ok: false, ma: "dang_nghi", nghiDen: be.nghiDen, lyDo: "Thủ lĩnh đang nghỉ ở Lều." };
+        const dvSo = nd ? nd.id : null, cungDv = t => (t.dv == null ? null : t.dv) === dvSo;
         const dang = (tt.truTran || []).find(t => t.ten === ten && !t.ket);
-        if (dang) return dang.truId === id ? { ok: true, tran: tranRa(dang), gio: bay } : { ok: false, ma: "dang_tran", lyDo: "Thủ lĩnh đang giao chiến." };
-        if ((tt.truTran || []).some(t => t.ten === ten && t.truId === id && t.ketLuc && bay - t.ketLuc < C.mienGiay * 1000)) return { ok: false, ma: "mien", lyDo: "Trụ vừa giao chiến." };
-        const s = TT.soTru(CH, ct.loai, ct.cap), tl = tlCua(ten), p = tl && viTri(tl);
+        if (dang) return dang.truId === id && cungDv(dang) ? { ok: true, tran: tranRa(dang), gio: bay } : { ok: false, ma: "dang_tran", lyDo: "Đang giao chiến." };
+        if ((tt.truTran || []).some(t => t.ten === ten && t.truId === id && cungDv(t) && t.ketLuc && bay - t.ketLuc < C.mienGiay * 1000)) return { ok: false, ma: "mien", lyDo: "Trụ vừa giao chiến." };
+        const s = TT.soTru(CH, ct.loai, ct.cap), tl = nd || tlCua(ten), p = tl && viTri(tl);
         if (!p || Math.hypot(p.x - (ct.x + ct.rong / 2), p.z - (ct.y + ct.sau / 2)) > s.tam + LECH_O) return { ok: false, ma: "xa_qua", lyDo: "Thủ lĩnh ngoài tầm trụ." };
         if (truTrongLang(ct) && !(tt.be[ct.chu] && (tt.be[ct.chu].songLuc || 0) >= bay - VM.sauGiay * 1000)) return { ok: false, ma: "bao_ho", lyDo: "Làng đang có vòng sáng bảo hộ." };
-        const toiDa = TT.hpThuLinh(CH, be.chungLoai);
-        const tr = { id: ++tt.soId, truId: id, chu: ct.chu, ten, loai: ct.loai, cap: ct.cap || 1, soCau: Math.min(s.soCau, ct.cau.length), tiLe: s.tiLe, cong: s.cong, beDanh: s.beDanh,
-          mauBe: tl.mau == null ? toiDa : tl.mau, mauBeToiDa: toiDa, mauTru: ct.mau == null ? s.mauToiDa : ct.mau, mauTruToiDa: s.mauToiDa,
+        const toiDa = nd ? TT.hpNongDan(CH, be.chungLoai) : TT.hpThuLinh(CH, be.chungLoai);
+        const tr = { id: ++tt.soId, truId: id, dv: dvSo, chu: ct.chu, ten, loai: ct.loai, cap: ct.cap || 1, soCau: Math.min(s.soCau, ct.cau.length), tiLe: s.tiLe, cong: s.cong, beDanh: s.beDanh,
+          mauBe: tl.mau == null ? toiDa : Math.min(toiDa, tl.mau), mauBeToiDa: toiDa, mauTru: ct.mau == null ? s.mauToiDa : ct.mau, mauTruToiDa: s.mauToiDa,
           so: 0, ben: null, moLuc: bay, ket: null, taoLuc: bay };
         (tt.truTran = tt.truTran || []).push(tr); luu();
         return { ok: true, tran: tranRa(tr), gio: bay };
@@ -826,9 +852,37 @@
         const cau = tr.ben === "be" && ct && ct.cau ? ct.cau[tr.so / 2 - 1] : null;
         const kq = TT.traLoi(tr, CH, bay, tl || {}, cau);
         if (cau) kq.loiGiai = cau.loiGiai || "";
+        if (ct && kq.ben === "tru") { const ai = tr.dv != null ? tr.dv : (tlCua(ten) || {}).id; if (ai != null) ghiBan(ct, { luc: bay, dv: ai, trung: kq.kieu === "trung" }, bay); } // TC_D06C2h
         ghiMauTran(tr, ct, bay);
         luu();
         return { ok: true, kq, gio: bay };
+      },
+      // TC_D06C2h - truBan(ten, id, dv): trụ id (của bé khác) tự bắn MỘT PHÁT vào nông dân dv của ten (máy bé ten hỏi khi nông
+      // dân đứng trong tầm). Máy chủ quyết trúng / trượt, mỗi trụ nhiều nhất một phát mỗi tru.nhipBanGiay giây. Hết máu: nông dân bỏ
+      // chạy (mất hẳn). -> { ok, trung, satThuong, mau, toiDa, mat } | { ok: false, ma: khong_tru | khong_phai_nguoi | dang_tran |
+      // xa_qua | bao_ho | cho (con = ms còn chờ) }
+      async truBan(ten, id, dv) {
+        ten = tenChuan(ten);
+        const be = tt.be[ten];
+        if (!be) return { ok: false, ma: "chua_vao", lyDo: "Con chưa vào thung lũng." };
+        const bay = gio(), C = CH.tru;
+        boTranCu(bay);
+        const ct = tt.congTrinh.find(c => c.id === id);
+        if (!ct || !TT.laTru(CH, ct.loai) || !ct.xongLuc || ct.hongLuc || ct.chu === ten) return { ok: false, ma: "khong_tru", lyDo: "Không có trụ ở đây." };
+        const nd = dv != null ? nguoiDanh(ten, dv) : null;
+        if (!nd) return { ok: false, ma: "khong_phai_nguoi", lyDo: "Đây không phải người của con." };
+        if ((tt.truTran || []).some(t => t.ten === ten && !t.ket && t.dv === nd.id)) return { ok: false, ma: "dang_tran", lyDo: "Đang giao chiến." };
+        const s = TT.soTru(CH, ct.loai, ct.cap), p = viTri(nd);
+        if (Math.hypot(p.x - (ct.x + ct.rong / 2), p.z - (ct.y + ct.sau / 2)) > s.tam + LECH_O) return { ok: false, ma: "xa_qua", lyDo: "Ngoài tầm trụ." };
+        if (truTrongLang(ct) && !(tt.be[ct.chu] && (tt.be[ct.chu].songLuc || 0) >= bay - VM.sauGiay * 1000)) return { ok: false, ma: "bao_ho", lyDo: "Làng đang có vòng sáng bảo hộ." };
+        if (ct.banLuc && bay - ct.banLuc < C.nhipBanGiay * 1000) return { ok: false, ma: "cho", con: C.nhipBanGiay * 1000 - (bay - ct.banLuc), lyDo: "Trụ đang nạp tên." };
+        const toiDa = TT.hpNongDan(CH, be.chungLoai), mau = nd.mau == null ? toiDa : Math.min(toiDa, nd.mau);
+        const k = TT.banMot(s, mau);
+        ghiBan(ct, { luc: bay, dv: nd.id, trung: k.trung }, bay);
+        const mat = k.mau <= 0;
+        if (mat) boDan(ten, nd); else if (k.trung) nd.mau = k.mau;
+        luu();
+        return { ok: true, trung: k.trung, satThuong: k.satThuong, mau: k.mau, toiDa, mat, gio: bay };
       },
       // truRut(ten, idTran): rút lui giữa trận (giữ máu hai bên)
       async truRut(ten, idTran) {
@@ -855,3 +909,4 @@
 // 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (quái hung dữ); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái)
 // 05/11/2026 - BƯỚC: TC_D06C2d (phaHuy: phá hủy công trình đã xong của bé)
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ: truCau / truKhai / truLuot / truTra / truRut; máu Thủ lĩnh sau trận quái)
+// 06/11/2026 - BƯỚC: TC_D06C2h (truBan: trụ tự bắn nông dân; truKhai(..., dv): nông dân vào trận với trụ; ct.ban: phát bắn gần nhất)

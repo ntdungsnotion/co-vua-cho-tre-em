@@ -498,6 +498,10 @@ export async function taoQuaiBanDo(the) {
   nutTran.setAttribute("aria-label", "Vào trận nông dân đang đánh quái");
   (document.querySelector(".d3Tren") || document.body).appendChild(nutTran);
   const tranDangCo = () => [...danh.values()].filter(f => f.giai === "danh" || f.giai === "lao");
+  // TC_D06C2h: trận NGOÀI (dt3d_tru.js: trụ của bạn đang bắn nông dân) cùng hiện ở nút ⚔️ + danh sách trận. Mỗi nguồn trả
+  // [{ khoa, html, nhan, vao(), xem() }]: hàng có 2 nút ⚔️ Đánh (vào trận câu hỏi) + 👀 Xem (tới chỗ nông dân để dẫn đi trốn)
+  const dsNgoai = []; let banNgoai = () => false;
+  const tranNgoai = () => dsNgoai.flatMap(f => f() || []);
   // TC_D06C2d (người dùng 05/11/2026): từ 2 trận trở lên, bấm ⚔️ hiện DANH SÁCH TRẬN nông dân vs quái (thông tin quái + nông dân),
   // bé chọn trận để vào điều khiển; 1 trận thì vào thẳng như cũ
   const bangTran = document.createElement("div");
@@ -515,29 +519,39 @@ export async function taoQuaiBanDo(the) {
   }
   function veBang() {
     if (bangTran.hidden) return;
-    const ds = tranDangCo();
-    if (!ds.length || trongTran) { dongBang(); return; }
-    const dong = ds.map(dongTranBang), khoa = dong.map(d => d.khoa).join("|");
+    const ds = tranDangCo(), ng = tranNgoai();
+    if ((!ds.length && !ng.length) || trongTran || banNgoai()) { dongBang(); return; }
+    const dong = ds.map(dongTranBang), khoa = dong.map(d => d.khoa).concat(ng.map(n => n.khoa)).join("|");
     if (khoa === khoaBang) return;
     khoaBang = khoa;
     const dau = document.createElement("div"); dau.className = "d3BtDau";
-    dau.innerHTML = "<strong>⚔️ " + ds.length + " trận đang diễn ra</strong>";
+    dau.innerHTML = "<strong>⚔️ " + (ds.length + ng.length) + " trận đang diễn ra</strong>";
     const dong0 = document.createElement("button"); dong0.type = "button"; dong0.className = "d3Nut d3BtDong"; dong0.textContent = "✖"; dong0.setAttribute("aria-label", "Đóng");
     dong0.addEventListener("click", e => { e.stopPropagation(); dongBang(); });
     dau.appendChild(dong0);
+    // TC_D06C2h: hàng trận ngoài: thông tin + nút ⚔️ Đánh + 👀 Xem
+    const hangNgoai = n => {
+      const h = document.createElement("div"); h.className = "d3BtDong1 d3BtNgoai"; h.innerHTML = n.html;
+      const nut = (chu, nhan, fn) => { const b = document.createElement("button"); b.type = "button"; b.className = "d3Nut d3BtNut"; b.textContent = chu; b.setAttribute("aria-label", nhan);
+        b.addEventListener("click", e => { e.stopPropagation(); dongBang(); fn(); }); return b; };
+      const cum = document.createElement("span"); cum.className = "d3BtCum";
+      cum.append(nut("⚔️ Đánh", "Vào trận: " + n.nhan, n.vao), nut("👀 Xem", "Tới chỗ " + n.nhan, n.xem));
+      h.appendChild(cum);
+      return h;
+    };
     bangTran.replaceChildren(dau, ...dong.map(d => {
       const b = document.createElement("button"); b.type = "button"; b.className = "d3BtDong1"; b.innerHTML = d.html;
       b.setAttribute("aria-label", "Vào điều khiển " + d.f.dv.ten + " đánh " + tenLoai(d.f.r.ma));
       b.addEventListener("click", e => { e.stopPropagation(); dongBang(); if (!trongTran && danh.get(d.f.dv.id) === d.f) vaoDieuKhien(d.f); });
       return b;
-    }));
+    }), ...ng.map(hangNgoai));
   }
   nutTran.setAttribute("aria-haspopup", "dialog"); nutTran.setAttribute("aria-expanded", "false");
   nutTran.addEventListener("click", e => {
     e.stopPropagation();
-    if (trongTran) return;
+    if (trongTran || banNgoai()) return;
     const ds = tranDangCo();
-    if (ds.length >= 2) {
+    if (ds.length >= 2 || tranNgoai().length) { // TC_D06C2h: có trận trụ thì luôn mở danh sách (bé chọn Đánh hay Xem)
       if (!bangTran.hidden) { dongBang(); return; }
       bangTran.hidden = false; khoaBang = ""; nutTran.setAttribute("aria-expanded", "true"); veBang(); return;
     }
@@ -546,7 +560,7 @@ export async function taoQuaiBanDo(the) {
   addEventListener("keydown", e => { if (e.key === "Escape") dongBang(); });
   canvas.addEventListener("pointerdown", dongBang); // chạm bản đồ: đóng bảng
   function veNut() {
-    const n = tranDangCo().length;
+    const n = tranDangCo().length + tranNgoai().length; // TC_D06C2h: cả trận trụ bắn nông dân
     if (nutTran.hidden !== !n) nutTran.hidden = !n;
     const chu = "⚔️" + (n > 1 ? " " + n : "");
     if (nutTran.textContent !== chu) nutTran.textContent = chu;
@@ -678,7 +692,7 @@ export async function taoQuaiBanDo(the) {
   }
 
   function vaoDieuKhien(f) {
-    if (trongTran) return;
+    if (trongTran || banNgoai()) return; // TC_D06C2h: đang trong trận trụ
     if (f.giai !== "danh") { f.muonVao = true; the.baoGoiY("⚔️ Vào trận khi " + tenLoai(f.r.ma) + " tới chỗ " + f.dv.ten); return; }
     const c = f.td.chuyen(), r = f.r, h = hinh.get(r.id);
     f.giai = "be"; veNut();
@@ -760,6 +774,10 @@ export async function taoQuaiBanDo(the) {
     trung, cham: chamUi, conNghi, dongHo, mauDan, // TC_D06C2b: mauDan; TC_D06C2d: chạm quái qua chamUi (bong bóng ⚔️ Đánh)
     // TC_D06C2g (trụ phòng thủ, dt3d_tru.js): Thủ lĩnh đang tới / đang đánh quái thì trụ không khai chiến; thua trụ thì nghỉ
     banThuLinh: () => !!(dangToi || (trongTran && !trongTran.dan)), datNghi: ms => { nghiDen = Math.max(nghiDen, ms); }, dungTl,
+    // TC_D06C2h (trụ bắn nông dân, dt3d_tru.js): thêm nguồn trận ngoài cho nút ⚔️; báo đang trong trận trụ; màn trận quái đang mở;
+    // nông dân hết máu bỏ chạy (hình chạy ra xa rồi mất); vẽ lại nút
+    themTranNgoai: fn => { dsNgoai.push(fn); veNut(); }, datBanNgoai: fn => { banNgoai = fn; }, dangTran: () => !!trongTran,
+    danBoChay, veNut, dangDanh: dv => danh.has(dv.id),
     moc: { // kịch bản thử Chrome
       ds: () => [...ghi.values()].map(r => { const p = viTri(r), h = hinh.get(r.id);
         return { id: r.id, ma: r.ma, lv: r.lv, x: p.x, z: p.z, nhaX: r.x, nhaZ: r.z, trangThai: p.mat ? "mat" : p.trangThai, hien: !!(h && h.vo.visible), mau: mau(r),
@@ -805,3 +823,4 @@ export async function taoQuaiBanDo(the) {
 // 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06D (thông số quái + nút ⚔️ Đánh ở thanh dưới); 04/11/2026 - TC_D06C2a (quái hung dữ); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái)
 // 05/11/2026 - BƯỚC: TC_D06C2d (⚔️ Đánh sai nông dân; danh sách trận khi có từ 2 trận)
 // 05/11/2026 - BƯỚC: TC_D06C2g (máu Thủ lĩnh còn lại vào / ra trận quái; banThuLinh, datNghi, dungTl cho trụ phòng thủ)
+// 06/11/2026 - BƯỚC: TC_D06C2h (trận ngoài ở nút ⚔️: trụ bắn nông dân, hàng có ⚔️ Đánh + 👀 Xem; themTranNgoai, datBanNgoai, danBoChay)

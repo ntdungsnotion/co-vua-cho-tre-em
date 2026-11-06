@@ -14,7 +14,8 @@
 //            (repo_rieng SQL/supabase_tc_d02b3_ban_do.sql mục TC_D06C2g) viết lại đúng các luật này.
 // HÀM KHAI RA (goc.KC_DT_TRU_TRAN):
 //   laTru(CH, loai) -> bool;  soTru(CH, loai, cap) -> { dangCap, mauToiDa, cong, beDanh, tam, soCau, tiLe }
-//   hpThuLinh(CH, chungLoai) -> máu tối đa Thủ lĩnh
+//   hpThuLinh(CH, chungLoai) -> máu tối đa Thủ lĩnh;  hpNongDan(CH, chungLoai) -> máu tối đa nông dân (TC_D06C2h)
+//   banMot(soTru, mau, rng) -> { trung, satThuong, mau } một phát trụ tự bắn nông dân (TC_D06C2h)
 //   moLuot(tr, CH, bay, rng) -> lượt { so, ben: "tru" | "be", moLuc, han?, giayTru?, cau? (chỉ số câu của trụ) }
 //   traLoi(tr, CH, bay, { chon, beDung }, cauTru) -> kết quả { so, ben, kieu, satThuong, dapAnDung?, mau{be, tru}, ket? }
 //     tr = trạng thái trận (máy chủ giữ): { soCau, tiLe, cong, beDanh, mauBe, mauBeToiDa, mauTru, mauTruToiDa,
@@ -39,6 +40,13 @@
   }
 
   const hpThuLinh = (CH, cl) => CH.tru.hpThuLinh[cl] || CH.tru.hpThuLinh.nhan;
+  // TC_D06C2h: máu tối đa nông dân (máy chủ cần để biết nông dân hết máu)
+  const hpNongDan = (CH, cl) => { const h = CH.tru.hpNongDan || {}; return h[cl] || h.nhan || 60; };
+  // TC_D06C2h: trụ bắn MỘT PHÁT vào nông dân: trúng với xác suất s.tiLe, trúng thì mất s.cong máu (không dưới 0)
+  function banMot(s, mau, rng) {
+    const trung = (rng || Math.random)() < s.tiLe, st = trung ? Math.min(mau, s.cong) : 0;
+    return { trung, satThuong: st, mau: mau - st };
+  }
 
   // Lượt lẻ: trụ tấn công; lượt chẵn: bé tấn công bằng câu thứ (so / 2 - 1) của trụ
   function moLuot(tr, CH, bay, rng) {
@@ -82,6 +90,7 @@
     return kq;
   }
 
-  goc.KC_DT_TRU_TRAN = { laTru, soTru, hpThuLinh, moLuot, traLoi };
+  goc.KC_DT_TRU_TRAN = { laTru, soTru, hpThuLinh, hpNongDan, banMot, moLuot, traLoi };
 })(typeof window !== "undefined" ? window : globalThis);
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ tấn công người chơi khác)
+// 06/11/2026 - BƯỚC: TC_D06C2h (hpNongDan, banMot: trụ tự bắn nông dân)

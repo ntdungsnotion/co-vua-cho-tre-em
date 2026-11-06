@@ -14,6 +14,7 @@
 //            gặt (ruộng của mình), bãi đã gặt còn gốc rạ thấp; ruộng của bạn theo giờ máy chủ trả (lang.ruongGiaiDoan).
 //            TC_D03C: Chòi hái lượm (giỏ trái cây + xiên cá), Chòi mỏ (đống đá + vàng, cuốc chim): 4 cọc, mái lá, không vách.
 //            TC_D06C2g: Trụ tên (chân đá, sàn có nỏ lớn, mái ngói đỏ, cờ); trụ thua (ct.hongLuc) thành đống gạch.
+//            TC_D06C2h (06/11/2026): nỏ của trụ ghi ở nha.userData.no (+ caoNo) để dt3d_tru.js quay nỏ + bắn tên.
 // HÀM KHAI RA:
 //   taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang?) -> { leu, lua, hinhCt(id) }
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh (dt3d_mo_hinh.js), diaHinh.doCao (dt3d_dia_hinh.js),
@@ -109,6 +110,7 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     const cung = new THREE.Mesh(new THREE.TorusGeometry(a * 1.1, 0.04, 5, 14, Math.PI), vlCoc); cung.rotation.z = Math.PI; cung.position.z = a * 0.6; no.add(cung);
     no.add(hop(0.1, 0.1, a * 2.2, vlGoSang, 0, 0, 0));
     no.rotation.y = Math.atan2(huongCam.x, huongCam.z); g.add(no);
+    g.userData.no = no; g.userData.caoNo = C + 0.3; // TC_D06C2h: dt3d_tru.js quay nỏ về phía người bị bắn, tên bay ra từ đây
     const mai = new THREE.Mesh(new THREE.ConeGeometry(a * 2.2, 0.9, 4), vlMaiDo); mai.position.y = C + 1.05; mai.rotation.y = Math.PI / 4; mai.castShadow = !nhe; g.add(mai);
     g.add(cot(0.025, 0.025, 0.8, vlCoc, a * 0.9, C + 1.65, -a * 0.9));
     const co = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.26), vlCoDo); co.position.set(a * 0.9 + 0.21, C + 1.9, -a * 0.9); g.add(co);
