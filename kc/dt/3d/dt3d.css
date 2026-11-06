@@ -169,3 +169,11 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3BangCauDa span.dung::before { content: "✓ "; }
 @media (min-width: 900px) { .d3BangCau { left: 50%; right: auto; width: 560px; transform: translateX(-50%); top: 90px; bottom: 150px; } .d3BangCauDau b { font-size: 1.25rem; } }
 /* 05/11/2026 - BƯỚC: TC_D06C2g (bảng câu phòng thủ của trụ) */
+/* TC_D06C2h: hàng "trụ bắn nông dân" trong danh sách trận: thông tin trụ | nông dân, dưới là 2 nút lớn ⚔️ Đánh + 👀 Xem */
+.d3BtNgoai { cursor: default; box-sizing: border-box; }
+.d3BtCum { grid-column: 1 / -1; display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+.d3BtNut { min-height: 44px; border-radius: 10px; color: var(--sang); background: rgba(20, 32, 74, .92); border: 2px solid #c9a35e; }
+.d3BtNut:hover, .d3BtNut:focus-visible { border-color: var(--vang); background: rgba(40, 56, 110, .95); }
+.d3BtNut:first-child { background: linear-gradient(180deg, #d8572f, #a6331c); border-color: #ffc24b; }
+@media (min-width: 900px) { .d3BtNut { min-height: 48px; font-size: 1.05rem; } }
+/* 06/11/2026 - BƯỚC: TC_D06C2h (trụ bắn nông dân) */

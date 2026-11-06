@@ -149,7 +149,10 @@ if (VUNG) {
   } catch (e) { console.warn("Chưa dựng được quái trên bản đồ", e); } // thiếu quái vẫn chơi làng được
   // TC_D06C2g: trụ phòng thủ (trụ của bạn khai chiến Thủ lĩnh trong tầm; trụ của mình tự chọn câu)
   try {
-    if (window.KC_DT_TRU_TRAN && vung.mayChu.truKhai) truBd = taoTruBanDo({ ctx, lang, cauHinh, mayChu: vung.mayChu, dvTl, vung, quaiBd, be: { ...be, ten: be.ten || "khach" }, baoGoiY });
+    if (window.KC_DT_TRU_TRAN && vung.mayChu.truKhai) truBd = taoTruBanDo({ ctx, lang, cauHinh, mayChu: vung.mayChu, dvTl, vung, quaiBd, be: { ...be, ten: be.ten || "khach" }, baoGoiY,
+      // TC_D06C2h: trụ bắn nông dân (nhãn máu, nỏ quay, mũi tên; 👀 Xem: camera tới nông dân + chọn)
+      lop: $("d3ChuNoi"), cam, diaHinh, hinhCt: id => congTrinhVe.hinhCt(id), nhinVe: (x, z) => cam.nhinVe(x, z),
+      chonDv: dv => { const h = boNv.dsHinh.find(k => k.dv === dv); if (h) dk.chon(h); } });
   } catch (e) { console.warn("Chưa dựng được trụ phòng thủ", e); }
 } else {
   dvTl = lang.themDonVi("thu_linh", banDo.batDau.thuLinh.x, banDo.batDau.thuLinh.z, be.tenThuLinh || "Thủ lĩnh");

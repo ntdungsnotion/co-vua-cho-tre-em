@@ -65,7 +65,8 @@
       la_leu: "Không phá được Lều trại: đó là nhà chính của làng.", // TC_D06C2d
       // TC_D06C2g: trụ phòng thủ
       khong_tru: "Không có trụ ở đây.", chua_cau: "Trụ chưa có câu hỏi.", dang_tran: "Thủ lĩnh đang giao chiến.", mien: "Trụ vừa giao chiến.",
-      bao_ho: "Làng đang có vòng sáng bảo hộ.", het_tran: "Trận đã kết thúc.", cau: "Câu hỏi không đúng."
+      bao_ho: "Làng đang có vòng sáng bảo hộ.", het_tran: "Trận đã kết thúc.", cau: "Câu hỏi không đúng.",
+      cho: "Trụ đang nạp tên." // TC_D06C2h
     };
     // Tên đưa vào câu lý do: loại nguồn (còn cây ở đây), tài nguyên thiếu (gỗ), loại nhà đã đủ (Tháp canh)
     const tenTrongLyDo = kq => (kq.loaiNguon ? tenNguon(kq.loaiNguon)
@@ -89,7 +90,8 @@
       catch (e) { kq = null; }
       if (kq && Number.isFinite(kq.gio)) lech = kq.gio - (t0 + Date.now()) / 2; // giữa lúc gửi và lúc nhận
       if (!kq || kq.thanhCong !== true) return Object.assign({ ok: false, ma: (kq && kq.ma) || "mang", lyDo: loiCho(kq) },
-        kq && kq.chu ? { chu: kq.chu } : null, kq && Number.isFinite(kq.nghiDen) ? { nghiDen: kq.nghiDen } : null); // TC_D06C1: ai đang đánh, giờ hết nghỉ
+        kq && kq.chu ? { chu: kq.chu } : null, kq && Number.isFinite(kq.nghiDen) ? { nghiDen: kq.nghiDen } : null, // TC_D06C1: ai đang đánh, giờ hết nghỉ
+        kq && Number.isFinite(kq.con) ? { con: kq.con } : null); // TC_D06C2h: trụ còn chờ bấy nhiêu ms mới bắn
       return Object.assign({ ok: true }, kq);
     }
 
@@ -120,7 +122,9 @@
       },
       // TC_D06C2g: trụ phòng thủ (luật dt/dt_tru_tran.js; máy chủ giữ đáp án câu của trụ, chấm lượt bé)
       async truCau(ten, id, ds) { return goi("kc_dt_tru_cau", { p_id: id, p_cau: ds }); },
-      async truKhai(ten, id) { return goi("kc_dt_tru_khai", { p_id: id }); },
+      // TC_D06C2h: p_dv chỉ gửi khi nông dân vào trận (Thủ lĩnh gọi như cũ); truBan = trụ tự bắn một phát nông dân
+      async truKhai(ten, id, dv) { return goi("kc_dt_tru_khai", Object.assign({ p_id: id }, dv != null ? { p_dv: dv } : null)); },
+      async truBan(ten, id, dv) { return goi("kc_dt_tru_ban", { p_id: id, p_dv: dv }); },
       async truLuot(ten, idTran) { return goi("kc_dt_tru_luot", { p_tran: idTran }); },
       async truTra(ten, idTran, tl) { return goi("kc_dt_tru_tra", { p_tran: idTran, p_chon: tl && Number.isInteger(tl.chon) ? tl.chon : null, p_be_dung: !!(tl && tl.beDung) }); },
       async truRut(ten, idTran, giu) { return goi("kc_dt_tru_rut", { p_tran: idTran }, giu); }
@@ -132,3 +136,4 @@
 // 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (p_lao); 04/11/2026 23:xx - TC_D06C2b (p_dv, p_mau)
 // 05/11/2026 - BƯỚC: TC_D06C2d (phaHuy)
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ; p_mau của Thủ lĩnh)
+// 06/11/2026 - BƯỚC: TC_D06C2h (truBan, truKhai p_dv: trụ tự bắn nông dân; cần SQL TC_D06C2h)
