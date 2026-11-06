@@ -806,6 +806,8 @@ export async function taoQuaiBanDo(the) {
     // nông dân hết máu bỏ chạy (hình chạy ra xa rồi mất); vẽ lại nút
     themTranNgoai: fn => { dsNgoai.push(fn); veNut(); }, datBanNgoai: fn => { banNgoai = fn; }, dangTran: () => !!trongTran,
     danBoChay, veNut, dangDanh: dv => danh.has(dv.id),
+    // TC_D06C5: nông dân bị quái hung dữ tấn công (quái đang lao tới, hoặc trận do quái lao vào) -> dt3d_nong_dan.js báo ⚠️
+    biTanCong: dv => { const f = danh.get(dv.id); return !!(f && (f.giai === "lao" || (f.giai === "danh" && f.quaiTruoc))); },
     moc: { // kịch bản thử Chrome
       ds: () => [...ghi.values()].map(r => { const p = viTri(r), h = hinh.get(r.id);
         return { id: r.id, ma: r.ma, lv: r.lv, x: p.x, z: p.z, nhaX: r.x, nhaZ: r.z, trangThai: p.mat ? "mat" : p.trangThai, hien: !!(h && h.vo.visible), mau: mau(r),
@@ -854,3 +856,4 @@ export async function taoQuaiBanDo(the) {
 // 05/11/2026 - BƯỚC: TC_D06C2g (máu Thủ lĩnh còn lại vào / ra trận quái; banThuLinh, datNghi, dungTl cho trụ phòng thủ)
 // 06/11/2026 - BƯỚC: TC_D06C2h (trận ngoài ở nút ⚔️: trụ bắn nông dân, hàng có ⚔️ Đánh + 👀 Xem; themTranNgoai, datBanNgoai, danBoChay)
 // 06/11/2026 - BƯỚC: TC_D06C4 (thắng quái -> quaiThang, đồ rơi nằm trên đất cho nông dân nhặt, xem quái thấy có thể rơi gì)
+// 06/11/2026 - BƯỚC: TC_D06C5 (biTanCong: nông dân bị quái hung dữ tấn công)
