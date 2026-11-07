@@ -223,3 +223,14 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 @media (min-width: 900px) { .d3BiDanh { right: 12px; top: 80px; font-size: 1.1rem; min-height: 50px; } }
 @media (max-width: 600px) { .d3Chung { max-width: 176px; } .d3NdRanh { font-size: 1.1rem; } }
 @media (prefers-reduced-motion: reduce) { .d3BiDanh { animation: none; } }
+/* TC_D06C6: nút ✕ bỏ chọn (góc trên phải ô đang xem) + nút 👑 tìm Thủ lĩnh */
+.d3BangChon { position: relative; }
+.d3BoChon { position: absolute; top: -12px; right: -8px; z-index: 2; width: 34px; height: 34px; padding: 0; border-radius: 50%;
+  display: grid; place-items: center; font: 700 1.05rem/1 system-ui, sans-serif; color: #fff; cursor: pointer;
+  background: #8c2f22; border: 2px solid #ffd27a; box-shadow: 0 2px 6px rgba(0, 0, 0, .45); touch-action: manipulation; }
+.d3BoChon:hover { background: #b03b2b; }
+.d3BoChon:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.d3BoChon[hidden] { display: none; }
+.d3TimTl { font-size: 1.2rem; }
+@media (max-width: 600px) { .d3TimTl { font-size: 1.1rem; } }
+/* 07/11/2026 - BƯỚC: TC_D06C6 */

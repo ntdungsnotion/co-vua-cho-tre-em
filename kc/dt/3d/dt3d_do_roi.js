@@ -87,12 +87,12 @@ export function taoDoRoi(the) {
       const el = document.createElement("div"); el.className = "d3DoCam"; el.setAttribute("aria-hidden", "true"); the.lop.appendChild(el);
       c = { ds: new Map(), el }; camTheo.set(dv, c);
     }
-    c.ds.set(d.id, d); veCam(dv);
+    c.ds.set(d.id, d); veCam(dv); dv.camDo = true; // TC_D06C6: dt3d_vung.js (chạm Lều / kho) biết nông dân đang cầm đồ
   }
   function boCam(dv, id) {
     const c = camTheo.get(dv); if (!c) return;
     if (id != null) c.ds.delete(id); else c.ds.clear();
-    if (!c.ds.size) { c.el.remove(); camTheo.delete(dv); } else veCam(dv);
+    if (!c.ds.size) { c.el.remove(); camTheo.delete(dv); delete dv.camDo; } else veCam(dv);
   }
   function veCam(dv) {
     const c = camTheo.get(dv); if (!c) return;
@@ -159,9 +159,17 @@ export function taoDoRoi(the) {
 
   function giaoNhat(dv, hang) {
     for (const v of viec.values()) if (v.dv !== dv) v.hang = v.hang.filter(id => !hang.includes(id)); // món đã giao người khác: giao lại người này
-    viec.set(dv, { dv, hang: hang.filter(id => ds.has(id) && cuaMinh(ds.get(id).d)), luc: Date.now(), dangDi: null, giai: "nhat" });
+    xongViec(dv);
+    const hangLoc = hang.filter(id => ds.has(id) && cuaMinh(ds.get(id).d));
+    // TC_D06C6 (người dùng 07/11/2026: "mỗi thời điểm chỉ mang một loại"): đang mang tài nguyên thu hoạch thì về cất trước
+    if (dv.mang && dv.mang.so > 0 && lang.lenhCat && lang.lenhCat(dv, null, false)) {
+      viec.set(dv, { dv, hang: hangLoc, luc: Date.now(), dangDi: null, giai: "truoc" });
+      baoGoiY("🧺 " + dv.ten + " cất " + (lang.CH.taiNguyen[dv.mang.loai] || {}).bieuTuong + " đang mang về kho trước, rồi ra nhặt đồ.");
+      return;
+    }
+    viec.set(dv, { dv, hang: hangLoc, luc: Date.now(), dangDi: null, giai: "nhat" });
     diTiep(viec.get(dv));
-    if (viec.has(dv)) baoGoiY("🧺 " + dv.ten + " ra nhặt đồ.");
+    if (viec.has(dv) && viec.get(dv).giai === "nhat") baoGoiY("🧺 " + dv.ten + " ra nhặt đồ.");
   }
 
   function thoiNhat(v) { // bỏ vạch tiến độ món đang nhặt
@@ -171,10 +179,13 @@ export function taoDoRoi(the) {
   function diTiep(v) {
     thoiNhat(v);
     v.hang = v.hang.filter(id => ds.has(id));
-    if (!v.hang.length) { veKho(v); return; }
+    // TC_D06C6: mỗi chuyến chỉ nhặt MỘT loại (cùng mã với đồ đang cầm); loại khác để chuyến sau
+    const cm = camTheo.get(v.dv), maCam = cm && cm.ds.size ? [...cm.ds.values()][0].ma : null;
+    const hop = maCam ? v.hang.filter(id => ds.get(id).d.ma === maCam) : v.hang.slice();
+    if (!hop.length) { veKho(v); return; }
     // món gần nhất trước
-    v.hang.sort((a, b) => Math.hypot(ds.get(a).d.x - v.dv.x, ds.get(a).d.z - v.dv.z) - Math.hypot(ds.get(b).d.x - v.dv.x, ds.get(b).d.z - v.dv.z));
-    const d = ds.get(v.hang[0]).d;
+    hop.sort((a, b) => Math.hypot(ds.get(a).d.x - v.dv.x, ds.get(a).d.z - v.dv.z) - Math.hypot(ds.get(b).d.x - v.dv.x, ds.get(b).d.z - v.dv.z));
+    const d = ds.get(hop[0]).d;
     v.giai = "nhat"; v.dangDi = d.id; v.luc = Date.now(); v.hen = 0;
     if (Math.hypot(v.dv.x - d.x, v.dv.z - d.z) <= tamVoi) return; // đứng sát rồi
     if (!lang.lenhDi(v.dv, { x: Math.floor(d.x), y: Math.floor(d.z) })) { baoGoiY("❌ " + v.dv.ten + " không tới được chỗ đồ."); xongViec(v.dv); }
@@ -197,15 +208,20 @@ export function taoDoRoi(the) {
     }
     return tot;
   }
-  function veKho(v) {
+  function veKho(v, uuTien) {
     v.dangDi = null;
     if (!camTheo.has(v.dv)) { xongViec(v.dv); return; }
-    const c = khoToi(v.dv);
+    const cm = camTheo.get(v.dv);
+    const c = uuTien && uuTien.xong && uuTien.cuaMinh !== false && [...cm.ds.values()].some(d => nhanDo(uuTien, d)) ? uuTien : khoToi(v.dv);
     if (!c) { baoGoiY("📦 Chưa có Lều / kho để cất " + camTheo.get(v.dv).el.textContent + " · " + v.dv.ten + " cầm tạm trên tay."); xongViec(v.dv); return; }
     v.giai = "ve"; v.dich = c; v.luc = Date.now(); v.hen = 0;
-    if (kcCt(c, v.dv.x, v.dv.z) <= tamVoi) return;
+    // TC_D06C6: luôn bước tới ô sát kho (kể cả khi đã đứng gần): máy chủ biết chỗ đứng theo lệnh đi, đứng gần mà máy chủ
+    // còn nhớ ô cũ (vd ô món đồ) thì cất bị báo "chưa tới" mãi
     const o = lang.oQuanh(c, v.dv.x, v.dv.z);
-    if (!o || !lang.lenhDi(v.dv, o)) { baoGoiY("❌ " + v.dv.ten + " không về được kho."); xongViec(v.dv); return; }
+    if (!o || !lang.lenhDi(v.dv, o)) {
+      if (kcCt(c, v.dv.x, v.dv.z) <= tamVoi) return;
+      baoGoiY("❌ " + v.dv.ten + " không về được kho."); xongViec(v.dv); return;
+    }
     baoGoiY("🧺 " + v.dv.ten + " mang " + camTheo.get(v.dv).el.textContent + " về kho.");
   }
 
@@ -256,11 +272,34 @@ export function taoDoRoi(the) {
       if (k.con > 0) d.so = k.con; else boCam(dv, k.id);
     }
     const con = camTheo.get(dv);
-    baoGoiY("📦 " + dv.ten + " cất " + chu.join(" ") + " vào kho" + (con ? " · còn cầm " + con.el.textContent + " (kho đầy)" : ""));
-    if (v) { if (con && khoToi(dv) !== v.dich) veKho(v); else xongViec(dv); }
+    const conDat = !!(v && !con && v.hang.some(id => ds.has(id))), sau = v && !con && !conDat ? v.sau : null;
+    baoGoiY("📦 " + dv.ten + " cất " + chu.join(" ") + " vào kho" + (con ? " · còn cầm " + con.el.textContent + " (kho đầy)" : conDat ? " · quay lại nhặt tiếp" : sau ? " · đi làm tiếp" : ""));
+    if (v) {
+      if (con) { if (khoToi(dv) !== v.dich) veKho(v); else xongViec(dv); }
+      else if (conDat) diTiep(v); // TC_D06C6: đống còn loại khác: quay lại lấy
+      else { xongViec(dv); if (sau) lang.giaoViec(dv, sau); }
+    }
   }
   // nông dân đang cầm đồ mà cất đồ thu hoạch về kho (bé đã giao việc khác): cất luôn đồ đang cầm
-  if (lang.nghe) lang.nghe(su => { if (su.loai === "cat" && su.dv && camTheo.has(su.dv) && !viec.has(su.dv)) catKho(su.dv, null); });
+  if (lang.nghe) lang.nghe(su => {
+    if (su.loai === "cat" && su.dv && camTheo.has(su.dv) && !viec.has(su.dv)) catKho(su.dv, null);
+    // TC_D06C6: bé chạm Lều / kho (lang.lenhCat) khi nông dân chỉ cầm đồ rơi: mang đồ tới đó cất
+    if (su.loai === "lenh_cat" && su.dv && camTheo.has(su.dv) && !su.coMang) {
+      const v = { dv: su.dv, hang: [], luc: Date.now(), dangDi: null, giai: "ve", dungLai: true };
+      xongViec(su.dv); viec.set(su.dv, v); veKho(v, su.ct);
+    }
+    // TC_D06C6: bé giao việc (chặt, đào...) khi nông dân đang cầm đồ rơi loại khác: cất đồ trước, xong mới đi làm
+    if (su.loai === "giao_viec" && su.dv && su.n) {
+      const v0 = viec.get(su.dv);
+      if (v0 && v0.giai !== "truoc") { thoiNhat(v0); xongViec(su.dv); }
+      const cm = camTheo.get(su.dv);
+      if (cm && !viec.has(su.dv) && [...cm.ds.values()].some(d => d.ma !== su.n.taiNguyen)) {
+        const v = { dv: su.dv, hang: [], luc: Date.now(), dangDi: null, giai: "ve", sau: su.n, dungLai: true };
+        viec.set(su.dv, v); veKho(v);
+        if (viec.get(su.dv) === v) baoGoiY("🧺 " + su.dv.ten + " mang " + cm.el.textContent + " về kho trước, rồi đi làm.");
+      }
+    }
+  });
 
   // đồ vừa cất bay từ tay nông dân lên ô tài nguyên trên thanh
   function bay(dv, d, so) {
@@ -316,9 +355,14 @@ export function taoDoRoi(the) {
       if (bay0 - v.luc > BO_SAU_MS || v.dv.trangThai === "lam" || v.dv.trangThai === "danh") { thoiNhat(v); xongViec(v.dv); continue; } // bé giao việc khác / kẹt
       v.dv.dangNhatDo = true; if (v.dv.ranh) v.dv.ranh = false;
       if (v.dangHoi || bay0 < (v.hen || 0)) continue;
+      if (v.giai === "truoc") { // TC_D06C6: chờ cất xong tài nguyên thu hoạch đang mang
+        if (!v.dv.mang || !v.dv.mang.so) { v.luc = bay0; diTiep(v); }
+        else if (v.dv.trangThai !== "ve_kho") { baoGoiY("📦 Kho đầy · " + v.dv.ten + " chưa cất được nên chưa ra nhặt đồ."); xongViec(v.dv); }
+        continue;
+      }
       if (v.giai === "ve") {
         if (!v.dich || !lang.congTrinh.includes(v.dich)) { veKho(v); continue; }
-        if (kcCt(v.dich, v.dv.x, v.dv.z) <= tamVoi) catKho(v.dv, v);
+        if (kcCt(v.dich, v.dv.x, v.dv.z) <= tamVoi && !(v.dv.duong && v.dv.duong.length)) catKho(v.dv, v); // tới nơi rồi mới cất
         continue;
       }
       if (!ds.has(v.dangDi)) { diTiep(v); continue; }
@@ -344,3 +388,4 @@ export function taoDoRoi(the) {
 }
 // 06/11/2026 - BƯỚC: TC_D06C4 (14:1x: bé khác thấy đồ nhưng không nhặt được; 14:28: lời báo ngắn gọn "Đây không phải đồ của bạn")
 // 06/11/2026 23:5x - BƯỚC: TC_D06C5 (đồ sát đất, nhỏ 1/4; nhặt mất thời gian như thu tài nguyên; cầm trên tay mang về kho)
+// 07/11/2026 - BƯỚC: TC_D06C6 (mỗi chuyến một loại, cất đồ thu hoạch trước khi nhặt, chạm Lều / kho để cất, giao việc khác thì cất trước)

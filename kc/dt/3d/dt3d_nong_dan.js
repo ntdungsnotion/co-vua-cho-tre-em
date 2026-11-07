@@ -41,6 +41,32 @@ export function taoNongDan(the) {
     baoGoiY("🧑‍🌾 " + dv.ten + " đang rảnh" + (dsRanh.length > 1 ? " (" + (thuTu + 1) + "/" + dsRanh.length + ")" : "") + " · chạm cây, mỏ hoặc ruộng để giao việc");
   });
 
+  // ---- TC_D06C6 (người dùng 07/11/2026: "Không tìm thấy thủ lĩnh, cần có nút tìm"): nút 👑 tới chỗ Thủ lĩnh + chọn ----
+  // (nút 🏕️ cũ đổi thành "Về lều" khi đã có Lều nên không còn cách nào tìm Thủ lĩnh)
+  const nutTl = document.createElement("button");
+  nutTl.type = "button"; nutTl.id = "d3TimTl"; nutTl.className = "d3Nut d3Khung d3TimTl";
+  nutTl.innerHTML = '👑<span class="d3Chu"> Thủ lĩnh</span>'; nutTl.setAttribute("aria-label", "Tìm Thủ lĩnh");
+  if (the.chung) the.chung.insertBefore(nutTl, nut.nextSibling);
+  nutTl.addEventListener("click", () => {
+    const tl = lang.donVi.find(d => d.vaiTro === "thu_linh" && !d.laBan);
+    if (!tl) { baoGoiY("👑 Thủ lĩnh đang nghỉ ở Lều."); return; }
+    toiVaChon(tl);
+    baoGoiY("👑 " + tl.ten + " ở đây · chạm đất để đi");
+  });
+
+  // ---- TC_D06C6 ("Trên điện thoại khó thoát đối tượng đang chọn => cần bổ sung nút x để thoát"): nút ✕ ở góc ô đang xem ----
+  const bang = document.querySelector(".d3BangChon"), lenh = document.getElementById("d3Lenh");
+  const nutX = document.createElement("button");
+  nutX.type = "button"; nutX.id = "d3BoChon"; nutX.className = "d3BoChon"; nutX.textContent = "✕"; nutX.hidden = true;
+  nutX.setAttribute("aria-label", "Bỏ chọn");
+  if (bang) bang.appendChild(nutX);
+  nutX.addEventListener("click", e => { e.stopPropagation(); if (dk.boChonTatCa) dk.boChonTatCa(); veX(); });
+  function veX() {
+    const co = !!(dk.dangChon && dk.dangChon()) || !!(lenh && lenh.classList.contains("d3XemKhac"));
+    if (nutX.hidden !== !co) nutX.hidden = !co;
+  }
+  setInterval(veX, 250);
+
   // ---- nút đỏ ⚠️ nông dân bị tấn công ----
   const bao = document.createElement("button");
   bao.type = "button"; bao.className = "d3Nut d3Khung d3BiDanh"; bao.hidden = true; bao.setAttribute("aria-live", "assertive");
@@ -88,8 +114,10 @@ export function taoNongDan(the) {
   return {
     moc: { // kịch bản thử Chrome
       soRanh: () => danMinh().filter(ranh).length, nut: () => !nut.hidden && nut.textContent,
-      bao: () => !bao.hidden && bao.textContent, bamRanh: () => nut.click(), bamBao: () => bao.click(), capNhat
+      bao: () => !bao.hidden && bao.textContent, bamRanh: () => nut.click(), bamBao: () => bao.click(), capNhat,
+      bamTl: () => nutTl.click(), coX: () => !nutX.hidden, bamX: () => nutX.click()
     }
   };
 }
 // 06/11/2026 - BƯỚC: TC_D06C5
+// 07/11/2026 - BƯỚC: TC_D06C6 (nút 👑 tìm Thủ lĩnh, nút ✕ bỏ chọn)
