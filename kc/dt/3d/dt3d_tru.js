@@ -411,7 +411,7 @@ export function taoTruBanDo(the) {
   }
 
   return {
-    thongTin, dangTran: () => !!tran,
+    thongTin, dangTran: () => !!tran, biBan: dv => biBan.has(dv.id), // TC_D06C5: nông dân đang bị trụ bắn
     moc: { // kịch bản thử Chrome
       tran: () => tran && { id: tran.tr.id, truId: tran.ct.id, ket: tran.ket },
       mien: id => Math.max(0, (mien.get(id) || 0) - Date.now()), boMien: () => mien.clear(),
@@ -431,3 +431,4 @@ export function taoTruBanDo(the) {
 }
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ trên bản đồ)
 // 06/11/2026 - BƯỚC: TC_D06C2h (trụ tự bắn nông dân, nông dân vào trận với trụ, máy chủ trụ thấy nỏ quay + mũi tên)
+// 06/11/2026 - BƯỚC: TC_D06C5 (biBan: nông dân đang bị trụ bắn)

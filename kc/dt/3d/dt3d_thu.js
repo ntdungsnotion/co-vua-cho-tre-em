@@ -34,6 +34,7 @@ import { taoQuaiBanDo } from "./dt3d_quai_ban_do.js";
 import { taoDenChon } from "./dt3d_den_chon.js";
 import { taoThanhDuoi } from "./dt3d_thanh_duoi.js";
 import { taoTruBanDo } from "./dt3d_tru.js"; // TC_D06C2g: trụ phòng thủ (05/11/2026)
+import { taoNongDan } from "./dt3d_nong_dan.js"; // TC_D06C5: nút tìm nông dân rảnh + báo nông dân bị tấn công
 
 const NV = window.KC_NV, LANG = window.KC_DT_LANG, BD = window.KC_DT_BAN_DO;
 const $ = id => document.getElementById(id);
@@ -131,7 +132,7 @@ function themNongDan(x, z) {
 }
 
 // Thủ lĩnh + nông dân: làng mẫu đặt sẵn; thung lũng thật lấy từ máy chủ (dt3d_vung.js)
-let hoSoTl = be.hoSo, dvTl, hTl, vung = null, quaiBd = null, truBd = null;
+let hoSoTl = be.hoSo, dvTl, hTl, vung = null, quaiBd = null, truBd = null, nongDanBd = null;
 if (VUNG) {
   let kho = null; try { localStorage.setItem("kc_dt_thu", "1"); kho = localStorage; } catch (e) { /* bị chặn: giữ trong bộ nhớ */ }
   const mayChu = GAME ? taoMayChuThat() : null; // trang thử ?vung: máy chủ giả trên máy
@@ -155,6 +156,11 @@ if (VUNG) {
       lop: $("d3ChuNoi"), cam, diaHinh, hinhCt: id => congTrinhVe.hinhCt(id), nhinVe: (x, z) => cam.nhinVe(x, z),
       chonDv: dv => { const h = boNv.dsHinh.find(k => k.dv === dv); if (h) dk.chon(h); } });
   } catch (e) { console.warn("Chưa dựng được trụ phòng thủ", e); }
+  // TC_D06C5 (người dùng 06/11/2026): nút 🧑‍🌾 tìm nông dân rảnh + nút ⚠️ nông dân bị tấn công (chạm: màn hình tới người đó)
+  try {
+    nongDanBd = taoNongDan({ ctx, lang, boNv, dk, cam, baoGoiY, chung: document.querySelector(".d3Chung"), truocNut: $("d3VeLang"),
+      biTanCong: dv => (quaiBd && quaiBd.biTanCong && quaiBd.biTanCong(dv) ? "quai" : truBd && truBd.biBan && truBd.biBan(dv) ? "tru" : null) });
+  } catch (e) { console.warn("Chưa dựng được nút nông dân", e); }
 } else {
   dvTl = lang.themDonVi("thu_linh", banDo.batDau.thuLinh.x, banDo.batDau.thuLinh.z, be.tenThuLinh || "Thủ lĩnh");
   hTl = boNv.tao(dvTl, "thu_linh", hoSoTl);
@@ -317,6 +323,7 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   vung: vung && vung.moc, // thung lũng thật
   quai: quaiBd && quaiBd.moc, // TC_D06A: quái trên bản đồ
   tru: truBd && truBd.moc, // TC_D06C2g: trụ phòng thủ
+  nongDan: nongDanBd && nongDanBd.moc, // TC_D06C5: nút nông dân rảnh + báo bị tấn công
   ttCt: id => { const ct = lang.congTrinh.find(c => c.id === id); return ct ? ttCongTrinh(ct) : null; }, // thông số thanh dưới của công trình
   mauTl: () => dvTl.mau
 };
@@ -341,3 +348,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 05/11/2026 - BƯỚC: TC_D06C2d (nút Phá hủy bật lại qua máy chủ; ⚔️ Đánh ở thanh dưới sai nông dân)
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ dt3d_tru.js: thanh dưới trụ, móc __dt3d.tru / ttCt / mauTl)
 // 06/11/2026 - BƯỚC: TC_D06C4 (ô Sắt khi có; quái nhận capNhatKho + oKho cho đồ rơi)
+// 06/11/2026 - BƯỚC: TC_D06C5 (nút 🧑‍🌾 tìm nông dân rảnh + nút ⚠️ nông dân bị tấn công: dt3d_nong_dan.js)

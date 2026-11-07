@@ -186,17 +186,40 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 @media (min-width: 900px) { .d3Roi { font-size: 2.25rem; } }
 @media (prefers-reduced-motion: reduce) { .d3TnNhan { animation: none; } }
 /* TC_D06C4 (người dùng chọn: rơi xuống đất, nông dân nhặt): món đồ nằm trên đất (dt3d_do_roi.js), chạm để nông dân ra nhặt */
-.d3DoRoi { position: absolute; left: 0; top: 0; pointer-events: auto; display: flex; align-items: center; gap: 2px; padding: 2px 8px 2px 4px; min-height: 40px;
-  border: 2px solid #ffd666; border-radius: 999px; background: rgba(40, 26, 8, .82); color: #fff6dc; font-family: "Baloo 2", sans-serif; font-weight: 800;
-  font-size: 1rem; line-height: 1; cursor: pointer; box-shadow: 0 0 12px rgba(255, 214, 102, .7); animation: d3DoRoiNhun 1.6s ease-in-out infinite; }
+/* TC_D06C5 (người dùng 06/11/2026 23:44: đồ "lửng lơ trên không", "thu lại còn 1/4"): đồ NẰM SÁT ĐẤT, nhỏ bằng 1/4 diện tích cũ
+   (cao 40 -> 20 px), không viền / không nhấp nhô, có bóng dưới chân; vùng chạm vẫn ~36 px (đệm trong suốt) cho ngón tay bé */
+.d3DoRoi { position: absolute; left: 0; top: 0; pointer-events: auto; display: grid; place-items: center; padding: 8px; margin: 0;
+  border: 0; background: none; cursor: pointer; line-height: 1; -webkit-tap-highlight-color: transparent; }
+.d3DoRoi::after { content: ""; position: absolute; left: 50%; bottom: 7px; width: 18px; height: 6px; transform: translateX(-50%); z-index: -1;
+  border-radius: 50%; background: radial-gradient(rgba(0, 0, 0, .5), rgba(0, 0, 0, 0) 70%); } /* bóng trên đất */
 .d3DoRoi[hidden] { display: none; }
-.d3DoRoiIcon { font-size: 1.5rem; }
-.d3DoRoiMoi { animation: d3DoRoiBat .55s cubic-bezier(.3, 1.6, .5, 1), d3DoRoiNhun 1.6s ease-in-out .55s infinite; }
-.d3DoRoi[data-sap="true"] { border-color: #ff8a8a; animation: d3DoRoiNhay .8s ease-in-out infinite; }
+.d3DoRoi b { display: none; } /* số lượng: trong dòng báo khi nhặt */
+.d3DoRoiIcon { font-size: 20px; filter: drop-shadow(0 0 3px rgba(255, 220, 120, .85)); }
+.d3DoRoiMoi { animation: d3DoRoiBat .5s cubic-bezier(.3, 1.5, .5, 1); }
+.d3DoRoi[data-sap="true"] { animation: d3DoRoiNhay .8s ease-in-out infinite; }
 .d3DoRoiMat { opacity: 0; transition: opacity .4s; pointer-events: none; }
-.d3DoRoiKhac { filter: grayscale(.85); opacity: .7; box-shadow: none; border-style: dashed; animation: none; } /* đồ của bé khác: thấy nhưng không nhặt */
-@keyframes d3DoRoiNhun { 0%, 100% { margin-top: 0; } 50% { margin-top: -6px; } }
-@keyframes d3DoRoiBat { 0% { margin-top: 30px; opacity: 0; scale: .4; } 60% { margin-top: -18px; opacity: 1; scale: 1.15; } 100% { margin-top: 0; scale: 1; } }
-@keyframes d3DoRoiNhay { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
-@media (min-width: 900px) { .d3DoRoi { font-size: 1.15rem; min-height: 44px; } .d3DoRoiIcon { font-size: 1.8rem; } }
-@media (prefers-reduced-motion: reduce) { .d3DoRoi, .d3DoRoiMoi, .d3DoRoi[data-sap="true"] { animation: none; } }
+.d3DoRoiKhac .d3DoRoiIcon { filter: grayscale(.9); opacity: .65; } /* đồ của bé khác: thấy nhưng không nhặt */
+@keyframes d3DoRoiBat { 0% { margin-top: 18px; opacity: 0; scale: .4; } 60% { margin-top: -10px; opacity: 1; scale: 1.1; } 100% { margin-top: 0; scale: 1; } }
+@keyframes d3DoRoiNhay { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+@media (min-width: 900px) { .d3DoRoiIcon { font-size: 22px; } }
+/* TC_D06C5: vạch tiến độ khi nông dân đang nhặt (dưới món đồ) + đồ cầm trên tay (hình nhỏ trên đầu nông dân) */
+.d3DoRoiTien { position: absolute; left: 50%; bottom: 0; width: 26px; height: 5px; transform: translateX(-50%); border-radius: 3px;
+  background: rgba(20, 14, 10, .75); border: 1px solid #ffe08a; overflow: hidden; }
+.d3DoRoiTien[hidden] { display: none; }
+.d3DoRoiTien > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #3ddc84, #a6f07a); }
+.d3DoCam { position: absolute; left: 0; top: 0; pointer-events: none; font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 8px;
+  background: rgba(40, 26, 8, .7); border: 1px solid #ffd666; white-space: nowrap; }
+.d3DoCam[hidden] { display: none; }
+@media (min-width: 900px) { .d3DoCam { font-size: 17px; } }
+@media (prefers-reduced-motion: reduce) { .d3DoRoiMoi, .d3DoRoi[data-sap="true"] { animation: none; } }
+/* 06/11/2026 - BƯỚC: TC_D06C5: nút 🧑‍🌾 nông dân rảnh (ô chung thanh dưới) + nút đỏ ⚠️ nông dân bị tấn công (dưới thanh trên, bên phải) */
+.d3NdRanh { position: relative; font-size: 1.2rem; }
+.d3NdRanhSo { position: absolute; top: -7px; right: -7px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center;
+  background: #ff9f1c; color: #2b1606; border: 2px solid #fff3d6; font-size: .78rem; font-weight: 800; line-height: 1; }
+.d3BiDanh { position: fixed; z-index: 30; right: 8px; top: calc(66px + env(safe-area-inset-top)); max-width: calc(100vw - 16px);
+  min-height: 46px; padding: 6px 14px; font-weight: 800; color: #fff; background: rgba(170, 20, 28, .95); border: 2px solid #ffb3b3; border-radius: 12px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 14px rgba(0, 0, 0, .4); animation: d3BiDanhNhay .8s ease-in-out infinite alternate; }
+@keyframes d3BiDanhNhay { to { box-shadow: 0 0 0 5px rgba(255, 90, 90, .45), 0 4px 14px rgba(0, 0, 0, .4); } }
+@media (min-width: 900px) { .d3BiDanh { right: 12px; top: 80px; font-size: 1.1rem; min-height: 50px; } }
+@media (max-width: 600px) { .d3Chung { max-width: 176px; } .d3NdRanh { font-size: 1.1rem; } }
+@media (prefers-reduced-motion: reduce) { .d3BiDanh { animation: none; } }
