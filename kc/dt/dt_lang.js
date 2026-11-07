@@ -461,7 +461,7 @@
       return tot;
     }
     function nghi(dv) {
-      dv.trangThai = "dung"; dv.viec = null; dv.duong = []; dv.ranh = true;
+      dv.trangThai = "dung"; dv.viec = null; dv.duong = []; dv.ranh = true; dv.catTai = null;
       phat({ loai: "ranh", dv });
     }
     // Lệnh của bé: đi tới ô (bỏ việc, giữ đồ đang mang). Vùng đất thật: không tới được thì đi
@@ -735,14 +735,43 @@
         if (!coKe(n)) n = nguonGanNhat(n.loai, n.x, n.z, CH.banKinhChonBia);
         if (!n) return null;
       }
-      if (dv.mang.so && dv.mang.loai !== n.taiNguyen) { dv.mang = { loai: null, so: 0 }; dv.mangTu = {}; } // đổi loại tài nguyên thì bỏ đồ đang mang
-      dv.viec = n; dv.ranh = false; dv.trangThai = "toi_viec"; dv.dich = null; dv.xay = null; dv.hangXay = []; dv.tuKhamPha = false;
-      diToi(dv, oLam(dv, n));
+      // TC_D06C6 (người dùng 07/11/2026: "mỗi thời điểm chỉ mang một loại", không mất đồ cũ): đang mang loại khác thì
+      // về Lều / kho cất trước rồi mới tới việc mới (chưa có chỗ cất: bỏ đồ như cũ)
+      const doiLoai = dv.mang.so > 0 && dv.mang.loai !== n.taiNguyen;
+      dv.viec = n; dv.ranh = false; dv.dich = null; dv.xay = null; dv.hangXay = []; dv.tuKhamPha = false; dv.catTai = null;
+      const choCat = doiLoai ? choCatGanNhat(dv) : null;
+      if (doiLoai && choCat) { dv.trangThai = "ve_kho"; diToi(dv, choCat); }
+      else {
+        if (doiLoai) { dv.mang = { loai: null, so: 0 }; dv.mangTu = {}; }
+        dv.trangThai = "toi_viec"; diToi(dv, oLam(dv, n));
+      }
       phat({ loai: "giao_viec", dv, n });
       return n;
     }
     const ganNguon = (dv, n) => Math.hypot(dv.x - n.x, dv.z - n.z) < CH.tamVoi;
+    // TC_D06C6: lệnh của bé "đi cất đồ" (chạm Lều / kho khi đang chọn nông dân). ct = chỗ bé chạm (không nhận loại
+    // đang mang thì về chỗ gần nhất nhận được). giuViec: cất xong quay lại việc đang làm. Phát "lenh_cat" (phần đồ rơi
+    // cất đồ đang cầm). Trả true nếu nông dân đang mang tài nguyên thu hoạch và đi cất.
+    const nhanLoai = (c, t) => !!c && c.xong && c.cuaMinh !== false && (!CHF || nhanCat(CHF, c.loai, t));
+    function lenhCat(dv, ct, giuViec) {
+      if (!dv || dv.vaiTro !== "nong_dan") return false;
+      const coMang = dv.mang.so > 0;
+      if (coMang) {
+        dv.catTai = nhanLoai(ct, dv.mang.loai) ? ct : null;
+        const c = choCatGanNhat(dv);
+        if (!c) { dv.catTai = null; return false; }
+        if (!giuViec) dv.viec = null;
+        dv.ranh = false; dv.dich = null; dv.xay = null; dv.hangXay = []; dv.tuKhamPha = false;
+        dv.trangThai = "ve_kho"; diToi(dv, c);
+      }
+      phat({ loai: "lenh_cat", dv, ct, coMang });
+      return coMang;
+    }
     function choCatGanNhat(dv) {
+      if (dv.catTai) { // TC_D06C6: bé chỉ chỗ cất
+        if (congTrinh.includes(dv.catTai) && nhanLoai(dv.catTai, dv.mang.loai)) { const o = oQuanh(dv.catTai, dv.x, dv.z); if (o) return o; }
+        dv.catTai = null;
+      }
       // TC_D03B1: ô quanh công trình đã xong của bé GẦN NHẤT nhận cất loại đồ đang mang (Lều trại: mọi loại; kho: đúng loại)
       if (CHF && laVung) {
         let tot = null, kc = Infinity;
@@ -838,7 +867,7 @@
               nghi(dv); phat({ loai: "kho_day", dv, taiNguyen: loai });
               break;
             }
-            dv.mang = { loai: null, so: 0 }; dv.mangTu = {};
+            dv.mang = { loai: null, so: 0 }; dv.mangTu = {}; dv.catTai = null;
             if (dangSong(dv.viec) || choRuong(dv.viec)) { dv.trangThai = "toi_viec"; diToi(dv, oLam(dv, dv.viec)); }
             else if (dv.viec) hetViec(dv);
             else nghi(dv);
@@ -920,7 +949,7 @@
       tuaNhanh(ms) { lechGio += ms; xuLyHen(); },
       get chungLoai() { return chungLoai; }, datChungLoai(cl) { if (CH.sucMang[cl] != null) chungLoai = cl; }, sucMang,
       nghe(f) { nghe.push(f); },
-      themDonVi, boDonVi, dungDanh, thoiDanh, lenhDi, giaoViec, capNhat, xuLyHen, nguonGanNhat, nguonSatBen, coKe, dangSong, sucChua, danSo, choO,
+      themDonVi, boDonVi, dungDanh, thoiDanh, lenhDi, giaoViec, lenhCat, capNhat, xuLyHen, nguonGanNhat, nguonSatBen, coKe, dangSong, sucChua, danSo, choO,
       duocXay, tocDoXay: (ct, n) => tocDoXay(CHF, ct, n),
       nguonTaiO: (x, y) => nguonO.get(chiSo(x, y)) || null
     };
@@ -930,3 +959,4 @@
 })(typeof window !== "undefined" ? window : globalThis);
 // 28/10/2026 19:05 - BƯỚC: TC_D03B2; 04/11/2026 23:xx - TC_D06C2b (boDonVi, dungDanh / thoiDanh: nông dân đánh quái)
 // 05/11/2026 - BƯỚC: TC_D06C2d (boO: trả ô công trình bị phá hủy về đất trống)
+// 07/11/2026 - BƯỚC: TC_D06C6 (mỗi lúc mang một loại: giao việc loại khác thì cất trước; lenhCat: chạm Lều / kho để cất)
