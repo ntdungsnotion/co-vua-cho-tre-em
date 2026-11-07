@@ -30,8 +30,10 @@
 //   TC_D06C2a (QUÁI HUNG DỮ, khối quaiBanDo.hung): bản ghi có thêm hung (true / false); khoa.trang "lao" = quái hung dữ
 //     đang lao từ chỗ nó đứng lúc khoá (khoa.luc) tới (khoa.x, khoa.z) với tốc độ hung.tocDoLao (viTri trả trangThai "lao",
 //     tới nơi thì "giu"); coHung(ch, sang, r) -> quái mới sinh có hung không; diemLao(ch, q, p, tl, diDuoc) -> { x, z } | null
+//   TC_D06C7a (07/11/2026, lỗi quái vượt hàng rào): quái BỎ CHẠY và quái LAO đi thẳng nhưng dừng ở chân tường / rào / lãnh địa
+//     (diThangDuoc(diDuoc, x0, z0, dx, dz, s) -> quãng đi được), không còn chạy xuyên rào vào làng.
 // BƯỚC: TC_D06A; TC_D06C1 (quái chung: vị trí tính từ bản ghi máy chủ + giờ máy chủ, quái quanh làng); TC_D06C2a (quái hung dữ)
-// NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026
+// NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026; 07/11/2026 (TC_D06C7a: không chạy / lao xuyên rào)
 // ================================================================
 (function (goc) {
   "use strict";
@@ -84,6 +86,22 @@
     }
     return true;
   }
+  // TC_D06C7a: đi thẳng từ (x0, z0) theo (dx, dz) (độ dài 1) được bao xa trong s ô mà không bước vào ô chặn (tường, rào,
+  // lãnh địa): dừng ở mép ô chặn đầu tiên. Ô xuất phát không tính (quái đang đứng ở đâu thì vẫn đi ra được).
+  // Qua đúng góc ô thì hai ô bên cũng phải đi được (như thongDuong: không lách chéo qua tường chéo).
+  function diThangDuoc(diDuoc, x0, z0, dx, dz, s) {
+    const BUOC = 0.2;
+    let ox = Math.floor(x0), oz = Math.floor(z0), d = 0;
+    while (d < s) {
+      const t = Math.min(s, d + BUOC), nx = Math.floor(x0 + dx * t), nz = Math.floor(z0 + dz * t);
+      if (nx !== ox || nz !== oz) {
+        if (!diDuoc(nx, nz) || (nx !== ox && nz !== oz && (!diDuoc(nx, oz) || !diDuoc(ox, nz)))) return d;
+        ox = nx; oz = nz;
+      }
+      d = t;
+    }
+    return s;
+  }
   // Điểm đứng của chu kỳ k (k < 0: chỗ ở). Điểm nhìn thẳng thấy từ chỗ ở; thử 4 lần, không được thì về chỗ ở
   function diem(ch, q, k, diDuoc) {
     if (k < 0) return { x: q.x, z: q.z };
@@ -99,14 +117,18 @@
     if (q.chay) {
       const t = Math.max(0, (bay - q.chay.luc) / 1000);
       if (t >= ch.chayGiay) return { x: q.chay.x, z: q.chay.z, huong: q.chay.huong, trangThai: "chay", mo: 0, mat: true };
-      const s = ch.tocDoChay * t;
-      return { x: q.chay.x + Math.sin(q.chay.huong) * s, z: q.chay.z + Math.cos(q.chay.huong) * s, huong: q.chay.huong, trangThai: "chay", mo: 1 - t / ch.chayGiay, mat: false };
+      const hx = Math.sin(q.chay.huong), hz = Math.cos(q.chay.huong);
+      const s = diThangDuoc(diDuoc, q.chay.x, q.chay.z, hx, hz, ch.tocDoChay * t); // TC_D06C7a: gặp tường / rào thì mờ dần tại chỗ, không chạy xuyên
+      return { x: q.chay.x + hx * s, z: q.chay.z + hz * s, huong: q.chay.huong, trangThai: "chay", mo: 1 - t / ch.chayGiay, mat: false };
     }
     if (q.khoa && q.khoa.trang === "lao") { // TC_D06C2a: quái hung dữ lao từ chỗ đang đi (lúc khoá) tới chỗ máy chủ ghi
       const A = viTri(ch, Object.assign({}, q, { khoa: null }), q.khoa.luc, diDuoc);
       const dx = q.khoa.x - A.x, dz = q.khoa.z - A.z, L = Math.hypot(dx, dz);
       const s = tocDoLao(ch) * Math.max(0, (bay - q.khoa.luc) / 1000);
-      if (L > 1e-3 && s < L) return { x: A.x + dx * s / L, z: A.z + dz * s / L, huong: Math.atan2(dx, dz), trangThai: "lao", mo: 1, mat: false };
+      // TC_D06C7a: đường lao bị tường / rào chặn (máy khác khoá quái khi chưa thấy tường) thì quái dừng ở chân tường
+      const Ld = L > 1e-3 ? diThangDuoc(diDuoc, A.x, A.z, dx / L, dz / L, L) : 0;
+      if (L > 1e-3 && s < Ld) return { x: A.x + dx * s / L, z: A.z + dz * s / L, huong: Math.atan2(dx, dz), trangThai: "lao", mo: 1, mat: false };
+      if (L > 1e-3 && Ld < L - 1e-6) return { x: A.x + dx * Ld / L, z: A.z + dz * Ld / L, huong: Math.atan2(dx, dz), trangThai: "giu", mo: 1, mat: false };
       return { x: q.khoa.x, z: q.khoa.z, huong: L > 1e-3 ? Math.atan2(dx, dz) : null, trangThai: "giu", mo: 1, mat: false };
     }
     if (q.khoa) return { x: q.khoa.x, z: q.khoa.z, huong: null, trangThai: q.khoa.trang === "danh" ? "danh" : "giu", mo: 1, mat: false };
@@ -171,6 +193,6 @@
     return K;
   }
 
-  goc.KC_DT_QUAI_BAN_DO = { viTri, chonCho, chonLoai, lvToiDa, lvQuai, mauKhung, kcCong, ngauNhien, coHung, diemLao, tocDoLao };
+  goc.KC_DT_QUAI_BAN_DO = { viTri, chonCho, chonLoai, lvToiDa, lvQuai, mauKhung, kcCong, ngauNhien, coHung, diemLao, tocDoLao, diThangDuoc };
 })(typeof window !== "undefined" ? window : globalThis);
-// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (quái hung dữ lao vào Thủ lĩnh)
+// 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (quái hung dữ lao vào Thủ lĩnh); 07/11/2026 23:5x - TC_D06C7a (không chạy / lao xuyên rào)

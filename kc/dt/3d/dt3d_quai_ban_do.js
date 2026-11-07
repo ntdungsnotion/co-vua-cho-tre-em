@@ -49,7 +49,9 @@
 //     { hp, toiDa } cho thông số nông dân ở thanh dưới; moc thêm danDs(), vaoDan(idDv), laoDan(idQuai, idDv).
 //   TC_D06C4: the thêm capNhatKho() (vẽ lại thanh tài nguyên), oKho(ma) -> ô tài nguyên trên thanh (đồ rơi bay tới). Thắng quái gọi
 //     mayChu.quaiThang (máy chủ gieo đồ) thay quaiKet "be"; đồ nằm trên đất, nông dân ra nhặt (dt3d_do_roi.js); xem quái thấy "🎁 Có thể rơi".
-// BƯỚC: TC_D06C4 (06/11/2026: quái rơi đồ); TC_D06F (05/11/2026: trang ẩn thì quái hung không lao); TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ); TC_D06C2a (quái hung dữ); TC_D06C2b (nông dân đánh quái)
+//   TC_D06C7a (07/11/2026, lỗi quái vượt hàng rào): quái không bước lên ô cổng; tránh cả lãnh địa máy chủ gửi (the.laLanhDia);
+//     quái đã có mà bị rào kín thì sống bình thường trong vùng rào (không ra được); bỏ chạy / lao dừng ở chân rào (lõi diThangDuoc).
+// BƯỚC: TC_D06C7a (07/11/2026: rào kín an toàn); TC_D06C4 (06/11/2026: quái rơi đồ); TC_D06F (05/11/2026: trang ẩn thì quái hung không lao); TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ); TC_D06C2a (quái hung dữ); TC_D06C2b (nông dân đánh quái)
 // NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // ================================================================
 import * as THREE from "three";
@@ -107,8 +109,15 @@ export async function taoQuaiBanDo(the) {
 
   // ---------- lõi ----------
   const leuGan = (x, y) => lang.congTrinh.some(c => c.loai === "leu" && Math.hypot(c.x + c.rong / 2 - x - 0.5, c.y + c.sau / 2 - y - 0.5) < ch.khongGanLeu);
-  const diDuoc = (x, y) => LUOI.diDuoc(lang.luoi, x, y) && !lang.ruongTaiO(x, y) && !(the.laLanhDia && the.laLanhDia(x, y)) && !leuGan(x, y);
-  const viTri = r => QB.viTri(ch, r, gio(), diDuoc);
+  // TC_D06C7a: quái không bước lên ô cổng (ô cổng không chặn lưới để người qua; quái đứng trên cổng trông như vượt rào).
+  // Quái ngoài rào không vào lãnh địa của ai. Quái có chỗ ở nằm TRONG lãnh địa (đã có trước khi rào khép kín) vẫn sống bình
+  // thường (người dùng 07/11/2026: "Quái đang tồn tại mà bị rào kín thì vẫn tồn tại bình thường, chỉ không xuất hiện mới"):
+  // đi lại trong vùng rào, không qua tường / cổng ra ngoài.
+  const diDuocNha = (x, y) => LUOI.diDuoc(lang.luoi, x, y) && lang.chuCong(x, y) === null && !lang.ruongTaiO(x, y) && !leuGan(x, y);
+  const laLd = (x, y) => !!(the.laLanhDia && the.laLanhDia(x, y));
+  const diDuoc = (x, y) => diDuocNha(x, y) && !laLd(x, y);
+  const diDuocCua = r => (laLd(Math.floor(r.x), Math.floor(r.z)) ? diDuocNha : diDuoc);
+  const viTri = r => QB.viTri(ch, r, gio(), diDuocCua(r));
   const tenLoai = ma => (chTran.quai.loai[ma] || {}).ten || ma;
   // TC_D06C4: bảng rơi đồ (máy chủ thật: bảng Supabase; không đọc được thì số mặc định du_lieu/roi_do.json)
   const RD = window.KC_DT_ROI_DO;
@@ -478,7 +487,7 @@ export async function taoQuaiBanDo(the) {
       if (!r.hung || r.khoa || r.chay || (mien.get(r.id) || 0) > bay) continue;
       const p = viTri(r);
       if (!thay(p)) continue;
-      const K = QB.diemLao(ch, r, p, dvTl, diDuoc);
+      const K = QB.diemLao(ch, r, p, dvTl, diDuocCua(r));
       if (!K) continue;
       const d = Math.hypot(p.x - dvTl.x, p.z - dvTl.z);
       if (!tot || d < tot.d) tot = { r, K, d };
@@ -621,7 +630,7 @@ export async function taoQuaiBanDo(the) {
       if (!thay(p)) continue;
       for (const dv of dsDanMinh()) {
         if (danh.has(dv.id) || dv.trangThai === "danh") continue;
-        const K = QB.diemLao(ch, r, p, dv, diDuoc);
+        const K = QB.diemLao(ch, r, p, dv, diDuocCua(r));
         if (!K) continue;
         const d = Math.hypot(p.x - dv.x, p.z - dv.z);
         if (!tot || d < tot.d) tot = { r, K, d, dv };
@@ -857,3 +866,4 @@ export async function taoQuaiBanDo(the) {
 // 06/11/2026 - BƯỚC: TC_D06C2h (trận ngoài ở nút ⚔️: trụ bắn nông dân, hàng có ⚔️ Đánh + 👀 Xem; themTranNgoai, datBanNgoai, danBoChay)
 // 06/11/2026 - BƯỚC: TC_D06C4 (thắng quái -> quaiThang, đồ rơi nằm trên đất cho nông dân nhặt, xem quái thấy có thể rơi gì)
 // 06/11/2026 - BƯỚC: TC_D06C5 (biTanCong: nông dân bị quái hung dữ tấn công)
+// 07/11/2026 23:5x - BƯỚC: TC_D06C7a (quái không đứng trên cổng, quái bị rào kín sống trong vùng rào)

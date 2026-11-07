@@ -16,7 +16,8 @@
 //            TC_D06C2g: Trụ tên (chân đá, sàn có nỏ lớn, mái ngói đỏ, cờ); trụ thua (ct.hongLuc) thành đống gạch.
 //            TC_D06C2h (06/11/2026): nỏ của trụ ghi ở nha.userData.no (+ caoNo) để dt3d_tru.js quay nỏ + bắn tên.
 // HÀM KHAI RA:
-//   taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang?) -> { leu, lua, hinhCt(id) }
+//   taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang?) -> { leu, lua, hinhCt(id), datNguoiQuaCong(() => [{ x, z }]) }
+//   TC_D06C7a (07/11/2026): cánh cổng đóng, có người tới gần (cách ô cổng <= 1,4 ô) thì mở ra, đi qua rồi tự đóng (hinhCt(id).mo 0..1)
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh (dt3d_mo_hinh.js), diaHinh.doCao (dt3d_dia_hinh.js),
 //           lang (lõi: congTrinh, sự kiện cong_trinh / xay_xong / bo_cong_trinh).
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (chưa có lều); TC_D02B2b (bé dựng lều);
@@ -70,16 +71,18 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
   const vlGoSang = new THREE.MeshLambertMaterial({ color: "#8a5a30" }), vlRom = new THREE.MeshLambertMaterial({ color: "#c9a050" });
   const hop = (r, c, s, vl, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(r, c, s), vl); m.position.set(x, y, z); m.castShadow = !nhe; return m; };
   const cot = (rt, rd, c, vl, x, y, z) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rd, c, 6), vl); m.position.set(x, y, z); m.castShadow = !nhe; return m; };
-  // Cổng cọc gỗ (TC_D02C): 2 cột, xà ngang, 2 cánh cửa hé mở; dài theo cạnh dài của móng
+  // Cổng cọc gỗ (TC_D02C): 2 cột, xà ngang, 2 cánh cửa; dài theo cạnh dài của móng. TC_D06C7a: cánh đóng, có người tới gần thì
+  // mở ra (g.userData.canh: [{ canh, s }], xoay canh.rotation.y = s x MO_GOC x độ mở), đi qua rồi tự đóng
   function taoCong(ct) {
     const g = new THREE.Group(), L = Math.max(ct.rong, ct.sau);
+    g.userData.canh = [];
     for (const s of [-1, 1]) {
       g.add(cot(0.12, 0.14, 1.9, vlCoc, s * (L / 2 - 0.2), 0.95, 0));
       g.add(new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.3, 6), vlCoc).translateX(s * (L / 2 - 0.2)).translateY(2.0));
       const canh = new THREE.Group(); canh.position.set(s * (L / 2 - 0.3), 0, 0);
       const van = hop(L / 2 - 0.35, 1.15, 0.08, vlGoSang, -s * (L / 4 - 0.17), 0.65, 0);
       canh.add(van,hop(L / 2 - 0.4, 0.1, 0.1, vlCoc, -s * (L / 4 - 0.17), 0.95, 0.03), hop(L / 2 - 0.4, 0.1, 0.1, vlCoc, -s * (L / 4 - 0.17), 0.35, 0.03));
-      canh.rotation.y = s * 0.55; // hé mở
+      g.userData.canh.push({ canh, s }); // TC_D06C7a: đóng (trước đây hé mở cố định 0,55)
       g.add(canh);
     }
     g.add(hop(L - 0.1, 0.16, 0.18, vlCoc, 0, 1.7, 0));
@@ -295,6 +298,7 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     else h.nha.scale.set(0.75 + 0.25 * p, Math.max(0.02, p), 0.75 + 0.25 * p);
     h.mong.visible = !h.ct.xong;
   }
+  let datNguoi = () => {}; // TC_D06C7a
   if (lang) {
     for (const ct of lang.congTrinh) themCt(ct);
     lang.nghe(su => {
@@ -305,6 +309,20 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
         const h = dsCt.get(su.ct.id); if (h) { ctx.canh.remove(h.nhom); dsCt.delete(su.ct.id); }
       }
     });
+    // TC_D06C7a: cổng mở khi có người (của mình + của bạn, nguoiThem) đứng cách ô cổng không quá MO_CACH ô, đóng khi đi qua
+    const MO_CACH = 1.4, MO_GOC = 1.45, MO_NHANH = 5;
+    let nguoiThem = () => [];
+    const kcO = (ct, x, z) => Math.hypot(Math.max(ct.x - x, 0, x - ct.x - ct.rong), Math.max(ct.y - z, 0, z - ct.y - ct.sau));
+    const coNguoiGan = ct => lang.donVi.some(d => kcO(ct, d.x, d.z) <= MO_CACH) || nguoiThem().some(d => kcO(ct, d.x, d.z) <= MO_CACH);
+    function moCong(h, dt) {
+      const muon = coNguoiGan(h.ct) ? 1 : 0;
+      if (h.mo === undefined) h.mo = 0;
+      if (Math.abs(h.mo - muon) < 0.001) return;
+      h.mo += Math.sign(muon - h.mo) * Math.min(Math.abs(muon - h.mo), dt * MO_NHANH * (muon ? 1 : 0.6)); // mở nhanh, đóng chậm hơn
+      const k = h.mo * h.mo * (3 - 2 * h.mo); // êm đầu êm cuối
+      for (const c of h.nha.userData.canh) c.canh.rotation.y = c.s * MO_GOC * k;
+    }
+    datNguoi = f => { nguoiThem = f || (() => []); };
     let demRuong = 0;
     ctx.moiKhung((dt, t) => { // TC_D06C2d: thêm t (nhà sụp rung theo thời gian; trước đây t chưa khai báo -> lỗi mỗi khung khi phá hủy)
       if (tuongDoi) veTuong();
@@ -315,6 +333,7 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
           if (!h.gach) { h.gach = taoGach(h.ct); h.nhom.add(h.gach); h.nha.visible = false; h.mong.visible = false; }
           continue;
         }
+        if (h.nha.userData.canh && h.ct.xong && h.ct.phaHuyLuc == null) moCong(h, dt); // TC_D06C7a
         if (!h.ct.xong) datTienDo(h);
         else if (h.ct.phaHuyLuc != null) {
           const con = Math.max(0, 30000 - (lang.bayGio() - h.ct.phaHuyLuc));
@@ -383,6 +402,7 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     return null;
   };
   return { leu, lua, hinhCt: id => dsCt.get(id) || null,
+    datNguoiQuaCong: f => datNguoi(f), // TC_D06C7a: người của bạn (ngoài lang.donVi) cũng mở cổng
     diemTuong: ct => (ct && dsTuong.has(ct.id) ? { x: ct.x + 0.5, z: ct.y + 0.5, r: 0.8 } : null), // điểm cho đèn chiếu
     chon: tia => {
       const ctN = [...dsCt.values()].map(h => h.nhom), hs0 = ctN.length ? tia.intersectObjects(ctN, true) : [];
@@ -397,3 +417,4 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
 }
 // 01/11/2026 17:53 - BƯỚC: TC_D06C1 giao diện công trình + trạng thái phá hủy
 // 05/11/2026 - BƯỚC: TC_D06C2d (sửa lỗi t chưa khai báo ở hiệu ứng nhà sụp)
+// 07/11/2026 23:5x - BƯỚC: TC_D06C7a (cổng mở khi có người đi qua)

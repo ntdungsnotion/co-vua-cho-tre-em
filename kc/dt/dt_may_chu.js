@@ -71,6 +71,8 @@
 //     nhatDo(ten, id, dv): nông dân tới sát món đồ nhặt -> CẦM TRÊN TAY (TC_D06C5). catDo(ten, dv): nông dân cầm đồ tới Lều / kho -> kho (không quá
 //     sức chứa) / túi đồ. nongDanMienPhi(ten): làng hết nông dân -> tặng 1 người. doRoiDs(ten): đồ trên đất trong vùng (của bé + bé khác) + đồ bé đang cầm.
 //     bangRoiDo() -> { ok, vatPham, quai, macDinh }.
+//   TC_D06C7a (07/11/2026): vaoVung / layQuanh trả lanhDia [{ chu, mat (base64, BD.maHoaLanhDia) }] lãnh địa của MỌI bé; quái không đứng trên ô cổng;
+//     quái đã có mà bị rào kín vẫn sống trong vùng rào (không bị dọn), chỉ không sinh mới trong lãnh địa.
 // BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1),
@@ -117,6 +119,8 @@
       if (ct.xongLuc && BD.LA_RAO[ct.loai]) lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, true);
     };
     for (const ct of tt.congTrinh) datCt(ct);
+    // TC_D06C7a: lãnh địa của MỌI bé (cả chỗ bé chưa khám phá) để quái trên máy bé tránh đúng như máy chủ: [{ chu, mat (base64) }]
+    const lanhDiaRa = () => lanhDia.dsChu().map(chu => { const m = lanhDia.cua(chu); return m ? { chu, mat: BD.maHoaLanhDia(m) } : null; }).filter(Boolean);
 
     const viTri = dv => dv.lenh ? BD.viTriTuLenh(lang, dv.lenh, gio(), null, dv.chu) : { x: dv.x, z: dv.z };
     const khoCua = be => { const k = {}; for (const t in CH.lang.taiNguyen) k[t] = (be.kho && be.kho[t]) || 0; return k; };
@@ -349,8 +353,11 @@
     const dsLeu = () => tt.congTrinh.filter(c => c.loai === "leu").map(c => ({ id: c.id, chu: c.chu, x: c.x + c.rong / 2, z: c.y + c.sau / 2, xong: !!c.xongLuc }));
     const laRuong = (x, y) => tt.congTrinh.some(c => c.loai === "ruong" && trongCt(c, x, y));
     // Ô quái đứng / đi được: như lõi trang (dt3d_quai_ban_do.js): không chặn, không ruộng, không lãnh địa, không sát lều
-    const quaiDiDuoc = leu => (x, y) => LUOI.diDuoc(lang.luoi, x, y) && !laRuong(x, y) && !lanhDia.chuO(x, y, null)
+    // TC_D06C7a: ô cổng không đứng được; quaiNhaDuoc = chỗ ở còn dùng được: như trên nhưng KHÔNG xét lãnh địa (người dùng 07/11/2026:
+    // quái đã có mà bị rào kín thì vẫn sống bình thường trong vùng rào, chỉ không sinh quái mới trong đó)
+    const quaiNhaDuoc = leu => (x, y) => LUOI.diDuoc(lang.luoi, x, y) && !laRuong(x, y) && lang.chuCong(x, y) === null
       && !leu.some(l => Math.hypot(l.x - x - 0.5, l.z - y - 0.5) < CQ.khongGanLeu);
+    const quaiDiDuoc = leu => { const nha = quaiNhaDuoc(leu); return (x, y) => nha(x, y) && !lanhDia.chuO(x, y, null); };
     const banGhiQuai = q => ({ id: q.id, ma: q.ma, lv: q.lv, x: q.x, z: q.z, hat: q.hat, sinhLuc: q.sinhLuc, hung: !!q.hung, khoa: q.khoa ? { ...q.khoa } : null, chay: q.chay ? { ...q.chay } : null });
     // Quái còn trên bản đồ hoặc vừa bỏ chạy (máy bé vẽ nốt lúc chạy); quái chờ sinh lại thì không trả
     const dsQuai = bay => (tt.quai || []).filter(q => !q.chay || bay < q.chay.luc + CQ.chayGiay * 1000 + 10000).map(banGhiQuai);
@@ -377,7 +384,8 @@
       for (const q of tt.quai) if (q.khoa && bay - q.khoa.luc > (q.khoa.trang === "danh" ? CQ.khoaDanhGiay : CQ.khoaToiGiay) * 1000) q.khoa = null;
       tt.quai = tt.quai.filter(q => q.leu == null || leu.some(l => l.id === q.leu && l.xong));
       const henLai = q => { q.chay = { x: q.x, z: q.z, huong: 0, luc: bay + (CQ.thuLaiGiay - CQ.hoiSinhGiay) * 1000 }; }; // mất ngay, sinh lại sau thuLaiGiay
-      for (const q of tt.quai) if (!q.chay && !q.khoa && !dd(Math.floor(q.x), Math.floor(q.z))) henLai(q);
+      const ddNha = quaiNhaDuoc(leu); // TC_D06C7a: chỗ ở bị rào kín không tính là bị chặn
+      for (const q of tt.quai) if (!q.chay && !q.khoa && !ddNha(Math.floor(q.x), Math.floor(q.z))) henLai(q);
       // cấp làng cao nhất vùng = cấp Lều trại đã dựng cao nhất (chưa có Lều nào: 1) -> Lv quái mới tối đa (lvTheoCapLang)
       const capLang = Math.max(1, ...tt.congTrinh.filter(c => c.loai === "leu" && c.xongLuc).map(c => c.cap || 1));
       const sinh = leuId => QB.chonCho({ ch: CQ, W: vung.rong, H: vung.cao, diDuoc: dd, cong: vung.cong, leu, capLang,
@@ -497,7 +505,7 @@
         const cong = vung.cong.find(c => c.so === be.cong);
         return { ok: true, maVung: vung.ma, banSao: 1, cong: { so: cong.so, x: cong.x, z: cong.z }, lanDau, khamPha: be.khamPha,
           donVi: cuaBe(ten).map(d => ({ id: d.id, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh, mau: d.mau == null ? null : d.mau })), kho: khoCua(be), vang, gio: bay, hang: hangCua(be),
-          quai: dsQuai(bay), nghiDen: be.nghiDen || 0 };
+          quai: dsQuai(bay), nghiDen: be.nghiDen || 0, lanhDia: lanhDiaRa() };
       },
 
       async layQuanh(ten) {
@@ -515,7 +523,7 @@
         const them = CB.thayNhaThemO || 0, gan = (x, y) => s.nguonSoi.some(n => (x + 0.5 - n.x) ** 2 + (y + 0.5 - n.z) ** 2 <= (n.r + them) ** 2);
         const congTrinh = tt.congTrinh.filter(ct => ct.chu === ten || s.muc(ct.x, ct.y) !== BD.DEN || gan(ct.x, ct.y)).map(ct => ctRa(ct, ten));
         return { ok: true, gio: gio(), nguon, congTrinh, donVi: thay.map(d => ({ id: d.id, chu: d.chu, loai: d.loai, x: d.x, z: d.z, lenh: d.lenh, mau: d.mau == null ? null : d.mau })),
-          hang: hangCua(tt.be[ten]), quai: dsQuai(bay), nghiDen: tt.be[ten].nghiDen || 0 };
+          hang: hangCua(tt.be[ten]), quai: dsQuai(bay), nghiDen: tt.be[ten].nghiDen || 0, lanhDia: lanhDiaRa() };
       },
 
       // TC_D06C1: bé chạm quái (Thủ lĩnh bắt đầu tiến tới): giữ quái đứng ở (x, z) cho mọi bé thấy; mỗi bé giữ một con.
@@ -1020,3 +1028,4 @@
 // 06/11/2026 - BƯỚC: TC_D06C2h (truBan: trụ tự bắn nông dân; truKhai(..., dv): nông dân vào trận với trụ; ct.ban: phát bắn gần nhất)
 // 06/11/2026 - BƯỚC: TC_D06C4 (quaiThang: quái rơi đồ vào kho / túi đồ; bangRoiDo)
 // 06/11/2026 - BƯỚC: TC_D06C5 (nhatDo cầm trên tay, catDo, nongDanMienPhi)
+// 07/11/2026 23:5x - BƯỚC: TC_D06C7a (lanhDia mọi bé, quái không đứng trên cổng)

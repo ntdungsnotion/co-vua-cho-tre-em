@@ -34,6 +34,8 @@
 //     doRoiDs() (kc_dt_do_roi_ds), bangRoiDo() (kc_dt_doc_roi_do).
 //   TC_D06C2g: truCau / truKhai / truLuot / truTra / truRut (trụ phòng thủ, như dt_may_chu.js); quaiKet(..., dan = { mau }) không có dv
 //     = máu Thủ lĩnh còn lại (giữ nguyên sau trận, không tự hồi). vaoVung trả congTrinh (số công trình từ bảng kc_dt_loai_cong_trinh).
+//   TC_D06C7a (07/11/2026): vaoVung / layQuanh trả thêm lanhDia [{ chu, mat (base64) }] (lãnh địa mọi bé, cần SQL TC_D06C7a;
+//     máy chủ chưa chạy SQL thì không có trường này, trang giữ cách cũ). Lớp gọi không đổi: trả nguyên kết quả RPC.
 // BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
