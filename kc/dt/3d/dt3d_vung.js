@@ -562,6 +562,19 @@ export async function vaoThungLung(the) {
   // TC_D03B1: chạm Lều trại đã xong (cả khi chưa chọn ai; tính rộng thêm 1 ô vì chạm mái lều tia rơi sau lều)
   // -> mở phần Lều: dân số + nút sinh nông dân; chạm chỗ khác thì đóng.
   uiDk.chamO = (h, o) => {
+    // TC_D06C6 (người dùng 07/11/2026: "Bấm vào kho, lều thì phải chuyển tài nguyên vào kho"): đang chọn nông dân đang mang
+    // tài nguyên / cầm đồ rơi + chạm Lều hoặc kho đã xong của mình -> nông dân đi cất (cất xong quay lại việc đang làm)
+    if (h && !h.dv.laBan && h.vaiTro === "nong_dan" && ((h.dv.mang && h.dv.mang.so > 0) || h.dv.camDo)) {
+      const ctCat = lang.congTrinh.find(c => c.cuaMinh !== false && c.xong && o.x >= c.x - 1 && o.x < c.x + c.rong + 1
+        && o.y >= c.y - 1 && o.y < c.y + c.sau + 1 && (c.loai === "leu" || (cauHinh.congTrinh[c.loai] || {}).sucChua || (cauHinh.congTrinh[c.loai] || {}).cat));
+      if (ctCat) {
+        const tn = h.dv.mang && h.dv.mang.so > 0 ? (lang.CH.taiNguyen[h.dv.mang.loai] || {}).bieuTuong + " " + h.dv.mang.so : "đồ đang cầm";
+        const di = lang.lenhCat(h.dv, ctCat, true) || h.dv.camDo;
+        const nhan = !(h.dv.mang && h.dv.mang.so > 0) || !window.KC_DT_LANG || window.KC_DT_LANG.nhanCat(cauHinh, ctCat.loai, h.dv.mang.loai);
+        baoGoiY(di ? "📦 " + h.dv.ten + " mang " + tn + " về " + (nhan ? (CT[ctCat.loai] || {}).ten || "kho" : "chỗ cất gần nhất (" + ((CT[ctCat.loai] || {}).ten || "kho này") + " không nhận loại này)") + " cất." : "❌ Chưa có chỗ cất loại này.");
+        return true;
+      }
+    }
     if (leuBe && leuBe.xong && o.x >= leuBe.x - 1 && o.x <= leuBe.x + R && o.y >= leuBe.y - 1 && o.y <= leuBe.y + S) {
       moLeu(true); return true;
     }
@@ -1021,3 +1034,4 @@ export async function vaoThungLung(the) {
 // 05/11/2026 - BƯỚC: TC_D06C2d (👥 lên thanh trên, bỏ % khám phá, phá hủy công trình qua máy chủ)
 // 06/11/2026 - BƯỚC: TC_D06C4 (máy chủ thử nhận bảng rơi đồ roi_do.json)
 // 06/11/2026 - BƯỚC: TC_D06C5 (không còn nông dân: máy chủ tặng một người, nongDanMienPhi)
+// 07/11/2026 - BƯỚC: TC_D06C6 (chạm Lều / kho khi chọn nông dân đang mang: đi cất)
