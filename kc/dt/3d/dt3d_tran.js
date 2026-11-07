@@ -304,8 +304,9 @@ async function tao(vungVe, { nhe } = {}) {
     },
     nghi(bat) { bong.visible = !!bat; },
     ketQua(k) {
-      vong.be.visible = vong.quai.visible = false; bong.visible = false;
-      const dangThu = giuThu; giuThu = false; // TC_D05D: thế thủ giữ tới đúng lúc này (đòn của quái được tính)
+      const dangThu = giuThu; giuThu = false; // TC_D05D: thế thủ giữ tới lúc đòn của quái được tính
+      // TC_D05D (người dùng 07/11/2026): vòng khiên còn tới lúc đòn CHẠM vào bé (beChiu) rồi mới tắt
+      vong.be.visible = dangThu && k.tanCong === "quai"; vong.quai.visible = false; bong.visible = false;
       const trung = k.satThuong > 0, ne = k.kieu === "ne";
       const qn = quai.nhom;
       if (k.tanCong === "be") {
@@ -337,8 +338,10 @@ async function tao(vungVe, { nhe } = {}) {
         const kq = KIEU_QUAI[quai.ma] || KIEU_QUAI.slime_so;
         // bé chọn đúng => đang giữ thế thủ (trang gọi thu("be", true)); giữ tới khi quái đánh xong rồi mới thả
         let daTha = false;
-        them(0.01, () => { daTha = true; if (tuong && ["thu", "do"].indexOf(tuong.dangDien()) >= 0) dien("dung"); }, 1.15);
+        them(0.01, () => { daTha = true; vong.be.visible = false; if (tuong && ["thu", "do"].indexOf(tuong.dangDien()) >= 0) dien("dung"); }, 1.15);
         const beChiu = p => {
+          vong.be.visible = false;
+          if (trung && k.chan && p) hu.khien(V(dvBe.x, caoBe * 0.5, 0.05), kieu === KIEU_TOC.tien ? "#9fe4ff" : kieu.mau, 0.45, caoBe * 0.55); // khiên đỡ bớt
           if (trung) {
             dien("trung"); chopBe(0.3); am.trung(p.x, k.chiMang);
             vaCham(p, k.chiMang ? "#ff5a4a" : "#ffb08a", k.chiMang);
