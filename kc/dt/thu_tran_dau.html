@@ -579,7 +579,7 @@
       const q = T.quai().ten, be = k.tanCong === "be";
       const cm = k.chiMang ? " · Chí mạng" : "";
       if (be) return ({ trung: (k.neThu ? q + " né hụt · " : "Trúng · ") + "−" + k.satThuong + " HP" + cm, so_ho: "Trúng sơ hở · −" + k.satThuong + " HP" + cm, ne: q + " né được", hut: "Đánh hụt", het_gio: "Hết giờ · đánh hụt" })[k.kieu];
-      return ({ trung: (k.neThu ? "Né hụt · −" : (k.beChon != null ? "Phòng thủ sai · −" : "Bị trúng · −")) + k.satThuong + " HP" + cm, so_ho: "Phòng thủ sai, sơ hở · −" + k.satThuong + " HP" + cm, ne: "Né được · +" + k.mp.be + " MP", hut: q + " đánh hụt" + (k.mp.be ? " · +" + k.mp.be + " MP" : ""), het_gio: q + " đánh hụt" })[k.kieu];
+      return ({ trung: (k.chan ? "Khiên đỡ " + Math.round(k.chan * 100) + "% · −" : k.neThu ? "Né hụt · −" : (k.beChon != null ? "Phòng thủ sai · −" : "Bị trúng · −")) + k.satThuong + " HP" + cm, so_ho: "Phòng thủ sai, sơ hở · −" + k.satThuong + " HP" + cm, ne: "Né được · +" + k.mp.be + " MP", hut: q + " đánh hụt" + (k.mp.be ? " · +" + k.mp.be + " MP" : ""), het_gio: q + " đánh hụt" })[k.kieu];
     }
 
     function xuLyKetQua(k) {
@@ -860,3 +860,4 @@
 </html>
 <!-- 30/10/2026 - BƯỚC: TC_D06A (chế độ nhúng từ bản đồ); 04/11/2026 - TC_D06C2a (quaiTruoc); 04/11/2026 23:xx - TC_D06C2b (vai=nong_dan) -->
 <!-- 05/11/2026 - BƯỚC: TC_D06C2g (trận trụ ?tru=1, máu Thủ lĩnh &hp=) -->
+<!-- 07/11/2026 - BƯỚC: TC_D05D (chữ "Khiên đỡ x%" khi phòng thủ đúng né hụt) -->
