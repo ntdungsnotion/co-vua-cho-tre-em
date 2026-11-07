@@ -50,7 +50,7 @@
 //             be: { ten, hoSo, tenThuLinh }, themNongDan(x, z) -> dv, $, baoGoiY, kho (localStorage | null),
 //             capNhatKho? () (vẽ lại thanh tài nguyên khi kho bị trừ, TC_D02B3b) }
 //     vung = { dvTl, hTl, suong, veSuong, mayChu, vao, batDau() (sau khung đầu), moc (kịch bản thử),
-//              laLanhDia(x, y) (TC_D06A, 30/10/2026: ô thuộc lãnh địa của bé bất kỳ, cho quái tránh),
+//              laLanhDia(x, y) (TC_D06A, 30/10/2026: ô thuộc lãnh địa của bé bất kỳ, cho quái tránh; TC_D06C7a: gồm cả lãnh địa máy chủ gửi),
 //              quanhDau { quai, nghiDen }, ngheQuanh(f(kqLayQuanh)), hoiLai(), tlBan(chu) -> { dv, h } | null (TC_D06C1) }
 //   TC_D06C1: Thủ lĩnh của bạn có dv.danhQuai = { x, z } (phần quái đặt) và đã tới nơi -> trangThai "danh" (động tác đánh).
 //   Không vào được (thung lũng đầy...): ném lỗi, err.lyDo là câu cho bé.
@@ -147,6 +147,21 @@ export async function vaoThungLung(the) {
     lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, co);
     ldDoi = true;
   });
+  // TC_D06C7a: lãnh địa MỌI bé do máy chủ gửi (lanhDia [{ chu, mat }], cả rào bé chưa khám phá / chưa tải): quái tránh đúng như máy chủ,
+  // không lọt vào làng bạn chỉ vì máy này chưa biết đủ tường. Máy chủ cũ (chưa chạy SQL TC_D06C7a) không gửi thì giữ cách cũ.
+  let ldMayChu = null; // gộp mọi bé: 1 = ô trong lãnh địa của ai đó
+  function nhanLdMayChu(ds) {
+    if (!Array.isArray(ds)) return;
+    let gop = null;
+    for (const d of ds) {
+      const m = d && typeof d.mat === "string" ? BD.giaiMaLanhDia(d.mat, W, H) : null;
+      if (!m) continue;
+      if (!gop) gop = m; else for (let i = 0; i < m.length; i++) gop[i] |= m[i];
+    }
+    ldMayChu = gop;
+  }
+  nhanLdMayChu(quanh.lanhDia || vao.lanhDia);
+  const laLdMayChu = (x, y) => !!ldMayChu && x >= 0 && y >= 0 && x < W && y < H && ldMayChu[y * W + x] === 1;
   const laTuongMinh = (x, y) => { const c = oRaoMinh.get(y * W + x); return !!c && c.loai === "tuong" && x >= 0 && y >= 0 && x < W && y < H; };
   const laRaoMinh = (x, y) => x >= 0 && y >= 0 && x < W && y < H && oRaoMinh.has(y * W + x);
   // Vẽ lại lãnh địa + báo bé khi lãnh địa của mình vừa khép / rộng ra / bị hở
@@ -346,7 +361,7 @@ export async function vaoThungLung(the) {
       await guiThuHoach();
       for (const { ct, dv } of [...choBaoXong.values()]) await xongCt(ct, dv, true); // TC_D03A
       const q = await mayChu.layQuanh(ten);
-      if (q && q.ok) { lienLac = Date.now(); dongBoNguon(q.nguon); dongBoCongTrinh(q.congTrinh); dongBoBan(q.donVi); dongBoMinh(q); for (const f of ngheQuanh) f(q); }
+      if (q && q.ok) { lienLac = Date.now(); nhanLdMayChu(q.lanhDia); dongBoNguon(q.nguon); dongBoCongTrinh(q.congTrinh); dongBoBan(q.donVi); dongBoMinh(q); for (const f of ngheQuanh) f(q); }
       if (q && q.ok) await tangNongDan(q); // TC_D06C5
     } finally { dangHoi = false; }
     if (hoiNgay) { hoiNgay = false; chuKy(); }
@@ -974,12 +989,13 @@ export async function vaoThungLung(the) {
 
   return {
     dvTl, hTl, suong, veSuong, mayChu, vao, batDau,
-    laLanhDia: (x, y) => !!lanhDia.chuO(x, y, null), // TC_D06A: quái không vào lãnh địa của ai
+    laLanhDia: (x, y) => !!lanhDia.chuO(x, y, null) || laLdMayChu(x, y), // TC_D06A: quái không vào lãnh địa của ai; TC_D06C7a: + lãnh địa máy chủ gửi
     // TC_D06C1: quái chung: kết quả vào vùng + hỏi lại đầu tiên, nghe các lần hỏi lại sau, Thủ lĩnh của bạn (vẽ đánh quái)
     quanhDau: { quai: quanh.quai || vao.quai || [], nghiDen: vao.nghiDen || 0 },
     ngheQuanh: f => ngheQuanh.push(f), hoiLai: () => chuKy(),
     tlBan: chu => { for (const b of ban.values()) if (b.dv.chu === chu && b.dv.vaiTro === "thu_linh") return b; return null; },
     dvBan: id => ban.get(id) || null, // TC_D06C2b: nông dân của bạn đang đánh quái (id máy chủ)
+    dsDvBan: () => [...ban.values()].map(b => b.dv), // TC_D06C7a: người của bạn đi qua cổng của bạn ấy -> cổng mở
     phaHuy, duocPhaHuy, PHA_HUY_GIAY,
     // TC_D06D: thông số riêng của công trình cho ô "đang xem" ở thanh dưới; chọn người khác thì đóng phần Lều / ruộng
     thongTinCt(ct) {
@@ -1035,3 +1051,4 @@ export async function vaoThungLung(the) {
 // 06/11/2026 - BƯỚC: TC_D06C4 (máy chủ thử nhận bảng rơi đồ roi_do.json)
 // 06/11/2026 - BƯỚC: TC_D06C5 (không còn nông dân: máy chủ tặng một người, nongDanMienPhi)
 // 07/11/2026 - BƯỚC: TC_D06C6 (chạm Lều / kho khi chọn nông dân đang mang: đi cất)
+// 07/11/2026 23:5x - BƯỚC: TC_D06C7a (lãnh địa mọi bé từ máy chủ cho quái tránh)

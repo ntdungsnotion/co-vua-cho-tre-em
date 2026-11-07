@@ -23,13 +23,14 @@
 //   timBienKhamPha(lang, suong, x, z, tranh?, cachNhau?) -> ô mép vùng đen gần nhất | null
 //   (TC_D02C) tamNhinCt(chBanDo, loaiCongTrinh, chungLoai); LA_RAO { tuong, cong };
 //   tinhLanhDia(W, H, [chỉ số ô rào]) -> Uint8Array | null (mục 5: loang từ ngoài vào, chỉ rào của bé là kín);
-//   taoBoLanhDia(W, H) -> { dat(chu, x, y, rong, sau, co), cua(chu), chuO(x, y, tru), soO(chu) };
+//   taoBoLanhDia(W, H) -> { dat(chu, x, y, rong, sau, co), cua(chu), chuO(x, y, tru), soO(chu), dsChu() };
+//   (TC_D06C7a) maHoaLanhDia(mặt nạ) -> base64; giaiMaLanhDia(base64, W, H) -> mặt nạ | null (lãnh địa máy chủ gửi, cho quái tránh)
 //   doanTuong(ôA, ôB, toiDa) -> [ô] thẳng ngang / dọc; choCong(x, y, rong, sau, laTuongMinh) -> { x, y, rong, sau, xoay }
 //   the.deLen?(x, y) của oXayDuoc: ô có công trình mà vẫn xây đè được (cổng đè tường của chính bé)
 //   (TC_D03B2) LY_DO chua_gat, het_bai (trồng lại ruộng)
 // BƯỚC: TC_D02B2a; TC_D02B2b (timBienKhamPha); TC_D02B3b (viTriTuLenh nhớ đường, báo chạy);
 //       TC_D02C (lãnh địa, đoạn tường, chỗ cổng, tầm nhìn công trình, viTriTuLenh theo chủ qua cổng); TC_D03B2 (câu trồng lại ruộng)
-// NGÀY: 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 19:05
+// NGÀY: 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 19:05; 07/11/2026 23:5x (TC_D06C7a)
 // PHỤ THUỘC: dt/dt_luoi.js (KC_DT_LUOI); tham số lang là lõi dt/dt_lang.js
 // ================================================================
 (function (goc) {
@@ -101,7 +102,22 @@
       return null;
     }
     const soO = chu => { const m = cua(chu); let n = 0; if (m) for (let i = 0; i < m.length; i++) n += m[i]; return n; };
-    return { dat, cua, chuO, soO };
+    const dsChu = () => [...rao.keys()]; // TC_D06C7a: máy chủ giả gửi mặt nạ mọi bé
+    return { dat, cua, chuO, soO, dsChu };
+  }
+  // TC_D06C7a: mặt nạ lãnh địa <-> chuỗi base64 (mỗi ô 1 bit, ô i ở byte i >> 3, bit i & 7 tính từ bit thấp: như
+  // set_bit / get_bit trên bytea của Postgres, cột kc_dt_lanh_dia.mat_na) để máy chủ gửi lãnh địa của mọi bé
+  function maHoaLanhDia(mat) {
+    const b = new Uint8Array(Math.ceil(mat.length / 8));
+    for (let i = 0; i < mat.length; i++) if (mat[i]) b[i >> 3] |= 1 << (i & 7);
+    let s = ""; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s);
+  }
+  function giaiMaLanhDia(chuoi, W, H) {
+    let s; try { s = atob(chuoi); } catch (e) { return null; }
+    const m = new Uint8Array(W * H);
+    for (let i = 0; i < m.length; i++) { const c = s.charCodeAt(i >> 3); if (c & (1 << (i & 7))) m[i] = 1; }
+    return m;
   }
   // Đoạn tường thẳng (ngang hoặc dọc, theo chiều chênh nhiều hơn) từ ô a về phía ô b, tối đa toiDa ô
   function doanTuong(a, b, toiDa) {
@@ -300,6 +316,6 @@
   }
 
   goc.KC_DT_BAN_DO = { DEN, MO, SANG, tamNhin, tamNhinCt, taoSuongMu, oXayDuoc, oXayDuocVung, viTriTuLenh, locDonViThayDuoc, timBienKhamPha, LY_DO,
-    LA_RAO, tinhLanhDia, taoBoLanhDia, doanTuong, choCong };
+    LA_RAO, tinhLanhDia, taoBoLanhDia, maHoaLanhDia, giaiMaLanhDia, doanTuong, choCong };
 })(typeof window !== "undefined" ? window : globalThis);
-// 28/10/2026 19:05 - BƯỚC: TC_D03B2 (LY_DO chua_gat / het_bai)
+// 28/10/2026 19:05 - BƯỚC: TC_D03B2 (LY_DO chua_gat / het_bai); 07/11/2026 23:5x - TC_D06C7a (mã hoá lãnh địa máy chủ gửi)

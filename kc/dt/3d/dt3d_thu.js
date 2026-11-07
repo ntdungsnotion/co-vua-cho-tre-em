@@ -140,6 +140,7 @@ if (VUNG) {
     vung = await vaoThungLung({ ctx, cam, lang, banDo, cauHinh, diaHinh, boNv, dk, uiDk, be: { ...be, ten: be.ten || "khach" }, themNongDan, $, baoGoiY, kho, mayChu, capNhatKho: () => capNhatKho() });
   } catch (e) { chuTai.textContent = e.lyDo || "Chưa vào được làng. Tải lại trang nhé!"; throw e; }
   dvTl = vung.dvTl; hTl = vung.hTl;
+  congTrinhVe.datNguoiQuaCong(vung.dsDvBan); // TC_D06C7a: người của bạn đi qua cổng thì cổng mở
   // TC_D06A: quái lang thang; chạm quái khi đang chọn Thủ lĩnh -> màn chiến đấu
   try {
     quaiBd = await taoQuaiBanDo({ ctx, cam, lang, diaHinh, banDo, cauHinh, suong: vung.suong, laLanhDia: vung.laLanhDia, dvTl, hTl,
@@ -325,7 +326,8 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   tru: truBd && truBd.moc, // TC_D06C2g: trụ phòng thủ
   nongDan: nongDanBd && nongDanBd.moc, // TC_D06C5: nút nông dân rảnh + báo bị tấn công
   ttCt: id => { const ct = lang.congTrinh.find(c => c.id === id); return ct ? ttCongTrinh(ct) : null; }, // thông số thanh dưới của công trình
-  mauTl: () => dvTl.mau
+  mauTl: () => dvTl.mau,
+  moCong: id => { const h = congTrinhVe.hinhCt(id); return h ? (h.mo || 0) : null; } // TC_D06C7a: độ mở cánh cổng 0..1
 };
 ctx.khiDo(so => {
   Object.assign(window.__dt3d, so);
@@ -349,3 +351,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ dt3d_tru.js: thanh dưới trụ, móc __dt3d.tru / ttCt / mauTl)
 // 06/11/2026 - BƯỚC: TC_D06C4 (ô Sắt khi có; quái nhận capNhatKho + oKho cho đồ rơi)
 // 06/11/2026 - BƯỚC: TC_D06C5 (nút 🧑‍🌾 tìm nông dân rảnh + nút ⚠️ nông dân bị tấn công: dt3d_nong_dan.js)
+// 07/11/2026 23:5x - BƯỚC: TC_D06C7a (người của bạn mở cổng; móc __dt3d.moCong)
