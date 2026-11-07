@@ -19,7 +19,7 @@ const NHIP_MS = 400; // đếm lại người rảnh / người bị đánh mỗ
 export function taoNongDan(the) {
   const { ctx, lang, boNv, dk, cam, baoGoiY } = the;
   const danMinh = () => lang.donVi.filter(d => d.vaiTro === "nong_dan" && !d.laBan && !d.chay);
-  const ranh = d => d.ranh || (d.trangThai === "dung" && !d.viec && !d.xay && !(d.hangXay && d.hangXay.length) && !(d.duong && d.duong.length));
+  const ranh = d => !d.dangNhatDo && (d.ranh || (d.trangThai === "dung" && !d.viec && !d.xay && !(d.hangXay && d.hangXay.length) && !(d.duong && d.duong.length)));
   const hinhCua = dv => boNv.dsHinh.find(h => h.dv === dv);
   function toiVaChon(dv) {
     cam.nhinVe(dv.x, dv.z);

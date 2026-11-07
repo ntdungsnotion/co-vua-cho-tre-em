@@ -347,7 +347,19 @@ export async function vaoThungLung(the) {
       for (const { ct, dv } of [...choBaoXong.values()]) await xongCt(ct, dv, true); // TC_D03A
       const q = await mayChu.layQuanh(ten);
       if (q && q.ok) { lienLac = Date.now(); dongBoNguon(q.nguon); dongBoCongTrinh(q.congTrinh); dongBoBan(q.donVi); dongBoMinh(q); for (const f of ngheQuanh) f(q); }
+      if (q && q.ok) await tangNongDan(q); // TC_D06C5
     } finally { dangHoi = false; }
+    if (hoiNgay) { hoiNgay = false; chuKy(); }
+  }
+  // TC_D06C5 (người dùng 06/11/2026: "tài khoản không còn nông dân thì có một nông dân miễn phí"): đã có Lều trại mà máy chủ báo
+  // không còn nông dân nào (mất hết vì quái / trụ) -> xin máy chủ tặng một người, hỏi lại ngay để người đó hiện ra
+  let hoiNgay = false, tangLuc = 0;
+  async function tangNongDan(q) {
+    if (!leuDaNhan || !mayChu.nongDanMienPhi || Date.now() - tangLuc < 30000) return;
+    if ((q.donVi || []).some(d => d.chu === tenChuan && d.loai === "nong_dan")) return;
+    tangLuc = Date.now();
+    const kq = await mayChu.nongDanMienPhi(ten).catch(() => null);
+    if (kq && kq.ok) { hoiNgay = true; baoGoiY("🎁 Làng không còn nông dân nào · tặng con 1 nông dân miễn phí!"); }
   }
   // TC_D03B1: nông dân Lều trại vừa sinh (máy chủ tạo theo giờ máy chủ) -> thêm vào làng, đứng chờ việc (dấu "!")
   function dongBoMinh(q) {
@@ -1008,3 +1020,4 @@ export async function vaoThungLung(the) {
 // 04/11/2026 - BƯỚC: TC_D06D (thongTinCt + dongXem cho thanh dưới; câu menu Xây: chỉ nông dân đang chọn đi xây)
 // 05/11/2026 - BƯỚC: TC_D06C2d (👥 lên thanh trên, bỏ % khám phá, phá hủy công trình qua máy chủ)
 // 06/11/2026 - BƯỚC: TC_D06C4 (máy chủ thử nhận bảng rơi đồ roi_do.json)
+// 06/11/2026 - BƯỚC: TC_D06C5 (không còn nông dân: máy chủ tặng một người, nongDanMienPhi)

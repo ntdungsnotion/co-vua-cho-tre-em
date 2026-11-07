@@ -676,7 +676,7 @@ export async function taoQuaiBanDo(the) {
   }
 
   // ===== TC_D06C4: ĐỒ RƠI NẰM TRÊN ĐẤT (dt3d_do_roi.js; người dùng 06/11/2026 chọn: rơi xuống đất, nông dân nhặt) =====
-  const doRoi = taoDoRoi({ ctx, cam, canvas, lang, diaHinh, mayChu, ten, baoGoiY: c => the.baoGoiY(c), capNhatKho: the.capNhatKho, oKho: the.oKho,
+  const doRoi = taoDoRoi({ ctx, cam, canvas, lang, diaHinh, mayChu, ten, cauHinh, baoGoiY: c => the.baoGoiY(c), capNhatKho: the.capNhatKho, oKho: the.oKho,
     lop: the.lop, dangChon: the.dangChon, dangDanh: dv => danh.has(dv.id), tenMinh, ngheQuanh: f => vung.ngheQuanh(f) });
   doRoi.nap();
   let soLanRoi = 0, dsRoiCuoi = []; // kịch bản thử Chrome đọc

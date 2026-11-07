@@ -69,7 +69,7 @@
       khong_tru: "Không có trụ ở đây.", chua_cau: "Trụ chưa có câu hỏi.", dang_tran: "Thủ lĩnh đang giao chiến.", mien: "Trụ vừa giao chiến.",
       bao_ho: "Làng đang có vòng sáng bảo hộ.", het_tran: "Trận đã kết thúc.", cau: "Câu hỏi không đúng.",
       cho: "Trụ đang nạp tên.", // TC_D06C2h
-      do_mat: "Đồ đã mất rồi.", khong_cua_ban: "Đây không phải đồ của bạn", kho_day: "Kho đầy rồi.", khong_phai_nguoi: "Chỉ nông dân của con mới làm được." // TC_D06C4
+      do_mat: "Đồ đã mất rồi.", khong_cua_ban: "Đây không phải đồ của bạn", con_nong_dan: "Còn nông dân rồi.", khong_cam: "Nông dân không cầm đồ.", chua_co_leu: "Chưa có Lều trại.", kho_day: "Kho đầy rồi.", khong_phai_nguoi: "Chỉ nông dân của con mới làm được." // TC_D06C4
     };
     // Tên đưa vào câu lý do: loại nguồn (còn cây ở đây), tài nguyên thiếu (gỗ), loại nhà đã đủ (Tháp canh)
     const tenTrongLyDo = kq => (kq.loaiNguon ? tenNguon(kq.loaiNguon)
@@ -130,7 +130,10 @@
       },
       async bangRoiDo() { return goi("kc_dt_doc_roi_do", {}); },
       async nhatDo(ten, id, dv) { return goi("kc_dt_nhat_do", { p_id: id, p_dv: dv }); },
+      async catDo(ten, dv) { return goi("kc_dt_cat_do", { p_dv: dv }); }, // TC_D06C5: nông dân cầm đồ về tới Lều / kho
       async doRoiDs() { return goi("kc_dt_do_roi_ds", {}); },
+      // TC_D06C5: không còn nông dân -> tặng một người (cần SQL TC_D06C5: repo_rieng SQL/supabase_tc_d06c5_nong_dan_mien_phi.sql)
+      async nongDanMienPhi() { return goi("kc_dt_nong_dan_mien_phi", {}); },
       // TC_D06C2g: trụ phòng thủ (luật dt/dt_tru_tran.js; máy chủ giữ đáp án câu của trụ, chấm lượt bé)
       async truCau(ten, id, ds) { return goi("kc_dt_tru_cau", { p_id: id, p_cau: ds }); },
       // TC_D06C2h: p_dv chỉ gửi khi nông dân vào trận (Thủ lĩnh gọi như cũ); truBan = trụ tự bắn một phát nông dân
