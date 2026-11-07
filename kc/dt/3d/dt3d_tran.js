@@ -341,7 +341,6 @@ async function tao(vungVe, { nhe } = {}) {
         them(0.01, () => { daTha = true; vong.be.visible = false; if (tuong && ["thu", "do"].indexOf(tuong.dangDien()) >= 0) dien("dung"); }, 1.15);
         const beChiu = p => {
           vong.be.visible = false;
-          if (trung && k.chan && p) hu.khien(V(dvBe.x, caoBe * 0.5, 0.05), kieu === KIEU_TOC.tien ? "#9fe4ff" : kieu.mau, 0.45, caoBe * 0.55); // khiên đỡ bớt
           if (trung) {
             dien("trung"); chopBe(0.3); am.trung(p.x, k.chiMang);
             vaCham(p, k.chiMang ? "#ff5a4a" : "#ffb08a", k.chiMang);

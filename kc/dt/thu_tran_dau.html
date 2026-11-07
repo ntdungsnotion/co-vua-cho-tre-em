@@ -579,7 +579,7 @@
       const q = T.quai().ten, be = k.tanCong === "be";
       const cm = k.chiMang ? " · Chí mạng" : "";
       if (be) return ({ trung: (k.neThu ? q + " né hụt · " : "Trúng · ") + "−" + k.satThuong + " HP" + cm, so_ho: "Trúng sơ hở · −" + k.satThuong + " HP" + cm, ne: q + " né được", hut: "Đánh hụt", het_gio: "Hết giờ · đánh hụt" })[k.kieu];
-      return ({ trung: (k.chan ? "Khiên đỡ " + Math.round(k.chan * 100) + "% · −" : k.neThu ? "Né hụt · −" : (k.beChon != null ? "Phòng thủ sai · −" : "Bị trúng · −")) + k.satThuong + " HP" + cm, so_ho: "Phòng thủ sai, sơ hở · −" + k.satThuong + " HP" + cm, ne: "Né được · +" + k.mp.be + " MP", hut: q + " đánh hụt" + (k.mp.be ? " · +" + k.mp.be + " MP" : ""), het_gio: q + " đánh hụt" })[k.kieu];
+      return ({ do: "🛡️ Đỡ được · +" + k.mp.be + " MP", trung: (k.neThu ? "Né hụt · −" : (k.beChon != null ? "Phòng thủ sai · −" : "Bị trúng · −")) + k.satThuong + " HP" + cm, so_ho: "Phòng thủ sai, sơ hở · −" + k.satThuong + " HP" + cm, ne: "💨 Né được!" + (k.mp.be ? " · +" + k.mp.be + " MP" : ""), hut: q + " đánh hụt" + (k.mp.be ? " · +" + k.mp.be + " MP" : ""), het_gio: q + " đánh hụt" })[k.kieu];
     }
 
     function xuLyKetQua(k) {
@@ -601,7 +601,8 @@
       hieuUng = { loai: k.kieu === "ne" ? "ne" : (k.satThuong > 0 ? "trung" : "hut"), danh: k.tanCong, do: benDo, t0: bayGio() };
       setTimeout(() => {
         if (k.satThuong > 0) soBay(benDo, "−" + k.satThuong, k.chiMang ? "chi-mang" : "");
-        else if (k.kieu === "ne") soBay(benDo, "NÉ", "ne");
+        else if (k.kieu === "ne") soBay(benDo, "NÉ ĐƯỢC!", "ne");
+        else if (k.kieu === "do") soBay(benDo, "ĐỠ", "ne"); // TC_D05D: phòng thủ đúng đỡ trọn
         if (k.mp.be) soBay("be", "+" + k.mp.be + " MP", "mp", 0.55);
         if (k.mp.quai) soBay("quai", "+" + k.mp.quai + " MP", "mp", 0.55);
         veThanh();
@@ -860,4 +861,4 @@
 </html>
 <!-- 30/10/2026 - BƯỚC: TC_D06A (chế độ nhúng từ bản đồ); 04/11/2026 - TC_D06C2a (quaiTruoc); 04/11/2026 23:xx - TC_D06C2b (vai=nong_dan) -->
 <!-- 05/11/2026 - BƯỚC: TC_D06C2g (trận trụ ?tru=1, máu Thủ lĩnh &hp=) -->
-<!-- 07/11/2026 - BƯỚC: TC_D05D (chữ "Khiên đỡ x%" khi phòng thủ đúng né hụt) -->
+<!-- 07/11/2026 - BƯỚC: TC_D05D (kieu "do": phòng thủ đúng đỡ trọn; "Né được!" khi né) -->

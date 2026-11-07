@@ -16,7 +16,7 @@
 //            Lõi không chọn câu (nhận từ dt_cau_hoi.js qua moLuot), không đụng DOM, không đọc đồng hồ:
 //            mọi hàm nhận thời điểm t (mili giây) từ ngoài => kiểm thử node chạy tua nhanh được.
 //            Mọi con số đọc từ du_lieu/cau_hinh_tran_dau.json.
-// BƯỚC: TC_D05; TC_D05D (07/11/2026: phòng thủ đúng né hụt thì khiên chặn bớt chanKhiNeHut); TC_D06C2a (quaiTruoc: quái đánh lượt đầu); TC_D06C2b (bên bé là nông dân: chiSoNongDan, tc.be, hpQuai, soLuotDau)
+// BƯỚC: TC_D05; TC_D05D (07/11/2026: luatChan: phòng thủ đúng đỡ trọn, sai mới tính né); TC_D06C2a (quaiTruoc: quái đánh lượt đầu); TC_D06C2b (bên bé là nông dân: chiSoNongDan, tc.be, hpQuai, soLuotDau)
 // NGÀY: 29/10/2026; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_quai.js (KC_DT_QUAI)
 // ================================================================
@@ -139,7 +139,15 @@
       } else {
         A.combo++;
         let soHo = false;
-        if (dBam && dBam.dung) {
+        // TC_D05D (người dùng 07/11/2026 16:31): luật "chặn" cho bên có luatChan[bên] = true: phòng thủ ĐÚNG thì khiên đỡ
+        // trọn (kieu "do", không mất máu); phòng thủ sai / không kịp mới tính tới né (theo AGI), né hụt mới trúng.
+        const chan = !!(ch.luatChan && ch.luatChan[pt0]);
+        if (chan) {
+          if (dBam && dBam.dung) { kq.kieu = "do"; D.combo++; kq.mp[pt0] += ch.mpPhongThuDung; }
+          else if (rng() < tiLeNe(D.agi, ch)) { kq.kieu = "ne"; if (dBam && !boSoHo) D.combo = 0; }
+          else if (dBam && !boSoHo) { kq.kieu = "so_ho"; soHo = true; D.combo = 0; }
+          else kq.kieu = "trung";
+        } else if (dBam && dBam.dung) {
           kq.neThu = true;
           if (rng() < tiLeNe(D.agi, ch)) { kq.kieu = "ne"; D.combo++; kq.mp[pt0] += ch.mpPhongThuDung; }
           else kq.kieu = "trung";
@@ -147,13 +155,9 @@
           if (boSoHo) kq.kieu = "trung";
           else { kq.kieu = "so_ho"; soHo = true; D.combo = 0; }
         } else kq.kieu = "trung";
-        if (kq.kieu !== "ne" && !L.daGaySatThuong) {
+        if (kq.kieu !== "ne" && kq.kieu !== "do" && !L.daGaySatThuong) {
           kq.chiMang = (A.combo % ch.chiMang.moiCombo === 0) || (ch.chiMang.khiCauKho && L.cau.doKho === "kho");
-          let st = satThuong(A, D, A.combo, kq.chiMang, soHo, ch);
-          // TC_D05D (người dùng 07/11/2026): phòng thủ đúng mà né hụt thì khiên vẫn chặn bớt chanKhiNeHut[bên phòng thủ]
-          const chan = kq.neThu && ch.chanKhiNeHut ? Math.max(0, Math.min(1, Number(ch.chanKhiNeHut[pt0]) || 0)) : 0;
-          if (chan > 0) { st = Math.max(ch.satThuong.toiThieu, Math.round(st * (1 - chan))); kq.chan = chan; }
-          kq.satThuong = Math.min(D.hp, st);
+          kq.satThuong = Math.min(D.hp, satThuong(A, D, A.combo, kq.chiMang, soHo, ch));
           D.hp = Math.max(0, D.hp - kq.satThuong);
           L.daGaySatThuong = true;
         }
@@ -184,4 +188,4 @@
 
   goc.KC_DT_TRAN_DAU = { taoTran, chiSoThuLinh, chiSoNongDan, tiLeNe, satThuong };
 })(typeof window !== "undefined" ? window : globalThis);
-// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (đồng hồ bé theo cấp quái: T.giayBe); 04/11/2026 - TC_D06C2a (quaiTruoc); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái); 07/11/2026 - TC_D05D (chanKhiNeHut)
+// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (đồng hồ bé theo cấp quái: T.giayBe); 04/11/2026 - TC_D06C2a (quaiTruoc); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái); 07/11/2026 - TC_D05D (luatChan)
