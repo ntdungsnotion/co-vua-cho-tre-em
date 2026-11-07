@@ -20,7 +20,8 @@
 //        TC_D05B2 (chiêu phủ vùng rộng dt3d_chieu_vung.js + bộ hạt card đồ hoạ dt3d_hat.js);
 //        TC_D05B3 (âm thanh chiến đấu dt3d_am_thanh.js: mỗi động tác / chiêu một tiếng; nhạc nền bối cảnh tran / thang / thua)
 //        TC_D06C2g (đối thủ là trụ: tru_ten bắn tên từ sàn, không nhảy; thua thì sụp thành đống gạch, hòa thì đứng nguyên)
-// NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026; 30/10/2026 06:00; 05/11/2026
+//        TC_D05D (bé phòng thủ đúng: thế thủ giữ tới lúc đòn của quái được tính, kể cả tướng tải xong giữa lượt / KayKit dự phòng)
+// NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026; 30/10/2026 06:00; 05/11/2026; 07/11/2026
 // ================================================================
 import * as THREE from "three";
 import { taoCanh, docDoHoa, bam } from "./dt3d_canh.js";
@@ -117,6 +118,7 @@ async function tao(vungVe, { nhe } = {}) {
   const dvBe = { ten: "", x: X_BE, z: 0, huongMuon: HUONG_BE, trangThai: "dung", duong: [], viec: null, mang: { loai: null, so: 0 }, chay: false, ranh: false };
   const boTuong = glbDongTacTuong ? taoBoTuong(ctx, glbDongTacTuong) : null;
   let hBe = null, tuong = null, khoaBe = "", vlBe = [], caoBe = 1.5 * TI_BE, lanDung = 0;
+  let giuThu = false; // TC_D05D: bé phòng thủ đúng -> giữ thế thủ tới lúc đòn của quái được tính (ketQua)
   function dungBe(hoSo) {
     const khoa = JSON.stringify(hoSo);
     const vo = tuong ? tuong.vo : hBe && hBe.vo;
@@ -144,7 +146,7 @@ async function tao(vungVe, { nhe } = {}) {
     vlBe = []; hBe.goc.traverse(o => { if (o.isMesh && o.material.emissive && vlBe.indexOf(o.material) < 0) vlBe.push(o.material); });
   }
   // động tác theo kiểu (dt3d_tuong.js); Thủ lĩnh KayKit dự phòng thì đổi sang tên động tác KayKit
-  const KAYKIT = { thu: ["Block"], do: ["Block"], chem: ["1H_Melee_Attack_Slice_Diagonal"], chemLon: ["1H_Melee_Attack_Slice_Diagonal"], phep: ["Spellcast_Shoot"], trung: ["Hit_A"], ne: ["Dodge_Backward"], thua: ["Hit_B"], mung: ["Cheer", "Cheer"] };
+  const KAYKIT = { thu: ["Blocking"], do: ["Block"], chem: ["1H_Melee_Attack_Slice_Diagonal"], chemLon: ["1H_Melee_Attack_Slice_Diagonal"], phep: ["Spellcast_Shoot"], trung: ["Hit_A"], ne: ["Dodge_Backward"], thua: ["Hit_B"], mung: ["Cheer", "Cheer"] };
   const dien = (kieu, xong) => { if (tuong) tuong.dien(kieu, xong); else if (hBe && KAYKIT[kieu]) boNv.dien(hBe, KAYKIT[kieu], null, xong, HUONG_BE); };
   const voBe = () => tuong ? tuong.vo : hBe && hBe.vo;
 
@@ -217,6 +219,8 @@ async function tao(vungVe, { nhe } = {}) {
     }
     boNv.capNhat(dt);
     if (tuong) { tuong.vo.position.set(dvBe.x, 0, dvBe.z); tuong.capNhat(dt); }
+    // TC_D05D: đang giữ thế thủ mà động tác đã rơi về đứng thường (tướng tải xong giữa lượt, KayKit diễn hết một lần...) thì vào lại
+    if (giuThu) { if (tuong) { if (tuong.dangDien() === "dung") dien("thu"); } else if (hBe && !hBe.dien) dien("thu"); }
     if (quai) quai.capNhat(dt, t);
     for (const k of ["be", "quai"]) {
       const v = vong[k]; if (!v.visible) continue;
@@ -281,7 +285,7 @@ async function tao(vungVe, { nhe } = {}) {
 
   const san = {
     datTran({ hoSo, quai: ma, chu }) {
-      dsTween.length = 0;
+      dsTween.length = 0; giuThu = false;
       dvBe.x = X_BE; dvBe.z = 0;
       const hs = NV.chuanHoa(hoSo || {});
       if (hoSo && hoSo.tuong) hs.tuong = hoSo.tuong; // chuanHoa (dùng chung) không biết trường tuong
@@ -296,11 +300,12 @@ async function tao(vungVe, { nhe } = {}) {
     },
     thu(ben, bat) {
       vong[ben].visible = !!bat;
-      if (ben === "be") { if (bat) dien("thu"); else if (tuong && tuong.dangDien() === "thu") dien("dung"); }
+      if (ben === "be") { giuThu = !!bat; if (bat) dien("thu"); else if (tuong && tuong.dangDien() === "thu") dien("dung"); }
     },
     nghi(bat) { bong.visible = !!bat; },
     ketQua(k) {
       vong.be.visible = vong.quai.visible = false; bong.visible = false;
+      const dangThu = giuThu; giuThu = false; // TC_D05D: thế thủ giữ tới đúng lúc này (đòn của quái được tính)
       const trung = k.satThuong > 0, ne = k.kieu === "ne";
       const qn = quai.nhom;
       if (k.tanCong === "be") {
@@ -331,7 +336,6 @@ async function tao(vungVe, { nhe } = {}) {
       } else {
         const kq = KIEU_QUAI[quai.ma] || KIEU_QUAI.slime_so;
         // bé chọn đúng => đang giữ thế thủ (trang gọi thu("be", true)); giữ tới khi quái đánh xong rồi mới thả
-        const dangThu = !!(tuong && tuong.dangDien() === "thu");
         let daTha = false;
         them(0.01, () => { daTha = true; if (tuong && ["thu", "do"].indexOf(tuong.dangDien()) >= 0) dien("dung"); }, 1.15);
         const beChiu = p => {
@@ -370,6 +374,7 @@ async function tao(vungVe, { nhe } = {}) {
       if (haoQuang) haoQuang.bat(cb >= 5 ? 2 : cb >= 3 ? 1 : 0);
     },
     ketThuc(thang) {
+      giuThu = false;
       vong.be.visible = vong.quai.visible = bong.visible = false;
       if (thang === "quai") {
         if (haoQuang) haoQuang.bat(0);
@@ -463,3 +468,4 @@ window.KC_DT_SAN3D = { tao };
 window.dispatchEvent(new Event("dt-san3d"));
 // 29/10/2026 - BƯỚC: TC_D05
 // 04/11/2026 23:xx - BƯỚC: TC_D06C2b (hoSo.nongDan: nông dân đánh quái dùng hình nông dân)
+// 07/11/2026 - BƯỚC: TC_D05D (giữ thế thủ tới đòn của quái: giuThu)
