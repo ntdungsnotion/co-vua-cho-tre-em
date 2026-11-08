@@ -83,6 +83,8 @@
   }
   // Ai được xây công trình loại này: nông dân; Thủ lĩnh chỉ dựng Lều trại
   const duocXay = (vaiTro, loai) => vaiTro === "nong_dan" || loai === "leu";
+  // TC_D06C7e: còn việc cho người xây: móng chưa xong, hoặc công trình đã xong đang sửa (ct.sua, chưa sụp)
+  const conLam = c => !!c && (!c.xong || (!!c.sua && c.hongLuc == null));
   // TC_D03B1: sức chứa tài nguyên t của MỘT công trình đã xong = congTrinh.*.sucChua (số: mọi loại; { loại: số }:
   // chỉ loại đó) x xay.heSoCap.sucChua[cấp - 1] x kho.heSoChungLoai[chủng loại]. Dùng chung lõi + máy chủ giả; SQL y hệt.
   function sucChuaCt(chFull, loai, cap, chungLoai, t) {
@@ -693,7 +695,7 @@
     }
     // Xong một móng: dựng tiếp móng chưa xong gần nhất trong hàng (bỏ móng không tới được). Trả true nếu còn việc.
     function xayTiep(dv) {
-      const hang = (dv.hangXay || []).filter(c => !c.xong && congTrinh.includes(c));
+      const hang = (dv.hangXay || []).filter(c => conLam(c) && congTrinh.includes(c));
       while (hang.length) {
         let k = 0, kc = Infinity;
         hang.forEach((c, j) => { const d = kcToiMong(dv, c); if (d < kc) { kc = d; k = j; } });
@@ -825,13 +827,13 @@
           }
           break;
         case "toi_xay":
-          if (!dv.xay || dv.xay.xong) { dv.xay = null; dv.trangThai = "dung"; }
+          if (!conLam(dv.xay)) { dv.xay = null; dv.trangThai = "dung"; }
           else if (kcToiMong(dv, dv.xay) <= CH.tamVoi) dv.trangThai = "xay";
           else { const ct = dv.xay; dv.xay = null; dv.trangThai = "dung"; phat({ loai: "xay_ket", ct, dv }); if (dv.hangXay && dv.hangXay.length) xayTiep(dv); }
           break;
         case "xay": { // tiến độ tính chung cho cả nhóm người xây ở capNhatXay (TC_D03A)
           const ct = dv.xay;
-          if (!ct || ct.xong) { dv.xay = null; dv.trangThai = "dung"; break; }
+          if (!conLam(ct)) { dv.xay = null; dv.trangThai = "dung"; break; }
           dv.huongMuon = Math.atan2(ct.x + ct.rong / 2 - dv.x, ct.y + ct.sau / 2 - dv.z);
           break;
         }
@@ -904,11 +906,23 @@
       }
       return ra;
     }
+    // TC_D06C7e (người dùng 08/11/2026: nông dân tới sửa): công trình đã xong bị đánh mất máu, bé bấm 🔧 Sửa -> ct.sua = { tienDo 0..1,
+    // giay (giây 1 người sửa xong) } (máy chủ ghi). Nông dân tới sửa như xây (lenhXay, cùng tốc độ theo số người, hệ số cấp); xong: máu đầy.
+    function suaTien(ct, n, dt) {
+      ct.sua.tienDo = Math.min(1, (ct.sua.tienDo || 0) + dt * tocDoXay(CHF, { giayXay: ct.sua.giay, cap: ct.cap }, n));
+      if (ct.sua.tienDo < 1) return;
+      ct.sua = null; ct.mau = null;
+      const tho = donVi.filter(d => d.xay === ct);
+      for (const d of tho) { d.xay = null; d.trangThai = "dung"; }
+      phat({ loai: "sua_xong", ct, dv: tho[0] || null, tho });
+      for (const d of tho) if (!d.xay && d.trangThai === "dung" && d.hangXay && d.hangXay.length) xayTiep(d);
+    }
     // TC_D03A: mỗi công trình tiến theo SỐ NGƯỜI đang đứng xây (không cộng dồn từng người)
     function capNhatXay(dt) {
       const so = new Map();
-      for (const dv of donVi) if (dv.trangThai === "xay" && dv.xay && !dv.xay.xong) so.set(dv.xay, (so.get(dv.xay) || 0) + 1);
+      for (const dv of donVi) if (dv.trangThai === "xay" && conLam(dv.xay)) so.set(dv.xay, (so.get(dv.xay) || 0) + 1);
       for (const [ct, n] of so) {
+        if (ct.xong) { suaTien(ct, n, dt); continue; } // TC_D06C7e: công trình đã xong đang được sửa
         ct.tienDo = Math.min(1, ct.tienDo + dt * tocDoXay(CHF, ct, n));
         if (ct.tienDo < 1) continue;
         ct.xong = true;
@@ -950,13 +964,14 @@
       get chungLoai() { return chungLoai; }, datChungLoai(cl) { if (CH.sucMang[cl] != null) chungLoai = cl; }, sucMang,
       nghe(f) { nghe.push(f); },
       themDonVi, boDonVi, dungDanh, thoiDanh, lenhDi, giaoViec, lenhCat, capNhat, xuLyHen, nguonGanNhat, nguonSatBen, coKe, dangSong, sucChua, danSo, choO,
-      duocXay, tocDoXay: (ct, n) => tocDoXay(CHF, ct, n),
+      duocXay, conLam, tocDoXay: (ct, n) => tocDoXay(CHF, ct, n),
       nguonTaiO: (x, y) => nguonO.get(chiSo(x, y)) || null
     };
   }
 
-  goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS, tocDoXay, duocXay, sucChuaCt, nhanCat, choOCt, chiemCho, mauRuong, giaiDoanRuong, sanLuongRuong };
+  goc.KC_DT_LANG = { taoLang, taoNgauNhien, chonCo, GIO_MS, tocDoXay, duocXay, conLam, sucChuaCt, nhanCat, choOCt, chiemCho, mauRuong, giaiDoanRuong, sanLuongRuong };
 })(typeof window !== "undefined" ? window : globalThis);
 // 28/10/2026 19:05 - BƯỚC: TC_D03B2; 04/11/2026 23:xx - TC_D06C2b (boDonVi, dungDanh / thoiDanh: nông dân đánh quái)
 // 05/11/2026 - BƯỚC: TC_D06C2d (boO: trả ô công trình bị phá hủy về đất trống)
+// 08/11/2026 16:xx - BƯỚC: TC_D06C7e (conLam / suaTien: nông dân sửa công trình bị đánh, sự kiện sua_xong)
 // 07/11/2026 - BƯỚC: TC_D06C6 (mỗi lúc mang một loại: giao việc loại khác thì cất trước; lenhCat: chạm Lều / kho để cất)

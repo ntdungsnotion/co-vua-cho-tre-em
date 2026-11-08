@@ -79,6 +79,8 @@
 //   TC_D06C7d (08/11/2026): SỐ CÂU RIÊNG từng công trình (ct.soCau; xây mới có sẵn muaCau.coSan câu): muaCau(ten, id, so) bé mua câu bằng
 //     vàng (+ máu), suaCt(ten, id) sửa = mua lại máu đã mất; trận (danhKhai / truKhai) theo TT.soCt; trận trụ giữ đủ câu trong tr.cau
 //     (câu của trụ + bù từ kho câu của chủ).
+//   TC_D06C7e (08/11/2026): muaCau(ten, id, so, cau) câu bé tự chọn gắn vào công trình (trận hỏi trước, thiếu bù kho câu của chủ);
+//     suaCt(ten, id) trừ tài nguyên (không vàng), ct.sua = { tienDo, giay }: nông dân tới sửa như xây (tinhXay, guiLenh, xayXong báo sửa xong).
 // BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1),
@@ -199,20 +201,30 @@
       if (!h.so) be.hangSinh = null;
       return ra;
     }
+    // TC_D06C7e (người dùng 08/11/2026: nông dân tới sửa): công trình đã xong bị đánh, bé bấm Sửa -> ct.sua = { tienDo, giay } (giay = TT.giaySua:
+    // giây 1 người sửa xong). Nông dân sửa như xây móng (lệnh xay = id, tốc độ theo số người + hệ số cấp); xong thì máu đầy.
+    const dangLam = c => !c.xongLuc || (!!c.sua && !c.hongLuc);
+    const tienLam = c => (c.sua ? c.sua.tienDo || 0 : c.tienDo || 0);
+    const tocDoLam = (c, n) => LANG.tocDoXay(CH, { giayXay: c.sua ? c.sua.giay : mauCt(c.loai).giayXay, cap: c.cap }, n);
+    function suaXong(c) {
+      c.sua = null; c.mau = null;
+      if (!Number.isInteger(c.soCau) && TT) c.soCau = TT.soCt(CH, c).soCau; // công trình xây trước TC_D06C7d: ghi số câu ra
+      for (const d of tt.donVi) if (d.lenh && d.lenh.xay === c.id) d.lenh = Object.assign({}, d.lenh, { xay: null }); // người sửa thôi lệnh sửa
+    }
     // Mô phỏng xây của bé từ be.xayBuLuc tới bay (SQL: kc_dt_tinh_xay). Trả các công trình vừa xong.
     function tinhXay(ten, bay) {
       const be = tt.be[ten];
       const tu = be.xayBuLuc != null ? be.xayBuLuc : be.vaoLuc;
       be.xayBuLuc = Math.max(tu, bay);
       const ct = new Map();
-      for (const c of tt.congTrinh) if (c.chu === ten && !c.xongLuc) ct.set(c.id, c);
+      for (const c of tt.congTrinh) if (c.chu === ten && dangLam(c)) ct.set(c.id, c);
       const tho = [];
       for (const d of tt.donVi) if (d.chu === ten && d.lenh && d.lenh.xay != null) {
         const c = ct.get(d.lenh.xay);
         tho.push({ d, dich: c && LANG.duocXay(d.loai, c.loai) ? c.id : null, hang: (d.lenh.hang || []).slice(), toi: toiLuc(d.lenh), doi: false });
       }
       if (!ct.size || !tho.length || bay <= tu) return [];
-      const conXay = (t, id) => { const c = ct.get(id); return !!c && !c.xongLuc && LANG.duocXay(t.d.loai, c.loai); };
+      const conXay = (t, id) => { const c = ct.get(id); return !!c && dangLam(c) && LANG.duocXay(t.d.loai, c.loai); };
       const sangTiep = (t, luc) => { // đích xong / không xây được: sang móng kế (ngay tại chỗ), hết thì nghỉ
         t.dich = null; t.doi = true;
         while (t.hang.length) { const id = t.hang.shift(); if (conXay(t, id)) { t.dich = id; t.toi = luc; break; } }
@@ -225,13 +237,14 @@
         for (const t of tho) if (t.dich != null) { if (t.toi <= t0) so.set(t.dich, (so.get(t.dich) || 0) + 1); else toiSau = Math.min(toiSau, t.toi); }
         if (!so.size && toiSau === Infinity) break;
         let t1 = Math.min(bay, toiSau);
-        for (const [id, n] of so) { const c = ct.get(id), v = LANG.tocDoXay(CH, { giayXay: mauCt(c.loai).giayXay, cap: c.cap }, n); t1 = Math.min(t1, t0 + (1 - (c.tienDo || 0)) / v * 1000); }
+        for (const [id, n] of so) { const c = ct.get(id), v = tocDoLam(c, n); t1 = Math.min(t1, t0 + (1 - tienLam(c)) / v * 1000); }
         for (const [id, n] of so) {
-          const c = ct.get(id), v = LANG.tocDoXay(CH, { giayXay: mauCt(c.loai).giayXay, cap: c.cap }, n);
-          c.tienDo = Math.min(1, (c.tienDo || 0) + v * (t1 - t0) / 1000);
+          const c = ct.get(id), v = tocDoLam(c, n), p = Math.min(1, tienLam(c) + v * (t1 - t0) / 1000);
+          if (c.sua) { c.sua.tienDo = p; if (p >= 1 - 1e-9) suaXong(c); continue; } // TC_D06C7e: sửa xong không tính là "xây xong"
+          c.tienDo = p;
           if (c.tienDo >= 1 - 1e-9) { hoanThanh(c, Math.round(t1)); xong.push(c); }
         }
-        for (const t of tho) if (t.dich != null && ct.get(t.dich).xongLuc) sangTiep(t, t1);
+        for (const t of tho) if (t.dich != null && !dangLam(ct.get(t.dich))) sangTiep(t, t1);
         t0 = t1;
       }
       // người đã sang móng khác / thôi xây: chỉ đổi phần xây của lệnh, GIỮ chỗ đứng (lệnh kế của máy bé so tốc độ
@@ -430,7 +443,7 @@
     const baoHo = (ct, bay) => truTrongLang(ct) && !(tt.be[ct.chu] && (tt.be[ct.chu].songLuc || 0) >= bay - VM.sauGiay * 1000);
     // TC_D06C7b: công trình sụp: hàng rào / cổng thôi tính lãnh địa ngay (ô vẫn là đống gạch tới khi máy chủ dọn)
     function sup(ct, bay) {
-      ct.hongLuc = bay;
+      ct.hongLuc = bay; ct.sua = null; // TC_D06C7e: đang sửa mà sụp thì thôi sửa
       if (BD.LA_RAO[ct.loai] && ct.xongLuc) lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, false);
     }
     // Trận bỏ dở quá boGiay giây (bé đóng trang): coi như rút lui; đống gạch quá hongGiay giây thì dọn
@@ -767,7 +780,7 @@
         const tinDuoc = Math.hypot(tu[0] - goc0[0], tu[1] - goc0[1]) <= vMax * tGiay + 2;
         const p = tinDuoc ? { x: Math.min(Math.max(tu[0], 0), vung.rong), z: Math.min(Math.max(tu[1], 0), vung.cao) } : viTri(dv);
         // xay: chỉ công trình chưa xong của chính bé mà người này được xây; hang: tối đa doanToiDa móng như thế
-        const laMong = id => Number.isInteger(id) && tt.congTrinh.some(c => c.id === id && c.chu === ten && !c.xongLuc && LANG.duocXay(dv.loai, c.loai));
+        const laMong = id => Number.isInteger(id) && tt.congTrinh.some(c => c.id === id && c.chu === ten && dangLam(c) && LANG.duocXay(dv.loai, c.loai)); // TC_D06C7e: + đang sửa
         const xay = laMong(lenh.xay) ? lenh.xay : null;
         dv.lenh = { tu: [p.x, p.z], den: [Math.floor(den[0]), Math.floor(den[1])], batDau, vaiTro: dv.loai,
           viec: xay == null && Number.isInteger(lenh.viec) ? lenh.viec : null, khamPha: !!lenh.khamPha,
@@ -884,6 +897,12 @@
         if (!ct || ct.chu !== ten) return { ok: false, lyDo: "Đây không phải nhà của con." };
         const bay = gio();
         songLai(ten, bay);
+        if (ct.sua && !ct.hongLuc) { // TC_D06C7e: máy bé báo sửa xong (như dựng xong: chỉ nhận khi còn lại không quá xay.treGiay giây)
+          const n = tt.donVi.filter(d => d.chu === ten && d.lenh && d.lenh.xay === ct.id && toiLuc(d.lenh) <= bay).length;
+          if (!n || (1 - tienLam(ct)) / tocDoLam(ct, n) > CH.xay.treGiay) return { ok: false, ma: "chua_xong", lyDo: "Chưa sửa xong đâu, con chờ thêm chút nhé." };
+          suaXong(ct); luu();
+          return { ok: true, donVi: [], sua: true };
+        }
         if (ct.baoXong) return { ok: false, ma: "da_xong", lyDo: "Nhà này dựng xong rồi." };
         if (!ct.xongLuc) {
           const n = tt.donVi.filter(d => d.chu === ten && d.lenh && d.lenh.xay === ct.id && toiLuc(d.lenh) <= bay).length;
@@ -967,7 +986,8 @@
         if (!p || TT.kcMep(ct, p.x, p.z) > C.chamO + LECH_O) return { ok: false, ma: "xa_qua", lyDo: "Thủ lĩnh chưa tới sát công trình." };
         if (baoHo(ct, bay)) return { ok: false, ma: "bao_ho", lyDo: "Làng đang có vòng sáng bảo hộ." };
         const kho = (tt.be[ct.chu] && tt.be[ct.chu].cauKho) || null;
-        const cau = kho && kho.length ? TT.chonCau(kho, s.soCau) : (Array.isArray(duPhong) && duPhong.length >= s.soCau ? chuanCau(duPhong.slice(0, s.soCau), s.soCau) : null);
+        const nen = kho && kho.length ? kho : (Array.isArray(duPhong) && duPhong.length ? chuanCau(duPhong.slice(0, 60), Math.min(60, duPhong.length)) : null);
+        const cau = TT.cauDu(ct.cau, nen || [], s.soCau); // TC_D06C7e: câu bé chủ tự chọn hỏi trước, thiếu mới bù
         if (!cau) return { ok: false, ma: "chua_cau", lyDo: "Chưa có câu hỏi." };
         const toiDa = TT.hpThuLinh(CH, be.chungLoai);
         const tr = { id: ++tt.soId, truId: id, dv: null, chu: ct.chu, ten, loai: ct.loai, cap: ct.cap || 1, soCau: s.soCau, tiLe: s.tiLe, cong: s.cong, beDanh: TT.beDanhCt(CH, s, be.chungLoai, false),
@@ -1057,10 +1077,12 @@
         luu();
         return { ok: true, trung: k.trung, satThuong: k.satThuong, mau: k.mau, toiDa, mat, gio: bay };
       },
-      // TC_D06C7d - muaCau(ten, id, so): bé mua so câu phòng thủ cho công trình của mình (đã xong, chưa sụp, không đang bị đánh) bằng vàng
+      // TC_D06C7d - muaCau(ten, id, so, cau): bé mua so câu phòng thủ cho công trình của mình (đã xong, chưa sụp, không đang bị đánh) bằng vàng
       // (TT.giaCau x so, mỗi lần 1..muaCau.toiDaMoiLan): số câu + so, máu tối đa + so x mauMoiCau, máu đang có cũng + chừng ấy.
-      // -> { ok, id, soCau, mau (null = đầy), mauToiDa, kho } | { ok: false, ma: chua_vao | khong_phai_nha | chua_xong | hong | so | dang_tran | thieu }
-      async muaCau(ten, id, so) {
+      // TC_D06C7e: cau = so câu BÉ TỰ CHỌN (kho chung theo trình độ) gắn vào công trình (TT.ganCauMua); đang sửa thì chưa mua.
+      // -> { ok, id, soCau, mau (null = đầy), mauToiDa, kho } | { ok: false, ma: chua_vao | khong_phai_nha | chua_xong | hong | so | dang_tran
+      //    | dang_sua | cau | thieu }
+      async muaCau(ten, id, so, cau) {
         ten = tenChuan(ten);
         const be = tt.be[ten];
         if (!be) return { ok: false, ma: "chua_vao", lyDo: "Con chưa vào thung lũng." };
@@ -1072,18 +1094,24 @@
         if (ct.hongLuc) return { ok: false, ma: "hong", lyDo: "Công trình đã sụp rồi." };
         if (!Number.isInteger(so) || so < 1 || so > (M.toiDaMoiLan || 10)) return { ok: false, ma: "so", lyDo: "Số câu không đúng." };
         if (dangBiDanh(id)) return { ok: false, ma: "dang_tran", lyDo: "Công trình đang bị đánh, chờ trận xong nhé." };
+        if (ct.sua) return { ok: false, ma: "dang_sua", lyDo: "Nông dân đang sửa, sửa xong rồi mua câu nhé." };
+        const sach = chuanCau(cau, so);
+        if (!sach) return { ok: false, ma: "cau", lyDo: "Con chọn câu hỏi trước nhé." };
         const gia = TT.giaCau(CH, ct.loai), thieu = thieuGia(be, gia, so);
         if (thieu) return loiThieu(thieu);
         truGia(be, gia, so);
         const s = TT.soCt(CH, ct);
         if (ct.mau != null) ct.mau = TT.mauCt(CH, ct, s) + so * s.mauMoiCau;
+        ct.cau = TT.ganCauMua(ct.cau, s.soCau, sach);
         ct.soCau = s.soCau + so;
         luu();
         const s2 = TT.soCt(CH, ct);
         return { ok: true, id, soCau: ct.soCau, mau: ct.mau == null ? null : ct.mau, mauToiDa: s2.mauToiDa, kho: khoCua(be), gio: bay };
       },
-      // TC_D06C7d - suaCt(ten, id): sửa công trình bị đánh mất máu = mua lại phần máu đã mất (TT.cauSua câu x giá một câu) -> máu đầy.
-      // -> { ok, id, soCau, mau: null, mauToiDa, kho } | { ok: false, ma: chua_vao | khong_phai_nha | chua_xong | hong | dang_tran | khong_hu | thieu }
+      // TC_D06C7e (người dùng 08/11/2026: thay cách TC_D06C7d "mua lại máu bằng vàng") - suaCt(ten, id): sửa công trình bị đánh mất máu
+      // KHÔNG tốn vàng: trừ tài nguyên TT.giaSua (giá xây x tiLeGia x phần máu mất) rồi ghi ct.sua = { tienDo 0, giay TT.giaySua }: NÔNG DÂN
+      // tới sửa (lệnh xay = id như xây móng), xong thì máu đầy. -> { ok, id, sua, gia, kho } | { ok: false, ma: chua_vao | khong_phai_nha
+      // | chua_xong | hong | dang_tran | dang_sua | khong_hu | thieu }
       async suaCt(ten, id) {
         ten = tenChuan(ten);
         const be = tt.be[ten];
@@ -1095,15 +1123,14 @@
         if (!ct.xongLuc) return { ok: false, ma: "chua_xong", lyDo: "Chưa dựng xong đâu, con chờ thêm chút nhé." };
         if (ct.hongLuc) return { ok: false, ma: "hong", lyDo: "Công trình đã sụp rồi." };
         if (dangBiDanh(id)) return { ok: false, ma: "dang_tran", lyDo: "Công trình đang bị đánh, chờ trận xong nhé." };
-        const n = TT.cauSua(CH, ct);
-        if (n <= 0) return { ok: false, ma: "khong_hu", lyDo: "Công trình còn nguyên, không cần sửa." };
-        const gia = TT.giaCau(CH, ct.loai), thieu = thieuGia(be, gia, n);
+        if (ct.sua) return { ok: false, ma: "dang_sua", lyDo: "Nông dân đang sửa rồi.", sua: ct.sua };
+        if (!(TT.phanMat(CH, ct) > 0)) return { ok: false, ma: "khong_hu", lyDo: "Công trình còn nguyên, không cần sửa." };
+        const gia = TT.giaSua(CH, ct), thieu = thieuGia(be, gia, 1);
         if (thieu) return loiThieu(thieu);
-        truGia(be, gia, n);
-        ct.mau = null;
-        if (!Number.isInteger(ct.soCau)) ct.soCau = TT.soCt(CH, ct).soCau; // ghi số câu ra (công trình xây trước TC_D06C7d)
+        truGia(be, gia, 1);
+        ct.sua = { tienDo: 0, giay: Math.max(0.5, Math.round(TT.giaySua(CH, ct) * 100) / 100) };
         luu();
-        return { ok: true, id, soCau: ct.soCau, mau: null, mauToiDa: TT.soCt(CH, ct).mauToiDa, kho: khoCua(be), gio: bay };
+        return { ok: true, id, sua: ct.sua, gia, kho: khoCua(be), gio: bay };
       },
       // truRut(ten, idTran): rút lui giữa trận (giữ máu hai bên)
       async truRut(ten, idTran) {
@@ -1135,3 +1162,4 @@
 // 06/11/2026 - BƯỚC: TC_D06C5 (nhatDo cầm trên tay, catDo, nongDanMienPhi)
 // 08/11/2026 - BƯỚC: TC_D06C7b (cauKho, danhKhai: mọi công trình bị bé khác đánh sập; rào sụp tính lại lãnh địa; bảo hộ = vòng quanh Lều)
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (lanhDia mọi bé, quái không đứng trên cổng)
+// 08/11/2026 16:xx - BƯỚC: TC_D06C7e (muaCau kèm câu bé chọn; suaCt bằng tài nguyên + nông dân sửa ct.sua; danhKhai hỏi câu bé chọn trước)

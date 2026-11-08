@@ -240,3 +240,12 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3TimTl { font-size: 1.2rem; }
 @media (max-width: 600px) { .d3TimTl { font-size: 1.1rem; } }
 /* 07/11/2026 - BƯỚC: TC_D06C6 */
+/* TC_D06C7e: bảng chọn câu khi mua 🛡️ (mỗi câu là một nút to, chạm là chọn) */
+.d3ChonCauDs { list-style: none; padding-left: 0 !important; }
+.d3CauChon { cursor: pointer; padding: 10px 12px; border-radius: 14px; border: 2px solid rgba(255, 214, 102, .35); background: rgba(255, 255, 255, .06); }
+.d3CauChon:hover, .d3CauChon:focus-visible { border-color: var(--vang); background: rgba(255, 214, 102, .14); outline: none; }
+.d3CauChon:active { transform: scale(.98); }
+#d3ChonCau > p { margin: 4px 0 10px; font-size: .9rem; opacity: .85; }
+#d3CauKhac { width: 100%; min-height: 48px; margin-top: 4px; background: var(--vang); color: #2a1d05; border: 0; border-radius: 14px; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.05rem; cursor: pointer; }
+@media (min-width: 900px) { #d3ChonCau { left: 50%; right: auto; width: 560px; transform: translateX(-50%); bottom: auto; max-height: calc(100vh - 200px); } }
+/* 08/11/2026 - BƯỚC: TC_D06C7e */

@@ -183,6 +183,7 @@ export async function vaoThungLung(the) {
   // ---------------- Công trình ----------------
   let leuBe = null;
   const ctBan = new Map(); // nhà của bạn: id máy chủ -> công trình lõi (TC_D02B3b)
+  const suaXongMinh = new Map(); // TC_D06C7e: id -> lúc máy này sửa xong (máy chủ còn trả sua cũ thì bỏ qua một lúc)
   // TC_D03B2: giờ ruộng máy chủ trả (giờ máy chủ) -> đồng hồ của lõi (máy bé lệch giờ vẫn chín đúng lúc)
   const gioLoi = t => (t == null ? null : t - (mayChu.gio() - lang.bayGio()));
   const ruongMc = c => ({ trongLuc: gioLoi(c.trongLuc), gatLuc: gioLoi(c.gatLuc), con: c.con });
@@ -203,7 +204,16 @@ export async function vaoThungLung(the) {
     if (!CT[c.loai] || !(CT[c.loai].tru || CT[c.loai].danh)) return {}; // TC_D06C7b: mọi công trình đánh được có máu + đống gạch
     return { mau: Number.isFinite(c.mau) ? c.mau : null, hongLuc: Number.isFinite(c.hongLuc) ? c.hongLuc : null, coCau: !!c.coCau, cau: Array.isArray(c.cau) ? c.cau : null,
       ban: Array.isArray(c.ban) ? c.ban : null, // TC_D06C2h: phát bắn gần nhất [{ luc (giờ máy chủ), dv (id máy chủ), trung }]
-      soCau: Number.isInteger(c.soCau) ? c.soCau : null }; // TC_D06C7d: số câu riêng (bé mua bằng vàng; null = số của loại)
+      soCau: Number.isInteger(c.soCau) ? c.soCau : null, // TC_D06C7d: số câu riêng (bé mua bằng vàng; null = số của loại)
+      sua: suaMc(c) }; // TC_D06C7e: đang được nông dân sửa { tienDo, giay }
+  }
+  function suaMc(c) { return c.sua && Number.isFinite(c.sua.giay) ? { tienDo: Number(c.sua.tienDo) || 0, giay: c.sua.giay } : null; }
+  // TC_D06C7e: công trình của mình đang sửa: tiến độ máy này tự chạy (nông dân đứng sửa); máy chủ chỉ sửa khi đi trước, hoặc báo đã xong
+  function hopSua(ct, c) {
+    const m = suaMc(c);
+    if (m && Date.now() - (suaXongMinh.get(ct.id) || 0) < 15000) return null; // vừa sửa xong ở máy này: chờ máy chủ chốt
+    if (!m || !ct.sua) return m;
+    return { tienDo: Math.max(ct.sua.tienDo || 0, m.tienDo), giay: m.giay };
   }
   // TC_D06C7b: hàng rào / cổng vừa thành đống gạch (bé khác đánh sập) thì thôi tính lãnh địa ngay (ô vẫn là đống gạch tới khi máy chủ dọn)
   function apHong(ct) {
@@ -219,7 +229,7 @@ export async function vaoThungLung(the) {
         // TC_D06C2g: trụ của mình: máu / đống gạch / câu theo máy chủ; TC_D06C7b: công trình của mình bị bé khác đánh (máu, đống gạch)
         conMinh.add(c.id);
         const ct = lang.congTrinh.find(x => x.id === c.id);
-        if (ct) { Object.assign(ct, truMc(c)); apHong(ct); }
+        if (ct) { const sua = hopSua(ct, c), mau = ct.mau; Object.assign(ct, truMc(c), { sua }); if (suaXongMinh.has(ct.id) && !sua && c.sua) ct.mau = mau; apHong(ct); }
         continue;
       }
       if (c.chu === tenChuan) { // nhà của mình: máy này tự giữ; TC_D03B2: lúa của ruộng theo máy chủ (trồng muộn hơn / đã gặt hết / máy khác trồng lại)
@@ -414,6 +424,7 @@ export async function vaoThungLung(the) {
       case "lenh_di": gui(su.dv, { tu: [su.tu.x, su.tu.z], den: [su.den.x, su.den.y], khamPha: su.khamPha, xay: su.xay, hang: su.hang }); break;
       case "giao_viec": gui(su.dv, { tu: [su.dv.x, su.dv.z], den: [su.n.o.x, su.n.o.y], viec: su.n.ma }); break;
       case "xay_xong": if (su.ct === leuBe) leuXong(); else if (su.dv && su.ct.cuaMinh !== false) xongCt(su.ct, su.dv); break;
+      case "sua_xong": if (su.ct.cuaMinh !== false) xongSua(su.ct, su.dv); break; // TC_D06C7e
       case "xay_ket":
         if (su.ct === leuBe) { if (su.dv === dvTl) baoGoiY("👑 " + dvTl.ten + " chưa tới được chỗ dựng lều. Con bấm 🔨 Dựng tiếp nhé."); }
         else baoGoiY((su.dv === dvTl ? "👑 " : "🧑‍🌾 ") + su.dv.ten + " chưa tới được một chỗ xây (cây hoặc tường chắn lối). Con bấm 🔨 Xây → Dựng tiếp nhé.");
@@ -622,8 +633,15 @@ export async function vaoThungLung(the) {
     }
     if (ruongMo) moRuong(null);
     if (!h) return false;
-    const ct = lang.congTrinh.find(c => c.cuaMinh !== false && !c.xong && o.x >= c.x && o.x < c.x + c.rong && o.y >= c.y && o.y < c.y + c.sau);
+    const ct = lang.congTrinh.find(c => c.cuaMinh !== false && lang.conLam(c) && o.x >= c.x && o.x < c.x + c.rong && o.y >= c.y && o.y < c.y + c.sau); // TC_D06C7e: + đang sửa
     if (!ct || h.dv.laBan) return false;
+    if (ct.xong) { // TC_D06C7e: nông dân đang chọn tới sửa cùng
+      const n = lang.donVi.filter(d => d.xay === ct).length + (h.dv.xay === ct ? 0 : 1);
+      const dangDoMinh = [h.dv.xay, ...(h.dv.hangXay || [])].filter(c => c && c !== ct && lang.conLam(c));
+      baoGoiY(lang.lenhXay(h.dv, ct, dangDoMinh) ? "🔧 " + h.dv.ten + " vào sửa " + (CT[ct.loai] || {}).ten + " (" + Math.round((ct.sua.tienDo || 0) * 100) + " %, " + n + " người)." : "❌ Chưa có lối tới công trình này.");
+      capNhatNut();
+      return true;
+    }
     if (!lang.duocXay(h.dv.vaiTro, ct.loai)) { baoGoiY("❌ Thủ lĩnh không xây công trình."); return true; }
     const n = lang.donVi.filter(d => d.xay === ct).length + (h.dv.xay === ct ? 0 : 1);
     const dangDoMinh = [h.dv.xay, ...(h.dv.hangXay || [])].filter(c => c && c !== ct && !c.xong); // xong chỗ này thì quay lại phần đang dở
@@ -690,6 +708,23 @@ export async function vaoThungLung(the) {
     else if (ct.loai === "ruong") baoGoiY("🌾 Ruộng hoàn thành · chín sau " + MR.chinGiay + " giây · " + KC_LANG.sanLuongRuong(cauHinh, ct.cap) + " " + TN.luong_thuc.bieuTuong + "/vụ."); // TC_D03B2
     else if (LA_CHOI[ct.loai]) baoGoiY(LA_CHOI[ct.loai] + " " + CT[ct.loai].ten + " hoàn thành · cất " + catChu(ct.loai) + "."); // TC_D03C
     capNhatNut();
+  }
+  // TC_D06C7e: nông dân sửa xong trên máy bé -> báo máy chủ (xayXong nhận cả "sửa xong"; chưa khớp thì thử lại vài lần)
+  async function xongSua(ct, dv, lan) {
+    suaXongMinh.set(ct.id, Date.now());
+    if (!lan) baoGoiY("🔧 " + (dv ? dv.ten + " sửa xong " : "Đã sửa xong ") + ((CT[ct.loai] || {}).ten || "công trình") + "! Hết cháy rồi.");
+    let kq;
+    try { kq = await mayChu.xayXong(ten, ct.id); } catch (e) { kq = { ok: false }; }
+    if (!kq.ok && !daXongRoi(kq) && kq.ma !== "khong_phai_nha" && (lan || 0) < 6) setTimeout(() => xongSua(ct, dv, (lan || 0) + 1), 1500);
+    capNhatNut();
+  }
+  // TC_D06C7e: bé bấm 🔧 Sửa (máy chủ đã ghi ct.sua): nông dân đang chọn / rảnh gần nhất tới sửa. Trả người được gửi (null: không ai tới được)
+  function guiSua(ct) {
+    if (!ct.sua) return null;
+    const dv = chonTho(ct);
+    if (!dv || dv.xay === ct) return dv || null;
+    const dangDoMinh = [dv.xay, ...(dv.hangXay || [])].filter(c => c && c !== ct && lang.conLam(c));
+    return lang.lenhXay(dv, ct, dangDoMinh) ? dv : null;
   }
   // Móng của mình chưa xong mà không ai đang dựng (tải lại trang, người xây bị gọi đi việc khác)
   const dangDo = () => lang.congTrinh.filter(c => c.cuaMinh !== false && !c.xong && c !== leuBe && !lang.donVi.some(d => d.xay === c || (d.hangXay || []).includes(c)));
@@ -1014,6 +1049,7 @@ export async function vaoThungLung(the) {
     phaHuy, duocPhaHuy, PHA_HUY_GIAY,
     hongCt: ct => { apHong(ct); capNhatLd(); }, // TC_D06C7b: công trình vừa bị đánh sập (dt3d_tru.js)
     nhanKho, // TC_D06C7d: mua câu / sửa xong (dt3d_tru.js)
+    guiSua, // TC_D06C7e: nông dân tới sửa (dt3d_tru.js)
     // TC_D06D: thông số riêng của công trình cho ô "đang xem" ở thanh dưới; chọn người khác thì đóng phần Lều / ruộng
     thongTinCt(ct) {
       if (ct.cuaMinh === false || !ct.xong) return null;
@@ -1069,3 +1105,4 @@ export async function vaoThungLung(the) {
 // 06/11/2026 - BƯỚC: TC_D06C5 (không còn nông dân: máy chủ tặng một người, nongDanMienPhi)
 // 07/11/2026 - BƯỚC: TC_D06C6 (chạm Lều / kho khi chọn nông dân đang mang: đi cất)
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (lãnh địa mọi bé từ máy chủ cho quái tránh)
+// 08/11/2026 16:xx - BƯỚC: TC_D06C7e (ct.sua theo máy chủ; guiSua: nông dân tới sửa; chạm công trình đang sửa khi chọn nông dân; báo sửa xong)
