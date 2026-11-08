@@ -24,6 +24,8 @@
 //   TC_D06C7d (người dùng 08/11/2026: bé mua câu bằng vàng): soCt(CH, ct) số trận theo SỐ CÂU RIÊNG ct.soCau (null = công trình xây trước
 //     TC_D06C7d: số câu của loại); mauCt(CH, ct) máu còn; coSan(CH) số câu có sẵn khi xây; giaCau(CH, loai) giá 1 câu ({ vang: 100 });
 //     cauSua(CH, ct) số câu phải trả khi sửa (máu mất / mauMoiCau, làm tròn lên); cauDu(cau, kho, n, rng) đủ n câu cho trận trụ
+//   TC_D06C7e: ganCauMua(cau, n, moi) chèn câu bé chọn sau n câu đang dùng; phanMat(CH, ct) phần máu mất; giaSua(CH, ct) tài nguyên sửa
+//     ({ go, da... }, không vàng); giaySua(CH, ct) giây 1 nông dân sửa xong; mucChay(CH, ct) 0 / 1 cháy nhỏ / 2 cháy to
 //   moLuot(tr, CH, bay, rng) -> lượt { so, ben: "tru" | "be", moLuc, han?, giayTru?, cau? (chỉ số câu của trụ) }
 //   traLoi(tr, CH, bay, { chon, beDung }, cauTru) -> kết quả { so, ben, kieu, satThuong, dapAnDung?, mau{be, tru}, ket? }
 //     tr = trạng thái trận (máy chủ giữ): { soCau, tiLe, cong, beDanh, mauBe, mauBeToiDa, mauTru, mauTruToiDa,
@@ -150,10 +152,36 @@
     return them ? co.concat(them) : null;
   }
 
+  // TC_D06C7e (người dùng 08/11/2026 12:1x, dac_ta_cong_trinh.md mục 0B): câu bé TỰ CHỌN khi mua gắn vào ct.cau ngay sau n câu đang dùng
+  // (n = số câu trước khi mua) để trận (cauDu lấy n câu đầu) hỏi đúng câu bé chọn; câu dư phía sau (trụ đã gắn sẵn 7 câu) đẩy lùi.
+  const ganCauMua = (cau, n, moi) => { const c = Array.isArray(cau) ? cau : []; return c.slice(0, n).concat(moi, c.slice(n)); };
+  // Phần máu đã mất (0..1)
+  const phanMat = (CH, ct) => { const s = soCt(CH, ct); return s.mauToiDa > 0 ? (s.mauToiDa - mauCt(CH, ct, s)) / s.mauToiDa : 0; };
+  // TC_D06C7e: SỬA không tốn vàng, tốn tài nguyên theo loại: giá xây (x hệ số cấp) x sua.tiLeGia x phần máu mất, mỗi loại làm tròn lên
+  // (ít nhất 1). Công trình không có giá xây (Lều): không tốn gì.
+  function giaSua(CH, ct) {
+    const p = phanMat(CH, ct), m = CH.congTrinh[ct.loai] || {}, g = m.gia || {}, S = CH.sua || {}, ra = {};
+    if (!(p > 0)) return ra;
+    const hs = ((CH.xay && CH.xay.heSoCap && CH.xay.heSoCap.gia) || [1])[Math.max(1, ct.cap || 1) - 1] || 1;
+    for (const t in g) if (g[t] > 0) ra[t] = Math.max(1, Math.ceil(g[t] * hs * (S.tiLeGia == null ? 0.25 : S.tiLeGia) * p - 1e-9));
+    return ra;
+  }
+  // TC_D06C7e: NÔNG DÂN SỬA (người dùng chốt 08/11/2026 15:4x): số giây 1 người sửa xong = giayXay x sua.tiLeGiay x phần máu mất
+  // (hệ số cấp + số người như khi xây: tocDoXay dt_lang.js với { giayXay: giaySua, cap })
+  const giaySua = (CH, ct) => { const m = CH.congTrinh[ct.loai] || {}, S = CH.sua || {}; return (m.giayXay || 0) * (S.tiLeGiay == null ? 1 / 3 : S.tiLeGiay) * phanMat(CH, ct); };
+  // TC_D06C7e: CHÁY theo máu: 0 = không, 1 = cháy nhỏ (chay.to < máu / tối đa < 1), 2 = cháy to (máu / tối đa <= chay.to, mặc định 0,5)
+  function mucChay(CH, ct) {
+    if (!ct || ct.hongLuc != null || !danhDuoc(CH, ct.loai)) return 0;
+    const s = soCt(CH, ct), m = mauCt(CH, ct, s);
+    if (!(s.mauToiDa > 0) || m >= s.mauToiDa) return 0;
+    return m / s.mauToiDa <= ((CH.chay || {}).to == null ? 0.5 : CH.chay.to) ? 2 : 1;
+  }
+
   goc.KC_DT_TRU_TRAN = { laTru, soTru, congNguoi, beDanhCt, laDanh, danhDuoc, soDanh, kcMep, trongBaoHo, chonCau, hpThuLinh, hpNongDan, banMot, moLuot, traLoi,
-    soCt, mauCt, coSan, giaCau, cauSua, cauDu };
+    soCt, mauCt, coSan, giaCau, cauSua, cauDu, ganCauMua, phanMat, giaSua, giaySua, mucChay };
 })(typeof window !== "undefined" ? window : globalThis);
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ tấn công người chơi khác)
 // 06/11/2026 - BƯỚC: TC_D06C2h (hpNongDan, banMot: trụ tự bắn nông dân)
 // 08/11/2026 - BƯỚC: TC_D06C7b (laDanh, danhDuoc, soDanh, kcMep, trongBaoHo, chonCau: mọi công trình bị bé khác đánh sập)
 // 08/11/2026 - BƯỚC: TC_D06C7d (soCt, mauCt, coSan, giaCau, cauSua, cauDu: số câu riêng từng công trình, bé mua bằng vàng)
+// 08/11/2026 16:xx - BƯỚC: TC_D06C7e (ganCauMua: câu bé tự chọn; giaSua / giaySua: sửa bằng tài nguyên, nông dân sửa; mucChay: cháy nhỏ / to)

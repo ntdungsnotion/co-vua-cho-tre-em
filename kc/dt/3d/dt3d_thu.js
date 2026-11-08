@@ -35,6 +35,7 @@ import { taoDenChon } from "./dt3d_den_chon.js";
 import { taoThanhDuoi } from "./dt3d_thanh_duoi.js";
 import { taoTruBanDo } from "./dt3d_tru.js"; // TC_D06C2g: trụ phòng thủ (05/11/2026)
 import { taoNongDan } from "./dt3d_nong_dan.js"; // TC_D06C5: nút tìm nông dân rảnh + báo nông dân bị tấn công
+import { taoChay } from "./dt3d_chay.js"; // TC_D06C7e: công trình bị đánh cháy nhỏ / cháy to
 
 const NV = window.KC_NV, LANG = window.KC_DT_LANG, BD = window.KC_DT_BAN_DO;
 const $ = id => document.getElementById(id);
@@ -110,6 +111,8 @@ const moHinh = taoBoMoHinh(ctx, glbLang);
 const cam = taoCamera(ctx, vungVe, banDo);
 const diaHinh = taoDiaHinh(ctx, moHinh, banDo, lang);
 const congTrinhVe = taoCongTrinh(ctx, moHinh, diaHinh, banDo, cam.huong, lang);
+let chayBd = null; // TC_D06C7e
+try { if (window.KC_DT_TRU_TRAN) chayBd = taoChay({ ctx, lang, cauHinh, doCao: diaHinh.doCao, hinhCt: id => congTrinhVe.hinhCt(id) }); } catch (e) { console.warn("Chưa dựng được lửa cháy", e); }
 const taiNguyen = taoTaiNguyen(ctx, moHinh, diaHinh, lang);
 const boNv = taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam: loai => CH.nguon[loai].nhipLam });
 ctx.moiKhung(dt => boNv.capNhat(dt));
@@ -180,10 +183,12 @@ const tenCt = ct => (cauHinh.congTrinh[ct.loai] || {}).ten || ct.loai;
 const thoiGian = ms => { const p = Math.max(1, Math.ceil(ms / 60000)); return p >= 60 ? Math.floor(p / 60) + " giờ " + (p % 60) + " phút" : p + " phút"; };
 function ttDonVi(h) {
   const dv = h.dv, laTl = h.vaiTro === "thu_linh", xay = dv.trangThai === "xay" && dv.xay;
-  const tt = { anh: laTl ? "👑" : "🧑‍🌾", ten: dv.ten, muc: xay ? dv.xay.tienDo : null };
+  const sua = xay && dv.xay.xong && dv.xay.sua; // TC_D06C7e: nông dân đang sửa công trình bị đánh
+  const tt = { anh: laTl ? "👑" : "🧑‍🌾", ten: dv.ten, muc: sua ? sua.tienDo || 0 : xay ? dv.xay.tienDo : null };
   const nghi = laTl && !dv.laBan && quaiBd ? quaiBd.conNghi() : 0;
   tt.phu = nghi > 0 ? "⛺ Đang nghỉ ở Lều · còn " + quaiBd.dongHo(nghi)
     : dv.trangThai === "danh" ? "⚔️ Đang đánh quái" // TC_D06C2b
+    : sua ? "🔧 Đang sửa " + tenCt(dv.xay) + " · " + pt(sua.tienDo)
     : xay ? "🔨 Đang xây " + tenCt(dv.xay) + " · " + pt(dv.xay.tienDo)
       : dv.ranh ? "💤 Đang rảnh" : dv.trangThai === "lam" && dv.viec ? LAM[dv.viec.loai] || "Đang làm" : TRANG_DV[dv.trangThai] || "";
   if (laTl) tt.dong = "Thủ lĩnh" + (dv.laBan ? "" : " · " + TEN_CL[lang.chungLoai]);
@@ -207,7 +212,7 @@ function ttCongTrinh(ct) {
   else tt.dong = "Đã hoàn thành";
   tt.phu = !cuaMinh ? "Của " + (ct.chu || "bạn") : vung ? vung.thongTinCt(ct) : null;
   const ttTru = truBd ? truBd.thongTin(ct) : null; // TC_D06C2g: máu, tầm, câu của trụ; đống gạch
-  if (ttTru) { if (ttTru.dong) tt.dong = ttTru.dong; if (ttTru.phu) tt.phu = ttTru.phu; tt.nut.push(...ttTru.nut); if (ct.hongLuc != null) return tt; }
+  if (ttTru) { if (ttTru.dong) tt.dong = ttTru.dong; if (ttTru.phu) tt.phu = ttTru.phu; if (ttTru.muc != null) tt.muc = ttTru.muc; tt.nut.push(...ttTru.nut); if (ct.hongLuc != null) return tt; } // TC_D06C7e: muc = tiến độ sửa
   // TC_D06C2d: nút Phá hủy bật lại (máy chủ ghi nhận); Lều trại không phá được
   if (vung && vung.duocPhaHuy(ct)) tt.nut.push({ id: "d3PhaHuy", lop: "d3NutPhaHuy", chu: "✖<span class=\"d3Chu\"> Phá hủy</span>", nhan: "Phá hủy " + tenCt(ct), bam: () => {
     if (!confirm("Phá hủy " + tenCt(ct) + "? Công trình sụp dần rồi biến mất sau " + vung.PHA_HUY_GIAY + " giây, không hoàn lại tài nguyên.")) return;
@@ -328,7 +333,8 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   ttCt: id => { const ct = lang.congTrinh.find(c => c.id === id); return ct ? ttCongTrinh(ct) : null; }, // thông số thanh dưới của công trình
   xemCt: id => { const ct = lang.congTrinh.find(c => c.id === id); if (ct) uiDk.xemCt(ct); return !!ct; }, // TC_D06C7d: mở thanh dưới như bé chạm công trình
   mauTl: () => dvTl.mau,
-  moCong: id => { const h = congTrinhVe.hinhCt(id); return h ? (h.mo || 0) : null; } // TC_D06C7a: độ mở cánh cổng 0..1
+  moCong: id => { const h = congTrinhVe.hinhCt(id); return h ? (h.mo || 0) : null; }, // TC_D06C7a: độ mở cánh cổng 0..1
+  chay: id => (chayBd ? (id == null ? chayBd.so() : chayBd.muc(id)) : null) // TC_D06C7e: mức lửa đang vẽ (0 / 1 nhỏ / 2 to), không id: số công trình đang cháy
 };
 ctx.khiDo(so => {
   Object.assign(window.__dt3d, so);
@@ -353,3 +359,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 06/11/2026 - BƯỚC: TC_D06C4 (ô Sắt khi có; quái nhận capNhatKho + oKho cho đồ rơi)
 // 06/11/2026 - BƯỚC: TC_D06C5 (nút 🧑‍🌾 tìm nông dân rảnh + nút ⚠️ nông dân bị tấn công: dt3d_nong_dan.js)
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (người của bạn mở cổng; móc __dt3d.moCong)
+// 08/11/2026 16:xx - BƯỚC: TC_D06C7e (lửa cháy dt3d_chay.js; thanh dưới: nông dân / công trình đang sửa; móc __dt3d.chay)

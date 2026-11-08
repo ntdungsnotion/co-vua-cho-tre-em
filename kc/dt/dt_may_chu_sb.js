@@ -73,6 +73,7 @@
       cho: "Trụ đang nạp tên.", // TC_D06C2h
       khong_danh: "Không đánh được công trình này.", // TC_D06C7b
       hong: "Công trình đã sụp rồi.", so: "Số câu không đúng.", khong_hu: "Công trình còn nguyên, không cần sửa.", // TC_D06C7d
+      dang_sua: "Nông dân đang sửa, sửa xong rồi làm tiếp nhé.", // TC_D06C7e
       do_mat: "Đồ đã mất rồi.", khong_cua_ban: "Đây không phải đồ của bạn", con_nong_dan: "Còn nông dân rồi.", khong_cam: "Nông dân không cầm đồ.", chua_co_leu: "Chưa có Lều trại.", kho_day: "Kho đầy rồi.", khong_phai_nguoi: "Chỉ nông dân của con mới làm được." // TC_D06C4
     };
     // Tên đưa vào câu lý do: loại nguồn (còn cây ở đây), tài nguyên thiếu (gỗ), loại nhà đã đủ (Tháp canh)
@@ -98,7 +99,8 @@
       if (kq && Number.isFinite(kq.gio)) lech = kq.gio - (t0 + Date.now()) / 2; // giữa lúc gửi và lúc nhận
       if (!kq || kq.thanhCong !== true) return Object.assign({ ok: false, ma: (kq && kq.ma) || "mang", lyDo: loiCho(kq) },
         kq && kq.chu ? { chu: kq.chu } : null, kq && Number.isFinite(kq.nghiDen) ? { nghiDen: kq.nghiDen } : null, // TC_D06C1: ai đang đánh, giờ hết nghỉ
-        kq && Number.isFinite(kq.con) ? { con: kq.con } : null); // TC_D06C2h: trụ còn chờ bấy nhiêu ms mới bắn
+        kq && Number.isFinite(kq.con) ? { con: kq.con } : null, // TC_D06C2h: trụ còn chờ bấy nhiêu ms mới bắn
+        kq && kq.sua ? { sua: kq.sua } : null); // TC_D06C7e: đang sửa (tiến độ) -> máy bé gửi nông dân tới sửa tiếp
       return Object.assign({ ok: true }, kq);
     }
 
@@ -150,7 +152,8 @@
       async cauKho(ten, ds) { return goi("kc_dt_cau_kho", { p_cau: ds }); },
       async danhKhai(ten, id, duPhong) { return goi("kc_dt_danh_khai", Object.assign({ p_id: id }, Array.isArray(duPhong) ? { p_cau: duPhong } : null)); },
       // TC_D06C7d: bé mua câu phòng thủ bằng vàng / sửa công trình bị đánh (cần SQL TC_D06C7d)
-      async muaCau(ten, id, so) { return goi("kc_dt_mua_cau", { p_id: id, p_so: so }); },
+      // TC_D06C7e: p_cau = câu bé tự chọn; sửa bằng tài nguyên, nông dân tới sửa (cần SQL TC_D06C7e)
+      async muaCau(ten, id, so, cau) { return goi("kc_dt_mua_cau", { p_id: id, p_so: so, p_cau: Array.isArray(cau) ? cau : null }); },
       async suaCt(ten, id) { return goi("kc_dt_sua_ct", { p_id: id }); }
     };
   }
@@ -164,3 +167,4 @@
 // 06/11/2026 - BƯỚC: TC_D06C4 (quaiThang, bangRoiDo; cần SQL TC_D06C4)
 // 08/11/2026 - BƯỚC: TC_D06C7b (cauKho, danhKhai; cần SQL TC_D06C7b)
 // 08/11/2026 - BƯỚC: TC_D06C7d (muaCau, suaCt; cần SQL TC_D06C7d)
+// 08/11/2026 16:xx - BƯỚC: TC_D06C7e (muaCau p_cau; suaCt trả sua; cần SQL TC_D06C7e)
