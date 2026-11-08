@@ -193,23 +193,33 @@ export async function vaoThungLung(the) {
       truMc(c))); // TC_D06C2g: máu, đống gạch, câu của trụ
     if (c.chu !== tenChuan) ctBan.set(c.id, ct);
     else if (c.loai === "leu") leuBe = ct;
+    apHong(ct); // TC_D06C7b: rào đã sụp không tính lãnh địa
     return ct;
   }
   for (const c of quanh.congTrinh || []) nhanCongTrinh(c);
   capNhatLd(true);
   // TC_D06C2g: phần trụ trong bản ghi máy chủ (máu còn, lúc thành đống gạch, có câu chưa; câu + đáp án chỉ chủ trụ nhận)
   function truMc(c) {
-    if (!CT[c.loai] || !CT[c.loai].tru) return {};
+    if (!CT[c.loai] || !(CT[c.loai].tru || CT[c.loai].danh)) return {}; // TC_D06C7b: mọi công trình đánh được có máu + đống gạch
     return { mau: Number.isFinite(c.mau) ? c.mau : null, hongLuc: Number.isFinite(c.hongLuc) ? c.hongLuc : null, coCau: !!c.coCau, cau: Array.isArray(c.cau) ? c.cau : null,
-      ban: Array.isArray(c.ban) ? c.ban : null }; // TC_D06C2h: phát bắn gần nhất [{ luc (giờ máy chủ), dv (id máy chủ), trung }]
+      ban: Array.isArray(c.ban) ? c.ban : null, // TC_D06C2h: phát bắn gần nhất [{ luc (giờ máy chủ), dv (id máy chủ), trung }]
+      soCau: Number.isInteger(c.soCau) ? c.soCau : null }; // TC_D06C7d: số câu riêng (bé mua bằng vàng; null = số của loại)
+  }
+  // TC_D06C7b: hàng rào / cổng vừa thành đống gạch (bé khác đánh sập) thì thôi tính lãnh địa ngay (ô vẫn là đống gạch tới khi máy chủ dọn)
+  function apHong(ct) {
+    if (!ct || ct.hongLuc == null || ct.boLd || !BD.LA_RAO[ct.loai] || !ct.xong) return;
+    ct.boLd = true;
+    lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, false);
+    ldDoi = true;
   }
   function dongBoCongTrinh(ds) {
     const con = new Set(), conMinh = new Set();
     for (const c of ds || []) {
-      if (c.chu === tenChuan && CT[c.loai] && CT[c.loai].tru) { // TC_D06C2g: trụ của mình: máu / đống gạch / câu theo máy chủ
+      if (c.chu === tenChuan && CT[c.loai] && (CT[c.loai].tru || (CT[c.loai].danh && (c.hongLuc != null || c.mau != null || c.soCau != null)))) { // TC_D06C7d: + số câu riêng
+        // TC_D06C2g: trụ của mình: máu / đống gạch / câu theo máy chủ; TC_D06C7b: công trình của mình bị bé khác đánh (máu, đống gạch)
         conMinh.add(c.id);
         const ct = lang.congTrinh.find(x => x.id === c.id);
-        if (ct) Object.assign(ct, truMc(c));
+        if (ct) { Object.assign(ct, truMc(c)); apHong(ct); }
         continue;
       }
       if (c.chu === tenChuan) { // nhà của mình: máy này tự giữ; TC_D03B2: lúa của ruộng theo máy chủ (trồng muộn hơn / đã gặt hết / máy khác trồng lại)
@@ -224,6 +234,7 @@ export async function vaoThungLung(the) {
         else if (Number.isFinite(c.tienDo)) ct.tienDo = c.tienDo; // TC_D03A: nhà bạn lớn theo tiến độ máy chủ
         if (c.loai === "ruong" && Number.isFinite(c.trongLuc)) Object.assign(ct, ruongMc(c)); // TC_D03B2: ruộng bạn chín / gặt theo máy chủ
         Object.assign(ct, truMc(c)); // TC_D06C2g
+        apHong(ct); // TC_D06C7b
       }
     }
     // Máy chủ trả mọi nhà ở vùng đã khám phá (chỉ thêm, không bớt): nhà bạn đã thấy mà nay không còn
@@ -434,6 +445,10 @@ export async function vaoThungLung(the) {
   const catChu = loai => (CT[loai].cat || []).filter(t => TN[t]).map(t => TN[t].bieuTuong).join(" "); // TC_D03C: loại chòi nhận cất
   const loiThieu = (gia, n) => { const t = thieuGia(gia, n); return t ? "❌ " + BD.LY_DO.thieu(TN[t].ten.toLowerCase()) + " (cần " + giaChu(gia, n) + ")" : null; };
   function truKho(gia, n) { for (const t in gia || {}) lang.kho[t] = Math.max(0, (lang.kho[t] || 0) - gia[t] * n); if (the.capNhatKho) the.capNhatKho(); }
+  // TC_D06C7d: kho máy chủ trả sau khi mua câu / sửa (dt3d_tru.js); công trình mới xây có sẵn muaCau.coSan câu (máy chủ ghi giống)
+  function nhanKho(kho) { for (const k in kho || {}) if (k in lang.kho) lang.kho[k] = kho[k]; if (the.capNhatKho) the.capNhatKho(); }
+  const TTR = window.KC_DT_TRU_TRAN;
+  const soCauMoi = loai => (TTR && TTR.danhDuoc(cauHinh, loai) ? { soCau: TTR.coSan(cauHinh) } : null);
   const cuaMinh = loai => lang.congTrinh.filter(c => c.cuaMinh !== false && c.loai === loai);
   // Móng nằm giữa chỗ chạm; cổng: 3 x 1, chạm lên tường dọc của mình thì xoay dọc. TC_D03A (góp ý người dùng):
   // nút "🔄 Xoay cổng" / phím R chọn hẳn ngang / dọc (xoayTay); chưa bấm thì tự theo hướng tường.
@@ -622,7 +637,7 @@ export async function vaoThungLung(the) {
     const kq = await mayChu.xayTuong(ten, ds.map(c => [c.x, c.y]));
     dangGui = false;
     if (!kq.ok) { choXem = null; baoGoiY("❌ " + kq.lyDo); return kq; }
-    const moi = kq.ds.map(c => lang.themCongTrinh({ id: c.id, chu: tenChuan, loai: "tuong", x: c.x, y: c.y, rong: 1, sau: 1, xong: false, giayXay: CT.tuong.giayXay }));
+    const moi = kq.ds.map(c => lang.themCongTrinh(Object.assign({ id: c.id, chu: tenChuan, loai: "tuong", x: c.x, y: c.y, rong: 1, sau: 1, xong: false, giayXay: CT.tuong.giayXay }, soCauMoi("tuong"))));
     truKho(CT.tuong.gia, moi.length);
     const cuoi = ds[ds.length - 1];
     if (cheDo === "tuong") { dauTuong = { x: cuoi.x, y: cuoi.y }; choXem = null; soiDat.hienO([dauTuong], () => false); }
@@ -638,7 +653,7 @@ export async function vaoThungLung(the) {
     dangGui = false;
     if (!kq.ok) { choXem = null; baoGoiY("❌ " + kq.lyDo); return kq; }
     for (const id of kq.boTuong || []) { const c = lang.congTrinh.find(t => t.id === id && t.cuaMinh !== false); if (c) lang.boCongTrinh(c); } // cổng đè tường
-    const ct = lang.themCongTrinh({ id: kq.id, chu: tenChuan, loai, x: a.x, y: a.y, rong: a.rong, sau: a.sau, xong: false, giayXay: CT[loai].giayXay });
+    const ct = lang.themCongTrinh(Object.assign({ id: kq.id, chu: tenChuan, loai, x: a.x, y: a.y, rong: a.rong, sau: a.sau, xong: false, giayXay: CT[loai].giayXay }, soCauMoi(loai)));
     truKho(CT[loai].gia, 1);
     batCheDo(null);
     baoGoiY(loiGiao(giaoXay([ct]), CT[loai].ten));
@@ -997,6 +1012,8 @@ export async function vaoThungLung(the) {
     dvBan: id => ban.get(id) || null, // TC_D06C2b: nông dân của bạn đang đánh quái (id máy chủ)
     dsDvBan: () => [...ban.values()].map(b => b.dv), // TC_D06C7a: người của bạn đi qua cổng của bạn ấy -> cổng mở
     phaHuy, duocPhaHuy, PHA_HUY_GIAY,
+    hongCt: ct => { apHong(ct); capNhatLd(); }, // TC_D06C7b: công trình vừa bị đánh sập (dt3d_tru.js)
+    nhanKho, // TC_D06C7d: mua câu / sửa xong (dt3d_tru.js)
     // TC_D06D: thông số riêng của công trình cho ô "đang xem" ở thanh dưới; chọn người khác thì đóng phần Lều / ruộng
     thongTinCt(ct) {
       if (ct.cuaMinh === false || !ct.xong) return null;

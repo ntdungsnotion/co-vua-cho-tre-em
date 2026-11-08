@@ -326,6 +326,7 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   tru: truBd && truBd.moc, // TC_D06C2g: trụ phòng thủ
   nongDan: nongDanBd && nongDanBd.moc, // TC_D06C5: nút nông dân rảnh + báo bị tấn công
   ttCt: id => { const ct = lang.congTrinh.find(c => c.id === id); return ct ? ttCongTrinh(ct) : null; }, // thông số thanh dưới của công trình
+  xemCt: id => { const ct = lang.congTrinh.find(c => c.id === id); if (ct) uiDk.xemCt(ct); return !!ct; }, // TC_D06C7d: mở thanh dưới như bé chạm công trình
   mauTl: () => dvTl.mau,
   moCong: id => { const h = congTrinhVe.hinhCt(id); return h ? (h.mo || 0) : null; } // TC_D06C7a: độ mở cánh cổng 0..1
 };

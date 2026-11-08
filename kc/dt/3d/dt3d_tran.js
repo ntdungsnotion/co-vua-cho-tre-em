@@ -49,7 +49,9 @@ const KIEU_TOC = {
 };
 // đòn của quái: dom_dom bắn tia sáng từ xa, còn lại lao tới
 const KIEU_QUAI = { slime_so: { mau: "#86ff6e" }, nam_chu_cai: { mau: "#c995ff" }, dom_dom: { mau: "#fff27a", xa: true },
-  tru_ten: { mau: "#ffe6a0", xa: true } }; // TC_D06C2g: Trụ tên bắn tên từ sàn (không nhảy)
+  tru_ten: { mau: "#ffe6a0", xa: true }, // TC_D06C2g: Trụ tên bắn tên từ sàn (không nhảy)
+  ct_rao: { mau: "#ffe6a0", xa: true }, ct_nha: { mau: "#ffd28a", xa: true }, // TC_D06C7b: (dự phòng) rào / nhà đánh trả từ xa
+  tl_doi: { mau: "#ffb35a" } }; // TC_D06C7b: Thủ lĩnh của chủ công trình lao tới chém
 
 function anhTron(ve, co = 64) { const cv = document.createElement("canvas"); cv.width = cv.height = co; ve(cv.getContext("2d"), co); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; }
 
@@ -152,13 +154,47 @@ async function tao(vungVe, { nhe } = {}) {
 
   // --- quái ---
   let quai = null;
-  function dungQuai(ma, chu) {
-    if (quai) canh.remove(quai.nhom);
-    quai = taoQuai3d(ma, { nhe }); quai.ma = ma;
+  function dungQuai(ma, chu, doiThu) {
+    if (quai) { canh.remove(quai.nhom); if (quai.boDi) quai.boDi(); }
+    quai = doiThu ? taoTlDoi(ma, doiThu) : taoQuai3d(ma, { nhe }); quai.ma = doiThu ? "tl_doi" : ma;
     quai.nhom.position.set(X_QUAI, 0, 0); quai.nhom.rotation.y = HUONG_QUAI;
     quai.nhom.scale.setScalar(TI_QUAI);
     if (chu) quai.datChu(chu);
     canh.add(quai.nhom);
+  }
+  // TC_D06C7b (người dùng 08/11/2026: "hình đại diện công trình chiến đấu sẽ là chủ loại nhà đó, ví dụ nhà ở là công nhân, trại lính
+  // cung là lính cung... Giờ chưa có quân đại diện thì thay bằng thủ lĩnh"): đánh công trình thường -> đối thủ là THỦ LĨNH của chủ
+  // (KayKit theo tộc của chủ, cầm rìu, lao tới chém như quái), công trình (maCt: ct_nha / ct_rao) đứng sau làm cảnh, bé thắng thì sụp.
+  // Sau này có quân đại diện từng loại nhà thì đổi hình ở đây.
+  function taoTlDoi(maCt, doiThu) {
+    const nhom = new THREE.Group();
+    const dvQ = { ten: "", x: 0, z: 0, huongMuon: 0, trangThai: "dung", duong: [], viec: null, mang: { loai: null, so: 0 }, chay: false, ranh: false };
+    const h = boNv.tao(dvQ, "thu_linh", NV.chuanHoa({ chungLoai: doiThu.chungLoai || "nhan", gioi: doiThu.gioi || "nam" }));
+    nhom.add(h.vo); // vị trí do boNv đặt theo dvQ (0, 0) -> tính trong nhóm
+    h.vo.scale.setScalar(TI_BE / TI_QUAI);
+    h.huongMuon = 0;
+    h.vuKhiMacDinh = "1H_Axe"; if (h.vuKhi["1H_Axe"]) h.vuKhi["1H_Axe"].visible = true;
+    const vl = []; h.goc.traverse(o => { if (o.isMesh && o.material.emissive && vl.indexOf(o.material) < 0) vl.push(o.material); });
+    const nen = taoQuai3d(/^ct_\w+$/.test(maCt || "") ? maCt : "ct_nha", { nhe });
+    nen.nhom.position.set(X_QUAI + 1.5, 0, -2.2); nen.nhom.rotation.y = HUONG_QUAI + 0.5; nen.nhom.scale.setScalar(TI_QUAI * 0.85);
+    canh.add(nen.nhom);
+    let chopCon = 0;
+    return {
+      nhom, cao: 1.5 * TI_BE / TI_QUAI, laTru: false, nen,
+      capNhat(dt) { // boNv.capNhat (mỗi khung) đã chạy động tác
+        if (chopCon > 0) { chopCon = Math.max(0, chopCon - dt); const k = chopCon / 0.25 * 0.5; for (const v of vl) v.emissive.setRGB(k, k * 0.55, k * 0.5); }
+      },
+      chop(giay) { chopCon = giay || 0.25; boNv.dien(h, ["Hit_A"], null, null, 0); },
+      danh() { boNv.dien(h, ["1H_Melee_Attack_Slice_Diagonal"], null, null, 0); },
+      datChu() {},
+      datMo(a) { h.goc.traverse(o => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = a; } }); },
+      sup() { // công trình sau lưng sụp khi bé thắng
+        them(0.01, () => { am.trung(nen.nhom.position.x, true); hu.khoi(V(nen.nhom.position.x, 0.3, nen.nhom.position.z), "#b9a68a", 14, 1.2, false); hu.rung(0.08, 0.5); }, 0.9);
+        const s = nen.nhom.scale.x;
+        them(1.4, p => { nen.nhom.scale.set(s * (1 + p * 0.35), s * Math.max(0.12, 1 - p), s * (1 + p * 0.35)); }, 0.9);
+      },
+      boDi() { boNv.xoa(h); canh.remove(nen.nhom); }
+    };
   }
 
   // --- vòng thế thủ, bóng suy nghĩ, sao bay, chớp sáng ---
@@ -284,7 +320,7 @@ async function tao(vungVe, { nhe } = {}) {
   }
 
   const san = {
-    datTran({ hoSo, quai: ma, chu }) {
+    datTran({ hoSo, quai: ma, chu, doiThu }) {
       dsTween.length = 0; giuThu = false;
       dvBe.x = X_BE; dvBe.z = 0;
       const hs = NV.chuanHoa(hoSo || {});
@@ -294,7 +330,7 @@ async function tao(vungVe, { nhe } = {}) {
       kieu = KIEU_TOC[hs.chungLoai] || KIEU_TOC.nhan;
       if (haoQuang) canh.remove(haoQuang.nhom);
       haoQuang = hu.taoHaoQuang(kieu.mau);
-      dungQuai(ma, chu);
+      dungQuai(ma, chu, doiThu); // TC_D06C7b: doiThu = { chungLoai } -> Thủ lĩnh của chủ công trình
       vong.be.visible = vong.quai.visible = bong.visible = false;
       am.phatNhac({ boiCanh: "tran" }); // nhạc nền trận từ thư viện (chưa có bài thì im)
     },
@@ -366,6 +402,7 @@ async function tao(vungVe, { nhe } = {}) {
           if (ne) them(0.01, () => beChiu(), 0.3);
         } else {
           am.nhay(X_QUAI);
+          if (quai.danh) quai.danh(); // TC_D06C7b: Thủ lĩnh của chủ công trình vung rìu
           them(0.3, p => { qn.position.x = X_QUAI + (X_BE + 1.0 - X_QUAI) * p; qn.position.y = Math.sin(p * Math.PI) * 0.6; });
           them(0.01, () => beChiu(tamBe()), 0.3);
           them(0.4, p => { qn.position.x = X_BE + 1.0 + (X_QUAI - X_BE - 1.0) * p; qn.position.y = Math.sin(p * Math.PI) * 0.4; }, 0.55);
@@ -390,6 +427,7 @@ async function tao(vungVe, { nhe } = {}) {
             them(1.4, p => { q.nhom.scale.set(TI_QUAI * (1 + p * 0.35), TI_QUAI * Math.max(0.12, 1 - p), TI_QUAI * (1 + p * 0.35)); q.nhom.rotation.z = Math.sin(p * 30) * 0.05 * (1 - p); }, 0.5); }
           return;
         }
+        if (q.sup && thang === "be") q.sup(); // TC_D06C7b: công trình sau lưng Thủ lĩnh của chủ sụp
         them(0.01, () => { am.chayTron(q.nhom.position.x); hu.khoi(V(q.nhom.position.x, 0.1, 0.1), "#cdbf9c", 6, 0.7, false); }, 0.6);
         them(1.2, p => { q.nhom.position.x = X_QUAI + p * 5; q.nhom.position.y = Math.abs(Math.sin(p * Math.PI * 4)) * 0.35; q.nhom.rotation.y = Math.PI / 2; q.datMo(1 - p); }, 0.6);
       }
@@ -471,3 +509,4 @@ window.dispatchEvent(new Event("dt-san3d"));
 // 29/10/2026 - BƯỚC: TC_D05
 // 04/11/2026 23:xx - BƯỚC: TC_D06C2b (hoSo.nongDan: nông dân đánh quái dùng hình nông dân)
 // 07/11/2026 - BƯỚC: TC_D05D (giữ thế thủ tới đòn của quái: giuThu)
+// 08/11/2026 - BƯỚC: TC_D06C7b (đánh công trình thường: đối thủ là Thủ lĩnh của chủ (datTran doiThu), công trình đứng sau, thắng thì sụp)

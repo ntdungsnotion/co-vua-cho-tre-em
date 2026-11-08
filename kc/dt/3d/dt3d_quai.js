@@ -6,6 +6,7 @@
 //            - dom_dom: đom đóm bay, đuôi phát sáng, cánh vỗ
 //            Mắt to tròn, động tác nhún / lắc / bay lơ lửng. Dễ thương vừa phải, không đáng sợ.
 //            TC_D06C2g: tru_ten = Trụ tên (đối thủ trận trụ): chân đá, thân gỗ, nỏ lớn, cờ; laTru = true.
+//            TC_D06C7b (08/11/2026): ct_rao (hàng rào cọc + chòi gác) / ct_nha (nhà gỗ mái rơm): công trình thường của bạn bị đánh.
 // HÀM KHAI RA:
 //   taoQuai3d(ma, { nhe }) -> { nhom (gốc ở chân, mặt nhìn +z), cao, capNhat(dt, t),
 //        chop(giây) (chớp trắng khi trúng), datChu(chữ), datMo(0..1) }
@@ -159,7 +160,46 @@ function truTen() {
   };
 }
 
-const BANG = { slime_so: slime, nam_chu_cai: nam, dom_dom: domDom, tru_ten: truTen };
+// TC_D06C7b: CÔNG TRÌNH THƯỜNG trên sân đấu (bé đánh nhà / rào của bạn): như trụ (laTru: không nhún, đánh trả từ trên cao, thua sụp).
+// ct_rao = đoạn hàng rào cọc gỗ nhọn có chòi gác nhỏ giữa; ct_nha = nhà gỗ mái rơm có cửa sổ phát sáng.
+function ctRao() {
+  const nhom = new THREE.Group();
+  const vlGo = new THREE.MeshStandardMaterial({ color: "#8a5a32", roughness: 0.85 });
+  const vlGoSang = new THREE.MeshStandardMaterial({ color: "#b37a45", roughness: 0.8 });
+  const vlDay = new THREE.MeshStandardMaterial({ color: "#5c3d22", roughness: 0.9 });
+  const khoi = (geo, vl, x, y, z) => { const m = new THREE.Mesh(geo, vl); m.position.set(x, y, z); m.castShadow = true; nhom.add(m); return m; };
+  for (let i = 0; i < 7; i++) {
+    const x = -1.05 + i * 0.35, cao = 1.25 + ((i * 37) % 5) * 0.06;
+    khoi(new THREE.CylinderGeometry(0.13, 0.15, cao, 7), i % 2 ? vlGo : vlGoSang, x, cao / 2, 0);
+    khoi(new THREE.ConeGeometry(0.13, 0.32, 7), vlGo, x, cao + 0.16, 0);
+  }
+  for (const y of [0.4, 0.95]) khoi(new THREE.BoxGeometry(2.4, 0.08, 0.08), vlDay, 0, y, 0.15);
+  // chòi gác nhỏ giữa rào (chỗ "rào" đánh trả)
+  for (const sx of [-1, 1]) khoi(new THREE.CylinderGeometry(0.05, 0.06, 1.1, 5), vlGo, sx * 0.28, 1.95, 0.05);
+  khoi(new THREE.BoxGeometry(0.75, 0.08, 0.6), vlGoSang, 0, 2.15, 0.05);
+  const mai = khoi(new THREE.ConeGeometry(0.55, 0.4, 4), vlDay, 0, 2.5, 0.05); mai.rotation.y = Math.PI / 4;
+  const chu = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
+  chu.scale.set(0.6, 0.6, 1); chu.position.y = 3.0; chu.visible = false; nhom.add(chu);
+  return { nhom, cao: 2.4, vlChop: [vlGo, vlGoSang], chu, laTru: true, capNhat() {} };
+}
+function ctNha() {
+  const nhom = new THREE.Group();
+  const vlVach = new THREE.MeshStandardMaterial({ color: "#a8763f", roughness: 0.85 });
+  const vlGo = new THREE.MeshStandardMaterial({ color: "#6e4524", roughness: 0.85 });
+  const vlRom = new THREE.MeshStandardMaterial({ color: "#d9b25a", roughness: 0.95 });
+  const vlSang = new THREE.MeshStandardMaterial({ color: "#ffcf6a", emissive: "#ff9a2a", emissiveIntensity: 0.8 });
+  const khoi = (geo, vl, x, y, z) => { const m = new THREE.Mesh(geo, vl); m.position.set(x, y, z); m.castShadow = true; nhom.add(m); return m; };
+  khoi(new THREE.BoxGeometry(1.7, 1.2, 1.3), vlVach, 0, 0.6, 0);
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) khoi(new THREE.BoxGeometry(0.12, 1.25, 0.12), vlGo, sx * 0.86, 0.62, sz * 0.66);
+  const mai = khoi(new THREE.ConeGeometry(1.45, 1.1, 4), vlRom, 0, 1.75, 0); mai.rotation.y = Math.PI / 4; mai.scale.set(1, 1, 0.82);
+  khoi(new THREE.BoxGeometry(0.42, 0.75, 0.04), vlGo, 0, 0.38, 0.66);
+  const cs = khoi(new THREE.BoxGeometry(0.3, 0.26, 0.04), vlSang, 0.5, 0.75, 0.66);
+  const chu = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
+  chu.scale.set(0.6, 0.6, 1); chu.position.y = 2.7; chu.visible = false; nhom.add(chu);
+  return { nhom, cao: 2.2, vlChop: [vlVach, vlGo, vlRom], chu, laTru: true, capNhat(dt, t) { cs.material.emissiveIntensity = 0.7 + Math.sin(t * 2) * 0.2; } };
+}
+
+const BANG = { slime_so: slime, nam_chu_cai: nam, dom_dom: domDom, tru_ten: truTen, ct_rao: ctRao, ct_nha: ctNha };
 
 export function taoQuai3d(ma, { nhe } = {}) {
   const q = (BANG[ma] || slime)(nhe);
