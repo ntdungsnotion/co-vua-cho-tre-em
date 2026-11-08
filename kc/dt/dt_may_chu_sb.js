@@ -118,7 +118,7 @@
       async xayXong(ten, id) { return goi("kc_dt_xay_xong", { p_id: id }); },
       async sinhNongDan() { return goi("kc_dt_sinh_nong_dan", {}); }, // TC_D03B1
       async trongLai(ten, id) { return goi("kc_dt_trong_lai", { p_id: id }); }, // TC_D03B2
-      async phaHuy(ten, id) { return goi("kc_dt_pha_huy", { p_id: id }); }, // TC_D06C2d: cần SQL TC_D06C2d
+      async phaHuy(ten, id) { return goi("kc_dt_pha_huy", { p_id: id }); }, // TC_D06C2d: cần SQL TC_D06C2d; TC_D06C7c: cả Lều (trả kho, hang)
       async luuKhamPha(ten, chuoi, giu) { return goi("kc_dt_luu_kham_pha", { p_mat_na: chuoi }, giu); },
       // TC_D06C1: quái chung (giữ khi Thủ lĩnh tiến tới, vào trận, kết quả / thả)
       // TC_D06C2a: p_lao; TC_D06C2b: p_dv (nông dân đánh quái) chỉ gửi khi có, để SQL cũ vẫn nhận lời gọi của Thủ lĩnh
@@ -168,3 +168,4 @@
 // 08/11/2026 - BƯỚC: TC_D06C7b (cauKho, danhKhai; cần SQL TC_D06C7b)
 // 08/11/2026 - BƯỚC: TC_D06C7d (muaCau, suaCt; cần SQL TC_D06C7d)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (muaCau p_cau; suaCt trả sua; cần SQL TC_D06C7e)
+// 08/11/2026 22:xx - BƯỚC: TC_D06C7c (phaHuy nhận Lều trại; cần SQL TC_D06C7c)
