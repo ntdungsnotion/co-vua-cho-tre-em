@@ -84,9 +84,11 @@ export async function vaoThungLung(the) {
   const ten = be.ten, tenChuan = String(ten).trim().toLowerCase();
   const R = CT.leu.rong, S = CT.leu.sau;
   // Phá hủy công trình của mình (Codex TC_D06C1; TC_D06C2d: máy chủ ghi nhận trước, bạn khác thấy mất, tải lại không hiện lại).
-  // Máy chủ xoá ngay (không hoàn tài nguyên; Lều trại không phá được); máy bé cho công trình sụp dần PHA_HUY_GIAY giây rồi mới bỏ.
+  // Máy chủ xoá ngay (không hoàn tài nguyên); máy bé cho công trình sụp dần PHA_HUY_GIAY giây rồi mới bỏ.
+  // TC_D06C7c: phá được cả Lều trại của mình (dời làng): bỏ Lều ngay khỏi làng (nút 🏕️ Dựng lều hiện lại, chỗ cất / sức chứa / chỗ ở
+  // của Lều thôi tính: dt_lang.js dungDuoc), hàng chờ sinh được hoàn lương thực (kho máy chủ trả).
   const PHA_HUY_GIAY = 30;
-  const duocPhaHuy = ct => !!ct && ct.cuaMinh !== false && ct.xong && ct.loai !== "leu" && ct.phaHuyLuc == null && !ct.dangPha;
+  const duocPhaHuy = ct => !!ct && ct.cuaMinh !== false && ct.xong && ct.phaHuyLuc == null && !ct.dangPha;
   const phaHuy = async ct => {
     if (!duocPhaHuy(ct) || !mayChu.phaHuy) return false;
     ct.dangPha = true;
@@ -94,6 +96,7 @@ export async function vaoThungLung(the) {
     ct.dangPha = false;
     if (!kq.ok) { baoGoiY("❌ " + kq.lyDo); return false; }
     ct.phaHuyLuc = lang.bayGio();
+    if (ct === leuBe) { leuBe = null; leuMo = false; hang = kq.hang || null; nhanKho(kq.kho); }
     setTimeout(() => { if (lang.congTrinh.includes(ct)) lang.boCongTrinh(ct); capNhatNut(); }, PHA_HUY_GIAY * 1000);
     return true;
   };
@@ -734,15 +737,18 @@ export async function vaoThungLung(the) {
     if (!kq.ok && !daXongRoi(kq) && (lan || 0) < 10) { setTimeout(() => leuXong((lan || 0) + 1), 2000); return; } // máy chủ chưa thấy đủ: thử lại
     if (!kq.ok) { if (!daXongRoi(kq)) baoGoiY("❌ " + kq.lyDo); else leuDaNhan = true; return; }
     const goc = { x: leuBe.x + R / 2, z: leuBe.y + S / 2 };
+    let moi = 0; // TC_D06C7c: Lều dựng lại (dời làng): máy chủ trả nông dân đang có, không ai mới
     kq.donVi.forEach((d, i) => {
       if (dsNd.some(x => x.idMayChu === d.id)) return;
-      const dv = nhanNongDan(d);
+      const dv = nhanNongDan(d); moi++;
       const n = lang.nguonGanNhat(VIEC_DAU[i % VIEC_DAU.length], goc.x, goc.z, 16) || lang.nguonGanNhat("cay", goc.x, goc.z, 40);
       if (n) lang.giaoViec(dv, n); else dv.ranh = true;
     });
     leuDaNhan = true; // TC_D03B1: từ giờ nông dân mới (sinh ở lều) nhận qua dongBoMinh
+    // TC_D06C7c: nông dân đang đứng ôm đồ vì làng không có chỗ cất -> mang về Lều mới
+    if (!moi) for (const d of dsNd) if (d.mang && d.mang.so > 0 && (d.ranh || d.trangThai === "dung")) lang.lenhCat(d, leuBe, true);
     capNhatNut();
-    baoGoiY("🏕️ Lều trại dựng xong: +" + kq.donVi.length + " nông dân.");
+    baoGoiY(moi ? "🏕️ Lều trại dựng xong: +" + moi + " nông dân." : "🏕️ Lều trại mới dựng xong! Làng đã dời về đây: nông dân mang đồ về Lều mới, sinh nông dân ở Lều mới.");
   }
 
   // ---------------- Lều trại: dân số + sinh nông dân (TC_D03B1) ----------------
@@ -1106,3 +1112,4 @@ export async function vaoThungLung(the) {
 // 07/11/2026 - BƯỚC: TC_D06C6 (chạm Lều / kho khi chọn nông dân đang mang: đi cất)
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (lãnh địa mọi bé từ máy chủ cho quái tránh)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (ct.sua theo máy chủ; guiSua: nông dân tới sửa; chạm công trình đang sửa khi chọn nông dân; báo sửa xong)
+// 08/11/2026 22:xx - BƯỚC: TC_D06C7c (tự phá Lều, dời làng: phaHuy nhận Lều, bỏ leuBe ngay; Lều dựng lại không thêm nông dân, ai ôm đồ mang về Lều mới)

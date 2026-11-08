@@ -22,7 +22,7 @@
 //     xayTuong(ten, [[x, y]...])   -> { ok, ds[{id, x, y}], kho } | { ok: false, ma, lyDo, o }   (TC_D02C)
 //     xayXong(ten, id)             -> { ok, donVi[] } (Lều trại: kèm nông dân đầu tiên) | { ok: false, lyDo }
 //     luuKhamPha(ten, chuoiBase64) -> { ok }
-//     phaHuy(ten, id)              -> { ok, id } | { ok: false, ma: khong_phai_nha | la_leu | chua_xong } (TC_D06C2d)
+//     phaHuy(ten, id)              -> { ok, id, kho, hang } | { ok: false, ma: khong_phai_nha | chua_xong } (TC_D06C2d; TC_D06C7c: cả Lều trại)
 //     gio()                        -> giờ máy chủ (ms)
 //   kho: giống localStorage (getItem / setItem); không có thì giữ trong bộ nhớ.
 //   TC_D02C: trừ giá khi đặt móng + giới hạn số mỗi bé; lãnh địa (tường + cổng đã xong khép kín):
@@ -179,6 +179,7 @@
       if (BD.LA_RAO[ct.loai]) lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, true);
       if (ct.loai === "ruong") { ct.trongLuc = luc; ct.con = LANG.sanLuongRuong(CH, ct.cap); ct.gatLuc = null; } // TC_D03B2: xong là trồng
       if (ct.loai !== "leu") return;
+      if (tt.be[ct.chu] && tt.be[ct.chu].doiLeu) return; // TC_D06C7c: Lều dựng lại sau khi tự phá không tặng thêm nông dân
       const cho = choQuanh(ct); // mỗi người một ô
       for (let i = 0; i < (mauCt("leu").nongDanDau || 0); i++) {
         const p = cho[i % cho.length];
@@ -916,20 +917,28 @@
         return { ok: true, donVi: moi };
       },
 
-      // TC_D06C2d: phá hủy công trình ĐÃ XONG của chính bé (SQL: kc_dt_pha_huy). Xoá ngay, không hoàn tài nguyên; Lều trại
-      // không phá được. Tường / cổng: lãnh địa tính lại. Ruộng: người đang gặt ở đó thôi việc (ruongCua không còn).
+      // TC_D06C2d: phá hủy công trình ĐÃ XONG của chính bé (SQL: kc_dt_pha_huy). Xoá ngay, không hoàn tài nguyên.
+      // Tường / cổng: lãnh địa tính lại. Ruộng: người đang gặt ở đó thôi việc (ruongCua không còn).
+      // TC_D06C7c (người dùng 07/11/2026: tự phá Lều, dời làng): chủ phá được Lều trại của mình (bé khác vẫn không: danhDuoc);
+      // hàng chờ sinh nông dân hoàn lương thực; be.doiLeu = Lều dựng lại không tặng nông dân đầu. Kho, nông dân, nhà cũ giữ nguyên.
       async phaHuy(ten, id) {
         ten = tenChuan(ten);
-        if (!tt.be[ten]) return { ok: false, ma: "chua_vao", lyDo: "Con chưa vào thung lũng." };
+        const be = tt.be[ten];
+        if (!be) return { ok: false, ma: "chua_vao", lyDo: "Con chưa vào thung lũng." };
+        songLai(ten, gio()); // tính bù trước: hàng sinh ra người tới lúc phá
         const ct = tt.congTrinh.find(c => c.id === id);
         if (!ct || ct.chu !== ten) return { ok: false, ma: "khong_phai_nha", lyDo: "Đây không phải nhà của con." };
-        if (ct.loai === "leu") return { ok: false, ma: "la_leu", lyDo: "Không phá được Lều trại: đó là nhà chính của làng." };
         if (!ct.xongLuc) return { ok: false, ma: "chua_xong", lyDo: "Chưa dựng xong đâu, con chờ thêm chút nhé." };
         tt.congTrinh = tt.congTrinh.filter(c => c !== ct);
         lang.boO(ct.x, ct.y, ct.rong, ct.sau);
         if (BD.LA_RAO[ct.loai]) lanhDia.dat(ct.chu, ct.x, ct.y, ct.rong, ct.sau, false);
+        if (ct.loai === "leu") {
+          const h = be.hangSinh;
+          if (h && h.so > 0) truGia(be, mauCt("leu").sinh.gia, -h.so);
+          be.hangSinh = null; be.doiLeu = true;
+        }
         luu();
-        return { ok: true, id, gio: gio() };
+        return { ok: true, id, kho: khoCua(be), hang: hangCua(be), gio: gio() };
       },
 
       async luuKhamPha(ten, chuoi) {
@@ -1163,3 +1172,4 @@
 // 08/11/2026 - BƯỚC: TC_D06C7b (cauKho, danhKhai: mọi công trình bị bé khác đánh sập; rào sụp tính lại lãnh địa; bảo hộ = vòng quanh Lều)
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (lanhDia mọi bé, quái không đứng trên cổng)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (muaCau kèm câu bé chọn; suaCt bằng tài nguyên + nông dân sửa ct.sua; danhKhai hỏi câu bé chọn trước)
+// 08/11/2026 22:xx - BƯỚC: TC_D06C7c (phaHuy nhận Lều của chủ: hoàn hàng sinh, be.doiLeu; Lều dựng lại không tặng nông dân đầu)

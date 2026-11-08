@@ -213,10 +213,12 @@ function ttCongTrinh(ct) {
   tt.phu = !cuaMinh ? "Của " + (ct.chu || "bạn") : vung ? vung.thongTinCt(ct) : null;
   const ttTru = truBd ? truBd.thongTin(ct) : null; // TC_D06C2g: máu, tầm, câu của trụ; đống gạch
   if (ttTru) { if (ttTru.dong) tt.dong = ttTru.dong; if (ttTru.phu) tt.phu = ttTru.phu; if (ttTru.muc != null) tt.muc = ttTru.muc; tt.nut.push(...ttTru.nut); if (ct.hongLuc != null) return tt; } // TC_D06C7e: muc = tiến độ sửa
-  // TC_D06C2d: nút Phá hủy bật lại (máy chủ ghi nhận); Lều trại không phá được
-  if (vung && vung.duocPhaHuy(ct)) tt.nut.push({ id: "d3PhaHuy", lop: "d3NutPhaHuy", chu: "✖<span class=\"d3Chu\"> Phá hủy</span>", nhan: "Phá hủy " + tenCt(ct), bam: () => {
-    if (!confirm("Phá hủy " + tenCt(ct) + "? Công trình sụp dần rồi biến mất sau " + vung.PHA_HUY_GIAY + " giây, không hoàn lại tài nguyên.")) return;
-    vung.phaHuy(ct).then(ok => { if (ok) baoGoiY("💥 " + tenCt(ct) + " đang sụp dần."); });
+  // TC_D06C2d: nút Phá hủy bật lại (máy chủ ghi nhận). TC_D06C7c: Lều trại của mình cũng phá được (dời làng), lời hỏi riêng
+  const laLeu = ct.loai === "leu";
+  if (vung && vung.duocPhaHuy(ct)) tt.nut.push({ id: "d3PhaHuy", lop: "d3NutPhaHuy", chu: laLeu ? "💥<span class=\"d3Chu\"> Phá Lều</span>" : "✖<span class=\"d3Chu\"> Phá hủy</span>", nhan: laLeu ? "Phá Lều trại để dời làng" : "Phá hủy " + tenCt(ct), bam: () => {
+    if (!confirm(laLeu ? "Phá Lều trại để dời làng? Lều sụp dần rồi biến mất sau " + vung.PHA_HUY_GIAY + " giây.\n\nChưa có Lều thì: không sinh được nông dân, nông dân không cất đồ vào Lều, nhà gần Lều mất vòng bảo hộ khi con vắng.\nKho, nông dân, nhà cũ vẫn giữ nguyên. Lều mới dựng MIỄN PHÍ: cho Thủ lĩnh 👑 tới chỗ con thích rồi bấm 🏕️ Dựng lều."
+      : "Phá hủy " + tenCt(ct) + "? Công trình sụp dần rồi biến mất sau " + vung.PHA_HUY_GIAY + " giây, không hoàn lại tài nguyên.")) return;
+    vung.phaHuy(ct).then(ok => { if (ok) baoGoiY(laLeu ? "💥 Lều trại đang sụp. Cho Thủ lĩnh 👑 đi tới chỗ con thích rồi bấm 🏕️ Dựng lều để dời làng (miễn phí)." : "💥 " + tenCt(ct) + " đang sụp dần."); });
   } });
   return tt;
 }
@@ -360,3 +362,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 06/11/2026 - BƯỚC: TC_D06C5 (nút 🧑‍🌾 tìm nông dân rảnh + nút ⚠️ nông dân bị tấn công: dt3d_nong_dan.js)
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (người của bạn mở cổng; móc __dt3d.moCong)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (lửa cháy dt3d_chay.js; thanh dưới: nông dân / công trình đang sửa; móc __dt3d.chay)
+// 08/11/2026 22:xx - BƯỚC: TC_D06C7c (nút 💥 Phá Lều ở thanh dưới Lều trại của mình, lời hỏi riêng: dời làng)

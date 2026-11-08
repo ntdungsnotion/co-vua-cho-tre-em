@@ -84,6 +84,8 @@
   // Ai được xây công trình loại này: nông dân; Thủ lĩnh chỉ dựng Lều trại
   const duocXay = (vaiTro, loai) => vaiTro === "nong_dan" || loai === "leu";
   // TC_D06C7e: còn việc cho người xây: móng chưa xong, hoặc công trình đã xong đang sửa (ct.sua, chưa sụp)
+  // TC_D06C7c: công trình của mình còn dùng được (xong, chưa bị phá: ct.phaHuyLuc = đang sụp, máy chủ đã xoá) -> sức chứa, chỗ ở, chỗ cất
+  const dungDuoc = c => !!c && c.xong && c.cuaMinh !== false && c.phaHuyLuc == null;
   const conLam = c => !!c && (!c.xong || (!!c.sua && c.hongLuc == null));
   // TC_D03B1: sức chứa tài nguyên t của MỘT công trình đã xong = congTrinh.*.sucChua (số: mọi loại; { loại: số }:
   // chỉ loại đó) x xay.heSoCap.sucChua[cấp - 1] x kho.heSoChungLoai[chủng loại]. Dùng chung lõi + máy chủ giả; SQL y hệt.
@@ -754,7 +756,7 @@
     // TC_D06C6: lệnh của bé "đi cất đồ" (chạm Lều / kho khi đang chọn nông dân). ct = chỗ bé chạm (không nhận loại
     // đang mang thì về chỗ gần nhất nhận được). giuViec: cất xong quay lại việc đang làm. Phát "lenh_cat" (phần đồ rơi
     // cất đồ đang cầm). Trả true nếu nông dân đang mang tài nguyên thu hoạch và đi cất.
-    const nhanLoai = (c, t) => !!c && c.xong && c.cuaMinh !== false && (!CHF || nhanCat(CHF, c.loai, t));
+    const nhanLoai = (c, t) => dungDuoc(c) && (!CHF || nhanCat(CHF, c.loai, t));
     function lenhCat(dv, ct, giuViec) {
       if (!dv || dv.vaiTro !== "nong_dan") return false;
       const coMang = dv.mang.so > 0;
@@ -778,14 +780,14 @@
       if (CHF && laVung) {
         let tot = null, kc = Infinity;
         for (const c of congTrinh) {
-          if (!c.xong || c.cuaMinh === false || !nhanCat(CHF, c.loai, dv.mang.loai)) continue;
+          if (!dungDuoc(c) || !nhanCat(CHF, c.loai, dv.mang.loai)) continue;
           const o = oQuanh(c, dv.x, dv.z);
           if (!o) continue;
           const d = Math.hypot(o.x + 0.5 - dv.x, o.y + 0.5 - dv.z); if (d < kc) { kc = d; tot = o; }
         }
         if (tot) return tot;
       }
-      if (leu && leu.ct) return oQuanh(leu.ct, dv.x, dv.z) || { x: lx, y: lz + 1 }; // lều bé dựng: ô quanh lều gần nhất
+      if (leu && leu.ct && leu.ct.phaHuyLuc == null) return oQuanh(leu.ct, dv.x, dv.z) || { x: lx, y: lz + 1 }; // lều bé dựng: ô quanh lều gần nhất
       let tot = diemCat[0] || null, kc = Infinity; // chưa có lều: không có chỗ cất
       for (const c of diemCat) { const d = Math.hypot(c.x + 0.5 - dv.x, c.y + 0.5 - dv.z); if (d < kc) { kc = d; tot = c; } }
       return tot;
@@ -885,14 +887,14 @@
     function sucChua(t) {
       if (!laVung) return Infinity;
       let s = 0;
-      for (const c of congTrinh) if (c.xong && c.cuaMinh !== false) s += sucChuaCt(CHF, c.loai, c.cap, chungLoai, t);
+      for (const c of congTrinh) if (dungDuoc(c)) s += sucChuaCt(CHF, c.loai, c.cap, chungLoai, t);
       return s;
     }
     // TC_D03B1: dân số (đơn vị chiếm chỗ ở: nông dân) / chỗ ở (công trình đã xong của bé: Lều 5 + Nhà ở 3 mỗi nhà)
     const danSo = () => donVi.filter(d => chiemCho(CHF, d.vaiTro)).length;
     function choO() {
       let s = 0;
-      for (const c of congTrinh) if (c.xong && c.cuaMinh !== false) s += choOCt(CHF, c.loai);
+      for (const c of congTrinh) if (dungDuoc(c)) s += choOCt(CHF, c.loai);
       return s;
     }
     // Lấy so món khỏi sổ "vác từ nguồn nào" của người này -> { mã nguồn: số } (gửi máy chủ lúc cất)
@@ -974,4 +976,5 @@
 // 28/10/2026 19:05 - BƯỚC: TC_D03B2; 04/11/2026 23:xx - TC_D06C2b (boDonVi, dungDanh / thoiDanh: nông dân đánh quái)
 // 05/11/2026 - BƯỚC: TC_D06C2d (boO: trả ô công trình bị phá hủy về đất trống)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (conLam / suaTien: nông dân sửa công trình bị đánh, sự kiện sua_xong)
+// 08/11/2026 22:xx - BƯỚC: TC_D06C7c (dungDuoc: công trình đang sụp vì bị phá, cả Lều, không còn là chỗ cất / sức chứa / chỗ ở)
 // 07/11/2026 - BƯỚC: TC_D06C6 (mỗi lúc mang một loại: giao việc loại khác thì cất trước; lenhCat: chạm Lều / kho để cất)
