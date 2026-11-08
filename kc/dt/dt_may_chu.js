@@ -76,6 +76,9 @@
 //   TC_D06C7b (08/11/2026): cauKho(ten, ds) kho câu của bé; danhKhai(ten, id, duPhong) Thủ lĩnh đánh công trình thường của bé khác (trận
 //     dùng truLuot / truTra / truRut như trụ, câu giữ trong trận tr.cau); vaoVung trả soCauKho; thua -> đống gạch, rào / cổng thôi là
 //     lãnh địa ngay; bảo hộ khi chủ vắng = cách Lều không quá tru.phamViLang ô (bỏ "trong lãnh địa").
+//   TC_D06C7d (08/11/2026): SỐ CÂU RIÊNG từng công trình (ct.soCau; xây mới có sẵn muaCau.coSan câu): muaCau(ten, id, so) bé mua câu bằng
+//     vàng (+ máu), suaCt(ten, id) sửa = mua lại máu đã mất; trận (danhKhai / truKhai) theo TT.soCt; trận trụ giữ đủ câu trong tr.cau
+//     (câu của trụ + bù từ kho câu của chủ).
 // BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1),
@@ -478,6 +481,10 @@
       return { so: t.so, ben: "be", han: CH.tru.giayBe, moLuc: t.moLuc,
         cau: c ? { noiDung: c.noiDung, dapAn: c.dapAn, mon: c.mon, doKho: c.doKho, hinhChu: c.hinhChu, amThanh: c.amThanh } : null }; // không có đáp án
     }
+    // TC_D06C7d: công trình mới xây (đánh được, trừ Lều) có sẵn muaCau.coSan câu (ct.soCau); bé mua thêm bằng vàng (muaCau)
+    const soCauMoi = loai => (TT && TT.danhDuoc(CH, loai) ? { soCau: TT.coSan(CH) } : null);
+    // TC_D06C7d: công trình đang trong trận (chưa xong) thì chưa mua câu / sửa được (trận giữ máu riêng, cuối trận ghi đè)
+    const dangBiDanh = id => (tt.truTran || []).some(t => t.truId === id && !t.ket);
     // Công trình trả cho bé: câu của trụ chỉ chủ trụ thấy (bé khác chỉ biết trụ đã có câu)
     function ctRa(ct, ten) {
       const r = Object.assign({}, ct);
@@ -836,7 +843,7 @@
           return false;
         });
         truGia(be, mau && mau.gia, 1);
-        const ct = { id: ++tt.soId, chu: ten, loai, x, y, rong, sau, cap: 1, tienDo: 0, xayLuc: gio(), xongLuc: null };
+        const ct = Object.assign({ id: ++tt.soId, chu: ten, loai, x, y, rong, sau, cap: 1, tienDo: 0, xayLuc: gio(), xongLuc: null }, soCauMoi(loai));
         tt.congTrinh.push(ct);
         datCt(ct);
         luu();
@@ -860,7 +867,7 @@
         for (const [ox, oy] of moi) { const k = BD.oXayDuoc(the, ox, oy); if (!k.duoc) return { ok: false, ma: k.ma, lyDo: k.lyDo, o: [ox, oy] }; }
         truGia(be, mau.gia, moi.length);
         const ds = moi.map(([ox, oy]) => {
-          const ct = { id: ++tt.soId, chu: ten, loai: "tuong", x: ox, y: oy, rong: 1, sau: 1, cap: 1, tienDo: 0, xayLuc: gio(), xongLuc: null };
+          const ct = Object.assign({ id: ++tt.soId, chu: ten, loai: "tuong", x: ox, y: oy, rong: 1, sau: 1, cap: 1, tienDo: 0, xayLuc: gio(), xongLuc: null }, soCauMoi("tuong"));
           tt.congTrinh.push(ct); datCt(ct);
           return { id: ct.id, x: ox, y: oy };
         });
@@ -956,7 +963,7 @@
         const dang = (tt.truTran || []).find(t => t.ten === ten && !t.ket);
         if (dang) return dang.truId === id && dang.dv == null ? { ok: true, tran: tranRa(dang), gio: bay } : { ok: false, ma: "dang_tran", lyDo: "Đang giao chiến." };
         if ((tt.truTran || []).some(t => t.ten === ten && t.truId === id && t.dv == null && t.ketLuc && bay - t.ketLuc < C.mienGiay * 1000)) return { ok: false, ma: "mien", lyDo: "Vừa giao chiến xong." };
-        const s = TT.soDanh(CH, ct.loai, ct.cap), tl = tlCua(ten), p = tl && viTri(tl);
+        const s = TT.soCt(CH, ct), tl = tlCua(ten), p = tl && viTri(tl); // TC_D06C7d: số câu riêng của công trình
         if (!p || TT.kcMep(ct, p.x, p.z) > C.chamO + LECH_O) return { ok: false, ma: "xa_qua", lyDo: "Thủ lĩnh chưa tới sát công trình." };
         if (baoHo(ct, bay)) return { ok: false, ma: "bao_ho", lyDo: "Làng đang có vòng sáng bảo hộ." };
         const kho = (tt.be[ct.chu] && tt.be[ct.chu].cauKho) || null;
@@ -987,13 +994,15 @@
         const dang = (tt.truTran || []).find(t => t.ten === ten && !t.ket);
         if (dang) return dang.truId === id && cungDv(dang) ? { ok: true, tran: tranRa(dang), gio: bay } : { ok: false, ma: "dang_tran", lyDo: "Đang giao chiến." };
         if ((tt.truTran || []).some(t => t.ten === ten && t.truId === id && cungDv(t) && t.ketLuc && bay - t.ketLuc < C.mienGiay * 1000)) return { ok: false, ma: "mien", lyDo: "Trụ vừa giao chiến." };
-        const s = TT.soTru(CH, ct.loai, ct.cap), tl = nd || tlCua(ten), p = tl && viTri(tl);
+        const s = TT.soCt(CH, ct), tl = nd || tlCua(ten), p = tl && viTri(tl); // TC_D06C7d: số câu riêng của trụ
         if (!p || Math.hypot(p.x - (ct.x + ct.rong / 2), p.z - (ct.y + ct.sau / 2)) > s.tam + LECH_O) return { ok: false, ma: "xa_qua", lyDo: "Thủ lĩnh ngoài tầm trụ." };
         if (truTrongLang(ct) && !(tt.be[ct.chu] && (tt.be[ct.chu].songLuc || 0) >= bay - VM.sauGiay * 1000)) return { ok: false, ma: "bao_ho", lyDo: "Làng đang có vòng sáng bảo hộ." };
         const toiDa = nd ? TT.hpNongDan(CH, be.chungLoai) : TT.hpThuLinh(CH, be.chungLoai);
-        const tr = { id: ++tt.soId, truId: id, dv: dvSo, chu: ct.chu, ten, loai: ct.loai, cap: ct.cap || 1, soCau: Math.min(s.soCau, ct.cau.length), tiLe: s.tiLe, cong: s.cong, beDanh: TT.beDanhCt(CH, s, be.chungLoai, !!nd), // TC_D06C7b: công - thủ
-          mauBe: tl.mau == null ? toiDa : Math.min(toiDa, tl.mau), mauBeToiDa: toiDa, mauTru: ct.mau == null ? s.mauToiDa : Math.min(ct.mau, s.mauToiDa), mauTruToiDa: s.mauToiDa,
-          so: 0, ben: null, moLuc: bay, ket: null, taoLuc: bay };
+        // TC_D06C7d: trận giữ đủ soCau câu: câu chủ trụ gắn + bù từ kho câu của chủ (trụ mua thêm câu)
+        const cau = TT.cauDu(ct.cau, tt.be[ct.chu] && tt.be[ct.chu].cauKho, s.soCau);
+        const tr = { id: ++tt.soId, truId: id, dv: dvSo, chu: ct.chu, ten, loai: ct.loai, cap: ct.cap || 1, soCau: cau.length, tiLe: s.tiLe, cong: s.cong, beDanh: TT.beDanhCt(CH, s, be.chungLoai, !!nd), // TC_D06C7b: công - thủ
+          mauBe: tl.mau == null ? toiDa : Math.min(toiDa, tl.mau), mauBeToiDa: toiDa, mauTru: TT.mauCt(CH, ct, s), mauTruToiDa: s.mauToiDa,
+          so: 0, ben: null, moLuc: bay, ket: null, taoLuc: bay, cau };
         (tt.truTran = tt.truTran || []).push(tr); luu();
         return { ok: true, tran: tranRa(tr), gio: bay };
       },
@@ -1016,7 +1025,7 @@
         const cau = tr.ben === "be" ? cauTran(tr, ct) : null;
         const kq = TT.traLoi(tr, CH, bay, tl || {}, cau);
         if (cau) kq.loiGiai = cau.loiGiai || "";
-        if (ct && kq.ben === "tru" && !tr.cau) { const ai = tr.dv != null ? tr.dv : (tlCua(ten) || {}).id; if (ai != null) ghiBan(ct, { luc: bay, dv: ai, trung: kq.kieu === "trung" }, bay); } // TC_D06C2h; TC_D06C7b: chỉ trụ ghi phát bắn
+        if (ct && kq.ben === "tru" && TT.laTru(CH, tr.loai)) { const ai = tr.dv != null ? tr.dv : (tlCua(ten) || {}).id; if (ai != null) ghiBan(ct, { luc: bay, dv: ai, trung: kq.kieu === "trung" }, bay); } // TC_D06C2h; TC_D06C7b: chỉ trụ ghi phát bắn
         ghiMauTran(tr, ct, bay);
         luu();
         return { ok: true, kq, gio: bay };
@@ -1047,6 +1056,54 @@
         if (mat) boDan(ten, nd); else if (k.trung) nd.mau = k.mau;
         luu();
         return { ok: true, trung: k.trung, satThuong: k.satThuong, mau: k.mau, toiDa, mat, gio: bay };
+      },
+      // TC_D06C7d - muaCau(ten, id, so): bé mua so câu phòng thủ cho công trình của mình (đã xong, chưa sụp, không đang bị đánh) bằng vàng
+      // (TT.giaCau x so, mỗi lần 1..muaCau.toiDaMoiLan): số câu + so, máu tối đa + so x mauMoiCau, máu đang có cũng + chừng ấy.
+      // -> { ok, id, soCau, mau (null = đầy), mauToiDa, kho } | { ok: false, ma: chua_vao | khong_phai_nha | chua_xong | hong | so | dang_tran | thieu }
+      async muaCau(ten, id, so) {
+        ten = tenChuan(ten);
+        const be = tt.be[ten];
+        if (!be) return { ok: false, ma: "chua_vao", lyDo: "Con chưa vào thung lũng." };
+        const bay = gio();
+        songLai(ten, bay); boTranCu(bay);
+        const ct = tt.congTrinh.find(c => c.id === id), M = CH.muaCau || {};
+        if (!ct || ct.chu !== ten || !TT.danhDuoc(CH, ct.loai)) return { ok: false, ma: "khong_phai_nha", lyDo: "Đây không phải nhà của con." };
+        if (!ct.xongLuc) return { ok: false, ma: "chua_xong", lyDo: "Chưa dựng xong đâu, con chờ thêm chút nhé." };
+        if (ct.hongLuc) return { ok: false, ma: "hong", lyDo: "Công trình đã sụp rồi." };
+        if (!Number.isInteger(so) || so < 1 || so > (M.toiDaMoiLan || 10)) return { ok: false, ma: "so", lyDo: "Số câu không đúng." };
+        if (dangBiDanh(id)) return { ok: false, ma: "dang_tran", lyDo: "Công trình đang bị đánh, chờ trận xong nhé." };
+        const gia = TT.giaCau(CH, ct.loai), thieu = thieuGia(be, gia, so);
+        if (thieu) return loiThieu(thieu);
+        truGia(be, gia, so);
+        const s = TT.soCt(CH, ct);
+        if (ct.mau != null) ct.mau = TT.mauCt(CH, ct, s) + so * s.mauMoiCau;
+        ct.soCau = s.soCau + so;
+        luu();
+        const s2 = TT.soCt(CH, ct);
+        return { ok: true, id, soCau: ct.soCau, mau: ct.mau == null ? null : ct.mau, mauToiDa: s2.mauToiDa, kho: khoCua(be), gio: bay };
+      },
+      // TC_D06C7d - suaCt(ten, id): sửa công trình bị đánh mất máu = mua lại phần máu đã mất (TT.cauSua câu x giá một câu) -> máu đầy.
+      // -> { ok, id, soCau, mau: null, mauToiDa, kho } | { ok: false, ma: chua_vao | khong_phai_nha | chua_xong | hong | dang_tran | khong_hu | thieu }
+      async suaCt(ten, id) {
+        ten = tenChuan(ten);
+        const be = tt.be[ten];
+        if (!be) return { ok: false, ma: "chua_vao", lyDo: "Con chưa vào thung lũng." };
+        const bay = gio();
+        songLai(ten, bay); boTranCu(bay);
+        const ct = tt.congTrinh.find(c => c.id === id);
+        if (!ct || ct.chu !== ten || !TT.danhDuoc(CH, ct.loai)) return { ok: false, ma: "khong_phai_nha", lyDo: "Đây không phải nhà của con." };
+        if (!ct.xongLuc) return { ok: false, ma: "chua_xong", lyDo: "Chưa dựng xong đâu, con chờ thêm chút nhé." };
+        if (ct.hongLuc) return { ok: false, ma: "hong", lyDo: "Công trình đã sụp rồi." };
+        if (dangBiDanh(id)) return { ok: false, ma: "dang_tran", lyDo: "Công trình đang bị đánh, chờ trận xong nhé." };
+        const n = TT.cauSua(CH, ct);
+        if (n <= 0) return { ok: false, ma: "khong_hu", lyDo: "Công trình còn nguyên, không cần sửa." };
+        const gia = TT.giaCau(CH, ct.loai), thieu = thieuGia(be, gia, n);
+        if (thieu) return loiThieu(thieu);
+        truGia(be, gia, n);
+        ct.mau = null;
+        if (!Number.isInteger(ct.soCau)) ct.soCau = TT.soCt(CH, ct).soCau; // ghi số câu ra (công trình xây trước TC_D06C7d)
+        luu();
+        return { ok: true, id, soCau: ct.soCau, mau: null, mauToiDa: TT.soCt(CH, ct).mauToiDa, kho: khoCua(be), gio: bay };
       },
       // truRut(ten, idTran): rút lui giữa trận (giữ máu hai bên)
       async truRut(ten, idTran) {

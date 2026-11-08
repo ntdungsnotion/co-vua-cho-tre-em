@@ -72,6 +72,7 @@
       bao_ho: "Làng đang có vòng sáng bảo hộ.", het_tran: "Trận đã kết thúc.", cau: "Câu hỏi không đúng.",
       cho: "Trụ đang nạp tên.", // TC_D06C2h
       khong_danh: "Không đánh được công trình này.", // TC_D06C7b
+      hong: "Công trình đã sụp rồi.", so: "Số câu không đúng.", khong_hu: "Công trình còn nguyên, không cần sửa.", // TC_D06C7d
       do_mat: "Đồ đã mất rồi.", khong_cua_ban: "Đây không phải đồ của bạn", con_nong_dan: "Còn nông dân rồi.", khong_cam: "Nông dân không cầm đồ.", chua_co_leu: "Chưa có Lều trại.", kho_day: "Kho đầy rồi.", khong_phai_nguoi: "Chỉ nông dân của con mới làm được." // TC_D06C4
     };
     // Tên đưa vào câu lý do: loại nguồn (còn cây ở đây), tài nguyên thiếu (gỗ), loại nhà đã đủ (Tháp canh)
@@ -147,7 +148,10 @@
       async truRut(ten, idTran, giu) { return goi("kc_dt_tru_rut", { p_tran: idTran }, giu); },
       // TC_D06C7b: kho câu của bé + Thủ lĩnh đánh công trình thường của bé khác (cần SQL TC_D06C7b); p_cau = câu dự phòng khi chủ chưa có kho
       async cauKho(ten, ds) { return goi("kc_dt_cau_kho", { p_cau: ds }); },
-      async danhKhai(ten, id, duPhong) { return goi("kc_dt_danh_khai", Object.assign({ p_id: id }, Array.isArray(duPhong) ? { p_cau: duPhong } : null)); }
+      async danhKhai(ten, id, duPhong) { return goi("kc_dt_danh_khai", Object.assign({ p_id: id }, Array.isArray(duPhong) ? { p_cau: duPhong } : null)); },
+      // TC_D06C7d: bé mua câu phòng thủ bằng vàng / sửa công trình bị đánh (cần SQL TC_D06C7d)
+      async muaCau(ten, id, so) { return goi("kc_dt_mua_cau", { p_id: id, p_so: so }); },
+      async suaCt(ten, id) { return goi("kc_dt_sua_ct", { p_id: id }); }
     };
   }
 
@@ -159,3 +163,4 @@
 // 06/11/2026 - BƯỚC: TC_D06C2h (truBan, truKhai p_dv: trụ tự bắn nông dân; cần SQL TC_D06C2h)
 // 06/11/2026 - BƯỚC: TC_D06C4 (quaiThang, bangRoiDo; cần SQL TC_D06C4)
 // 08/11/2026 - BƯỚC: TC_D06C7b (cauKho, danhKhai; cần SQL TC_D06C7b)
+// 08/11/2026 - BƯỚC: TC_D06C7d (muaCau, suaCt; cần SQL TC_D06C7d)

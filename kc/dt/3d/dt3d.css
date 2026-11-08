@@ -68,6 +68,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 /* TC_D06C7b (08/11/2026): ⚔️ Tấn công công trình của bạn */
 .d3Thanh .d3NutDanh { background: #b8560f; border-color: #ffb347; color: #fff8e8; font-weight: 700; }
 .d3Thanh .d3NutDanh:hover { background: #d86a17; }
+/* TC_D06C7d: 🛡️ mua câu / 🔧 sửa công trình (trả vàng) */
+.d3Thanh .d3NutMua { background: #2f5d8a; border-color: #ffd35a; color: #fff8e8; font-weight: 700; }
+.d3Thanh .d3NutMua:hover { background: #3c74ab; }
 /* Chữ nổi "+5 🪵" và dấu "!" nông dân rảnh */
 #d3ChuNoi { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .d3Noi { position: absolute; left: 0; top: 0; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.5rem; color: #fff6c8;

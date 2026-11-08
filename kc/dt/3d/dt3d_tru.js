@@ -22,6 +22,9 @@
 //              -> kèn lệnh, trận y luật trụ (số theo congTrinh.<loai>.danh; công trình không tự khai chiến). Câu do máy chủ chọn trong
 //              KHO CÂU của chủ (máy bé gửi kho câu theo trình độ của bé lúc vào vùng, cauKho). Thắng: đống gạch; rào / cổng sụp thì
 //              vòng rào thủng, lãnh địa tính lại ngay (vung.hongCt).
+//            - TC_D06C7d (người dùng 08/11/2026) MUA CÂU BẰNG VÀNG: chạm công trình của mình (đã xong, chưa sụp; trụ: đã có câu) -> thanh dưới
+//              ❤️ máu · ❓ số câu + nút 🛡️ +1 câu (giá muaCau, rào / cổng rẻ hơn; mayChu.muaCau) và 🔧 Sửa khi mất máu (mua lại máu đã mất;
+//              mayChu.suaCt). Máy chủ trừ vàng, trả kho (vung.nhanKho). Số câu riêng ct.soCau (TT.soCt).
 // HÀM KHAI RA:
 //   taoTruBanDo(the) -> { thongTin(ct) -> { phu, nut[] } | null, dangTran(), moc }
 //     the = { ctx, lang, cauHinh, mayChu (truCau / truKhai / truLuot / truTra / truRut / truBan), dvTl, vung, quaiBd (banThuLinh,
@@ -129,7 +132,7 @@ export function taoTruBanDo(the) {
     dangKhai = true;
     let kq;
     try {
-      const duPhong = await taoBoCau(TT.soDanh(cauHinh, ct.loai, ct.cap).soCau); // chủ chưa có kho câu: máy chủ dùng câu này
+      const duPhong = await taoBoCau(TT.soCt(cauHinh, ct).soCau); // TC_D06C7d: số câu riêng // chủ chưa có kho câu: máy chủ dùng câu này
       kq = await mayChu.danhKhai(ten, ct.id, duPhong || undefined);
     } catch (e) { kq = { ok: false, lyDo: "Chưa vào trận được." }; }
     dangKhai = false;
@@ -340,7 +343,7 @@ export function taoTruBanDo(the) {
   function dongBiBan(f) { f.nhan.remove(); biBan.delete(f.dv.id); if (quaiBd && quaiBd.veNut) quaiBd.veNut(); }
   // hàng trận ở nút ⚔️ (dt3d_quai_ban_do.js themTranNgoai)
   const hangTran = () => [...biBan.values()].filter(f => !(tran && tran.dv === f.dv)).map(f => {
-    const s = TT.soTru(cauHinh, f.ct.loai, f.ct.cap), mt = f.ct.mau == null ? s.mauToiDa : Math.min(f.ct.mau, s.mauToiDa), md = mauDan(f.dv), td = toiDaDan();
+    const s = TT.soCt(cauHinh, f.ct), mt = TT.mauCt(cauHinh, f.ct, s), md = mauDan(f.dv), td = toiDaDan();
     return { khoa: "tru:" + f.dv.id + ":" + f.ct.id + ":" + md + ":" + mt, nhan: f.dv.ten,
       html: '<span class="d3BtQuai"><b>🏹 ' + esc(tenTru(f.ct)) + " của " + esc(f.ct.chu) + "</b><i>❤️ " + mt + "/" + s.mauToiDa + "</i></span>"
         + '<span class="d3BtVs">đang bắn</span>'
@@ -464,12 +467,13 @@ export function taoTruBanDo(the) {
     const cu = document.getElementById("d3BangCau"); if (cu) cu.remove();
     const p = document.createElement("div"); p.id = "d3BangCau"; p.className = "d3BangCau d3Khung"; p.setAttribute("role", "dialog");
     const dau = document.createElement("div"); dau.className = "d3BangCauDau";
-    const td = document.createElement("b"); td.textContent = "📜 " + tenTru(ct) + " · " + (ct.cau || []).length + " câu phòng thủ";
+    const n = TT.soCt(cauHinh, ct).soCau, ds = (ct.cau || []).slice(0, n); // TC_D06C7d: trận dùng n câu đầu (thiếu thì bù từ kho câu)
+    const td = document.createElement("b"); td.textContent = "📜 " + tenTru(ct) + " · " + n + " câu phòng thủ";
     const dong = document.createElement("button"); dong.type = "button"; dong.className = "d3Nut"; dong.textContent = "✖"; dong.setAttribute("aria-label", "Đóng");
     dong.addEventListener("click", () => p.remove());
     dau.append(td, dong); p.appendChild(dau);
     const ol = document.createElement("ol");
-    for (const c of ct.cau || []) {
+    for (const c of ds) {
       const li = document.createElement("li");
       const nd = document.createElement("div"); nd.textContent = (c.hinhChu ? c.hinhChu + " " : "") + c.noiDung; li.appendChild(nd);
       const da = document.createElement("div"); da.className = "d3BangCauDa";
@@ -477,14 +481,53 @@ export function taoTruBanDo(the) {
       li.appendChild(da); ol.appendChild(li);
     }
     p.appendChild(ol);
+    if (n > ds.length) { const g = document.createElement("p"); g.textContent = "+ " + (n - ds.length) + " câu lấy ngẫu nhiên trong kho câu của con lúc vào trận"; p.appendChild(g); }
     document.body.appendChild(p);
   }
-  // TC_D06C7b: công trình thường: đống gạch; của bạn: máu + ⚔️ Tấn công (Thủ lĩnh tự đi tới sát rồi vào trận); của mình: máu nếu đã bị đánh
+  // ---------- TC_D06C7d: bé mua câu phòng thủ bằng vàng (🛡️) / sửa công trình bị đánh (🔧) ----------
+  const giaChu = (gia, n) => Object.keys(gia || {}).map(t => gia[t] * n + " " + ((cauHinh.lang.taiNguyen[t] || {}).bieuTuong || t)).join(" + ");
+  let dangMua = false, soMua = 0, soSua = 0;
+  async function muaCau(ct, so) {
+    if (dangMua || !mayChu.muaCau) return false;
+    dangMua = true;
+    let kq;
+    try { kq = await mayChu.muaCau(ten, ct.id, so || 1); } catch (e) { kq = { ok: false, lyDo: "Không kết nối được máy chủ, con thử lại nhé." }; }
+    dangMua = false;
+    if (!kq.ok) { baoGoiY((kq.ma === "thieu" ? "🪙 " : "❌ ") + kq.lyDo); return false; }
+    ct.soCau = kq.soCau; ct.mau = Number.isFinite(kq.mau) ? kq.mau : null; soMua++;
+    if (vung && vung.nhanKho) vung.nhanKho(kq.kho);
+    baoGoiY("🛡️ " + tenTru(ct) + " có " + kq.soCau + " câu phòng thủ · ❤️ " + TT.mauCt(cauHinh, ct) + "/" + kq.mauToiDa);
+    return true;
+  }
+  async function suaCt(ct) {
+    if (dangMua || !mayChu.suaCt) return false;
+    dangMua = true;
+    let kq;
+    try { kq = await mayChu.suaCt(ten, ct.id); } catch (e) { kq = { ok: false, lyDo: "Không kết nối được máy chủ, con thử lại nhé." }; }
+    dangMua = false;
+    if (!kq.ok) { baoGoiY((kq.ma === "thieu" ? "🪙 " : "❌ ") + kq.lyDo); return false; }
+    ct.soCau = kq.soCau; ct.mau = null; soSua++;
+    if (vung && vung.nhanKho) vung.nhanKho(kq.kho);
+    baoGoiY("🔧 Đã sửa " + tenTru(ct) + " · ❤️ " + kq.mauToiDa + "/" + kq.mauToiDa);
+    return true;
+  }
+  // Nút của công trình của mình (đã xong, chưa sụp): 🛡️ +1 câu (giá theo loại), 🔧 Sửa khi mất máu
+  function nutMua(ct) {
+    const nut = [];
+    if (!mayChu.muaCau) return nut;
+    const n = TT.cauSua(cauHinh, ct), gia = TT.giaCau(cauHinh, ct.loai);
+    // giá luôn hiện (điện thoại chỉ ẩn chữ "Sửa" / "+1 câu")
+    if (n > 0 && mayChu.suaCt) nut.push({ id: "d3SuaCt", lop: "d3NutMua", chu: "🔧<span class=\"d3Chu\"> Sửa ·</span> " + giaChu(gia, n), nhan: "Sửa " + tenTru(ct) + " (" + giaChu(gia, n) + ")", bam: () => suaCt(ct) });
+    nut.push({ id: "d3MuaCau", lop: "d3NutMua", chu: "🛡️<span class=\"d3Chu\"> +1 câu ·</span> " + giaChu(gia, 1), nhan: "Mua thêm 1 câu phòng thủ (" + giaChu(gia, 1) + ")", bam: () => muaCau(ct, 1) });
+    return nut;
+  }
+  // TC_D06C7b: công trình thường: đống gạch; của bạn: máu + ⚔️ Tấn công (Thủ lĩnh tự đi tới sát rồi vào trận); của mình: máu + số câu + 🛡️ / 🔧
   function thongTinDanh(ct) {
-    const s = TT.soDanh(cauHinh, ct.loai, ct.cap), mau = ct.mau == null ? s.mauToiDa : Math.min(ct.mau, s.mauToiDa);
+    const s = TT.soCt(cauHinh, ct), mau = TT.mauCt(cauHinh, ct, s); // TC_D06C7d: số câu riêng của công trình
     if (ct.hongLuc != null) return { dong: "🧱 Đống gạch · biến mất sau " + Math.max(0, Math.ceil((C.hongGiay * 1000 - (mayChu.gio() - ct.hongLuc)) / 1000)) + " giây", nut: [] };
     if (!ct.xong) return null;
-    if (ct.cuaMinh !== false) return ct.mau != null ? { phu: "❤️ " + mau + "/" + s.mauToiDa + " · bị bạn đánh", nut: [] } : null;
+    // của mình: máu + số câu ở dòng chính (thay "Đã hoàn thành"); dòng phụ giữ thông số riêng (sức chứa, chỗ ở...)
+    if (ct.cuaMinh !== false) return { dong: "❤️ " + mau + "/" + s.mauToiDa + " · ❓ " + s.soCau + " câu" + (mau < s.mauToiDa ? " · bị bạn đánh" : ""), nut: nutMua(ct) };
     const nut = [];
     if (dvTl && !dvTl.laBan) nut.push({ id: "d3DanhCt", lop: "d3NutDanh", chu: "⚔️<span class=\"d3Chu\"> Tấn công</span>", nhan: "Tấn công " + tenTru(ct) + " của " + ct.chu, bam: () => batDauDanh(ct) });
     return { phu: "❤️ " + mau + "/" + s.mauToiDa + " · ❓ " + s.soCau + " câu · của " + ct.chu, nut };
@@ -492,13 +535,14 @@ export function taoTruBanDo(the) {
   function thongTin(ct) {
     if (laDanh(ct)) return thongTinDanh(ct);
     if (!laTru(ct)) return null;
-    const s = TT.soTru(cauHinh, ct.loai, ct.cap), mau = ct.mau == null ? s.mauToiDa : Math.min(ct.mau, s.mauToiDa); // TC_D06C7b: máu tối đa đổi (số câu x máu mỗi câu)
+    const s = TT.soCt(cauHinh, ct), mau = TT.mauCt(cauHinh, ct, s); // TC_D06C7b: máu = số câu x máu mỗi câu; TC_D06C7d: số câu riêng của trụ
     if (ct.hongLuc != null) return { dong: "🧱 Đống gạch · biến mất sau " + Math.max(0, Math.ceil((C.hongGiay * 1000 - (mayChu.gio() - ct.hongLuc)) / 1000)) + " giây", nut: [] };
     if (!ct.xong) return null;
     const phu = "❤️ " + mau + "/" + s.mauToiDa + " · 🎯 tầm " + s.tam + " ô · trụ đúng " + Math.round(s.tiLe * 100) + "%";
     if (ct.cuaMinh === false) return { phu: phu + " · của " + ct.chu, nut: [] };
     const nut = [];
-    if (ct.cau && ct.cau.length) nut.push({ id: "d3XemCau", lop: "", chu: "📜<span class=\"d3Chu\"> " + ct.cau.length + " câu</span>", nhan: "Xem " + ct.cau.length + " câu phòng thủ", bam: () => moBangCau(ct) });
+    if (ct.cau && ct.cau.length) nut.push({ id: "d3XemCau", lop: "", chu: "📜<span class=\"d3Chu\"> " + s.soCau + " câu</span>", nhan: "Xem " + s.soCau + " câu phòng thủ", bam: () => moBangCau(ct) });
+    if (ct.coCau) nut.push(...nutMua(ct));
     return { phu: phu + " · " + (ct.coCau ? "❓ " + s.soCau + " câu" : "⏳ đang chọn câu"), nut };
   }
 
@@ -522,7 +566,13 @@ export function taoTruBanDo(the) {
       danh: id => { const ct = lang.congTrinh.find(c => c.id === id); if (ct) batDauDanh(ct); return !!ct; },
       danhCho: () => (danhCho ? danhCho.ct.id : null),
       ctBan: () => lang.congTrinh.filter(c => c.cuaMinh === false && laDanh(c)).map(c => ({ id: c.id, chu: c.chu, loai: c.loai, x: c.x, y: c.y, xong: c.xong, mau: c.mau, hongLuc: c.hongLuc })),
-      thongTin: id => { const ct = lang.congTrinh.find(c => c.id === id); const t = ct && thongTin(ct); return t ? { dong: t.dong, phu: t.phu, nut: (t.nut || []).map(n => n.id) } : null; }
+      thongTin: id => { const ct = lang.congTrinh.find(c => c.id === id); const t = ct && thongTin(ct); return t ? { dong: t.dong, phu: t.phu, nut: (t.nut || []).map(n => n.id) } : null; },
+      // TC_D06C7d: mua câu / sửa như bé bấm 🛡️ / 🔧 (Promise<bool>), số lần đã mua / sửa, nút của công trình (chữ)
+      muaCau: (id, so) => { const ct = lang.congTrinh.find(c => c.id === id); return ct ? muaCau(ct, so) : Promise.resolve(false); },
+      suaCt: id => { const ct = lang.congTrinh.find(c => c.id === id); return ct ? suaCt(ct) : Promise.resolve(false); },
+      soMua: () => soMua, soSua: () => soSua,
+      nutChu: id => { const ct = lang.congTrinh.find(c => c.id === id); const t = ct && thongTin(ct); return t ? (t.nut || []).map(n => ({ id: n.id, chu: n.chu.replace(/<[^>]+>/g, "") })) : null; },
+      ctMinh: () => lang.congTrinh.filter(c => c.cuaMinh !== false && TT.danhDuoc(cauHinh, c.loai)).map(c => ({ id: c.id, loai: c.loai, xong: c.xong, soCau: c.soCau, mau: c.mau, hongLuc: c.hongLuc }))
     }
   };
 }
@@ -530,3 +580,4 @@ export function taoTruBanDo(the) {
 // 06/11/2026 - BƯỚC: TC_D06C2h (trụ tự bắn nông dân, nông dân vào trận với trụ, máy chủ trụ thấy nỏ quay + mũi tên)
 // 06/11/2026 - BƯỚC: TC_D06C5 (biBan: nông dân đang bị trụ bắn)
 // 08/11/2026 - BƯỚC: TC_D06C7b (kho câu của bé; ⚔️ Tấn công công trình thường của bạn: Thủ lĩnh tới sát -> trận y luật trụ; rào sụp -> lãnh địa tính lại)
+// 08/11/2026 - BƯỚC: TC_D06C7d (🛡️ mua câu bằng vàng, 🔧 sửa công trình; số câu riêng từng công trình)
