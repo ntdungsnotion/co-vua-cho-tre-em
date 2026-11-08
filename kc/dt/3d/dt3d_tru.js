@@ -340,7 +340,7 @@ export function taoTruBanDo(the) {
   function dongBiBan(f) { f.nhan.remove(); biBan.delete(f.dv.id); if (quaiBd && quaiBd.veNut) quaiBd.veNut(); }
   // hàng trận ở nút ⚔️ (dt3d_quai_ban_do.js themTranNgoai)
   const hangTran = () => [...biBan.values()].filter(f => !(tran && tran.dv === f.dv)).map(f => {
-    const s = TT.soTru(cauHinh, f.ct.loai, f.ct.cap), mt = f.ct.mau == null ? s.mauToiDa : f.ct.mau, md = mauDan(f.dv), td = toiDaDan();
+    const s = TT.soTru(cauHinh, f.ct.loai, f.ct.cap), mt = f.ct.mau == null ? s.mauToiDa : Math.min(f.ct.mau, s.mauToiDa), md = mauDan(f.dv), td = toiDaDan();
     return { khoa: "tru:" + f.dv.id + ":" + f.ct.id + ":" + md + ":" + mt, nhan: f.dv.ten,
       html: '<span class="d3BtQuai"><b>🏹 ' + esc(tenTru(f.ct)) + " của " + esc(f.ct.chu) + "</b><i>❤️ " + mt + "/" + s.mauToiDa + "</i></span>"
         + '<span class="d3BtVs">đang bắn</span>'
@@ -481,7 +481,7 @@ export function taoTruBanDo(the) {
   }
   // TC_D06C7b: công trình thường: đống gạch; của bạn: máu + ⚔️ Tấn công (Thủ lĩnh tự đi tới sát rồi vào trận); của mình: máu nếu đã bị đánh
   function thongTinDanh(ct) {
-    const s = TT.soDanh(cauHinh, ct.loai, ct.cap), mau = ct.mau == null ? s.mauToiDa : ct.mau;
+    const s = TT.soDanh(cauHinh, ct.loai, ct.cap), mau = ct.mau == null ? s.mauToiDa : Math.min(ct.mau, s.mauToiDa);
     if (ct.hongLuc != null) return { dong: "🧱 Đống gạch · biến mất sau " + Math.max(0, Math.ceil((C.hongGiay * 1000 - (mayChu.gio() - ct.hongLuc)) / 1000)) + " giây", nut: [] };
     if (!ct.xong) return null;
     if (ct.cuaMinh !== false) return ct.mau != null ? { phu: "❤️ " + mau + "/" + s.mauToiDa + " · bị bạn đánh", nut: [] } : null;
@@ -492,7 +492,7 @@ export function taoTruBanDo(the) {
   function thongTin(ct) {
     if (laDanh(ct)) return thongTinDanh(ct);
     if (!laTru(ct)) return null;
-    const s = TT.soTru(cauHinh, ct.loai, ct.cap), mau = ct.mau == null ? s.mauToiDa : ct.mau;
+    const s = TT.soTru(cauHinh, ct.loai, ct.cap), mau = ct.mau == null ? s.mauToiDa : Math.min(ct.mau, s.mauToiDa); // TC_D06C7b: máu tối đa đổi (số câu x máu mỗi câu)
     if (ct.hongLuc != null) return { dong: "🧱 Đống gạch · biến mất sau " + Math.max(0, Math.ceil((C.hongGiay * 1000 - (mayChu.gio() - ct.hongLuc)) / 1000)) + " giây", nut: [] };
     if (!ct.xong) return null;
     const phu = "❤️ " + mau + "/" + s.mauToiDa + " · 🎯 tầm " + s.tam + " ô · trụ đúng " + Math.round(s.tiLe * 100) + "%";

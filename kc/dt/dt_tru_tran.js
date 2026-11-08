@@ -13,7 +13,9 @@
 //            Không đụng DOM, không đọc đồng hồ: máy chủ giả (dt_may_chu.js) dùng y nguyên; SQL
 //            (repo_rieng SQL/supabase_tc_d02b3_ban_do.sql mục TC_D06C2g) viết lại đúng các luật này.
 // HÀM KHAI RA (goc.KC_DT_TRU_TRAN):
-//   laTru(CH, loai) -> bool;  soTru(CH, loai, cap) -> { dangCap, mauToiDa, cong, beDanh, tam, soCau, tiLe }
+//   laTru(CH, loai) -> bool;  soTru(CH, loai, cap) -> { dangCap, mauToiDa (= soCau x mauMoiCau), mauMoiCau, thu, cong, tam, soCau, tiLe }
+//   TC_D06C7b: congNguoi(CH, chungLoai, laDan) công người đánh; beDanhCt(CH, so, chungLoai, laDan) = max(1, công - thủ công trình)
+//     = tr.beDanh (máu công trình mất mỗi câu bé đúng)
 //   hpThuLinh(CH, chungLoai) -> máu tối đa Thủ lĩnh;  hpNongDan(CH, chungLoai) -> máu tối đa nông dân (TC_D06C2h)
 //   banMot(soTru, mau, rng) -> { trung, satThuong, mau } một phát trụ tự bắn nông dân (TC_D06C2h)
 //   TC_D06C7b: laDanh(CH, loai) công trình thường đánh được; danhDuoc = trụ hoặc laDanh; soDanh(CH, loai, cap) số trận mọi loại
@@ -37,10 +39,14 @@
     const t0 = CH.congTrinh[loai].tru, k = Math.max(1, Math.floor(cap) || 1);
     const t = (k > 1 && t0.capTren && t0.capTren[k - 2]) || t0;
     return {
-      dangCap: t0.dangCap || 1, mauToiDa: t.mau, cong: t.cong, beDanh: t.beDanh, tam: t.tam, soCau: t.soCau,
+      dangCap: t0.dangCap || 1, mauToiDa: t.soCau * t.mauMoiCau, mauMoiCau: t.mauMoiCau, thu: t.thu || 0, cong: t.cong, tam: t.tam, soCau: t.soCau,
       tiLe: Math.min(CH.tru.tiLeToiDa, t.tiLeDung)
     };
   }
+  // TC_D06C7b (người dùng 08/11/2026, dac_ta_pha_thanh.md 3.1 + 7.2): máu công trình = soCau x mauMoiCau; mỗi câu bé đúng công trình
+  // mất max(1, CÔNG người đánh - thủ công trình). CÔNG người đánh: tru.congThuLinh / tru.congNongDan theo chủng loại.
+  const congNguoi = (CH, cl, laDan) => { const b = (laDan ? CH.tru.congNongDan : CH.tru.congThuLinh) || {}; return b[cl] || b.nhan || 20; };
+  const beDanhCt = (CH, so, cl, laDan) => Math.max(1, congNguoi(CH, cl, laDan) - (so.thu || 0));
 
   // TC_D06C7b: công trình THƯỜNG bị bé khác đánh (congTrinh.<loai>.danh; trụ không tính: trụ dùng khối tru); Lều không có danh
   const laDanh = (CH, loai) => !!(CH.congTrinh && CH.congTrinh[loai] && CH.congTrinh[loai].danh && !CH.congTrinh[loai].tru);
@@ -49,7 +55,7 @@
   function soDanh(CH, loai, cap) {
     if (laTru(CH, loai)) return soTru(CH, loai, cap);
     const d = CH.congTrinh[loai].danh;
-    return { dangCap: 0, mauToiDa: d.mau, cong: d.cong, beDanh: d.beDanh, tam: null, soCau: d.soCau, tiLe: Math.min(CH.tru.tiLeToiDa, d.tiLeDung) };
+    return { dangCap: 0, mauToiDa: d.soCau * d.mauMoiCau, mauMoiCau: d.mauMoiCau, thu: d.thu || 0, cong: d.cong, tam: null, soCau: d.soCau, tiLe: Math.min(CH.tru.tiLeToiDa, d.tiLeDung) };
   }
   // Khoảng cách từ điểm (x, z) tới mép công trình (0 = đứng trên móng); SQL: kc_dt_kc_mep
   const kcMep = (ct, x, z) => Math.hypot(Math.max(ct.x - x, 0, x - (ct.x + ct.rong)), Math.max(ct.y - z, 0, z - (ct.y + ct.sau)));
@@ -119,7 +125,7 @@
     return ra;
   }
 
-  goc.KC_DT_TRU_TRAN = { laTru, soTru, laDanh, danhDuoc, soDanh, kcMep, trongBaoHo, chonCau, hpThuLinh, hpNongDan, banMot, moLuot, traLoi };
+  goc.KC_DT_TRU_TRAN = { laTru, soTru, congNguoi, beDanhCt, laDanh, danhDuoc, soDanh, kcMep, trongBaoHo, chonCau, hpThuLinh, hpNongDan, banMot, moLuot, traLoi };
 })(typeof window !== "undefined" ? window : globalThis);
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ tấn công người chơi khác)
 // 06/11/2026 - BƯỚC: TC_D06C2h (hpNongDan, banMot: trụ tự bắn nông dân)

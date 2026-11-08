@@ -963,8 +963,8 @@
         const cau = kho && kho.length ? TT.chonCau(kho, s.soCau) : (Array.isArray(duPhong) && duPhong.length >= s.soCau ? chuanCau(duPhong.slice(0, s.soCau), s.soCau) : null);
         if (!cau) return { ok: false, ma: "chua_cau", lyDo: "Chưa có câu hỏi." };
         const toiDa = TT.hpThuLinh(CH, be.chungLoai);
-        const tr = { id: ++tt.soId, truId: id, dv: null, chu: ct.chu, ten, loai: ct.loai, cap: ct.cap || 1, soCau: s.soCau, tiLe: s.tiLe, cong: s.cong, beDanh: s.beDanh,
-          mauBe: tl.mau == null ? toiDa : Math.min(toiDa, tl.mau), mauBeToiDa: toiDa, mauTru: ct.mau == null ? s.mauToiDa : ct.mau, mauTruToiDa: s.mauToiDa,
+        const tr = { id: ++tt.soId, truId: id, dv: null, chu: ct.chu, ten, loai: ct.loai, cap: ct.cap || 1, soCau: s.soCau, tiLe: s.tiLe, cong: s.cong, beDanh: TT.beDanhCt(CH, s, be.chungLoai, false),
+          mauBe: tl.mau == null ? toiDa : Math.min(toiDa, tl.mau), mauBeToiDa: toiDa, mauTru: ct.mau == null ? s.mauToiDa : Math.min(ct.mau, s.mauToiDa), mauTruToiDa: s.mauToiDa,
           so: 0, ben: null, moLuc: bay, ket: null, taoLuc: bay, cau };
         (tt.truTran = tt.truTran || []).push(tr); luu();
         return { ok: true, tran: tranRa(tr), gio: bay };
@@ -991,8 +991,8 @@
         if (!p || Math.hypot(p.x - (ct.x + ct.rong / 2), p.z - (ct.y + ct.sau / 2)) > s.tam + LECH_O) return { ok: false, ma: "xa_qua", lyDo: "Thủ lĩnh ngoài tầm trụ." };
         if (truTrongLang(ct) && !(tt.be[ct.chu] && (tt.be[ct.chu].songLuc || 0) >= bay - VM.sauGiay * 1000)) return { ok: false, ma: "bao_ho", lyDo: "Làng đang có vòng sáng bảo hộ." };
         const toiDa = nd ? TT.hpNongDan(CH, be.chungLoai) : TT.hpThuLinh(CH, be.chungLoai);
-        const tr = { id: ++tt.soId, truId: id, dv: dvSo, chu: ct.chu, ten, loai: ct.loai, cap: ct.cap || 1, soCau: Math.min(s.soCau, ct.cau.length), tiLe: s.tiLe, cong: s.cong, beDanh: s.beDanh,
-          mauBe: tl.mau == null ? toiDa : Math.min(toiDa, tl.mau), mauBeToiDa: toiDa, mauTru: ct.mau == null ? s.mauToiDa : ct.mau, mauTruToiDa: s.mauToiDa,
+        const tr = { id: ++tt.soId, truId: id, dv: dvSo, chu: ct.chu, ten, loai: ct.loai, cap: ct.cap || 1, soCau: Math.min(s.soCau, ct.cau.length), tiLe: s.tiLe, cong: s.cong, beDanh: TT.beDanhCt(CH, s, be.chungLoai, !!nd), // TC_D06C7b: công - thủ
+          mauBe: tl.mau == null ? toiDa : Math.min(toiDa, tl.mau), mauBeToiDa: toiDa, mauTru: ct.mau == null ? s.mauToiDa : Math.min(ct.mau, s.mauToiDa), mauTruToiDa: s.mauToiDa,
           so: 0, ben: null, moLuc: bay, ket: null, taoLuc: bay };
         (tt.truTran = tt.truTran || []).push(tr); luu();
         return { ok: true, tran: tranRa(tr), gio: bay };
