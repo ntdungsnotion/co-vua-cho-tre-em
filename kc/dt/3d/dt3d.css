@@ -65,6 +65,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3Do { font-size: .85rem; color: var(--nhat); padding: 4px 10px; }
 .d3Thanh .d3NutPhaHuy { background: #9d1d1d; border-color: #ff6a58; color: #fff4e8; }
 .d3Thanh .d3NutPhaHuy:hover { background: #c33124; }
+/* TC_D06C7b (08/11/2026): ⚔️ Tấn công công trình của bạn */
+.d3Thanh .d3NutDanh { background: #b8560f; border-color: #ffb347; color: #fff8e8; font-weight: 700; }
+.d3Thanh .d3NutDanh:hover { background: #d86a17; }
 /* Chữ nổi "+5 🪵" và dấu "!" nông dân rảnh */
 #d3ChuNoi { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .d3Noi { position: absolute; left: 0; top: 0; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.5rem; color: #fff6c8;

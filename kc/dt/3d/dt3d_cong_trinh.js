@@ -18,6 +18,7 @@
 // HÀM KHAI RA:
 //   taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang?) -> { leu, lua, hinhCt(id), datNguoiQuaCong(() => [{ x, z }]) }
 //   TC_D06C7a (07/11/2026): cánh cổng đóng, có người tới gần (cách ô cổng <= 1,4 ô) thì mở ra, đi qua rồi tự đóng (hinhCt(id).mo 0..1)
+//   TC_D06C7b (08/11/2026): mọi công trình bị bé khác đánh sập (ct.hongLuc) thành đống gạch; ô rào sụp: cọc gãy đổ nghiêng
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), moHinh (dt3d_mo_hinh.js), diaHinh.doCao (dt3d_dia_hinh.js),
 //           lang (lõi: congTrinh, sự kiện cong_trinh / xay_xong / bo_cong_trinh).
 // BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); TC_D02B2a (chưa có lều); TC_D02B2b (bé dựng lều);
@@ -245,7 +246,7 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
   const hinhCoc = new THREE.LatheGeometry([new THREE.Vector2(0.075, 0), new THREE.Vector2(0.075, 0.82), new THREE.Vector2(0, 1.02)], 6);
   const CHO_COC = [[0, 0], [0.27, 0], [-0.27, 0], [0, 0.27], [0, -0.27]];
   let coc = null, tuongDoi = true;
-  const mt = new THREE.Matrix4(), vtT = new THREE.Vector3(), qT = new THREE.Quaternion(), sT = new THREE.Vector3();
+  const mt = new THREE.Matrix4(), vtT = new THREE.Vector3(), qT = new THREE.Quaternion(), sT = new THREE.Vector3(), vtGay = new THREE.Vector3();
   function veTuong() {
     tuongDoi = false;
     const can = dsTuong.size * CHO_COC.length;
@@ -257,12 +258,15 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     }
     let k = 0;
     for (const ct of dsTuong.values()) {
-      const p = ct.xong ? 1 : Math.max(0.08, ct.tienDo || 0);
+      const p = ct.xong ? 1 : Math.max(0.08, ct.tienDo || 0), gay = ct.hongLuc != null; // TC_D06C7b: ô rào bị đánh sập: cọc gãy đổ nghiêng
+      ct.hongVe = gay;
       if (!ct.xong) tuongDoi = true;
       CHO_COC.forEach(([dx, dz], j) => {
         const x = ct.x + 0.5 + dx, z = ct.y + 0.5 + dz, cao = (0.95 + bam(ct.x * 31 + ct.y * 17 + j, 4) * 0.35) * (j ? 1 : 1.12);
-        vtT.set(x, doCao(x, z) - 0.05, z); sT.set(1, cao * p, 1);
+        vtT.set(x, doCao(x, z) - 0.05, z); sT.set(1, gay ? cao * (0.25 + bam(ct.id + j, 7) * 0.25) : cao * p, 1);
+        if (gay) qT.setFromAxisAngle(vtGay.set(Math.cos(j * 1.7 + ct.id), 0, Math.sin(j * 1.7 + ct.id)), 0.9 + bam(j, ct.id) * 0.6);
         coc.setMatrixAt(k++, mt.compose(vtT, qT, sT));
+        if (gay) qT.identity();
       });
     }
     coc.count = k; coc.instanceMatrix.needsUpdate = true;
@@ -327,7 +331,7 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
     ctx.moiKhung((dt, t) => { // TC_D06C2d: thêm t (nhà sụp rung theo thời gian; trước đây t chưa khai báo -> lỗi mỗi khung khi phá hủy)
       if (tuongDoi) veTuong();
       const veLaiRuong = (demRuong += dt) >= 0.25;
-      if (veLaiRuong) demRuong = 0;
+      if (veLaiRuong) { demRuong = 0; for (const c of dsTuong.values()) if (!!c.hongVe !== (c.hongLuc != null)) { tuongDoi = true; break; } } // TC_D06C7b
       for (const h of dsCt.values()) {
         if (h.ct.hongLuc != null) { // TC_D06C2g: trụ thua -> đống gạch (lõi bỏ công trình khi máy chủ xoá)
           if (!h.gach) { h.gach = taoGach(h.ct); h.nhom.add(h.gach); h.nha.visible = false; h.mong.visible = false; }
@@ -418,3 +422,4 @@ export function taoCongTrinh(ctx, moHinh, diaHinh, banDo, huongCam, lang) {
 // 01/11/2026 17:53 - BƯỚC: TC_D06C1 giao diện công trình + trạng thái phá hủy
 // 05/11/2026 - BƯỚC: TC_D06C2d (sửa lỗi t chưa khai báo ở hiệu ứng nhà sụp)
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (cổng mở khi có người đi qua)
+// 08/11/2026 - BƯỚC: TC_D06C7b (ô rào bị đánh sập: cọc gãy)

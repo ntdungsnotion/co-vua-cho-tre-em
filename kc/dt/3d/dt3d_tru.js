@@ -17,6 +17,11 @@
 //              trận với 2 nút: ⚔️ Đánh (trận câu hỏi với trụ như Thủ lĩnh, truKhai có dv; thua = mất dân) / 👀 Xem (camera tới
 //              nông dân + chọn để bé dẫn đi trốn). Hết máu: bỏ chạy, mất hẳn. Máy CHỦ TRỤ vẽ lại phát bắn máy chủ ghi (ct.ban):
 //              nỏ quay về phía người bị bắn, mũi tên bay (trúng / cắm đất), tiếng khi cảnh trong khung hình.
+//            - TC_D06C7b (người dùng 07/11 + 08/11/2026) MỌI CÔNG TRÌNH BỊ BÉ KHÁC ĐÁNH SẬP: chạm công trình thường của bạn (trừ Lều)
+//              -> thanh dưới ❤️ máu · ❓ số câu + nút ⚔️ Tấn công: Thủ lĩnh tự đi tới sát (tru.chamO ô) rồi hỏi máy chủ danhKhai
+//              -> kèn lệnh, trận y luật trụ (số theo congTrinh.<loai>.danh; công trình không tự khai chiến). Câu do máy chủ chọn trong
+//              KHO CÂU của chủ (máy bé gửi kho câu theo trình độ của bé lúc vào vùng, cauKho). Thắng: đống gạch; rào / cổng sụp thì
+//              vòng rào thủng, lãnh địa tính lại ngay (vung.hongCt).
 // HÀM KHAI RA:
 //   taoTruBanDo(the) -> { thongTin(ct) -> { phu, nut[] } | null, dangTran(), moc }
 //     the = { ctx, lang, cauHinh, mayChu (truCau / truKhai / truLuot / truTra / truRut / truBan), dvTl, vung, quaiBd (banThuLinh,
@@ -78,6 +83,71 @@ export function taoTruBanDo(the) {
     } finally { dangGan.delete(ct.id); }
   }
 
+  // ---------- TC_D06C7b: KHO CÂU của bé (công trình thường của bé bị bạn đánh thì máy chủ lấy câu trong kho này) ----------
+  // Máy chủ trả soCauKho lúc vào vùng (máy chủ cũ không trả: bỏ qua); thiếu thì chọn tru.soCauKho câu theo trình độ của bé gửi lên một lần
+  const soKho = vung && vung.vao ? vung.vao.soCauKho : undefined;
+  if (Number.isFinite(soKho) && soKho < (C.soCauKho || 30) && mayChu.cauKho) {
+    setTimeout(async () => {
+      try { const ds = await taoBoCau(C.soCauKho || 30); if (ds) await mayChu.cauKho(ten, ds); } catch (e) { /* lần vào sau gửi lại */ }
+    }, 3000);
+  }
+
+  // ---------- TC_D06C7b: Thủ lĩnh đánh công trình THƯỜNG của bạn (chạm công trình -> ⚔️ Tấn công) ----------
+  const laDanh = ct => !!ct && TT.laDanh(cauHinh, ct.loai);
+  const laRao = ct => ct.loai === "tuong" || ct.loai === "cong";
+  let danhCho = null; // { ct, het }: Thủ lĩnh đang đi tới sát công trình để đánh
+  const satCt = ct => TT.kcMep(ct, dvTl.x, dvTl.z) <= C.chamO;
+  // Ô đi được sát móng gần Thủ lĩnh nhất (lang.lenhDi tìm được đường)
+  function toiSat(ct) {
+    const o = [];
+    for (let y = ct.y - 1; y <= ct.y + ct.sau; y++) for (let x = ct.x - 1; x <= ct.x + ct.rong; x++) {
+      if (y >= ct.y && y < ct.y + ct.sau && x >= ct.x && x < ct.x + ct.rong) continue;
+      o.push({ x, y, d: Math.hypot(x + 0.5 - dvTl.x, y + 0.5 - dvTl.z) });
+    }
+    o.sort((a, b) => a.d - b.d);
+    for (const p of o) if (lang.lenhDi(dvTl, { x: p.x, y: p.y })) return true;
+    return false;
+  }
+  function batDauDanh(ct) {
+    if (!dvTl || tran || dangKhai) return;
+    if (quaiBd && quaiBd.conNghi() > 0) { baoGoiY("⛺ " + dvTl.ten + " đang nghỉ ở Lều, chưa đánh được."); return; }
+    if (quaiBd && quaiBd.banThuLinh()) { baoGoiY("⚔️ " + dvTl.ten + " đang giao chiến."); return; }
+    if (!laDanh(ct) || !ct.xong || ct.hongLuc != null || !lang.congTrinh.includes(ct)) return;
+    if (satCt(ct)) { danhCho = null; khaiCt(ct); return; }
+    if (!toiSat(ct)) { baoGoiY("🚧 " + dvTl.ten + " không tới sát " + tenTru(ct) + " được."); return; }
+    danhCho = { ct, het: Date.now() + 40000 };
+    baoGoiY("👑 " + dvTl.ten + " đang tới " + tenTru(ct) + " của " + ct.chu + "…");
+  }
+  function theoDanh() {
+    if (!danhCho) return;
+    const { ct } = danhCho;
+    if (tran || Date.now() > danhCho.het || ct.hongLuc != null || !lang.congTrinh.includes(ct)) { danhCho = null; return; }
+    if (satCt(ct)) { danhCho = null; khaiCt(ct); }
+    else if (!dvTl.duong || !dvTl.duong.length) { if (!dvTl.dich) danhCho = null; } // bé cho Thủ lĩnh đi chỗ khác / đứng lại: thôi
+  }
+  async function khaiCt(ct) {
+    dangKhai = true;
+    let kq;
+    try {
+      const duPhong = await taoBoCau(TT.soDanh(cauHinh, ct.loai, ct.cap).soCau); // chủ chưa có kho câu: máy chủ dùng câu này
+      kq = await mayChu.danhKhai(ten, ct.id, duPhong || undefined);
+    } catch (e) { kq = { ok: false, lyDo: "Chưa vào trận được." }; }
+    dangKhai = false;
+    if (!kq.ok) {
+      if (kq.ma === "dang_nghi" && Number.isFinite(kq.nghiDen) && quaiBd) quaiBd.datNghi(kq.nghiDen);
+      baoGoiY((kq.ma === "bao_ho" ? "🛡️ Làng của " + ct.chu + " đang có vòng sáng bảo hộ (bạn ấy vắng mặt) · chưa đánh được " + tenTru(ct) + "."
+        : kq.ma === "mien" ? "⏳ Vừa đánh " + tenTru(ct) + " xong, chờ một lát nhé." : "❌ " + (kq.lyDo || "Chưa vào trận được.")));
+      return;
+    }
+    if (tran || (quaiBd && quaiBd.banThuLinh())) { mayChu.truRut(ten, kq.tran.id); return; }
+    if (am) am.kenLenh();
+    if (quaiBd) quaiBd.dungTl();
+    const p = tamCt(ct);
+    dvTl.huongMuon = Math.atan2(p.x - dvTl.x, p.z - dvTl.z);
+    baoGoiY("⚔️ " + dvTl.ten + " tấn công " + tenTru(ct) + " của " + ct.chu + "!");
+    moTran(ct, kq.tran);
+  }
+
   // ---------- trụ của bạn: Thủ lĩnh vào tầm -> khai chiến ----------
   const mien = new Map(); // id trụ -> Date.now() được thử lại
   let tran = null, dangKhai = false, baoBaoHo = 0, dem = 0;
@@ -86,6 +156,7 @@ export function taoTruBanDo(the) {
     dem = 0;
     for (const ct of lang.congTrinh) if (ct.cuaMinh !== false && laTru(ct) && ct.xong && ct.hongLuc == null && !ct.coCau) ganCau(ct);
     banNongDan(); veBanChu(); // TC_D06C2h
+    theoDanh(); // TC_D06C7b
     if (tran || dangKhai || ctx.chayNen || !dvTl || dvTl.xay) return;
     if (quaiBd && (quaiBd.banThuLinh() || quaiBd.conNghi() > 0)) return;
     const bay = Date.now();
@@ -117,11 +188,17 @@ export function taoTruBanDo(the) {
     moTran(ct, kq.tran);
   }
   function moTran(ct, tr, dv) { // TC_D06C2h: dv = nông dân vào trận (không có = Thủ lĩnh)
-    const ts = new URLSearchParams({ nhung: "1", tru: "1", tran: String(tr.id), loaiTru: ct.loai, cap: String(tr.cap || 1),
+    // TC_D06C7b: công trình thường trên sân đấu: ct_rao (hàng rào, cổng) / ct_nha (nhà, kho, chòi...) (dt3d_quai.js)
+    const loaiSan = laTru(ct) ? ct.loai : laRao(ct) ? "ct_rao" : "ct_nha";
+    const ts = new URLSearchParams({ nhung: "1", tru: "1", tran: String(tr.id), loaiTru: loaiSan, cap: String(tr.cap || 1),
       tenTru: tenTru(ct) + " của " + ct.chu, mauBe: String(tr.mauBe), mauBeToiDa: String(tr.mauBeToiDa), mauTru: String(tr.mauTru),
       mauTruToiDa: String(tr.mauTruToiDa), giayBe: String(C.giayBe), nghi: String(C.nghiGiay),
       cl: be.hoSo.chungLoai || "nhan", gioi: be.hoSo.gioi || "nam", lop: String(be.lop || 2), ten: be.ten || "", tl: (dv ? dv.ten : dvTl.ten) || "" });
     if (dv) { ts.set("vai", "nong_dan"); ts.set("nd", String(dv.id)); } // nông dân (trang trận: thua = bỏ chạy, không nghỉ)
+    if (!laTru(ct)) { // TC_D06C7b: đối thủ trên sân là Thủ lĩnh của chủ (tộc theo Thủ lĩnh bạn ấy máy này đang thấy; chưa thấy: Nhân tộc)
+      const b = vung && vung.tlBan ? vung.tlBan(ct.chu) : null;
+      ts.set("doiCl", (b && ((b.d && b.d.chungLoai) || b.dv.chungLoai)) || "nhan");
+    }
     const khung = document.createElement("div"); khung.className = "d3Tran";
     const fr = document.createElement("iframe");
     fr.title = "Trận đấu"; fr.allow = "autoplay"; fr.src = new URL("../thu_tran_dau.html?" + ts, import.meta.url).href;
@@ -151,7 +228,11 @@ export function taoTruBanDo(the) {
     mien.set(ct.id, Date.now() + C.mienGiay * 1000);
     if (Number.isFinite(hp)) dvTl.mau = hp; // máu Thủ lĩnh giữ nguyên (không tự hồi)
     const ten2 = tenTru(ct) + " của " + ct.chu;
-    if (ket === "be") { ct.hongLuc = mayChu.gio(); ct.mau = 0; baoGoiY("🏆 Thắng · " + ten2 + " sụp đổ · ❤️ " + dvTl.mau); }
+    if (ket === "be") {
+      ct.hongLuc = mayChu.gio(); ct.mau = 0;
+      if (vung && vung.hongCt) vung.hongCt(ct); // TC_D06C7b: rào sụp -> lãnh địa tính lại ngay
+      baoGoiY("🏆 Thắng · " + ten2 + " sụp đổ" + (laRao(ct) ? " · vòng rào đã thủng" : "") + " · ❤️ " + dvTl.mau);
+    }
     else if (ket === "quai") {
       dvTl.mau = null; // nghỉ xong đủ máu
       if (quaiBd) quaiBd.datNghi(mayChu.gio() + C.nghiGiay * 1000);
@@ -398,7 +479,18 @@ export function taoTruBanDo(the) {
     p.appendChild(ol);
     document.body.appendChild(p);
   }
+  // TC_D06C7b: công trình thường: đống gạch; của bạn: máu + ⚔️ Tấn công (Thủ lĩnh tự đi tới sát rồi vào trận); của mình: máu nếu đã bị đánh
+  function thongTinDanh(ct) {
+    const s = TT.soDanh(cauHinh, ct.loai, ct.cap), mau = ct.mau == null ? s.mauToiDa : ct.mau;
+    if (ct.hongLuc != null) return { dong: "🧱 Đống gạch · biến mất sau " + Math.max(0, Math.ceil((C.hongGiay * 1000 - (mayChu.gio() - ct.hongLuc)) / 1000)) + " giây", nut: [] };
+    if (!ct.xong) return null;
+    if (ct.cuaMinh !== false) return ct.mau != null ? { phu: "❤️ " + mau + "/" + s.mauToiDa + " · bị bạn đánh", nut: [] } : null;
+    const nut = [];
+    if (dvTl && !dvTl.laBan) nut.push({ id: "d3DanhCt", lop: "d3NutDanh", chu: "⚔️<span class=\"d3Chu\"> Tấn công</span>", nhan: "Tấn công " + tenTru(ct) + " của " + ct.chu, bam: () => batDauDanh(ct) });
+    return { phu: "❤️ " + mau + "/" + s.mauToiDa + " · ❓ " + s.soCau + " câu · của " + ct.chu, nut };
+  }
   function thongTin(ct) {
+    if (laDanh(ct)) return thongTinDanh(ct);
     if (!laTru(ct)) return null;
     const s = TT.soTru(cauHinh, ct.loai, ct.cap), mau = ct.mau == null ? s.mauToiDa : ct.mau;
     if (ct.hongLuc != null) return { dong: "🧱 Đống gạch · biến mất sau " + Math.max(0, Math.ceil((C.hongGiay * 1000 - (mayChu.gio() - ct.hongLuc)) / 1000)) + " giây", nut: [] };
@@ -425,10 +517,16 @@ export function taoTruBanDo(the) {
       goc: id => { const h = hinhCt && hinhCt(id), no = h && h.nha && h.nha.userData.no; return no ? no.rotation.y : null; },
       vaoDan: idDv => { const f = [...biBan.values()].find(k => k.dv.idMayChu === idDv); if (f) vaoTranDan(f); return !!f; },
       xemDan: idDv => { const f = [...biBan.values()].find(k => k.dv.idMayChu === idDv); if (f) xemDan(f); return !!f; },
-      tranDv: () => (tran && tran.dv ? tran.dv.idMayChu : null)
+      tranDv: () => (tran && tran.dv ? tran.dv.idMayChu : null),
+      // TC_D06C7b: đánh công trình thường của bạn (như bé bấm ⚔️ Tấn công), Thủ lĩnh đang đi tới công trình nào
+      danh: id => { const ct = lang.congTrinh.find(c => c.id === id); if (ct) batDauDanh(ct); return !!ct; },
+      danhCho: () => (danhCho ? danhCho.ct.id : null),
+      ctBan: () => lang.congTrinh.filter(c => c.cuaMinh === false && laDanh(c)).map(c => ({ id: c.id, chu: c.chu, loai: c.loai, x: c.x, y: c.y, xong: c.xong, mau: c.mau, hongLuc: c.hongLuc })),
+      thongTin: id => { const ct = lang.congTrinh.find(c => c.id === id); const t = ct && thongTin(ct); return t ? { dong: t.dong, phu: t.phu, nut: (t.nut || []).map(n => n.id) } : null; }
     }
   };
 }
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ trên bản đồ)
 // 06/11/2026 - BƯỚC: TC_D06C2h (trụ tự bắn nông dân, nông dân vào trận với trụ, máy chủ trụ thấy nỏ quay + mũi tên)
 // 06/11/2026 - BƯỚC: TC_D06C5 (biBan: nông dân đang bị trụ bắn)
+// 08/11/2026 - BƯỚC: TC_D06C7b (kho câu của bé; ⚔️ Tấn công công trình thường của bạn: Thủ lĩnh tới sát -> trận y luật trụ; rào sụp -> lãnh địa tính lại)
