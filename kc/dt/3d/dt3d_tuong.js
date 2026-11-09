@@ -18,7 +18,9 @@
 // LUẬT NỐI: chỉ dùng ctx (dt3d_canh.js); không biết gì về trận (dt3d_tran.js gọi dien()).
 // BƯỚC: TC_D05B1 (người dùng 29/10/2026: "đồ hoạ hiện tại chỉ phù hợp trẻ 4-5 tuổi" -> tướng người thật;
 //        góp ý cùng ngày: nhân vật riêng cho Quỷ / Tiên, phòng thủ theo tộc)
-// NGÀY: 29/10/2026 19:00; 29/10/2026 23:40
+//        TC_D05B4: tướng có `dungTay` (độ, tuong.json) đứng thường bằng thế tự dựng dungDangTay (tay dang
+//        khỏi thân, không đâm vào quần phùng) thay động tác "dung" của tộc
+// NGÀY: 29/10/2026 19:00; 29/10/2026 23:40; 09/11/2026 22:45
 // ================================================================
 import * as THREE from "three";
 import { clone as nhanBanXuong } from "../../thu_vien/three/utils/SkeletonUtils.js";
@@ -78,6 +80,36 @@ export function taoBoTuong(ctx, dongTac) {
   }
   const boNhoClip = new Map();
 
+  // TC_D05B4: thế đứng thường tự dựng từ tư thế chữ T của chính tướng: hai cánh tay hạ xuống `ha` độ nhưng vẫn
+  // dang khỏi thân (tướng quần phùng: tay sát người sẽ đâm vào quần), khuỷu hơi co, tay đung đưa nhẹ như thở.
+  function dungDangTay(goc, ha) {
+    goc.updateWorldMatrix(true, true);
+    const qGoc = new THREE.Quaternion(); goc.getWorldQuaternion(qGoc); qGoc.invert();
+    const truc = new THREE.Vector3(0, 0, 1), tracks = [], T = [0, 1.6, 3.2];
+    // local' = local * (Qw^-1 * R * Qw): quay xương quanh trục thế giới (trong khung của tướng)
+    const quay = (xuong, goc_, deg) => {
+      const qw = new THREE.Quaternion(); xuong.getWorldQuaternion(qw); qw.premultiply(goc_);
+      const r = new THREE.Quaternion().setFromAxisAngle(truc, THREE.MathUtils.degToRad(deg));
+      return xuong.quaternion.clone().multiply(qw.clone().invert().multiply(r).multiply(qw));
+    };
+    for (const [ben, dau] of [["Left", -1], ["Right", 1]]) {
+      const tay = goc.getObjectByName("mixamorig" + ben + "Arm"), khuyu = goc.getObjectByName("mixamorig" + ben + "ForeArm");
+      if (!tay || !khuyu) continue;
+      const k = [ha, ha - 4, ha].map(d => quay(tay, qGoc, dau * d));
+      tracks.push(new THREE.QuaternionKeyframeTrack(tay.name + ".quaternion", T, k.flatMap(q => q.toArray())));
+      const c = quay(khuyu, qGoc, -dau * 12); // khuỷu co nhẹ ra ngoài cho tay không thẳng đuột
+      tracks.push(new THREE.QuaternionKeyframeTrack(khuyu.name + ".quaternion", T, [c, c, c].flatMap(q => q.toArray())));
+    }
+    // mọi xương khác giữ đúng tư thế gốc (không thì còn sót thế của động tác trước)
+    const coRoi = new Set(tracks.map(t => t.name.split(".")[0]));
+    goc.traverse(o => {
+      if (!o.isBone || coRoi.has(o.name)) return;
+      tracks.push(new THREE.QuaternionKeyframeTrack(o.name + ".quaternion", [0], o.quaternion.toArray()));
+      if (o.name === HONG) tracks.push(new THREE.VectorKeyframeTrack(o.name + ".position", [0], o.position.toArray()));
+    });
+    return new THREE.AnimationClip("DungTay", T[2], tracks);
+  }
+
   function tao(glb, hoSo, cao) {
     const goc = nhanBanXuong(glb.scene);
     const bang = Object.assign({}, KIEU, KIEU_TOC[hoSo.chungLoai] || {});
@@ -96,8 +128,13 @@ export function taoBoTuong(ctx, dongTac) {
     goc.scale.multiplyScalar(cao / (dinh || 1.8));
     const vo = new THREE.Group(); vo.add(goc); ctx.canh.add(vo);
 
-    if (!boNhoClip.has(glb)) boNhoClip.set(glb, chepDongTac(goc));
+    if (!boNhoClip.has(glb)) {
+      const ds = chepDongTac(goc);
+      if (hoSo.dungTay) ds.DungTay = dungDangTay(goc, hoSo.dungTay);
+      boNhoClip.set(glb, ds);
+    }
     const clip = boNhoClip.get(glb);
+    if (clip.DungTay) bang.dung = { clip: "DungTay", lap: true };
     const tron = new THREE.AnimationMixer(goc), dt = {};
     for (const k in clip) dt[k] = tron.clipAction(clip[k]);
     let dang = null, xong = null, kieuDang = null;
