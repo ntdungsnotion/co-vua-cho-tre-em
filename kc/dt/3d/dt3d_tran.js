@@ -66,7 +66,7 @@ async function tao(vungVe, { nhe } = {}) {
     taiGlb(duongDan("../mo_hinh/dong_tac_tuong.glb")).catch(() => null),
     fetch(duongDan("../du_lieu/tuong.json")).then(r => r.json()).catch(() => null)
   ]);
-  // tướng cho hồ sơ: hoSo.tuong (mã trong kho, vd trang thử ?tuong=demon) hoặc Thủ lĩnh theo tộc + giới
+  // tướng cho hồ sơ: hoSo.tuong (mã trong kho, vd trang thử ?tuong=quy_toc) hoặc Thủ lĩnh theo tộc + giới
   function chonTuong(hoSo) {
     if (!khoTuong) return null;
     const ma = hoSo.tuong || khoTuong.thuLinh[hoSo.chungLoai + "_" + (hoSo.gioi === "nu" ? "nu" : "nam")] || khoTuong.thuLinh.nhan_nam;
@@ -132,7 +132,7 @@ async function tao(vungVe, { nhe } = {}) {
         if (lan !== lanDung) return; // bé đã đổi tướng khác trong lúc tải
         if (tuong) canh.remove(tuong.vo);
         if (hBe) { boNv.xoa(hBe); hBe = null; }
-        tuong = boTuong.tao(glb, Object.assign({}, hoSo, { chungLoai: tt.toc }), CAO_TUONG); tuong.vo.rotation.y = HUONG_BE;
+        tuong = boTuong.tao(glb, Object.assign({}, hoSo, { chungLoai: tt.toc, dungTay: tt.dungTay }), CAO_TUONG); tuong.vo.rotation.y = HUONG_BE;
         tuong.vo.position.set(dvBe.x, 0, dvBe.z);
         vlBe = tuong.vlPhatSang; caoBe = CAO_TUONG;
       }, () => { if (lan === lanDung && !tuong) dungKayKit(hoSo); });
