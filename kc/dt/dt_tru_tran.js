@@ -26,6 +26,7 @@
 //     cauSua(CH, ct) số câu phải trả khi sửa (máu mất / mauMoiCau, làm tròn lên); cauDu(cau, kho, n, rng) đủ n câu cho trận trụ
 //   TC_D06C7e: ganCauMua(cau, n, moi) chèn câu bé chọn sau n câu đang dùng; phanMat(CH, ct) phần máu mất; giaSua(CH, ct) tài nguyên sửa
 //     ({ go, da... }, không vàng); giaySua(CH, ct) giây 1 nông dân sửa xong; mucChay(CH, ct) 0 / 1 cháy nhỏ / 2 cháy to
+//   TC_D06E: doiCau(cau, viTri, moi) bé thay câu thứ viTri bằng câu thư viện (viTri >= số câu đã gắn: thêm vào cuối, thay chỗ "lấy ngẫu nhiên")
 //   moLuot(tr, CH, bay, rng) -> lượt { so, ben: "tru" | "be", moLuc, han?, giayTru?, cau? (chỉ số câu của trụ) }
 //   traLoi(tr, CH, bay, { chon, beDung }, cauTru) -> kết quả { so, ben, kieu, satThuong, dapAnDung?, mau{be, tru}, ket? }
 //     tr = trạng thái trận (máy chủ giữ): { soCau, tiLe, cong, beDanh, mauBe, mauBeToiDa, mauTru, mauTruToiDa,
@@ -155,6 +156,9 @@
   // TC_D06C7e (người dùng 08/11/2026 12:1x, dac_ta_cong_trinh.md mục 0B): câu bé TỰ CHỌN khi mua gắn vào ct.cau ngay sau n câu đang dùng
   // (n = số câu trước khi mua) để trận (cauDu lấy n câu đầu) hỏi đúng câu bé chọn; câu dư phía sau (trụ đã gắn sẵn 7 câu) đẩy lùi.
   const ganCauMua = (cau, n, moi) => { const c = Array.isArray(cau) ? cau : []; return c.slice(0, n).concat(moi, c.slice(n)); };
+  // TC_D06E (người dùng 05/11 + 09/11/2026): bé đổi câu thứ viTri (0..) bằng câu chọn trong thư viện, miễn phí, số câu / máu giữ nguyên.
+  // viTri chưa gắn câu (trận đang lấy câu ngẫu nhiên trong kho của chủ) -> câu mới gắn tiếp sau các câu đã gắn.
+  const doiCau = (cau, viTri, moi) => { const c = Array.isArray(cau) ? cau.slice() : []; if (viTri < c.length) c[viTri] = moi; else c.push(moi); return c; };
   // Phần máu đã mất (0..1)
   const phanMat = (CH, ct) => { const s = soCt(CH, ct); return s.mauToiDa > 0 ? (s.mauToiDa - mauCt(CH, ct, s)) / s.mauToiDa : 0; };
   // TC_D06C7e: SỬA không tốn vàng, tốn tài nguyên theo loại: giá xây (x hệ số cấp) x sua.tiLeGia x phần máu mất, mỗi loại làm tròn lên
@@ -178,10 +182,11 @@
   }
 
   goc.KC_DT_TRU_TRAN = { laTru, soTru, congNguoi, beDanhCt, laDanh, danhDuoc, soDanh, kcMep, trongBaoHo, chonCau, hpThuLinh, hpNongDan, banMot, moLuot, traLoi,
-    soCt, mauCt, coSan, giaCau, cauSua, cauDu, ganCauMua, phanMat, giaSua, giaySua, mucChay };
+    soCt, mauCt, coSan, giaCau, cauSua, cauDu, ganCauMua, doiCau, phanMat, giaSua, giaySua, mucChay };
 })(typeof window !== "undefined" ? window : globalThis);
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ tấn công người chơi khác)
 // 06/11/2026 - BƯỚC: TC_D06C2h (hpNongDan, banMot: trụ tự bắn nông dân)
 // 08/11/2026 - BƯỚC: TC_D06C7b (laDanh, danhDuoc, soDanh, kcMep, trongBaoHo, chonCau: mọi công trình bị bé khác đánh sập)
 // 08/11/2026 - BƯỚC: TC_D06C7d (soCt, mauCt, coSan, giaCau, cauSua, cauDu: số câu riêng từng công trình, bé mua bằng vàng)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (ganCauMua: câu bé tự chọn; giaSua / giaySua: sửa bằng tài nguyên, nông dân sửa; mucChay: cháy nhỏ / to)
+// 09/11/2026 - BƯỚC: TC_D06E (doiCau: bé đổi từng câu bằng thư viện câu hỏi)

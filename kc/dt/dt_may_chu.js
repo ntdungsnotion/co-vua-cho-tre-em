@@ -80,6 +80,7 @@
 //     vàng (+ máu), suaCt(ten, id) sửa = mua lại máu đã mất; trận (danhKhai / truKhai) theo TT.soCt; trận trụ giữ đủ câu trong tr.cau
 //     (câu của trụ + bù từ kho câu của chủ).
 //   TC_D06C7e (08/11/2026): muaCau(ten, id, so, cau) câu bé tự chọn gắn vào công trình (trận hỏi trước, thiếu bù kho câu của chủ);
+//   TC_D06E (09/11/2026): doiCau(ten, id, viTri, cau) bé đổi từng câu bằng thư viện câu hỏi, miễn phí;
 //     suaCt(ten, id) trừ tài nguyên (không vàng), ct.sua = { tienDo, giay }: nông dân tới sửa như xây (tinhXay, guiLenh, xayXong báo sửa xong).
 // BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
@@ -1117,6 +1118,24 @@
         const s2 = TT.soCt(CH, ct);
         return { ok: true, id, soCau: ct.soCau, mau: ct.mau == null ? null : ct.mau, mauToiDa: s2.mauToiDa, kho: khoCua(be), gio: bay };
       },
+      // TC_D06E - doiCau(ten, id, viTri, cau): bé đổi câu thứ viTri (0..soCau-1) của công trình của mình bằng 1 câu chọn trong thư viện
+      // (TT.doiCau), MIỄN PHÍ, số câu / máu giữ nguyên; đang sửa / đang bị đánh vẫn đổi được (trận đang đánh giữ bản câu riêng).
+      // -> { ok, id, soDaGan (số câu đã gắn) } | { ok: false, ma: chua_vao | khong_phai_nha | chua_xong | hong | vi_tri | cau }
+      async doiCau(ten, id, viTri, cau) {
+        ten = tenChuan(ten);
+        const be = tt.be[ten];
+        if (!be) return { ok: false, ma: "chua_vao", lyDo: "Con chưa vào thung lũng." };
+        const ct = tt.congTrinh.find(c => c.id === id);
+        if (!ct || ct.chu !== ten || !TT.danhDuoc(CH, ct.loai)) return { ok: false, ma: "khong_phai_nha", lyDo: "Đây không phải nhà của con." };
+        if (!ct.xongLuc) return { ok: false, ma: "chua_xong", lyDo: "Chưa dựng xong đâu, con chờ thêm chút nhé." };
+        if (ct.hongLuc) return { ok: false, ma: "hong", lyDo: "Công trình đã sụp rồi." };
+        if (!Number.isInteger(viTri) || viTri < 0 || viTri >= TT.soCt(CH, ct).soCau) return { ok: false, ma: "vi_tri", lyDo: "Không có câu số này." };
+        const sach = chuanCau(cau, 1);
+        if (!sach) return { ok: false, ma: "cau", lyDo: "Con chọn câu hỏi trước nhé." };
+        ct.cau = TT.doiCau(ct.cau, viTri, sach[0]);
+        luu();
+        return { ok: true, id, soDaGan: ct.cau.length, gio: gio() };
+      },
       // TC_D06C7e (người dùng 08/11/2026: thay cách TC_D06C7d "mua lại máu bằng vàng") - suaCt(ten, id): sửa công trình bị đánh mất máu
       // KHÔNG tốn vàng: trừ tài nguyên TT.giaSua (giá xây x tiLeGia x phần máu mất) rồi ghi ct.sua = { tienDo 0, giay TT.giaySua }: NÔNG DÂN
       // tới sửa (lệnh xay = id như xây móng), xong thì máu đầy. -> { ok, id, sua, gia, kho } | { ok: false, ma: chua_vao | khong_phai_nha
@@ -1173,3 +1192,4 @@
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (lanhDia mọi bé, quái không đứng trên cổng)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (muaCau kèm câu bé chọn; suaCt bằng tài nguyên + nông dân sửa ct.sua; danhKhai hỏi câu bé chọn trước)
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (phaHuy nhận Lều của chủ: hoàn hàng sinh, be.doiLeu; Lều dựng lại không tặng nông dân đầu)
+// 09/11/2026 - BƯỚC: TC_D06E (doiCau: bé đổi từng câu của công trình bằng thư viện câu hỏi)
