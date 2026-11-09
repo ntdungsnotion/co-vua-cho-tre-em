@@ -249,3 +249,42 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 #d3CauKhac { width: 100%; min-height: 48px; margin-top: 4px; background: var(--vang); color: #2a1d05; border: 0; border-radius: 14px; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.05rem; cursor: pointer; }
 @media (min-width: 900px) { #d3ChonCau { left: 50%; right: auto; width: 560px; transform: translateX(-50%); bottom: auto; max-height: calc(100vh - 200px); } }
 /* 08/11/2026 - BƯỚC: TC_D06C7e */
+/* TC_D06E: bảng 📝 Cập nhật câu hỏi. Điện thoại: một cột, data-che = "ds" (câu của công trình) | "tv" (thư viện, ◀ Quay lại);
+   máy tính: hộp rộng 2 cột (trái câu của công trình, phải thư viện), không có nút Quay lại */
+.d3CapNhat .d3CnThan { display: block; }
+.d3CapNhat[data-che="ds"] .d3CnTv, .d3CapNhat[data-che="tv"] .d3CnDs { display: none; }
+.d3CapNhat p { margin: 0 0 10px; opacity: .9; }
+.d3CnO { cursor: pointer; padding: 8px 10px; border-radius: 12px; border: 2px solid transparent; background: rgba(255, 255, 255, .06); }
+.d3CnO:hover, .d3CnO:focus-visible { border-color: #c9a35e; outline: none; }
+.d3CnO.dangChon { border-color: var(--vang); background: rgba(255, 211, 90, .14); }
+.d3CnO.vuaDoi { animation: d3CnVuaDoi 1.2s ease-out; }
+@keyframes d3CnVuaDoi { 0% { background: rgba(47, 158, 85, .7); } 100% { background: rgba(255, 211, 90, .14); } }
+.d3CnNgauNhien { opacity: .75; font-style: italic; }
+.d3CnTvDau { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.d3CnTvDau b { color: var(--vang); font-family: "Baloo 2", sans-serif; font-size: 1.05rem; }
+.d3CnLui { min-height: 44px; }
+.d3CnMon, .d3CnCd { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: thin; }
+.d3CnMon .d3Nut, .d3CnCd .d3Nut { flex: none; min-height: 44px; white-space: nowrap; }
+.d3CnTv .d3Nut { border-radius: 10px; border: 2px solid #c9a35e; background: linear-gradient(180deg, #6a4f35, #44301d); color: #fff6dc; padding: 6px 12px; }
+.d3CnTv .d3Nut:hover:not(:disabled) { background: linear-gradient(180deg, #7f6142, #523b25); }
+.d3CapNhat .d3BangCauDau .d3Nut { border-radius: 10px; border: 2px solid #c9a35e; background: linear-gradient(180deg, #6a4f35, #44301d); color: #fff6dc; }
+.d3CnTv #d3CnKhac { background: #2f5d8a; border-color: #ffd35a; color: #fff8e8; }
+.d3CnTab[aria-selected="true"] { background: #2f5d8a; border-color: var(--vang); color: #fff8e8; font-weight: 700; }
+.d3CnTab:disabled { opacity: .45; cursor: not-allowed; }
+.d3CnChip { font-size: .92rem; }
+.d3CnChip[aria-pressed="true"] { background: var(--vang); color: #2a1a00; font-weight: 700; }
+.d3CnTv .d3CauChon { cursor: pointer; padding: 8px 10px; border-radius: 12px; border: 2px solid rgba(255, 255, 255, .15); }
+.d3CnTv .d3CauChon:hover, .d3CnTv .d3CauChon:focus-visible { border-color: var(--vang); outline: none; background: rgba(255, 211, 90, .1); }
+.d3CnNhan { display: block; opacity: .75; font-size: .8rem; margin-bottom: 2px; }
+#d3CnKhac { margin-top: 4px; min-height: 44px; }
+@media (min-width: 900px) {
+  .d3CapNhat { width: min(1040px, calc(100vw - 48px)); }
+  .d3CapNhat .d3CnThan { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 18px; align-items: start; }
+  .d3CapNhat[data-che] .d3CnTv, .d3CapNhat[data-che] .d3CnDs { display: block; }
+  .d3CnLui { display: none; }
+  .d3CnCd { flex-wrap: wrap; overflow: hidden auto; max-height: 142px; padding: 4px; border-radius: 10px; background: rgba(0, 0, 0, .18); margin-bottom: 8px; }
+  .d3CnCd .d3Nut { min-height: 38px; padding: 4px 10px; }
+  .d3CnTv { border-left: 1px solid rgba(255, 255, 255, .15); padding-left: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .d3CnO.vuaDoi { animation: none; } }
+/* 09/11/2026 - BƯỚC: TC_D06E (bảng 📝 Cập nhật câu hỏi: điện thoại 1 cột chuyển qua lại, máy tính 2 cột) */

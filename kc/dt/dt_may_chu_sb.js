@@ -154,7 +154,9 @@
       // TC_D06C7d: bé mua câu phòng thủ bằng vàng / sửa công trình bị đánh (cần SQL TC_D06C7d)
       // TC_D06C7e: p_cau = câu bé tự chọn; sửa bằng tài nguyên, nông dân tới sửa (cần SQL TC_D06C7e)
       async muaCau(ten, id, so, cau) { return goi("kc_dt_mua_cau", { p_id: id, p_so: so, p_cau: Array.isArray(cau) ? cau : null }); },
-      async suaCt(ten, id) { return goi("kc_dt_sua_ct", { p_id: id }); }
+      async suaCt(ten, id) { return goi("kc_dt_sua_ct", { p_id: id }); },
+      // TC_D06E: bé đổi câu thứ viTri bằng câu thư viện, miễn phí (cần SQL TC_D06E)
+      async doiCau(ten, id, viTri, cau) { return goi("kc_dt_doi_cau", { p_id: id, p_vi_tri: viTri, p_cau: Array.isArray(cau) ? cau : null }); }
     };
   }
 
@@ -169,3 +171,4 @@
 // 08/11/2026 - BƯỚC: TC_D06C7d (muaCau, suaCt; cần SQL TC_D06C7d)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (muaCau p_cau; suaCt trả sua; cần SQL TC_D06C7e)
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (phaHuy nhận Lều trại; cần SQL TC_D06C7c)
+// 09/11/2026 - BƯỚC: TC_D06E (doiCau; cần SQL TC_D06E)
