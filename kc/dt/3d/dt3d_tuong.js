@@ -12,15 +12,17 @@
 //   taoBoTuong(ctx, dongTac) -> { tao(glb, hoSo, cao) -> tuong }   (hoSo.chungLoai = tộc của tướng)
 //   tuong = { vo, goc, cao, vlPhatSang[], dien(kieu, khiXong), capNhat(dt), dangDien() }
 //   kieu: dung, thu (giữ thế thủ), chem, chemLon (chí mạng), phep, phepLon (chí mạng Tiên), trung,
-//         do (đỡ được), ne, thua, mung. Kiểu mà tộc không có động tác (do của Quỷ / Tiên) thì giữ nguyên thế.
+//         do (đỡ được), ne, thua, mung, nghi (đứng thả lỏng: chỉ tướng có dungTay; dành cho bản đồ, trận không gọi).
+//         Kiểu mà tộc không có động tác (do của Quỷ / Tiên) thì giữ nguyên thế.
 //   Mỗi động tác đánh được dời + tua để lúc vũ khí chạm đúng 0,3 giây (phép: 0,22 giây) sau khi bắt đầu,
 //   khớp hiệu ứng của dt3d_tran.js (đo bằng repo_rieng dau_truong_tri_thuc/cong_cu/do_nhip_dong_tac.py).
 // LUẬT NỐI: chỉ dùng ctx (dt3d_canh.js); không biết gì về trận (dt3d_tran.js gọi dien()).
 // BƯỚC: TC_D05B1 (người dùng 29/10/2026: "đồ hoạ hiện tại chỉ phù hợp trẻ 4-5 tuổi" -> tướng người thật;
 //        góp ý cùng ngày: nhân vật riêng cho Quỷ / Tiên, phòng thủ theo tộc)
-//        TC_D05B4: tướng có `dungTay` (độ, tuong.json) đứng thường bằng thế tự dựng dungDangTay (tay dang
-//        khỏi thân, không đâm vào quần phùng) thay động tác "dung" của tộc
-// NGÀY: 29/10/2026 19:00; 29/10/2026 23:40; 09/11/2026 22:45
+//        TC_D05B4: tướng có `dungTay` (độ, tuong.json) có thêm kiểu "nghi" = thế tự dựng dungDangTay (tay dang
+//        khỏi thân, không đâm vào quần phùng). Người dùng 10/11/2026: thả lỏng chỉ ở bản đồ, vào trận là thế
+//        sẵn sàng chiến đấu -> "dung" trong trận lấy `dungTran` (tên động tác, tuong.json) nếu tướng có
+// NGÀY: 29/10/2026 19:00; 29/10/2026 23:40; 09/11/2026 22:45; 10/11/2026
 // ================================================================
 import * as THREE from "three";
 import { clone as nhanBanXuong } from "../../thu_vien/three/utils/SkeletonUtils.js";
@@ -134,7 +136,8 @@ export function taoBoTuong(ctx, dongTac) {
       boNhoClip.set(glb, ds);
     }
     const clip = boNhoClip.get(glb);
-    if (clip.DungTay) bang.dung = { clip: "DungTay", lap: true };
+    if (clip.DungTay) bang.nghi = { clip: "DungTay", lap: true };
+    if (hoSo.dungTran && clip[hoSo.dungTran]) bang.dung = { clip: hoSo.dungTran, lap: true };
     const tron = new THREE.AnimationMixer(goc), dt = {};
     for (const k in clip) dt[k] = tron.clipAction(clip[k]);
     let dang = null, xong = null, kieuDang = null;

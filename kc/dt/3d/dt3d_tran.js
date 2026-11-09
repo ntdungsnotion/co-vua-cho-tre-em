@@ -132,7 +132,7 @@ async function tao(vungVe, { nhe } = {}) {
         if (lan !== lanDung) return; // bé đã đổi tướng khác trong lúc tải
         if (tuong) canh.remove(tuong.vo);
         if (hBe) { boNv.xoa(hBe); hBe = null; }
-        tuong = boTuong.tao(glb, Object.assign({}, hoSo, { chungLoai: tt.toc, dungTay: tt.dungTay }), CAO_TUONG); tuong.vo.rotation.y = HUONG_BE;
+        tuong = boTuong.tao(glb, Object.assign({}, hoSo, { chungLoai: tt.toc, dungTay: tt.dungTay, dungTran: tt.dungTran }), CAO_TUONG); tuong.vo.rotation.y = HUONG_BE;
         tuong.vo.position.set(dvBe.x, 0, dvBe.z);
         vlBe = tuong.vlPhatSang; caoBe = CAO_TUONG;
       }, () => { if (lan === lanDung && !tuong) dungKayKit(hoSo); });
