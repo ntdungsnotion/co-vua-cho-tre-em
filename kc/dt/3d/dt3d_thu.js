@@ -94,7 +94,9 @@ function baoTai(ten, da, tong) {
 }
 const [banDo, cauHinh, glbLang, glbNv] = await Promise.all([
   fetch(duongDan(VUNG ? "../du_lieu/vung_dat.json" : "../du_lieu/lang_thu_3d.json"), { cache: "no-cache" }).then(r => r.json()),
-  fetch(duongDan("../du_lieu/cau_hinh.json"), { cache: "no-cache" }).then(r => r.json()),
+  // TC_D18A: số mặc định + phần quản trị đã sửa (dt/dt_cau_hinh.js); trang không nạp file đó thì chỉ số mặc định
+  window.KC_DT_CAU_HINH ? window.KC_DT_CAU_HINH.tai("cau_hinh", duongDan("../du_lieu/cau_hinh.json"))
+    : fetch(duongDan("../du_lieu/cau_hinh.json"), { cache: "no-cache" }).then(r => r.json()),
   taiGlb(duongDan("../mo_hinh/lang.glb"), baoTai),
   taiGlb(duongDan("../mo_hinh/nhan_vat.glb"), baoTai)
 ]).catch(e => { chuTai.textContent = "Chưa tải được làng. Kiểm tra mạng rồi tải lại trang nhé!"; throw e; });
@@ -363,3 +365,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (người của bạn mở cổng; móc __dt3d.moCong)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (lửa cháy dt3d_chay.js; thanh dưới: nông dân / công trình đang sửa; móc __dt3d.chay)
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (nút 💥 Phá Lều ở thanh dưới Lều trại của mình, lời hỏi riêng: dời làng)
+// 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)

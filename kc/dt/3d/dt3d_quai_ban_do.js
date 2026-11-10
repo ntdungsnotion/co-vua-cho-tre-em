@@ -70,7 +70,9 @@ const LOI_DUNG = { dang_danh: 1, quai_mat: 1, dang_nghi: 1 }; // máy chủ từ
 export async function taoQuaiBanDo(the) {
   const { ctx, lang, diaHinh, cauHinh, cam, suong, dvTl, hTl, be, mayChu, vung } = the;
   const ch = cauHinh.quaiBanDo;
-  const chTran = await fetch(new URL("../du_lieu/cau_hinh_tran_dau.json", import.meta.url), { cache: "no-cache" }).then(r => r.json());
+  const urlTran = new URL("../du_lieu/cau_hinh_tran_dau.json", import.meta.url); // TC_D18A: + phần quản trị đã sửa
+  const chTran = await (window.KC_DT_CAU_HINH ? window.KC_DT_CAU_HINH.tai("cau_hinh_tran_dau", urlTran)
+    : fetch(urlTran, { cache: "no-cache" }).then(r => r.json()));
   const canvas = ctx.renderer.domElement;
   const ten = be.ten || "khach", tenMinh = String(ten).trim().toLowerCase();
   const gio = () => mayChu.gio();
@@ -867,3 +869,4 @@ export async function taoQuaiBanDo(the) {
 // 06/11/2026 - BƯỚC: TC_D06C4 (thắng quái -> quaiThang, đồ rơi nằm trên đất cho nông dân nhặt, xem quái thấy có thể rơi gì)
 // 06/11/2026 - BƯỚC: TC_D06C5 (biTanCong: nông dân bị quái hung dữ tấn công)
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (quái không đứng trên cổng, quái bị rào kín sống trong vùng rào)
+// 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)

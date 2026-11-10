@@ -45,6 +45,10 @@ import { taoAmThanh } from "./dt3d_am_thanh.js";
 
 const TT = window.KC_DT_TRU_TRAN;
 const nap = u => fetch(new URL(u, import.meta.url), { cache: "no-cache" }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+// TC_D18A: độ khó câu hỏi = số mặc định + phần quản trị đã sửa (dt/dt_cau_hinh.js)
+const napTd = () => window.KC_DT_CAU_HINH
+  ? window.KC_DT_CAU_HINH.tai("cau_hinh_trinh_do", new URL("../du_lieu/cau_hinh_trinh_do.json", import.meta.url)).catch(() => null)
+  : nap("../du_lieu/cau_hinh_trinh_do.json");
 
 export function taoTruBanDo(the) {
   const { ctx, lang, cauHinh, mayChu, dvTl, vung, quaiBd, be, baoGoiY } = the;
@@ -59,7 +63,7 @@ export function taoTruBanDo(the) {
   function nguonCau() {
     if (boChon) return boChon;
     const TD = window.KC_DT_TRINH_DO, ST = window.KC_DT_SINH_TOAN, TA = window.KC_DT_SINH_TA, CHQ = window.KC_DT_CAU_HOI;
-    boChon = Promise.all([nap("../du_lieu/cau_hinh_trinh_do.json"), nap("../../tu_vung/kho_tu.json")]).then(([chTd0, kho]) => {
+    boChon = Promise.all([napTd(), nap("../../tu_vung/kho_tu.json")]).then(([chTd0, kho]) => {
       const chTD = TD.cauHinh(chTd0), NG = { toan: ST };
       if (kho && TA) { try { NG.tieng_anh = TA.tao(kho, chTD); } catch (e) { /* thiếu kho từ: chỉ Toán */ } }
       let hs = null;
@@ -768,3 +772,4 @@ export function taoTruBanDo(the) {
 // 08/11/2026 - BƯỚC: TC_D06C7d (🛡️ mua câu bằng vàng, 🔧 sửa công trình; số câu riêng từng công trình)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (bảng chọn câu khi mua; 🔧 sửa bằng tài nguyên, nông dân tới sửa)
 // 09/11/2026 - BƯỚC: TC_D06E (📝 Cập nhật câu hỏi: bé đổi từng câu của công trình bằng thư viện câu hỏi theo môn -> chủ đề)
+// 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)

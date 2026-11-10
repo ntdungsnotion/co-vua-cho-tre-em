@@ -26,6 +26,8 @@
               logic DÙNG LẠI admin_NC.js ở gốc repo (không viết lại).
        CẬP NHẬT: 20/10/2026 - TC_T03B: thêm mục "📖 Kho từ vựng" (Quản trị chung): sửa kho từ
                  dùng chung + tải hình của từ, lưu thẳng vào repo qua GitHub API (qt_kho_tu.js/.css).
+       CẬP NHẬT: 10/11/2026 - TC_D18A: nhóm "⚔️ Đấu Trường Tri Thức" trong Trò Chơi, mục "🎛️ Thông số" (qt_dau_truong.js/.css,
+                 dt/dt_cau_hinh.js): sửa mọi số cân bằng + 3 bảng Supabase, lịch sử + hoàn tác (SQL TC_D18A).
        CẬP NHẬT: 23/10/2026 11:50 - TC_03C: ghi chú khóa Cờ Tướng chơi 2 người (kc_co_tuong_kc_2n_..., kc_co_tuong_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 23/10/2026 07:40 - TC_03E: Cờ Tướng thêm mục "💡 Gợi ý" (qt_goi_y.js, bảng kc_goi_y_cap:
                  số lần / kim cương gợi ý theo cấp) + ghi chú 2 khóa câu nhắc kc_co_tuong_..._goi_y.
@@ -46,6 +48,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kc_style.css">
   <link rel="stylesheet" href="qt_kho_tu.css">
+  <link rel="stylesheet" href="qt_dau_truong.css"> <!-- TC_D18A -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -470,6 +473,10 @@
           <button class="adminNutManHinh qtMuc" data-manhinh="loidongvien-cotuong" type="button">💬 Lời động viên</button>
           <button class="adminNutManHinh qtMuc" data-manhinh="goiy-cotuong" type="button">💡 Gợi ý</button>
           <button class="adminNutManHinh qtMuc" data-manhinh="cauhinh-cotuong" type="button">⚙️ Cấu hình</button>
+        </div>
+        <div class="qtNhomCon" data-ten-nhom="Trò Chơi › Đấu Trường Tri Thức">
+          <div class="qtTenNhomCon">⚔️ Đấu Trường Tri Thức</div>
+          <button class="adminNutManHinh qtMuc" data-manhinh="dautruong-thongso" type="button">🎛️ Thông số</button>
         </div>
       </div>
 
@@ -1352,6 +1359,33 @@
     <!-- TC_T03B - MÀN HÌNH: KHO TỪ VỰNG (qt_kho_tu.js). Sửa kc/tu_vung/kho_tu.json +
          hình kc/tu_vung/hinh/, lưu bằng commit qua GitHub API. -->
     <!-- ============================================================ -->
+    <!-- TC_D18A 10/11/2026: thông số Đấu Trường Tri Thức (qt_dau_truong.js / .css, SQL TC_D18A) -->
+    <section class="adminManHinh" id="manhinh-dautruong-thongso">
+      <div class="adminKhoi qdKhoi">
+        <h3>🎛️ Thông Số Đấu Trường Tri Thức</h3>
+        <p class="adminGhiChu">
+          Mọi số cân bằng của game. Số trong file của game chỉ là <strong>mặc định</strong>; ở đây chỉ lưu các ô bạn sửa khác mặc định.
+          Lưu xong là máy chủ dùng ngay, bé mở lại trang là thấy số mới (không phải chạy lại SQL). Bấm ↺ để về mặc định,
+          xem / hoàn tác các lần sửa ở 🕘 Lịch sử sửa. Kim cương thưởng (nếu có) nằm ở ⚙️ Cấu hình chung.
+        </p>
+        <div class="qdChips" id="qdChips" role="tablist" aria-label="Nhóm thông số"></div>
+        <div class="qdThanhCongCu">
+          <input type="search" id="qdTim" placeholder="🔍 Tìm ô (vd: máu, tốc độ, giây...)" aria-label="Tìm ô">
+          <label class="qdChonSua"><input type="checkbox" id="qdChiSua"> Chỉ ô đã sửa</label>
+          <button class="adminNut adminNutPhu" id="qdLamMoi" type="button">🔄 Tải lại</button>
+        </div>
+        <div class="qdChuGiai"><span class="cgSua">khác mặc định</span><span class="cgLuu">chưa lưu</span></div>
+        <div class="qdTrangThai" id="qdTrangThai"></div>
+        <div class="qdLuoi" id="qdNoiDung"><p class="adminDangTai">Đang tải...</p></div>
+        <div class="qdThanhLuu" id="qdThanhLuu">
+          <strong id="qdSoChuaLuu">0 ô chưa lưu</strong>
+          <input type="text" id="qdGhiChuLuu" maxlength="300" placeholder="Ghi chú lần sửa (không bắt buộc)">
+          <button class="adminNut adminNutPhu" id="qdBo" type="button">Bỏ</button>
+          <button class="adminNut" id="qdLuu" type="button">💾 Lưu</button>
+        </div>
+      </div>
+    </section>
+
     <section class="adminManHinh" id="manhinh-khotu">
       <div class="adminKhoi ktKhoiDau">
         <h3>📖 Kho từ vựng tiếng Anh</h3>
@@ -1533,6 +1567,8 @@
   <script src="qt_kho_tu.js"></script>
   <script src="qt_loi_dong_vien.js"></script>
   <script src="qt_goi_y.js"></script>
+  <script src="dt/dt_cau_hinh.js"></script> <!-- TC_D18A: tron / khac số Đấu Trường -->
+  <script src="qt_dau_truong.js"></script>
 </body>
 </html>
 <!-- 23/10/2026 11:50 - BƯỚC: TC_03C | 23/10/2026 07:40 - BƯỚC: TC_03E -->
