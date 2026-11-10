@@ -11,7 +11,7 @@
 //   Mỗi ô: tên dễ hiểu + mã khoá, số mặc định, nút ↺ về mặc định; ô khác mặc định tô vàng, ô chưa lưu tô xanh.
 //   Ô tìm + "chỉ ô đã sửa". Máy tính: lưới nhiều cột + bảng như Excel; điện thoại: một cột, bảng thành thẻ.
 // BƯỚC: TC_D18A - NGÀY: 10/11/2026
-// PHỤ THUỘC: ../admin_NC.js (adminTaiKhoan, adminGoiRpc, adminBaoTin, adminDinhDangGio), quantri_NC.js,
+// PHỤ THUỘC: qt_dt_khung.js (QDT: mục này gắn vào khung, vỏ màn hình dựng ở QDT.dangKyMuc bên dưới), ../admin_NC.js, quantri_NC.js,
 //   dt/dt_cau_hinh.js (KC_DT_CAU_HINH: tron, khac), qt_dau_truong.css; SQL repo_rieng SQL/supabase_tc_d18a_thong_so.sql.
 // ================================================================
 
@@ -149,17 +149,27 @@ QD.BANG = {
 // ================================================================
 // KHỞI ĐỘNG
 // ================================================================
-document.addEventListener("DOMContentLoaded", function () {
-  if (typeof adminTaiKhoan === "undefined" || !adminTaiKhoan) return;
-  if (!qdEl("manhinh-" + QD.MAN)) return;
-  qdGanSuKien();
-  document.addEventListener("adminDaChuyenManHinh", function (su) {
-    if (su.detail.ten === QD.MAN && !QD.daTai) { QD.daTai = true; qdTai(); }
-  });
-  if (qdEl("manhinh-" + QD.MAN).classList.contains("dangHien")) { QD.daTai = true; qdTai(); }
-  window.addEventListener("beforeunload", function (su) {
-    if (QD.daTai && qdSoChuaLuu() > 0) { su.preventDefault(); su.returnValue = ""; }
-  });
+// TC_D18A (khung): mục này gắn vào khung QDT (qt_dt_khung.js) thay vì tự dựng; vỏ màn hình nằm ở đây, không còn trong HTML.
+QDT.dangKyMuc({
+  ma: "thongso", ten: "Thông số", bieuTuong: "🎛️", tieuDe: "Thông Số Đấu Trường Tri Thức",
+  moTa: "Mọi số cân bằng của game. Số trong file của game chỉ là <strong>mặc định</strong>; ở đây chỉ lưu các ô bạn sửa khác mặc định. "
+    + "Lưu xong là máy chủ dùng ngay, bé mở lại trang là thấy số mới (không phải chạy lại SQL). Bấm ↺ để về mặc định, "
+    + "xem / hoàn tác các lần sửa ở 🕘 Lịch sử sửa. Kim cương thưởng (nếu có) nằm ở ⚙️ Cấu hình chung.",
+  dung: function (than) {
+    than.innerHTML = '<div class="qdChips" id="qdChips" role="tablist" aria-label="Nhóm thông số"></div>'
+      + '<div class="qdThanhCongCu"><input type="search" id="qdTim" placeholder="🔍 Tìm ô (vd: máu, tốc độ, giây...)" aria-label="Tìm ô">'
+      + '<label class="qdChonSua"><input type="checkbox" id="qdChiSua"> Chỉ ô đã sửa</label>'
+      + '<button class="adminNut adminNutPhu" id="qdLamMoi" type="button">🔄 Tải lại</button></div>'
+      + '<div class="qdChuGiai"><span class="cgSua">khác mặc định</span><span class="cgLuu">chưa lưu</span></div>'
+      + '<div class="qdTrangThai" id="qdTrangThai"></div>'
+      + '<div class="qdLuoi" id="qdNoiDung"><p class="adminDangTai">Đang tải...</p></div>'
+      + '<div class="qdThanhLuu" id="qdThanhLuu"><strong id="qdSoChuaLuu">0 ô chưa lưu</strong>'
+      + '<input type="text" id="qdGhiChuLuu" maxlength="300" placeholder="Ghi chú lần sửa (không bắt buộc)">'
+      + '<button class="adminNut adminNutPhu" id="qdBo" type="button">Bỏ</button>'
+      + '<button class="adminNut" id="qdLuu" type="button">💾 Lưu</button></div>';
+  },
+  mo: function () { qdGanSuKien(); QD.daTai = true; qdTai(); },
+  soChuaLuu: function () { return qdSoChuaLuu(); }
 });
 
 function qdEl(id) { return document.getElementById(id); }
@@ -406,8 +416,11 @@ function qdVeLichSu() {
         tieuDe = QD.TEN_TEP[l.ten] || l.ten;
         var md = QD.md[l.ten] || {};
         ds = qdKhacNhau(KC_DT_CAU_HINH.tron(md, l.cu), KC_DT_CAU_HINH.tron(md, l.moi));
+      } else if (l.loai === "tai_khoan") {
+        tieuDe = "👤 Tài khoản › " + l.ten;
+        ds = qdKhacNhau(l.cu || {}, l.moi || {});
       } else {
-        tieuDe = (QD.BANG[l.ten] ? QD.BANG[l.ten].ten : l.ten) + " › " + (l.moi ? QD.BANG[l.ten].tieuDe(l.moi) : JSON.stringify(l.khoa));
+        tieuDe = (QD.BANG[l.ten] ? QD.BANG[l.ten].ten : l.ten) + " › " + (l.moi && QD.BANG[l.ten] ? QD.BANG[l.ten].tieuDe(l.moi) : JSON.stringify(l.khoa));
         ds = qdKhacNhau(l.cu || {}, l.moi || {});
       }
       var dong = ds.slice(0, 8).map(function (d) { return "<li><code>" + qdHtml(d.k) + "</code>: " + qdHtml(qdChuSo(d.cu)) + " → <b>" + qdHtml(qdChuSo(d.moi)) + "</b></li>"; }).join("")
