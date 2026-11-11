@@ -32,6 +32,10 @@
 //              -> bảng #d3CapNhat: các câu của công trình (chỗ chưa gắn = "câu ngẫu nhiên trong kho") -> chạm một câu -> THƯ VIỆN theo
 //              môn -> chủ đề (dt_thu_vien_cau.js, cau_hinh.json thuVien; không lọc lớp, mỗi câu có nhãn lớp) -> chạm câu là đổi
 //              (mayChu.doiCau, miễn phí). Nút "✏️ Câu của con" để sẵn, mờ (bé tự ra câu: TC_D06E2).
+//            - KC_06B1 (11/11/2026, Hướng Dẫn 3.17): máy chủ thật (mayChu.thuVien) -> MỌI câu của công trình là câu trong KHO kc_cau_hoi,
+//              gửi máy chủ bằng MÃ câu: trụ mới gắn câu = máy chủ tự bốc (truCau không kèm câu); bảng chọn câu 🛡️ = gợi ý theo lớp của bé
+//              (mayChu.thuVien); 📝 thư viện = KC_DT_THU_VIEN.taoThuVienKho (môn -> chủ đề của kho); không gửi kho câu (cauKho) / câu dự
+//              phòng nữa (máy chủ bốc câu kho theo lớp của chủ). Máy chủ giả (trang thử ?vung) giữ cách cũ (bộ sinh câu trên máy).
 // HÀM KHAI RA:
 //   taoTruBanDo(the) -> { thongTin(ct) -> { phu, nut[] } | null, dangTran(), moc }
 //     the = { ctx, lang, cauHinh, mayChu (truCau / truKhai / truLuot / truTra / truRut / truBan), dvTl, vung, quaiBd (banThuLinh,
@@ -57,6 +61,14 @@ export function taoTruBanDo(the) {
   const tenTru = ct => (cauHinh.congTrinh[ct.loai] || {}).ten || "Trụ";
   const tamCt = ct => ({ x: ct.x + ct.rong / 2, z: ct.y + ct.sau / 2 });
   let am = null; try { am = taoAmThanh(); } catch (e) { am = null; }
+  const coKho = !!(mayChu.thuVien && mayChu.mucLuc); // KC_06B1: máy chủ thật có kho câu chung (công trình chỉ nhận mã câu)
+  const lopBe = () => Math.max(1, Math.min(12, Math.floor(be.lop) || 2));
+  // KC_06B1: n câu kho gợi ý theo lớp của bé (bảng chọn câu 🛡️), bỏ câu đã có trong công trình (mã)
+  async function goiYKho(n, ct) {
+    const boQua = (ct && ct.cau || []).map(c => c.id).filter(Number.isInteger);
+    const kq = await mayChu.thuVien({ lop: lopBe(), n, boQua }).catch(() => null);
+    return kq && kq.ok ? (kq.cau || []).map(c => window.KC_DT_THU_VIEN.cauKho(c)).filter(Boolean) : [];
+  }
 
   // ---------- trụ của mình: gắn câu ngẫu nhiên từ kho ----------
   let boChon = null; // Promise<{ bo, hs, mon[] }>
@@ -91,6 +103,11 @@ export function taoTruBanDo(the) {
     if (dangGan.has(ct.id) || Date.now() - (ganLuc.get(ct.id) || 0) < 15000) return;
     dangGan.add(ct.id); ganLuc.set(ct.id, Date.now());
     try {
+      if (coKho) { // KC_06B1: máy chủ tự bốc câu kho theo lớp của bé (câu + mã về ở lần hỏi layQuanh sau)
+        const kq = await mayChu.truCau(ten, ct.id, null);
+        if (kq.ok) ct.coCau = true;
+        return;
+      }
       const ds = await taoBoCau(TT.soTru(cauHinh, ct.loai, ct.cap).soCau);
       if (!ds) return;
       const kq = await mayChu.truCau(ten, ct.id, ds);
@@ -144,7 +161,8 @@ export function taoTruBanDo(the) {
     dangKhai = true;
     let kq;
     try {
-      const duPhong = await taoBoCau(TT.soCt(cauHinh, ct).soCau); // TC_D06C7d: số câu riêng // chủ chưa có kho câu: máy chủ dùng câu này
+      // TC_D06C7d: số câu riêng; máy chủ giả: chủ chưa có kho câu thì dùng câu dự phòng này. KC_06B1: máy chủ thật tự bốc câu kho
+      const duPhong = coKho ? null : await taoBoCau(TT.soCt(cauHinh, ct).soCau);
       kq = await mayChu.danhKhai(ten, ct.id, duPhong || undefined);
     } catch (e) { kq = { ok: false, lyDo: "Chưa vào trận được." }; }
     dangKhai = false;
@@ -493,7 +511,7 @@ export function taoTruBanDo(the) {
       li.appendChild(da); ol.appendChild(li);
     }
     p.appendChild(ol);
-    if (n > ds.length) { const g = document.createElement("p"); g.textContent = "+ " + (n - ds.length) + " câu lấy ngẫu nhiên trong kho câu của con lúc vào trận"; p.appendChild(g); }
+    if (n > ds.length) { const g = document.createElement("p"); g.textContent = "+ " + (n - ds.length) + (coKho ? " câu lấy ngẫu nhiên trong kho câu (theo lớp của con) lúc vào trận" : " câu lấy ngẫu nhiên trong kho câu của con lúc vào trận"); p.appendChild(g); }
     document.body.appendChild(p);
   }
   // ---------- TC_D06C7d: bé mua câu phòng thủ bằng vàng (🛡️) / sửa công trình bị đánh (🔧) ----------
@@ -547,7 +565,8 @@ export function taoTruBanDo(the) {
     const daCo = new Set((ct.cau || []).map(c => c.noiDung));
     async function ve() {
       ol.textContent = "⏳";
-      const ds = (await taoBoCau((cauHinh.muaCau || {}).soGoiY || 3, daCo)) || [];
+      const soGoiY = (cauHinh.muaCau || {}).soGoiY || 3;
+      const ds = coKho ? await goiYKho(soGoiY, ct) : (await taoBoCau(soGoiY, daCo)) || []; // KC_06B1: câu kho theo lớp của bé
       if (!p.isConnected) return;
       ol.textContent = "";
       if (!ds.length) { ol.textContent = "Chưa lấy được câu hỏi, con bấm 🔄 Câu khác nhé."; return; }
@@ -572,7 +591,9 @@ export function taoTruBanDo(the) {
   // sang thư viện (◀ Quay lại); máy tính: 2 cột (trái câu của công trình, phải thư viện).
   let boTv = null, tvMon = null, tvCd = {}; // thư viện (Promise) + môn / chủ đề bé chọn lần trước
   function thuVien() {
-    if (!boTv) boTv = nguonCau().then(({ NG, kho }) => window.KC_DT_THU_VIEN.taoThuVien(cauHinh.thuVien, NG, { khoTu: kho }));
+    if (!boTv) boTv = coKho // KC_06B1: thư viện = kho câu chung trên máy chủ (môn -> chủ đề), câu có mã
+      ? window.KC_DT_THU_VIEN.taoThuVienKho(mayChu).then(tv => { if (!tv) boTv = null; return tv; })
+      : nguonCau().then(({ NG, kho }) => window.KC_DT_THU_VIEN.taoThuVien(cauHinh.thuVien, NG, { khoTu: kho }));
     return boTv;
   }
   const TEN_MUC = { de: "dễ", vua: "vừa", kho: "khó" };
@@ -617,7 +638,7 @@ export function taoTruBanDo(the) {
         const li = document.createElement("li"); li.className = "d3CnO" + (i === o ? " dangChon" : "") + (i === vuaDoi ? " vuaDoi" : "");
         li.tabIndex = 0; li.setAttribute("role", "button");
         if (ds[i]) veCauVao(li, ds[i]);
-        else { const g = document.createElement("div"); g.className = "d3CnNgauNhien"; g.textContent = "❔ Câu ngẫu nhiên trong kho câu của con"; li.appendChild(g); }
+        else { const g = document.createElement("div"); g.className = "d3CnNgauNhien"; g.textContent = coKho ? "❔ Câu ngẫu nhiên trong kho (theo lớp của con)" : "❔ Câu ngẫu nhiên trong kho câu của con"; li.appendChild(g); }
         const chon = () => { o = i; veDs(); tdTv.textContent = "Đổi câu " + (i + 1); p.dataset.che = "tv"; };
         li.addEventListener("click", chon);
         li.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); chon(); } });
@@ -626,6 +647,7 @@ export function taoTruBanDo(the) {
     }
     const tv = await thuVien();
     if (!p.isConnected) return p;
+    if (!tv) { olTv.textContent = "Chưa mở được thư viện câu hỏi, con thử lại sau nhé."; veDs(); return p; } // KC_06B1: mất mạng
     const dsMon = tv.dsMon();
     if (!tvMon || !dsMon.some(m => m.ma === tvMon)) tvMon = dsMon.length ? dsMon[0].ma : null;
     function veMon() {
@@ -649,14 +671,18 @@ export function taoTruBanDo(the) {
       }
       const dang = hangCd.querySelector("[aria-pressed=true]"); if (dang && dang.scrollIntoView) dang.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
-    function veCau() {
+    let lanVe = 0;
+    async function veCau() {
+      const lan = ++lanVe, cd = tvCd[tvMon];
+      olTv.textContent = tv.kho ? "⏳" : "";
+      const tranh = new Set((ct.cau || []).map(c => (tv.kho && Number.isInteger(c.id) ? c.id : c.noiDung))); // KC_06B1: kho tránh theo mã câu
+      const ds = cd ? await tv.cau(tvMon, cd, (cauHinh.thuVien || {}).soGoiY || 4, null, tranh) : [];
+      if (lan !== lanVe || !p.isConnected) return; // bé đã bấm chủ đề khác
       olTv.textContent = "";
-      const cd = tvCd[tvMon];
-      const ds = cd ? tv.cau(tvMon, cd, (cauHinh.thuVien || {}).soGoiY || 4, null, new Set((ct.cau || []).map(c => c.noiDung))) : [];
       if (!ds.length) { olTv.textContent = "Chủ đề này chưa có câu, con chọn chủ đề khác nhé."; return; }
       for (const c of ds) {
         const li = document.createElement("li"); li.className = "d3CauChon"; li.tabIndex = 0; li.setAttribute("role", "button");
-        const nhan = document.createElement("small"); nhan.className = "d3CnNhan"; nhan.textContent = (c.lop ? "Lớp " + c.lop : "") + (c.doKho ? " · " + (TEN_MUC[c.doKho] || c.doKho) : "");
+        const nhan = document.createElement("small"); nhan.className = "d3CnNhan"; nhan.textContent = (c.lop ? "Lớp " + c.lop : "") + (c.doKho ? " · " + (TEN_MUC[c.doKho] || c.doKho) : "") + (c.cuaBe ? " · ✏️ Câu của bạn nhỏ" : "");
         li.appendChild(nhan); veCauVao(li, c);
         const chon = async () => { const so = await doiCau(ct, o, c); if (so) { o = so - 1; veDs(o); veCau(); p.dataset.che = "ds"; } };
         li.addEventListener("click", chon);
@@ -673,7 +699,8 @@ export function taoTruBanDo(the) {
   async function doiCau(ct, o, c) {
     if (dangDoi || !mayChu.doiCau) return false;
     const viTri = Math.min(o, (ct.cau || []).length); // chỗ "ngẫu nhiên": gắn tiếp sau các câu đã gắn (TT.doiCau)
-    const cau = { noiDung: c.noiDung, dapAn: c.dapAn, dung: c.dung, loiGiai: c.loiGiai, mon: c.mon, doKho: c.doKho, hinhChu: c.hinhChu, amThanh: c.amThanh };
+    const cau = Object.assign({ noiDung: c.noiDung, dapAn: c.dapAn, dung: c.dung, loiGiai: c.loiGiai, mon: c.mon, doKho: c.doKho, hinhChu: c.hinhChu, amThanh: c.amThanh },
+      Number.isInteger(c.id) ? { id: c.id, lop: c.lop, chuDe: c.chuDe } : null); // KC_06B1: máy chủ chỉ nhận mã câu
     dangDoi = true;
     let kq;
     try { kq = await mayChu.doiCau(ten, ct.id, viTri, [cau]); } catch (e) { kq = { ok: false, lyDo: "Không kết nối được máy chủ, con thử lại nhé." }; }
@@ -773,3 +800,4 @@ export function taoTruBanDo(the) {
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (bảng chọn câu khi mua; 🔧 sửa bằng tài nguyên, nông dân tới sửa)
 // 09/11/2026 - BƯỚC: TC_D06E (📝 Cập nhật câu hỏi: bé đổi từng câu của công trình bằng thư viện câu hỏi theo môn -> chủ đề)
 // 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)
+// 11/11/2026 - BƯỚC: KC_06B1 (máy chủ thật: câu công trình = câu kho có mã; trụ mới máy chủ tự bốc; 🛡️ gợi ý kho theo lớp; 📝 thư viện kho; bỏ cauKho / câu dự phòng)
