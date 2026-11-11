@@ -42,6 +42,9 @@
    CẬP NHẬT: 20/10/2026 - TC_T03A: kho từ tải từ kc/tu_vung/kho_tu.json (chờ tải xong mới vào màn; lỗi
              mạng thì báo bé). Ô gợi ý, bảng ôn tập, chip từ đã học hiện HÌNH RIÊNG của từ nếu có,
              chưa có thì emoji như cũ.
+   CẬP NHẬT: 11/11/2026 - KC_03A: sổ ghi nhớ từ lưu ở Sổ Ghi Nhớ chung trên máy chủ (kc/kc_ghi_nho.js):
+             mở game thì chuyển sổ cũ trong trình duyệt lên (một lần) rồi đọc sổ từ máy chủ; mỗi từ trả lời
+             xong gửi lên (gom 4 giây, mất mạng thì gửi bù); ẩn trang thì gửi ngay. Xem thử / khách: như cũ.
    ================================================================ */
 (function () {
   "use strict";
@@ -60,10 +63,18 @@
   // Sổ ghi nhớ từ: tách riêng theo tên đăng nhập của bé (máy dùng chung)
   let tenBe = "";
   try { tenBe = (JSON.parse(sessionStorage.getItem("coVuaTaiKhoanDangNhap") || "null") || {}).tenDangNhap || ""; } catch (e) { tenBe = ""; }
-  const soTay = new ST.SoTayTu(tenBe);
-  const tienDo = new ST.TienDoDuongDua(tenBe); // bé đã mở tới màn nào, mỗi màn mấy sao
   // Xem thử cho bố mẹ (#xem-keo): mở mọi màn của một đường đua trong lần mở trang này, không lưu
   const xemThu = (location.hash.match(/^#xem-(\w+)$/) || [])[1];
+  const layPhien = () => { try { return JSON.parse(sessionStorage.getItem("coVuaTaiKhoanDangNhap") || "null"); } catch (e) { return null; } };
+  const coMayChu = typeof kcGoiRpc === "function" && typeof kcSupabaseClient !== "undefined";
+  const dangXemThu = !!(xemThu && ST.DUONG_DUA.some(d => d.ma === xemThu && d.daCo));
+  // KC_03A: bé đã đăng nhập (không phải xem thử) thì sổ ghi nhớ từ nằm ở Sổ Ghi Nhớ chung trên máy chủ
+  const soGhiNho = tenBe && !dangXemThu && window.KC_GHI_NHO
+    ? new KC_GHI_NHO.So(tenBe, coMayChu ? kcGoiRpc : null, layPhien, { loai: "tu", gapO: "san_tu",
+        khiDoi: () => { if ($("manBatDau").classList.contains("hien")) veChonDoKho(); } })
+    : null;
+  const soTay = new ST.SoTayTu(tenBe, soGhiNho);
+  const tienDo = new ST.TienDoDuongDua(tenBe); // bé đã mở tới màn nào, mỗi màn mấy sao
   if (xemThu && ST.DUONG_DUA.some(d => d.ma === xemThu && d.daCo)) {
     const duongMoGoc = tienDo.duongMo.bind(tienDo), manMoGoc = tienDo.manMo.bind(tienDo);
     tienDo.duongMo = ma => ma === xemThu || duongMoGoc(ma);
@@ -77,9 +88,6 @@
   let soManChon = manMacDinh(maDuong);
   if (xemThu && maDuong === xemThu) soManChon = 0; // xem thử: bắt đầu từ Tập chơi của đường đó
   // Cất kim cương vào kho của bé (TC_01). Xem thử thì không cất (tên rỗng).
-  const dangXemThu = !!(xemThu && ST.DUONG_DUA.some(d => d.ma === xemThu && d.daCo));
-  const layPhien = () => { try { return JSON.parse(sessionStorage.getItem("coVuaTaiKhoanDangNhap") || "null"); } catch (e) { return null; } };
-  const coMayChu = typeof kcGoiRpc === "function" && typeof kcSupabaseClient !== "undefined";
   const kho = new ST.KhoKimCuong(dangXemThu ? "" : tenBe, coMayChu ? kcGoiRpc : null, layPhien);
   // TC_00K: tiến độ đường đua đồng bộ lên tài khoản; máy chủ có đường / màn mới thì vẽ lại menu (nếu đang mở)
   const dongBo = new ST.DongBoTienDo(tienDo, dangXemThu ? "" : tenBe, coMayChu ? kcGoiRpc : null, layPhien, () => {
@@ -787,7 +795,7 @@
     }
   });
   // Chuyển tab / khóa màn hình khi đang chơi: tự tạm dừng
-  document.addEventListener("visibilitychange", () => { if (document.hidden) tamDung(); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) { tamDung(); if (soGhiNho) soGhiNho.gui(); } });
   window.addEventListener("blur", () => tamDung());
   if (window.ResizeObserver) new ResizeObserver(() => ve.doiCo()).observe($("manHinh"));
   else window.addEventListener("resize", () => ve.doiCo());
@@ -802,12 +810,14 @@
   const bam = location.hash.replace("#", "");
   if (ST.DO_KHO[bam]) { maDoKho = bam; veChonDoKho(); }
   // để kiểm thử tự động
-  window.__sanTu = { layTroChoi: () => g, batDau, tamDung, tiepTuc, am, tienDo, kho, dongBo, layCatMan: () => catMan, layBangOnTap: () => bang,
+  window.__sanTu = { layTroChoi: () => g, batDau, tamDung, tiepTuc, am, tienDo, kho, dongBo, soTay, soGhiNho, layCatMan: () => catMan, layBangOnTap: () => bang,
     chonMan: (duong, so) => { maDuong = duong; soManChon = so; veMenuChon(); },
     moOnTap: ds => { tuDaGap = ds.slice(); tuSai = []; hienOnTap(); } }; // moOnTap: chỉ để kiểm thử bảng ôn tập
   // Màn chưa cất được (mất mạng lần trước): gửi bù khi mở game và khi có mạng lại
-  const guiBu = () => { if (coMayChu) { kho.gui().then(t => capNhatDiemSo(t.diemSoMoi)); dongBo.gui(); } };
+  const guiBu = () => { if (coMayChu) { kho.gui().then(t => capNhatDiemSo(t.diemSoMoi)); dongBo.gui(); if (soGhiNho) soGhiNho.gui(); } };
   guiBu();
+  // KC_03A: chuyển sổ cũ trong trình duyệt lên (một lần) rồi đọc Sổ Ghi Nhớ từ máy chủ
+  if (soGhiNho && coMayChu) soTay.chuyenSoCu();
   window.addEventListener("online", guiBu);
   requestAnimationFrame(khung);
 })();
