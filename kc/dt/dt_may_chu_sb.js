@@ -36,6 +36,8 @@
 //     = máu Thủ lĩnh còn lại (giữ nguyên sau trận, không tự hồi). vaoVung trả congTrinh (số công trình từ bảng kc_dt_loai_cong_trinh).
 //   TC_D06C7a (07/11/2026): vaoVung / layQuanh trả thêm lanhDia [{ chu, mat (base64) }] (lãnh địa mọi bé, cần SQL TC_D06C7a;
 //     máy chủ chưa chạy SQL thì không có trường này, trang giữ cách cũ). Lớp gọi không đổi: trả nguyên kết quả RPC.
+//   KC_06B1 (11/11/2026): công trình chỉ nhận MÃ câu kho (truCau / muaCau / doiCau gửi c.id; không còn cauKho); mucLuc() + thuVien(hoi)
+//     đọc kho câu chung (RPC kc_cau_hoi_muc_luc / kc_cau_hoi_thu_vien, không gửi p_ma_vung). Có thuVien = trang dùng kho máy chủ.
 // BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
@@ -69,7 +71,7 @@
       la_leu: "Không phá được Lều trại: đó là nhà chính của làng.", // TC_D06C2d
       // TC_D06C2g: trụ phòng thủ
       khong_tru: "Không có trụ ở đây.", chua_cau: "Trụ chưa có câu hỏi.", dang_tran: "Thủ lĩnh đang giao chiến.", mien: "Trụ vừa giao chiến.",
-      bao_ho: "Làng đang có vòng sáng bảo hộ.", het_tran: "Trận đã kết thúc.", cau: "Câu hỏi không đúng.",
+      bao_ho: "Làng đang có vòng sáng bảo hộ.", het_tran: "Trận đã kết thúc.", cau: "Câu này không dùng được nữa, con chọn câu khác nhé.",
       cho: "Trụ đang nạp tên.", // TC_D06C2h
       khong_danh: "Không đánh được công trình này.", // TC_D06C7b
       hong: "Công trình đã sụp rồi.", so: "Số câu không đúng.", khong_hu: "Công trình còn nguyên, không cần sửa.", // TC_D06C7d
@@ -87,6 +89,16 @@
       if (BD.LY_DO[ma]) return BD.LY_DO[ma](tenTrongLyDo(kq));
       return LOI[ma] || LOI.mang;
     };
+
+    // KC_06B1: câu (hoặc số) -> mảng mã câu kho; câu không có mã (máy sinh cũ) bị bỏ
+    const dsMa = ds => (Array.isArray(ds) ? ds : []).map(c => (c && typeof c === "object" ? c.id : c)).filter(m => Number.isInteger(m) && m > 0);
+    // KC_06B1: RPC kho câu dùng chung toàn app (không theo vùng: không gửi p_ma_vung)
+    async function goiKho(ham, thamSo) {
+      let kq;
+      try { kq = await opt.goiRpc(ham, Object.assign({ p_ten: opt.ten, p_ma_phien: opt.maPhien }, thamSo)); } catch (e) { kq = null; }
+      if (!kq || kq.thanhCong !== true) return { ok: false, ma: (kq && kq.ma) || "mang", lyDo: loiCho(kq) };
+      return Object.assign({ ok: true }, kq);
+    }
 
     let lech = 0; // giờ máy chủ - giờ máy bé (ms)
     const gio = () => Date.now() + lech;
@@ -141,22 +153,31 @@
       // TC_D06C5: không còn nông dân -> tặng một người (cần SQL TC_D06C5: repo_rieng SQL/supabase_tc_d06c5_nong_dan_mien_phi.sql)
       async nongDanMienPhi() { return goi("kc_dt_nong_dan_mien_phi", {}); },
       // TC_D06C2g: trụ phòng thủ (luật dt/dt_tru_tran.js; máy chủ giữ đáp án câu của trụ, chấm lượt bé)
-      async truCau(ten, id, ds) { return goi("kc_dt_tru_cau", { p_id: id, p_cau: ds }); },
+      // KC_06B1: chỉ gửi MÃ câu kho (ds = câu có id); không có mã = máy chủ tự bốc câu kho theo lớp của chủ
+      async truCau(ten, id, ds) { const ma = dsMa(ds); return goi("kc_dt_tru_cau", { p_id: id, p_ma: ma.length ? ma : null }); },
       // TC_D06C2h: p_dv chỉ gửi khi nông dân vào trận (Thủ lĩnh gọi như cũ); truBan = trụ tự bắn một phát nông dân
       async truKhai(ten, id, dv) { return goi("kc_dt_tru_khai", Object.assign({ p_id: id }, dv != null ? { p_dv: dv } : null)); },
       async truBan(ten, id, dv) { return goi("kc_dt_tru_ban", { p_id: id, p_dv: dv }); },
       async truLuot(ten, idTran) { return goi("kc_dt_tru_luot", { p_tran: idTran }); },
       async truTra(ten, idTran, tl) { return goi("kc_dt_tru_tra", { p_tran: idTran, p_chon: tl && Number.isInteger(tl.chon) ? tl.chon : null, p_be_dung: !!(tl && tl.beDung) }); },
       async truRut(ten, idTran, giu) { return goi("kc_dt_tru_rut", { p_tran: idTran }, giu); },
-      // TC_D06C7b: kho câu của bé + Thủ lĩnh đánh công trình thường của bé khác (cần SQL TC_D06C7b); p_cau = câu dự phòng khi chủ chưa có kho
-      async cauKho(ten, ds) { return goi("kc_dt_cau_kho", { p_cau: ds }); },
-      async danhKhai(ten, id, duPhong) { return goi("kc_dt_danh_khai", Object.assign({ p_id: id }, Array.isArray(duPhong) ? { p_cau: duPhong } : null)); },
+      // TC_D06C7b: Thủ lĩnh đánh công trình thường của bé khác. KC_06B1: bỏ kho câu máy bé gửi (cauKho) + câu dự phòng: máy chủ tự bốc câu kho
+      async danhKhai(ten, id) { return goi("kc_dt_danh_khai", { p_id: id }); },
       // TC_D06C7d: bé mua câu phòng thủ bằng vàng / sửa công trình bị đánh (cần SQL TC_D06C7d)
       // TC_D06C7e: p_cau = câu bé tự chọn; sửa bằng tài nguyên, nông dân tới sửa (cần SQL TC_D06C7e)
-      async muaCau(ten, id, so, cau) { return goi("kc_dt_mua_cau", { p_id: id, p_so: so, p_cau: Array.isArray(cau) ? cau : null }); },
+      async muaCau(ten, id, so, cau) { return goi("kc_dt_mua_cau", { p_id: id, p_so: so, p_ma: dsMa(cau).length ? dsMa(cau) : null }); }, // KC_06B1: mã câu kho
       async suaCt(ten, id) { return goi("kc_dt_sua_ct", { p_id: id }); },
       // TC_D06E: bé đổi câu thứ viTri bằng câu thư viện, miễn phí (cần SQL TC_D06E)
-      async doiCau(ten, id, viTri, cau) { return goi("kc_dt_doi_cau", { p_id: id, p_vi_tri: viTri, p_cau: Array.isArray(cau) ? cau : null }); }
+      async doiCau(ten, id, viTri, cau) { const ma = dsMa(cau); return goi("kc_dt_doi_cau", { p_id: id, p_vi_tri: viTri, p_ma: ma.length === 1 ? ma[0] : null }); }, // KC_06B1
+      // KC_06B1: KHO CÂU HỎI CHUNG (Hướng Dẫn 3.17: bé mở kho để chọn câu thì thấy đáp án). mucLuc() -> { ok, mon: [{ ma, ten, bieuTuong,
+      // chuDe: [{ ma, ten, soCau, lopTu, lopDen }] }] }; thuVien({ mon?, chuDe?, lop?, n?, boQua? }) -> { ok, cau: [câu có id + đáp án] }
+      // (không có mon = gợi ý theo lớp cho bảng chọn câu 🛡️)
+      async mucLuc() { return goiKho("kc_cau_hoi_muc_luc", {}); },
+      async thuVien(hoi) {
+        const h = hoi || {};
+        return goiKho("kc_cau_hoi_thu_vien", { p_mon: h.mon || null, p_chu_de: h.chuDe || null, p_lop: Number.isInteger(h.lop) ? h.lop : null,
+          p_n: Number.isInteger(h.n) ? h.n : 4, p_bo_qua: dsMa(h.boQua) });
+      }
     };
   }
 
@@ -172,3 +193,4 @@
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (muaCau p_cau; suaCt trả sua; cần SQL TC_D06C7e)
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (phaHuy nhận Lều trại; cần SQL TC_D06C7c)
 // 09/11/2026 - BƯỚC: TC_D06E (doiCau; cần SQL TC_D06E)
+// 11/11/2026 - BƯỚC: KC_06B1 (truCau / muaCau / doiCau chỉ gửi mã câu kho; bỏ cauKho + câu dự phòng; mucLuc / thuVien kho câu chung; cần SQL KC_06B1)

@@ -12,8 +12,12 @@
 // HÀM KHAI RA: KC_DT_THU_VIEN.taoThuVien(cauHinhThuVien, nguon, them) -> { dsMon(), dsChuDe(mon), cau(mon, chuDe, n, rng, tranh) }
 //   nguon = { toan: KC_DT_SINH_TOAN, tieng_anh: KC_DT_SINH_TA.tao(...) }   them = { khoTu (kho_tu.json, cho chủ đề Tiếng Anh), soan }
 //   tranh = Set nội dung câu đã có trong công trình (không gợi ý lại)
-// BƯỚC: TC_D06E
-// NGÀY: 09/11/2026
+// KC_06B1 (11/11/2026, Hướng Dẫn 3.17: mọi câu từ KHO kc_cau_hoi, công trình chỉ nhận mã câu):
+//   KC_DT_THU_VIEN.taoThuVienKho(mayChu) -> Promise<{ dsMon(), dsChuDe(mon), cau(mon, chuDe, n, rng, tranh) -> Promise<[câu có id]> } | null>
+//   đọc kho máy chủ (mayChu.mucLuc / mayChu.thuVien, dt_may_chu_sb.js); cùng giao diện taoThuVien (chỉ cau trả Promise).
+//   tranh = Set mã câu (hoặc nội dung) đã có trong công trình. Máy chủ giả (trang thử ?vung) không có kho: dùng taoThuVien như cũ.
+// BƯỚC: TC_D06E; KC_06B1
+// NGÀY: 09/11/2026; 11/11/2026
 // ================================================================
 (function (goc) {
   "use strict";
@@ -104,6 +108,32 @@
     return { dsMon, dsChuDe, cau };
   }
 
-  goc.KC_DT_THU_VIEN = { taoThuVien, chuan };
+  // KC_06B1: thư viện đọc KHO CÂU máy chủ. Câu trả về giữ đúng dạng của chuan() + id (mã câu kho), cuaBe (câu bạn nhỏ đặt)
+  function cauKho(c) {
+    const x = chuan(c, c && c.mon);
+    if (!x || !Number.isInteger(c.id)) return null;
+    x.id = c.id; x.cuaBe = !!c.cuaBe;
+    return x;
+  }
+  async function taoThuVienKho(mayChu) {
+    if (!mayChu || !mayChu.mucLuc || !mayChu.thuVien) return null;
+    const kq = await mayChu.mucLuc().catch(() => null);
+    if (!kq || !kq.ok) return null;
+    const dsM = (kq.mon || []).filter(m => m && m.ma && Array.isArray(m.chuDe) && m.chuDe.length);
+    const dsMon = () => dsM.map(m => ({ ma: m.ma, ten: m.ten || m.ma, bieuTuong: m.bieuTuong || "📘" }));
+    const dsChuDe = mon => {
+      const m = dsM.find(x => x.ma === mon);
+      return m ? m.chuDe.filter(c => c && c.ma && c.soCau > 0).map(c => ({ ma: c.ma, ten: c.ten || c.ma, lop: Number.isFinite(c.lopTu) ? c.lopTu : null, soCau: c.soCau })) : [];
+    };
+    async function cau(mon, chuDe, n, rng, tranh) {
+      const boQua = tranh ? [...tranh].filter(Number.isInteger) : [];
+      const r = await mayChu.thuVien({ mon, chuDe, n: n || 4, boQua }).catch(() => null);
+      return r && r.ok ? (r.cau || []).map(cauKho).filter(Boolean).filter(c => !(tranh && tranh.has(c.noiDung))) : [];
+    }
+    return { dsMon, dsChuDe, cau, kho: true };
+  }
+
+  goc.KC_DT_THU_VIEN = { taoThuVien, taoThuVienKho, chuan, cauKho };
 })(typeof window !== "undefined" ? window : globalThis);
 // 09/11/2026 - BƯỚC: TC_D06E
+// 11/11/2026 - BƯỚC: KC_06B1 (taoThuVienKho: thư viện đọc kho câu chung trên máy chủ, câu có mã)
