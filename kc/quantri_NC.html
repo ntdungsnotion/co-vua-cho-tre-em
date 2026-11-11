@@ -29,7 +29,8 @@
        CẬP NHẬT: 10/11/2026 - TC_D18A: nhóm "⚔️ Đấu Trường Tri Thức" trong Trò Chơi, mục "🎛️ Thông số" (qt_dau_truong.js/.css,
                  dt/dt_cau_hinh.js): sửa mọi số cân bằng + 3 bảng Supabase, lịch sử + hoàn tác (SQL TC_D18A).
                  Cùng bước: KHUNG gắn mục (qt_dt_khung.js, chỗ gắn #qdtMenu + #qdtManHinh) + mục "👤 Tài khoản" (qt_dt_tai_khoan.js).
-       CẬP NHẬT: 11/11/2026 - KC_03A: khối "📒 Ghi nhớ" trong 👤 Tài khoản từng bé (qt_ghi_nho.js, RPC kc_ghi_nho_admin_xem).
+       CẬP NHẬT: 11/11/2026 - KC_03A: tiểu mục "📒 Sổ ghi nhớ" trong 👦 Hồ sơ các bé (qt_ghi_nho.js, RPC kc_ghi_nho_admin_xem);
+                 lúc đầu đặt ở Đấu Trường › 👤 Tài khoản, người dùng chuyển về hồ sơ chung (sổ gom mọi trò chơi).
        CẬP NHẬT: 23/10/2026 11:50 - TC_03C: ghi chú khóa Cờ Tướng chơi 2 người (kc_co_tuong_kc_2n_..., kc_co_tuong_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 23/10/2026 07:40 - TC_03E: Cờ Tướng thêm mục "💡 Gợi ý" (qt_goi_y.js, bảng kc_goi_y_cap:
                  số lần / kim cương gợi ý theo cấp) + ghi chú 2 khóa câu nhắc kc_co_tuong_..._goi_y.
@@ -1249,6 +1250,7 @@
           <button class="htNutTieuMuc dangChon" data-tieumuc="chung" type="button">🌟 Thông tin chung</button>
           <button class="htNutTieuMuc" data-tieumuc="covua" type="button">♟️ Cờ Vua</button>
           <button class="htNutTieuMuc" data-tieumuc="santu" type="button">🐱 Giải Cứu Mèo Con</button>
+          <button class="htNutTieuMuc" data-tieumuc="ghinho" type="button">📒 Sổ ghi nhớ</button>
           <button class="htNutTieuMuc" data-tieumuc="khac" type="button">🎯 Thử Thách · 📚 Học Tập · 🧭 Khám Phá</button>
         </div>
 
@@ -1342,9 +1344,14 @@
             </table>
           </div>
           <p class="adminGhiChu">
-            Tiến độ đường đua (màn đã mở, số sao) và các từ bé đã thuộc hiện chỉ lưu trên máy của bé;
-            sẽ đưa lên tài khoản ở bước TC_01B để hiện tại đây.
+            Tiến độ đường đua (màn đã mở, số sao) hiện chỉ lưu trên máy của bé; sẽ đưa lên tài khoản ở bước TC_01B để hiện tại đây.
+            Các từ bé đã thuộc / hay sai: xem tiểu mục 📒 Sổ ghi nhớ.
           </p>
+        </div>
+
+        <!-- KC_03A: TIỂU MỤC SỔ GHI NHỚ (chung mọi trò chơi / học tập; qt_ghi_nho.js) -->
+        <div class="htTieuMuc" data-tieumuc="ghinho" style="display:none;">
+          <div id="htGhiNho"><p class="adminGhiChu">Chọn một bé để xem.</p></div>
         </div>
 
         <!-- TIỂU MỤC: CÁC LĨNH VỰC SẮP CÓ -->
@@ -1552,7 +1559,7 @@
   <script src="qt_dt_khung.js"></script>
   <script src="qt_dau_truong.js"></script>   <!-- 🎛️ Thông số -->
   <script src="qt_dt_tai_khoan.js"></script> <!-- 👤 Tài khoản -->
-  <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: khối 📒 Ghi nhớ trong 👤 Tài khoản -->
+  <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
 </body>
 </html>
