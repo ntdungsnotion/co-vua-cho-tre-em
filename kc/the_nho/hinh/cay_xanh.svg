@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- KC_03B1 12/11/2026: hình nền dùng chung "cay_xanh" (rễ, thân, lá, hoa, quả) cho thẻ tren_hinh. Tự vẽ cho app. -->
+  <rect width="400" height="320" fill="#e8f6ff"/>
+  <rect y="320" width="400" height="80" fill="#c99a6b"/>
+  <rect y="316" width="400" height="8" fill="#7cc36b"/>
+  <g stroke="#8a5a2b" stroke-width="7" stroke-linecap="round" fill="none">
+    <path d="M200 322 C196 345 180 360 150 378"/>
+    <path d="M200 322 C204 350 222 365 252 380"/>
+    <path d="M200 322 L200 392"/>
+    <path d="M176 352 C165 360 160 372 158 388" stroke-width="4"/>
+    <path d="M226 356 C240 362 248 372 250 390" stroke-width="4"/>
+  </g>
+  <path d="M184 322 C188 270 186 230 192 190 L208 190 C214 230 212 270 216 322 Z" fill="#8a5a2b"/>
+  <path d="M200 236 C182 222 160 214 140 212" stroke="#8a5a2b" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <g fill="#4caf50">
+    <circle cx="200" cy="130" r="78"/>
+    <circle cx="128" cy="160" r="52"/>
+    <circle cx="272" cy="160" r="52"/>
+    <circle cx="150" cy="84" r="48"/>
+    <circle cx="250" cy="84" r="48"/>
+  </g>
+  <g fill="#66bb6a">
+    <ellipse cx="104" cy="144" rx="26" ry="14" transform="rotate(-25 104 144)"/>
+    <ellipse cx="190" cy="110" rx="22" ry="12" transform="rotate(20 190 110)"/>
+    <ellipse cx="236" cy="150" rx="22" ry="12" transform="rotate(-15 236 150)"/>
+  </g>
+  <path d="M84 150 L124 138" stroke="#2e7d32" stroke-width="2"/>
+  <g transform="translate(280 80)">
+    <circle r="9" cx="0" cy="-11" fill="#f48fb1"/><circle r="9" cx="11" cy="0" fill="#f48fb1"/>
+    <circle r="9" cx="0" cy="11" fill="#f48fb1"/><circle r="9" cx="-11" cy="0" fill="#f48fb1"/>
+    <circle r="6" fill="#ffeb3b"/>
+  </g>
+  <g transform="translate(150 60)" opacity="0.9">
+    <circle r="6" cx="0" cy="-8" fill="#f48fb1"/><circle r="6" cx="8" cy="0" fill="#f48fb1"/>
+    <circle r="6" cx="0" cy="8" fill="#f48fb1"/><circle r="6" cx="-8" cy="0" fill="#f48fb1"/>
+    <circle r="4" fill="#ffeb3b"/>
+  </g>
+  <path d="M288 166 L288 172" stroke="#5d4037" stroke-width="3"/>
+  <circle cx="288" cy="186" r="15" fill="#ff9800"/>
+  <circle cx="283" cy="181" r="4" fill="#ffd180"/>
+  <circle cx="160" cy="190" r="11" fill="#ff9800"/>
+</svg>
