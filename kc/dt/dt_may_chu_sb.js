@@ -180,13 +180,17 @@
       },
       // KC_06B2: câu kho cho TRẬN QUÁI / lượt trụ tấn công, MÁY CHỦ CHẤM (trang trận dt/thu_tran_dau.html nhờ bản đồ gọi hộ, dt/dt_nguon_kho.js):
       //   kho("o") -> { ok, o: [{ mon, chuDe, lop, muc, n }] }        ô câu để chọn độ khó (RPC kc_cau_hoi_o)
-      //   kho("lo", { mon, lop, muc, chuDe?, n, boQua }) -> { ok, cau: [câu có id, KHÔNG có đáp án] }   (kc_cau_hoi_lo, KC_06A)
+      //   kho("lo", { mon, lop, muc, chuDe?, n, boQua, nhanh? }) -> { ok, cau: [câu có id, KHÔNG có đáp án] }   (kc_cau_hoi_lo, KC_06A;
+      //        nhanh: kc_cau_hoi_lo_tran kèm muoi + k để chấm nhanh trên máy, 12/11/2026)
       //   kho("cham", { maLuot, id, chon, giay, gapO }) -> { ok, dung, dapAnDung, loiGiai }   (kc_cau_hoi_cham; gửi lại cùng maLuot không tính 2 lần)
       async kho(ham, ts) {
         const h = ts || {}, so = (v, d) => Number.isInteger(v) ? v : d;
         if (ham === "o") return goiKho("kc_cau_hoi_o", {});
-        if (ham === "lo") return goiKho("kc_cau_hoi_lo", { p_mon: String(h.mon || "toan"), p_lop: so(h.lop, null), p_muc: h.muc || null,
-          p_n: so(h.n, 20), p_bo_qua: dsMa(h.boQua), p_chu_de: h.chuDe || null });
+        if (ham === "lo") {
+          const ts = { p_mon: String(h.mon || "toan"), p_lop: so(h.lop, null), p_muc: h.muc || null, p_n: so(h.n, 20), p_bo_qua: dsMa(h.boQua), p_chu_de: h.chuDe || null };
+          if (h.nhanh) { const kq = await goiKho("kc_cau_hoi_lo_tran", ts); if (kq.ok) return kq; } // 12/11: lô kèm mã chấm nhanh; chưa chạy SQL mới -> lô cũ
+          return goiKho("kc_cau_hoi_lo", ts);
+        }
         if (ham === "cham") return goiKho("kc_cau_hoi_cham", { p_ma_luot: String(h.maLuot || ""), p_cau_id: so(h.id, null), p_chon: so(h.chon, null),
           p_giay: Number.isFinite(h.giay) ? Math.round(h.giay * 100) / 100 : null, p_gap_o: h.gapO || null });
         return { ok: false, ma: "lenh", lyDo: LOI.lenh };
@@ -208,3 +212,4 @@
 // 09/11/2026 - BƯỚC: TC_D06E (doiCau; cần SQL TC_D06E)
 // 11/11/2026 - BƯỚC: KC_06B1 (truCau / muaCau / doiCau chỉ gửi mã câu kho; bỏ cauKho + câu dự phòng; mucLuc / thuVien kho câu chung; cần SQL KC_06B1)
 // 11/11/2026 - BƯỚC: KC_06B2 (kho: ô câu / lô câu không đáp án / máy chủ chấm; cần SQL KC_06B2)
+// 12/11/2026 - BƯỚC: KC_06B2 (kho("lo", { nhanh }): kc_cau_hoi_lo_tran, chấm nhanh trên máy)
