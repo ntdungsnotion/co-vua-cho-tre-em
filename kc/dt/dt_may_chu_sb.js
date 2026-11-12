@@ -199,6 +199,29 @@
         if (ham === "cham") return goiKho("kc_cau_hoi_cham", { p_ma_luot: String(h.maLuot || ""), p_cau_id: so(h.id, null), p_chon: so(h.chon, null),
           p_giay: Number.isFinite(h.giay) ? Math.round(h.giay * 100) / 100 : null, p_gap_o: h.gapO || null });
         return { ok: false, ma: "lenh", lyDo: LOI.lenh };
+      },
+      // KC_06D: BÉ TỰ ĐẶT CÂU (cần SQL KC_06D). cauCuaBe() -> { ok, luot: { conLai, gioiHan, khoa }, lop, cau: [câu của bé + trangThai,
+      //   lyDo, goiY, daXem, soCongTrinh] }; guiCau(id | null, { mon, lop, noiDung, dapAn[4], dung, loiGiai }) -> { ok, cau, luot, goiAi }
+      //   hoặc { ok: false, ma (het_luot | khoa | chan | trung | sai_khuon | khong_sua | dang_nhap | mang), loai?, giongVoi?, luot? };
+      //   daXemCau(ids): bé đã đọc tin của các câu; monChuDe(): danh sách môn của kho (RPC không cần đăng nhập)
+      async cauCuaBe() { return goiKho("kc_cau_hoi_cua_be", {}); },
+      async guiCau(id, cau) {
+        let kq;
+        try { kq = await opt.goiRpc("kc_cau_hoi_gui", { p_ten: opt.ten, p_ma_phien: opt.maPhien, p_id: Number.isInteger(id) ? id : null, p_cau: cau || {} }); }
+        catch (e) { kq = null; }
+        if (!kq || typeof kq !== "object") return { ok: false, ma: "mang" };
+        return Object.assign({}, kq, { ok: kq.thanhCong === true, ma: kq.thanhCong === true ? undefined : (kq.ma || "mang") });
+      },
+      // KC_06E: đánh thức AI chấm hàng chờ (Edge Function kc-duyet-cau; khoá Gemini chỉ ở máy chủ). Lỗi thì thôi: lịch máy chủ chấm sau.
+      async goiAi() {
+        const sb = typeof window !== "undefined" ? window.kcSupabaseClient : null;
+        if (!sb || !sb.functions) return { ok: false, ma: "mang" };
+        try { const r = await sb.functions.invoke("kc-duyet-cau", { body: { nguon: "be" } }); return { ok: !r.error }; } catch (e) { return { ok: false, ma: "mang" }; }
+      },
+      async daXemCau(ids) { return goiKho("kc_cau_hoi_be_da_xem", { p_ids: dsMa(ids) }); },
+      async monChuDe() {
+        let kq; try { kq = await opt.goiRpc("kc_mon_chu_de", {}); } catch (e) { kq = null; }
+        return kq && kq.thanhCong === true ? Object.assign({ ok: true }, kq) : { ok: false, ma: "mang" };
       }
     };
   }
@@ -219,3 +242,5 @@
 // 11/11/2026 - BƯỚC: KC_06B2 (kho: ô câu / lô câu không đáp án / máy chủ chấm; cần SQL KC_06B2)
 // 12/11/2026 - BƯỚC: KC_06B2 (kho("lo", { nhanh }): kc_cau_hoi_lo_tran, chấm nhanh trên máy)
 // 12/11/2026 - BƯỚC: KC_06B3 (truTra: p_ma_luot + p_cau_id, cần SQL kc06b3)
+// 12/11/2026 - BƯỚC: KC_06D (cauCuaBe / guiCau / daXemCau / monChuDe: bé tự đặt câu; cần SQL KC_06D)
+// 12/11/2026 - BƯỚC: KC_06E (goiAi: đánh thức AI chấm câu bé đặt)
