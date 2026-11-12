@@ -656,7 +656,8 @@ export function taoTruBanDo(the) {
     if (!p.isConnected) return p;
     if (!tv) { olTv.textContent = "Chưa mở được thư viện câu hỏi, con thử lại sau nhé."; veDs(); return p; } // KC_06B1: mất mạng
     const dsMon = tv.dsMon();
-    if (!tvMon || !(dsMon.some(m => m.ma === tvMon) || (tvMon === BE && cauBe.co))) tvMon = dsMon.length ? dsMon[0].ma : null;
+    // người dùng 12/11/2026: mở bảng luôn ở KHO CHUNG; thẻ câu riêng của con chỉ mở khi bé bấm (rồi mới hiện 2 lựa chọn)
+    if (!tvMon || tvMon === BE || !dsMon.some(m => m.ma === tvMon)) tvMon = dsMon.length ? dsMon[0].ma : null;
     function veMon() {
       hangMon.textContent = "";
       for (const m of dsMon) {
@@ -665,7 +666,7 @@ export function taoTruBanDo(the) {
         hangMon.appendChild(b);
       }
       // KC_06D: bé tự đặt câu (máy chủ thật có cauCuaBe); máy chủ giả: nút mờ như cũ
-      const be = nutNho("✏️ Câu của con" + (cauBe.co ? "" : " · sắp có"), "d3CnTab d3CnTabBe"); be.dataset.mon = BE;
+      const be = nutNho("✏️ Câu riêng của con" + (cauBe.co ? "" : " · sắp có"), "d3CnTab d3CnTabBe"); be.dataset.mon = BE;
       if (cauBe.co) { be.setAttribute("role", "tab"); be.setAttribute("aria-selected", String(tvMon === BE)); be.addEventListener("click", () => { tvMon = BE; veMon(); veCd(); veCau(); }); }
       else { be.disabled = true; be.title = "Con tự ra câu: làm ở bước sau"; }
       hangMon.appendChild(be);
