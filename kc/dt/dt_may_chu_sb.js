@@ -159,7 +159,12 @@
       async truKhai(ten, id, dv) { return goi("kc_dt_tru_khai", Object.assign({ p_id: id }, dv != null ? { p_dv: dv } : null)); },
       async truBan(ten, id, dv) { return goi("kc_dt_tru_ban", { p_id: id, p_dv: dv }); },
       async truLuot(ten, idTran) { return goi("kc_dt_tru_luot", { p_tran: idTran }); },
-      async truTra(ten, idTran, tl) { return goi("kc_dt_tru_tra", { p_tran: idTran, p_chon: tl && Number.isInteger(tl.chon) ? tl.chon : null, p_be_dung: !!(tl && tl.beDung) }); },
+      // KC_06B3: lượt trụ gửi mã lượt + mã câu phòng thủ (máy chủ tự chấm, SQL kc06b3)
+      async truTra(ten, idTran, tl) {
+        const ts = { p_tran: idTran, p_chon: tl && Number.isInteger(tl.chon) ? tl.chon : null, p_be_dung: !!(tl && tl.beDung) }; // SQL kc06b3 bỏ qua p_be_dung
+        if (tl && typeof tl.maLuot === "string" && Number.isInteger(tl.id)) { ts.p_ma_luot = tl.maLuot; ts.p_cau_id = tl.id; }
+        return goi("kc_dt_tru_tra", ts);
+      },
       async truRut(ten, idTran, giu) { return goi("kc_dt_tru_rut", { p_tran: idTran }, giu); },
       // TC_D06C7b: Thủ lĩnh đánh công trình thường của bé khác. KC_06B1: bỏ kho câu máy bé gửi (cauKho) + câu dự phòng: máy chủ tự bốc câu kho
       async danhKhai(ten, id) { return goi("kc_dt_danh_khai", { p_id: id }); },
@@ -213,3 +218,4 @@
 // 11/11/2026 - BƯỚC: KC_06B1 (truCau / muaCau / doiCau chỉ gửi mã câu kho; bỏ cauKho + câu dự phòng; mucLuc / thuVien kho câu chung; cần SQL KC_06B1)
 // 11/11/2026 - BƯỚC: KC_06B2 (kho: ô câu / lô câu không đáp án / máy chủ chấm; cần SQL KC_06B2)
 // 12/11/2026 - BƯỚC: KC_06B2 (kho("lo", { nhanh }): kc_cau_hoi_lo_tran, chấm nhanh trên máy)
+// 12/11/2026 - BƯỚC: KC_06B3 (truTra: p_ma_luot + p_cau_id, cần SQL kc06b3)

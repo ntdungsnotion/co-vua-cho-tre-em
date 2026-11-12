@@ -500,11 +500,21 @@
     const cauTran = (t, ct) => { const ds = t.cau || (ct && ct.cau); return ds ? ds[t.so / 2 - 1] || null : null; };
     const tranRa = t => ({ id: t.id, truId: t.truId, dv: t.dv == null ? null : t.dv, chu: t.chu, loai: t.loai, cap: t.cap, soCau: t.soCau, tiLe: t.tiLe, cong: t.cong, beDanh: t.beDanh,
       mauBe: t.mauBe, mauBeToiDa: t.mauBeToiDa, mauTru: t.mauTru, mauTruToiDa: t.mauTruToiDa, so: t.so, ket: t.ket });
-    function luotRa(t) {
-      if (t.ben === "tru") return { so: t.so, ben: "tru", giayTru: t.giayTru, moLuc: t.moLuc };
+    // KC_06B3: như kc_dt_tru_luot_json (SQL kc06b3): số trận (beDanh, cong, soCau, mau) + lượt trụ có truDung; câu lượt bé kèm
+    // id + muoi + k (12 ký tự đầu sha256 "muoi:id:vị trí đúng") + lời giải -> trang trận chấm ngay, máy chủ chấm lại khi truTra
+    async function luotRa(t) {
+      const so = { beDanh: t.beDanh, cong: t.cong, soCau: t.soCau, mau: { be: t.mauBe, tru: t.mauTru } };
+      if (t.ben === "tru") return Object.assign(so, { so: t.so, ben: "tru", giayTru: t.giayTru, moLuc: t.moLuc, truDung: !!t.truDung });
       const c = cauTran(t, tt.congTrinh.find(k => k.id === t.truId));
-      return { so: t.so, ben: "be", han: CH.tru.giayBe, moLuc: t.moLuc,
-        cau: c ? { noiDung: c.noiDung, dapAn: c.dapAn, mon: c.mon, doKho: c.doKho, hinhChu: c.hinhChu, amThanh: c.amThanh } : null }; // không có đáp án
+      const cau = c ? { noiDung: c.noiDung, dapAn: c.dapAn, mon: c.mon, doKho: c.doKho, hinhChu: c.hinhChu, amThanh: c.amThanh } : null; // không có đáp án
+      const subtle = goc.crypto && goc.crypto.subtle;
+      if (cau && subtle && Array.isArray(c.dung) && c.dung.length) {
+        cau.id = Number.isInteger(c.id) ? c.id : 900000 + t.so; cau.muoi = Math.random().toString(36).slice(2) + t.moLuc.toString(36);
+        const b = await subtle.digest("SHA-256", new TextEncoder().encode(cau.muoi + ":" + cau.id + ":" + c.dung[0]));
+        cau.k = Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, "0")).join("").slice(0, 12);
+        cau.loiGiai = c.loiGiai || "";
+      }
+      return Object.assign(so, { so: t.so, ben: "be", han: CH.tru.giayBe, moLuc: t.moLuc, cau });
     }
     // TC_D06C7d: công trình mới xây (đánh được, trừ Lều) có sẵn muaCau.coSan câu (ct.soCau); bé mua thêm bằng vàng (muaCau)
     const soCauMoi = loai => (TT && TT.danhDuoc(CH, loai) ? { soCau: TT.coSan(CH) } : null);
@@ -1052,18 +1062,21 @@
         const tr = (tt.truTran || []).find(t => t.id === idTran && t.ten === ten);
         if (!tr || tr.ket) return { ok: false, ma: "het_tran", lyDo: "Trận đã kết thúc." };
         const bay = gio();
-        if (tr.ben) return { ok: true, luot: luotRa(tr), gio: bay }; // lượt đang mở (trang tải lại): trả lại đúng lượt đó
+        if (tr.ben) return { ok: true, luot: await luotRa(tr), gio: bay }; // lượt đang mở (trang tải lại): trả lại đúng lượt đó
         TT.moLuot(tr, CH, bay); luu();
-        return { ok: true, luot: luotRa(tr), gio: bay };
+        return { ok: true, luot: await luotRa(tr), gio: bay };
       },
-      // truTra(ten, idTran, { chon, beDung }) -> { ok, kq (dt_tru_tran traLoi; lượt bé có dapAnDung + loiGiai) }
+      // truTra(ten, idTran, { chon, maLuot, id }) -> { ok, kq (dt_tru_tran traLoi; lượt bé có dapAnDung + loiGiai) }
+      // KC_06B3: lượt trụ (bé phòng thủ câu kho): máy chủ tự chấm chon theo mã câu id (kho giả), thôi tin beDung trang gửi
       async truTra(ten, idTran, tl) {
         ten = tenChuan(ten);
         const tr = (tt.truTran || []).find(t => t.id === idTran && t.ten === ten);
         if (!tr || tr.ket || !tr.ben) return { ok: false, ma: "het_tran", lyDo: "Trận đã kết thúc." };
         const bay = gio(), ct = tt.congTrinh.find(c => c.id === tr.truId);
         const cau = tr.ben === "be" ? cauTran(tr, ct) : null;
-        const kq = TT.traLoi(tr, CH, bay, tl || {}, cau);
+        const t2 = { chon: tl && Number.isInteger(tl.chon) ? tl.chon : null, beDung: !!(tl && tl.beDung) }; // không có mã câu (bài thử cũ): như cũ
+        if (tr.ben === "tru" && tl && tl.maLuot && tl.id != null && khoGia) t2.beDung = t2.chon != null && khoGia.dap(tl.id) === t2.chon;
+        const kq = TT.traLoi(tr, CH, bay, t2, cau);
         if (cau) kq.loiGiai = cau.loiGiai || "";
         if (ct && kq.ben === "tru" && TT.laTru(CH, tr.loai)) { const ai = tr.dv != null ? tr.dv : (tlCua(ten) || {}).id; if (ai != null) ghiBan(ct, { luc: bay, dv: ai, trung: kq.kieu === "trung" }, bay); } // TC_D06C2h; TC_D06C7b: chỉ trụ ghi phát bắn
         ghiMauTran(tr, ct, bay);
@@ -1213,3 +1226,4 @@
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (phaHuy nhận Lều của chủ: hoàn hàng sinh, be.doiLeu; Lều dựng lại không tặng nông dân đầu)
 // 09/11/2026 - BƯỚC: TC_D06E (doiCau: bé đổi từng câu của công trình bằng thư viện câu hỏi)
 // 11/11/2026 - BƯỚC: KC_06B2 (kho: câu kho giả cho trận quái, máy chủ giả chấm)
+// 12/11/2026 - BƯỚC: KC_06B3 (truLuot kèm số trận + mã kiểm câu; truTra tự chấm câu phòng thủ theo mã câu)

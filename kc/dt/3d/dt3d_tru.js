@@ -249,7 +249,7 @@ export function taoTruBanDo(the) {
     if (d.loai === "dt-tru-hoi") { // trang trận nhờ gọi máy chủ
       const ts = d.ts || {};
       const kq = d.ham === "luot" ? await mayChu.truLuot(ten, t.tr.id)
-        : d.ham === "tra" ? await mayChu.truTra(ten, t.tr.id, { chon: Number.isInteger(ts.chon) ? ts.chon : null, beDung: !!ts.beDung })
+        : d.ham === "tra" ? await mayChu.truTra(ten, t.tr.id, { chon: Number.isInteger(ts.chon) ? ts.chon : null, maLuot: typeof ts.maLuot === "string" ? ts.maLuot : null, id: Number.isInteger(ts.id) ? ts.id : null }) // KC_06B3
           : { ok: false, ma: "lenh" };
       try { t.fr.contentWindow.postMessage({ loai: "dt-tru-dap", so: d.so, kq }, location.origin); } catch (er) { /* khung đã đóng */ }
     } else if (d.loai === "dt-tran-ket") t.ket = d.thang;
@@ -804,3 +804,4 @@ export function taoTruBanDo(the) {
 // 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)
 // 11/11/2026 - BƯỚC: KC_06B1 (máy chủ thật: câu công trình = câu kho có mã; trụ mới máy chủ tự bốc; 🛡️ gợi ý kho theo lớp; 📝 thư viện kho; bỏ cauKho / câu dự phòng)
 // 11/11/2026 - BƯỚC: KC_06B2 (máy chủ giả: nạp bộ sinh câu khi cần, trang game không nạp sẵn)
+// 12/11/2026 - BƯỚC: KC_06B3 (truTra gửi mã lượt + mã câu phòng thủ để máy chủ tự chấm)
