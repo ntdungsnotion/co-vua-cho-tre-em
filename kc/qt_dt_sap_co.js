@@ -4,13 +4,14 @@
 //   thanh bên + thẻ "sắp có". Khi làm thật một mục: viết file riêng (vd qt_dt_cau_hoi.js) gọi QDT.dangKyMuc với dung / mo,
 //   thêm dòng <script> vào quantri_NC.html và XOÁ dòng đặt chỗ tương ứng ở đây.
 // BƯỚC: TC_D18A - NGÀY: 10/11/2026
+// CẬP NHẬT: 12/11/2026 - KC_06C: mục Câu hỏi trỏ sang Quản trị chung › ❓ Kho câu hỏi (kho chung toàn app).
 // PHỤ THUỘC: qt_dt_khung.js (QDT).
 // ================================================================
 
 QDT.dangKyMuc({
   ma: "cauhoi", ten: "Câu hỏi", bieuTuong: "❓", sapCo: true,
-  moTa: "Kho câu hỏi của Đấu Trường.",
-  seCo: ["Duyệt câu thành lũy bé tự gõ", "Soạn câu hỏi tay, xem trước cả khổ điện thoại", "Bật / tắt từng dạng câu sinh tự động", "Xem trình độ từng bé"]
+  moTa: "Câu hỏi nằm ở kho chung toàn app: Quản trị chung › ❓ Kho câu hỏi (duyệt, sửa, nhập câu, từ cấm). Ở đây sau này chỉ còn phần riêng của Đấu Trường.",
+  seCo: ["Bật / tắt từng dạng câu sinh tự động", "Xem trình độ từng bé", "Xem trước câu ở cả khổ điện thoại"]
 });
 QDT.dangKyMuc({
   ma: "quandoi", ten: "Tướng & lính", bieuTuong: "🧙", sapCo: true,

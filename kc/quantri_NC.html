@@ -26,6 +26,8 @@
               logic DÙNG LẠI admin_NC.js ở gốc repo (không viết lại).
        CẬP NHẬT: 20/10/2026 - TC_T03B: thêm mục "📖 Kho từ vựng" (Quản trị chung): sửa kho từ
                  dùng chung + tải hình của từ, lưu thẳng vào repo qua GitHub API (qt_kho_tu.js/.css).
+       CẬP NHẬT: 12/11/2026 - KC_06C: mục "❓ Kho câu hỏi" (Quản trị chung): duyệt / sửa / loại / xoá câu (từng câu + hàng loạt),
+                 nhập JSON, ô thiếu câu, từ cấm, nhật ký chặn, cấu hình kho (qt_kho_cau.js/.css, SQL KC_06C).
        CẬP NHẬT: 10/11/2026 - TC_D18A: nhóm "⚔️ Đấu Trường Tri Thức" trong Trò Chơi, mục "🎛️ Thông số" (qt_dau_truong.js/.css,
                  dt/dt_cau_hinh.js): sửa mọi số cân bằng + 3 bảng Supabase, lịch sử + hoàn tác (SQL TC_D18A).
                  Cùng bước: KHUNG gắn mục (qt_dt_khung.js, chỗ gắn #qdtMenu + #qdtManHinh) + mục "👤 Tài khoản" (qt_dt_tai_khoan.js).
@@ -52,6 +54,7 @@
   <link rel="stylesheet" href="kc_style.css">
   <link rel="stylesheet" href="qt_kho_tu.css">
   <link rel="stylesheet" href="qt_dau_truong.css"> <!-- TC_D18A -->
+  <link rel="stylesheet" href="qt_kho_cau.css"> <!-- KC_06C -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -450,6 +453,7 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="ytuong" type="button">💡 Ý tưởng các bé gửi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinhchung" type="button">⚙️ Cấu hình chung</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotu" type="button">📖 Kho từ vựng</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="khocau" type="button">❓ Kho câu hỏi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="giongdoc" type="button">🔊 Giọng đọc</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="donkho" type="button">🧹 Dọn kho ảnh</button>
       </div>
@@ -1491,6 +1495,20 @@
     <!-- ============================================================ -->
     <!-- MÀN HÌNH 9: DỌN KHO ẢNH - FILE MỒ CÔI (NC_06A-2) -->
     <!-- ============================================================ -->
+    <!-- ============================================================ -->
+    <!-- KC_06C - MÀN HÌNH: KHO CÂU HỎI CHUNG TOÀN APP (qt_kho_cau.js dựng nội dung trong #qkcGoc) -->
+    <!-- ============================================================ -->
+    <section class="adminManHinh" id="manhinh-khocau">
+      <div class="adminKhoi">
+        <h3>❓ Kho câu hỏi</h3>
+        <p class="adminGhiChu">
+          Kho câu hỏi dùng chung cho cả app (Đấu Trường Tri Thức: trận quái, công trình, thư viện câu của bé; các trò chơi sau này).
+          Duyệt câu bé đặt, sửa / loại / xoá câu, nhập nhiều câu từ JSON, quản lý từ cấm và xem câu bị chặn.
+        </p>
+        <div id="qkcGoc"></div>
+      </div>
+    </section>
+
     <section class="adminManHinh" id="manhinh-donkho">
       <div class="adminKhoi">
         <h3>🧹 Dọn Kho Ảnh (file mồ côi trong Storage)</h3>
@@ -1551,6 +1569,7 @@
   <script src="../admin_NC.js"></script>
   <script src="quantri_NC.js"></script>
   <script src="qt_kho_tu.js"></script>
+  <script src="qt_kho_cau.js"></script>       <!-- KC_06C: ❓ Kho câu hỏi -->
   <script src="qt_loi_dong_vien.js"></script>
   <script src="qt_goi_y.js"></script>
   <!-- TC_D18A: Đấu Trường Tri Thức. Khung trước, rồi mỗi mục một file (thứ tự ở đây = thứ tự trên thanh bên).
