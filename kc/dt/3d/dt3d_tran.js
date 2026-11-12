@@ -10,6 +10,7 @@
 // HÀM KHAI RA (window.KC_DT_SAN3D):
 //   tao(vungVe, { nhe }) -> Promise<san>; san = { datTran({ chungLoai, hoSo, quai, chu }),
 //        ketQua(k) (k: kết quả lượt của lõi), thu(ben, bat), nghi(bat), ketThuc(thang),
+//        tuLuc(vai) -> { bung(), tan(), manh(), choMang(b) } (KC_06B2: pha tụ lực lúc chờ máy chủ chấm; vai "danh" | "thu"),
 //        viTri(ben) -> { x, y } điểm ảnh trong vùng vẽ (trên đầu),
 //        chieuVung(ma) -> giây diễn (ma: mua_lua | thien_thach | loc_xoay | dam_dat | vo_khong_gian | mua_ten | chuong; TC_D05B2),
 //        am = bộ tiếng dt3d_am_thanh.js (dangBat(), datBat(b): nút tắt tiếng của trang; TC_D05B3) }
@@ -20,6 +21,7 @@
 //        TC_D05B2 (chiêu phủ vùng rộng dt3d_chieu_vung.js + bộ hạt card đồ hoạ dt3d_hat.js);
 //        TC_D05B3 (âm thanh chiến đấu dt3d_am_thanh.js: mỗi động tác / chiêu một tiếng; nhạc nền bối cảnh tran / thang / thua)
 //        TC_D06C2g (đối thủ là trụ: tru_ten bắn tên từ sàn, không nhảy; thua thì sụp thành đống gạch, hòa thì đứng nguyên)
+//        KC_06B2 (11/11/2026: tuLuc(vai) pha tụ lực che lúc chờ máy chủ chấm, bung / tan)
 //        TC_D05D (bé phòng thủ đúng: thế thủ giữ tới lúc đòn của quái được tính, kể cả tướng tải xong giữa lượt / KayKit dự phòng)
 // NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026; 30/10/2026 06:00; 05/11/2026; 07/11/2026
 // ================================================================
@@ -206,6 +208,7 @@ async function tao(vungVe, { nhe } = {}) {
     const vlVom = hu.taoVlKhien(mau); vlVom.uniforms.uMo.value = 0.75;
     const vom = new THREE.Mesh(new THREE.SphereGeometry(1.05, 28, 16, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 1.6, 1), vlVom);
     nhom.add(vom); nhom.visible = false; canh.add(nhom);
+    nhom.userData = { day, vlVom }; // KC_06B2: tụ lực phòng thủ cho khiên sáng dần
     return nhom;
   }
   const vong = { be: taoVong("#ffd75e"), quai: taoVong("#ff9b9b") };
@@ -231,6 +234,68 @@ async function tao(vungVe, { nhe } = {}) {
   }
   function chopBe(giay) { them(giay, p => { const k = (1 - p) * 0.5; for (const v of vlBe) { const g = v.userData.sangGoc || 0; v.emissive.setRGB(g + k, g + k * 0.55, g + k * 0.5); } }); } // chớp đỏ nhạt khi trúng đòn (tướng: trở về độ tự sáng gốc)
 
+  // --- KC_06B2: PHA TỤ LỰC che lúc chờ máy chủ chấm (dac_ta_tran_dau.md mục 6, Hướng Dẫn 3.17) ---
+  // vai "danh": ánh sáng + hạt sáng HÚT VÀO vũ khí / tay theo tộc (Nhân kiếm vàng, Quỷ lửa đỏ, Tiên cầu phép xanh giữa hai tay);
+  // vai "thu": khiên tụ sáng dần. Trung tính (không lộ đúng / sai), lặp vòng tới khi trang gọi bung() (đúng) / tan() (sai).
+  // manh(): chờ lâu -> vòng sáng thứ hai + rung nhẹ; choMang(true): chờ mạng -> ánh sáng dịu xuống. Đồ hoạ Nhẹ: không hạt.
+  const dsTuLuc = [];
+  function taoTuLuc(vai) {
+    const thu = vai === "thu", mau = thu ? (kieu === KIEU_TOC.quy ? "#ffb070" : "#9fe4ff") : kieu.mau, mau2 = thu ? "#ffffff" : kieu.mau2;
+    const sp = (m, co) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: chopTex, color: m, transparent: true, depthTest: false, blending: THREE.AdditiveBlending })); s.scale.setScalar(co); canh.add(s); return s; };
+    const tam = () => thu ? V(dvBe.x + 0.15, caoBe * 0.5, 0.3) : kieu.phep ? V(dvBe.x + 0.32, caoBe * 0.6, 0.32) : V(dvBe.x + 0.42, caoBe * (kieu === KIEU_TOC.quy ? 0.5 : 0.62), 0.35);
+    const loi = sp(mau, 0.2), vien = sp(mau2, 0.1);
+    let vong2 = null, t = 0, manh = false, choMang = false, xong = false, hen = 0, sang = 0;
+    const hat = [];
+    const vb = vong.be.userData;
+    if (thu) { vong.be.visible = true; vb.vlVom.uniforms.uMo.value = 0.1; vb.day.material.opacity = 0.2; }
+    const x = {
+      capNhat(dt) {
+        if (xong) return;
+        t += dt;
+        const muc = Math.min(1, t / 0.35) * (choMang ? 0.35 : 1) * (manh ? 1.3 : 1);
+        sang += (muc - sang) * Math.min(1, dt * 8);
+        const p = tam(), nhip = Math.sin(t * 11) * 0.05;
+        if (manh && !choMang) p.x += Math.sin(t * 47) * 0.012; // rung nhẹ
+        loi.position.copy(p); vien.position.copy(p);
+        loi.scale.setScalar((kieu.phep && !thu ? 0.35 : 0.22) + 0.5 * sang + nhip);
+        vien.scale.setScalar(0.12 + 0.18 * sang - nhip);
+        loi.material.opacity = 0.35 + 0.6 * Math.min(1, sang); vien.material.opacity = 0.6 * Math.min(1, sang);
+        if (thu) { vb.vlVom.uniforms.uMo.value = 0.1 + 0.5 * Math.min(1, sang); vb.day.material.opacity = 0.2 + 0.6 * Math.min(1, sang); }
+        if (vong2) { vong2.position.set(p.x, p.y, p.z); vong2.scale.setScalar(0.9 + Math.sin(t * 6) * 0.12); vong2.material.opacity = choMang ? 0.15 : 0.45; }
+        if (!nhe && !choMang && (hen -= dt) <= 0) { // hạt sáng từ xa hút vào tâm
+          hen = manh ? 0.025 : 0.045;
+          const g = Math.random() * Math.PI * 2, r = 0.7 + Math.random() * 0.55;
+          const s = sp(Math.random() < 0.5 ? mau : mau2, 0.05 + Math.random() * 0.06);
+          hat.push({ s, tu: V(p.x + Math.cos(g) * r, Math.max(0.05, p.y + Math.sin(g) * r * 0.8), p.z + (Math.random() - 0.5) * 0.4), con: 0, tong: 0.32 + Math.random() * 0.15 });
+        }
+        for (let i = hat.length - 1; i >= 0; i--) {
+          const h = hat[i]; h.con += dt;
+          const k = Math.min(1, h.con / h.tong), e = k * k;
+          h.s.position.lerpVectors(h.tu, tam(), e); h.s.material.opacity = Math.sin(k * Math.PI) * 0.95;
+          if (k >= 1) { canh.remove(h.s); h.s.material.dispose(); hat.splice(i, 1); }
+        }
+      },
+      manh() { if (xong || manh) return; manh = true; vong2 = sp(mau2, 1); vong2.material.opacity = 0.45; },
+      choMang(b) { choMang = !!b; },
+      bung() { if (xong) return; const p = tam(); don(); hu.chop(p, mau, 1.1, 0.2, 0.8); hu.tia(p, mau2, nhe ? 4 : 8, 3, 0.3); },
+      tan() { // xì tan thành khói lấp lánh nhẹ (vui, không phạt bằng hình)
+        if (xong) return; const p = tam(); don();
+        hu.khoi(p, thu ? "#d9eeff" : "#e6dcff", nhe ? 4 : 8, 0.7); noLapLanh(V(p.x, Math.max(0, p.y - 0.5), p.z), "#efe6ff");
+        if (thu) vong.be.visible = false;
+      },
+      dangChay: () => !xong
+    };
+    function don() {
+      xong = true;
+      [loi, vien, vong2].concat(hat.map(h => h.s)).forEach(s => { if (s) { canh.remove(s); s.material.dispose(); } });
+      hat.length = 0;
+      if (thu) { vb.vlVom.uniforms.uMo.value = 0.75; vb.day.material.opacity = 1; }
+      const i = dsTuLuc.indexOf(x); if (i >= 0) dsTuLuc.splice(i, 1);
+    }
+    dsTuLuc.push(x);
+    return x;
+  }
+
   // --- hoạt cảnh theo thời gian (tween) ---
   const dsTween = [];
   function them(giay, fn, tre = 0) { dsTween.push({ t: -tre, giay, fn }); }
@@ -239,6 +304,7 @@ async function tao(vungVe, { nhe } = {}) {
     hu.capNhat(dt, t); bui.capNhat(dt, t); boHat.capNhat(dt); cv.capNhat(dt, t);
     if (ct && ct.capNhat) { try { ct.capNhat(dt, t); } catch (e) { console.warn("Kho chiêu thêm lỗi khi vẽ", e); ct = null; } }
     if (haoQuang) haoQuang.capNhat(dt, t, dvBe);
+    for (let i = dsTuLuc.length - 1; i >= 0; i--) dsTuLuc[i].capNhat(dt); // KC_06B2
     for (let i = dsTween.length - 1; i >= 0; i--) {
       const w = dsTween[i]; w.t += dt;
       if (w.t < 0) continue;
@@ -322,6 +388,7 @@ async function tao(vungVe, { nhe } = {}) {
   const san = {
     datTran({ hoSo, quai: ma, chu, doiThu }) {
       dsTween.length = 0; giuThu = false;
+      dsTuLuc.slice().forEach(x => x.tan()); // KC_06B2
       dvBe.x = X_BE; dvBe.z = 0;
       const hs = NV.chuanHoa(hoSo || {});
       if (hoSo && hoSo.tuong) hs.tuong = hoSo.tuong; // chuanHoa (dùng chung) không biết trường tuong
@@ -339,6 +406,8 @@ async function tao(vungVe, { nhe } = {}) {
       if (ben === "be") { giuThu = !!bat; if (bat) dien("thu"); else if (tuong && tuong.dangDien() === "thu") dien("dung"); }
     },
     nghi(bat) { bong.visible = !!bat; },
+    // KC_06B2: pha tụ lực lúc chờ máy chủ chấm; vai "danh" | "thu" -> tay cầm { bung(), tan(), manh(), choMang(b) }
+    tuLuc(vai) { return taoTuLuc(vai); },
     ketQua(k) {
       const dangThu = giuThu; giuThu = false; // TC_D05D: thế thủ giữ tới lúc đòn của quái được tính
       // TC_D05D (người dùng 07/11/2026): vòng khiên còn tới lúc đòn CHẠM vào bé (beChiu) rồi mới tắt
@@ -414,6 +483,7 @@ async function tao(vungVe, { nhe } = {}) {
     },
     ketThuc(thang) {
       giuThu = false;
+      dsTuLuc.slice().forEach(x => x.tan()); // KC_06B2
       vong.be.visible = vong.quai.visible = bong.visible = false;
       if (thang === "quai") {
         if (haoQuang) haoQuang.bat(0);
@@ -510,3 +580,4 @@ window.dispatchEvent(new Event("dt-san3d"));
 // 04/11/2026 23:xx - BƯỚC: TC_D06C2b (hoSo.nongDan: nông dân đánh quái dùng hình nông dân)
 // 07/11/2026 - BƯỚC: TC_D05D (giữ thế thủ tới đòn của quái: giuThu)
 // 08/11/2026 - BƯỚC: TC_D06C7b (đánh công trình thường: đối thủ là Thủ lĩnh của chủ (datTran doiThu), công trình đứng sau, thắng thì sụp)
+// 11/11/2026 - BƯỚC: KC_06B2 (pha tụ lực tuLuc: hút sáng vào vũ khí / tay, khiên tụ sáng; bung / tan)

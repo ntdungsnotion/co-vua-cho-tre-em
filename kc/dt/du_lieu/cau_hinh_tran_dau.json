@@ -11,6 +11,8 @@
   "tuaKhiDaBamGiay": 1,
   "_ghiChuLatBai": "Lật bài xong tự sang lượt sau sau bấy nhiêu giây (người dùng 29/10/2026: quái tự đánh, không bấm nút); bé trả lời sai / không trả lời thì đọc lời giải lâu hơn. Chạm vào khung câu hỏi để sang ngay.",
   "latBaiGiay": { "dung": 2.2, "sai": 4.5 },
+  "_ghiChuTuLuc": "tuLuc (KC_06B2, người dùng 11/11/2026): PHA TỤ LỰC lúc chờ máy chủ chấm câu (máy bé không có đáp án). Bé chạm đáp án thì ánh sáng hút vào vũ khí / tay (phòng thủ: khiên sáng dần), kéo ít nhất toiThieuGiay giây; quá manhSauGiay giây chưa có kết quả thì tụ mạnh hơn; quá choMangGiay giây thì ánh sáng dịu xuống + chữ nhỏ \"Đang chờ mạng...\" (máy tự gửi lại, không tính 2 lần). Đồng hồ câu hỏi dừng lúc bé chạm.",
+  "tuLuc": { "toiThieuGiay": 0.35, "manhSauGiay": 1.5, "choMangGiay": 6 },
   "_ghiChuSatThuong": "Sát thương = làm tròn(max(toiThieu, uyLuc x (1 + chỉ số đánh / 100) x k_combo x k_chí_mạng x k_sơ_hở - heSoDef x DEF đối thủ)). k_combo = min(combo.toiDa, 1 + combo.buoc x (combo - 1)). Chí mạng x chiMang.heSo khi combo chia hết cho chiMang.moiCombo hoặc (khiCauKho) trả lời đúng câu mức Khó. Né (khi cả hai cùng đúng, phòng thủ bấm trước) = min(ne.toiDa, ne.goc + ne.moiAgi x AGI).",
   "satThuong": { "toiThieu": 1, "heSoDef": 0.5 },
   "soHo": 1.2,

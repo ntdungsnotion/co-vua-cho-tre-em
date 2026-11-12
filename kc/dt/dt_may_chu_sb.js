@@ -38,7 +38,7 @@
 //     máy chủ chưa chạy SQL thì không có trường này, trang giữ cách cũ). Lớp gọi không đổi: trả nguyên kết quả RPC.
 //   KC_06B1 (11/11/2026): công trình chỉ nhận MÃ câu kho (truCau / muaCau / doiCau gửi c.id; không còn cauKho); mucLuc() + thuVien(hoi)
 //     đọc kho câu chung (RPC kc_cau_hoi_muc_luc / kc_cau_hoi_thu_vien, không gửi p_ma_vung). Có thuVien = trang dùng kho máy chủ.
-// BƯỚC: TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
+// BƯỚC: KC_06B2 (11/11/2026: kho("o" | "lo" | "cham") câu kho trận quái, máy chủ chấm); TC_D02B3a; TC_D02B3b (chỉ ghi chú: layQuanh trả thêm chungLoai, mọc lại ở máy chủ); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 27/10/2026; 27/10/2026 20:55; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_ban_do.js (KC_DT_BAN_DO: câu lý do không xây được); goiRpc: kcGoiRpc của kc_api.js
 // ================================================================
@@ -177,6 +177,19 @@
         const h = hoi || {};
         return goiKho("kc_cau_hoi_thu_vien", { p_mon: h.mon || null, p_chu_de: h.chuDe || null, p_lop: Number.isInteger(h.lop) ? h.lop : null,
           p_n: Number.isInteger(h.n) ? h.n : 4, p_bo_qua: dsMa(h.boQua) });
+      },
+      // KC_06B2: câu kho cho TRẬN QUÁI / lượt trụ tấn công, MÁY CHỦ CHẤM (trang trận dt/thu_tran_dau.html nhờ bản đồ gọi hộ, dt/dt_nguon_kho.js):
+      //   kho("o") -> { ok, o: [{ mon, chuDe, lop, muc, n }] }        ô câu để chọn độ khó (RPC kc_cau_hoi_o)
+      //   kho("lo", { mon, lop, muc, chuDe?, n, boQua }) -> { ok, cau: [câu có id, KHÔNG có đáp án] }   (kc_cau_hoi_lo, KC_06A)
+      //   kho("cham", { maLuot, id, chon, giay, gapO }) -> { ok, dung, dapAnDung, loiGiai }   (kc_cau_hoi_cham; gửi lại cùng maLuot không tính 2 lần)
+      async kho(ham, ts) {
+        const h = ts || {}, so = (v, d) => Number.isInteger(v) ? v : d;
+        if (ham === "o") return goiKho("kc_cau_hoi_o", {});
+        if (ham === "lo") return goiKho("kc_cau_hoi_lo", { p_mon: String(h.mon || "toan"), p_lop: so(h.lop, null), p_muc: h.muc || null,
+          p_n: so(h.n, 20), p_bo_qua: dsMa(h.boQua), p_chu_de: h.chuDe || null });
+        if (ham === "cham") return goiKho("kc_cau_hoi_cham", { p_ma_luot: String(h.maLuot || ""), p_cau_id: so(h.id, null), p_chon: so(h.chon, null),
+          p_giay: Number.isFinite(h.giay) ? Math.round(h.giay * 100) / 100 : null, p_gap_o: h.gapO || null });
+        return { ok: false, ma: "lenh", lyDo: LOI.lenh };
       }
     };
   }
@@ -194,3 +207,4 @@
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (phaHuy nhận Lều trại; cần SQL TC_D06C7c)
 // 09/11/2026 - BƯỚC: TC_D06E (doiCau; cần SQL TC_D06E)
 // 11/11/2026 - BƯỚC: KC_06B1 (truCau / muaCau / doiCau chỉ gửi mã câu kho; bỏ cauKho + câu dự phòng; mucLuc / thuVien kho câu chung; cần SQL KC_06B1)
+// 11/11/2026 - BƯỚC: KC_06B2 (kho: ô câu / lô câu không đáp án / máy chủ chấm; cần SQL KC_06B2)

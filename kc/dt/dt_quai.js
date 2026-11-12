@@ -61,12 +61,21 @@
   // Trả { dung, chiSo }: chiSo = vị trí đáp án quái chọn
   function traLoi(quai, cau, ch, rng, vaiTro) {
     const dung = rng() < xacSuatDung(quai, cau.doKho, ch, vaiTro);
+    // KC_06B2: câu kho chưa có đáp án trên máy (máy chủ chấm) -> chỉ quyết đúng / sai; ô quái chọn tính khi biết đáp án (chonO)
+    if (!cau.dung || !cau.dung.length) return { dung, chiSo: null };
     if (dung) return { dung, chiSo: cau.dung[0] };
     const sai = [];
     for (let i = 0; i < cau.dapAn.length; i++) if (cau.dung.indexOf(i) < 0) sai.push(i);
     return { dung, chiSo: sai.length ? sai[Math.floor(rng() * sai.length)] : cau.dung[0] };
   }
 
-  goc.KC_DT_QUAI = { dsLoai, taoQuai, xacSuatDung, giayBe, giayTraLoi, traLoi };
+  // KC_06B2: ô quái bấm khi đã biết đáp án đúng d (quái đúng -> d, sai -> một ô sai ngẫu nhiên)
+  function chonO(dung, d, soO, rng) {
+    if (dung) return d;
+    const sai = []; for (let i = 0; i < soO; i++) if (i !== d) sai.push(i);
+    return sai.length ? sai[Math.floor(rng() * sai.length)] : d;
+  }
+
+  goc.KC_DT_QUAI = { dsLoai, taoQuai, xacSuatDung, giayBe, giayTraLoi, traLoi, chonO };
 })(typeof window !== "undefined" ? window : globalThis);
-// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (thời gian theo cấp quái)
+// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (thời gian theo cấp quái); 11/11/2026 - KC_06B2 (câu chưa có đáp án: chonO)

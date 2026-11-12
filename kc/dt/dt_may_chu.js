@@ -82,7 +82,7 @@
 //   TC_D06C7e (08/11/2026): muaCau(ten, id, so, cau) câu bé tự chọn gắn vào công trình (trận hỏi trước, thiếu bù kho câu của chủ);
 //   TC_D06E (09/11/2026): doiCau(ten, id, viTri, cau) bé đổi từng câu bằng thư viện câu hỏi, miễn phí;
 //     suaCt(ten, id) trừ tài nguyên (không vàng), ct.sua = { tienDo, giay }: nông dân tới sửa như xây (tinhXay, guiLenh, xayXong báo sửa xong).
-// BƯỚC: TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
+// BƯỚC: KC_06B2 (kho: câu kho giả cho trận quái); TC_D02B2a; TC_D02B2b (dựng lều + nông dân đầu tiên, kho tài nguyên, lệnh nhớ việc); TC_D02C; TC_D03A; TC_D03B1; TC_D03B2; TC_D06C1; TC_D06C2a; TC_D06C2b
 // NGÀY: 26/10/2026; 27/10/2026; 28/10/2026 00:05; 28/10/2026 10:50; 28/10/2026 15:10; 28/10/2026 19:05; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), dt/dt_ban_do.js (KC_DT_BAN_DO), dt/dt_quai_ban_do.js (KC_DT_QUAI_BAN_DO, TC_D06C1),
 //   dt/dt_roi_do.js (KC_DT_ROI_DO, TC_D06C4: chỉ cần khi có opt.roiDo)
@@ -92,6 +92,16 @@
   const PHIEN_BAN = 1;
   const khoaLuu = maVung => "kc_dt_may_chu_gia_" + maVung;
   const tenChuan = t => String(t || "").trim().toLowerCase();
+  // KC_06B2: trang game không nạp bộ sinh câu nữa; máy chủ GIẢ (kịch bản thử) cần thì tự nạp bộ sinh + kho giả (cùng thư mục dt/)
+  const GOC_JS = typeof document !== "undefined" && document.currentScript ? document.currentScript.src : null;
+  let hoaSinh = null;
+  function napBoSinh() {
+    if (goc.KC_DT_SINH_TOAN && goc.KC_DT_SINH_TA && goc.KC_DT_NGUON_KHO) return Promise.resolve(true);
+    if (!GOC_JS || typeof document === "undefined") return Promise.resolve(!!goc.KC_DT_SINH_TOAN);
+    if (hoaSinh) return hoaSinh;
+    const nap = f => goc[f[1]] ? Promise.resolve() : new Promise(x => { const sc = document.createElement("script"); sc.src = new URL(f[0], GOC_JS).href; sc.onload = sc.onerror = () => x(); document.head.appendChild(sc); });
+    return (hoaSinh = Promise.all([["dt_sinh_toan.js", "KC_DT_SINH_TOAN"], ["dt_sinh_tieng_anh.js", "KC_DT_SINH_TA"], ["dt_nguon_kho.js", "KC_DT_NGUON_KHO"]].map(nap)).then(() => !!goc.KC_DT_SINH_TOAN));
+  }
 
   function taoMayChuGia(opt) {
     const LANG = goc.KC_DT_LANG, BD = goc.KC_DT_BAN_DO;
@@ -1175,12 +1185,21 @@
       // TC_D06C1 (chỉ kiểm thử): dời chỗ ở một quái tới (x, z), lang thang lại từ bây giờ; buộc quaiBu chạy ở lần gọi tới
       // TC_D06C2a: hung = true / false thì đặt luôn quái hung dữ / hiền (không truyền: giữ nguyên)
       _dichQuai(id, x, z, hung) { const q = (tt.quai || []).find(k => k.id === id); if (!q) return false; q.x = x; q.z = z; q.sinhLuc = gio(); q.khoa = null; q.chay = null; if (hung != null) q.hung = !!hung; luu(); return true; },
-      _buNgay() { tt.quaiBuLuc = 0; }
+      _buNgay() { tt.quaiBuLuc = 0; },
+      // KC_06B2: câu kho cho trận quái (như dt_may_chu_sb.js kho("o" | "lo" | "cham")): máy chủ giả dựng KHO GIẢ từ bộ sinh câu
+      // có trên trang thử (dt_nguon_kho.js khoGia), giữ đáp án trong bộ nhớ. Trang không có bộ sinh: báo lỗi mạng.
+      async kho(ham, ts) {
+        await napBoSinh();
+        const NK = goc.KC_DT_NGUON_KHO;
+        if (!khoGia && NK && goc.KC_DT_SINH_TOAN) goc.__khoGia = khoGia = NK.khoGia({ toan: goc.KC_DT_SINH_TOAN }, { soMoiO: 8 }); // __khoGia.dap(id): kịch bản thử bấm đúng
+        return khoGia ? khoGia.goi(ham, ts) : { ok: false, ma: "mang" };
+      }
     };
+    let khoGia = null;
     return api;
   }
 
-  goc.KC_DT_MAY_CHU = { taoMayChuGia };
+  goc.KC_DT_MAY_CHU = { taoMayChuGia, napBoSinh };
 })(typeof window !== "undefined" ? window : globalThis);
 // 30/10/2026 17:30 - BƯỚC: TC_D06C1; 04/11/2026 - TC_D06C2a (quái hung dữ); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái)
 // 05/11/2026 - BƯỚC: TC_D06C2d (phaHuy: phá hủy công trình đã xong của bé)
@@ -1193,3 +1212,4 @@
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (muaCau kèm câu bé chọn; suaCt bằng tài nguyên + nông dân sửa ct.sua; danhKhai hỏi câu bé chọn trước)
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (phaHuy nhận Lều của chủ: hoàn hàng sinh, be.doiLeu; Lều dựng lại không tặng nông dân đầu)
 // 09/11/2026 - BƯỚC: TC_D06E (doiCau: bé đổi từng câu của công trình bằng thư viện câu hỏi)
+// 11/11/2026 - BƯỚC: KC_06B2 (kho: câu kho giả cho trận quái, máy chủ giả chấm)
