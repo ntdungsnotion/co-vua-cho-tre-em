@@ -130,6 +130,7 @@ async function tao(vungVe, { nhe } = {}) {
     khoaBe = khoa;
     const lan = ++lanDung, tt = boTuong && !hoSo.nongDan && chonTuong(hoSo); // TC_D06C2b: nông dân đánh quái -> hình nông dân KayKit
     if (tt) { // tải tướng (lần đầu ~1 MB); trong lúc tải giữ tướng cũ trên sân
+      if (!tuong && !hBe) dungKayKit(hoSo); // KC_06B2b: mạng chậm, tướng chưa tải xong -> Thủ lĩnh KayKit (đã có sẵn) đứng tạm, không để trống sân
       taiTuong(tt.tep).then(glb => {
         if (lan !== lanDung) return; // bé đã đổi tướng khác trong lúc tải
         if (tuong) canh.remove(tuong.vo);
@@ -581,3 +582,4 @@ window.dispatchEvent(new Event("dt-san3d"));
 // 07/11/2026 - BƯỚC: TC_D05D (giữ thế thủ tới đòn của quái: giuThu)
 // 08/11/2026 - BƯỚC: TC_D06C7b (đánh công trình thường: đối thủ là Thủ lĩnh của chủ (datTran doiThu), công trình đứng sau, thắng thì sụp)
 // 11/11/2026 - BƯỚC: KC_06B2 (pha tụ lực tuLuc: hút sáng vào vũ khí / tay, khiên tụ sáng; bung / tan)
+// 12/11/2026 - BƯỚC: KC_06B2 (sửa: tướng chưa tải xong thì Thủ lĩnh KayKit đứng tạm)

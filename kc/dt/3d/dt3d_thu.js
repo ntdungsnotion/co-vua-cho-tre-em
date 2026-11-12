@@ -25,6 +25,7 @@
 import { taoCanh, docDoHoa, luuDoHoa } from "./dt3d_canh.js";
 import { taoCamera } from "./dt3d_camera.js";
 import { taiGlb, taoBoMoHinh } from "./dt3d_mo_hinh.js";
+import { taiTruoc } from "./dt3d_luu_san.js"; // KC_06B2: tải sẵn cảnh trận, lưu trong trình duyệt
 import { taoDiaHinh } from "./dt3d_dia_hinh.js";
 import { taoCongTrinh } from "./dt3d_cong_trinh.js";
 import { taoTaiNguyen } from "./dt3d_tai_nguyen.js";
@@ -194,6 +195,28 @@ window.addEventListener("message", async e => {
   } catch (er) { kq = { ok: false, ma: "mang" }; }
   try { e.source.postMessage({ loai: "dt-kho-dap", so: d.so, kq }, location.origin); } catch (er) { /* khung đã đóng */ }
 });
+
+// ---------------- KC_06B2 (12/11/2026, người dùng): TẢI SẴN CẢNH TRẬN khi mở game ----------------
+// Bản đồ tải xong mới tải ở nền (từng file, lúc rảnh): tướng của bé + bộ động tác. File lưu trong trình duyệt
+// (dt3d_luu_san.js); lần sau chỉ ping xem có bản mới. Tướng của bạn khác: lưu khi gặp lần đầu.
+let dangTaiSan = false; // đang tải sẵn ở nền: khung hình tụt tạm thời, không báo "Máy hơi chậm"
+setTimeout(async () => {
+  dangTaiSan = true;
+  try {
+    const kt = await fetch(duongDan("../du_lieu/tuong.json"), { cache: "no-cache" }).then(r => r.json());
+    const h = be.hoSo || {}, ma = kt.thuLinh[h.chungLoai + "_" + (h.gioi === "nu" ? "nu" : "nam")] || kt.thuLinh.nhan_nam;
+    const t = kt.kho.find(x => x.ma === ma);
+    // mô hình (kho bền) + mã của cảnh trận: chiêu thức, hiệu ứng, âm thanh, quái, trang trận (bộ nhớ đệm thường)
+    const TV = "../../thu_vien/three/";
+    await taiTruoc([t && duongDan("../mo_hinh/" + t.tep), duongDan("../mo_hinh/dong_tac_tuong.glb"), duongDan("../mo_hinh/dong_tac_tran.glb"),
+      ...["dt3d_tran.js", "dt3d_tuong.js", "dt3d_hieu_ung.js", "dt3d_chieu_vung.js", "dt3d_chieu_them.js", "dt3d_hat.js", "dt3d_quai.js", "dt3d_am_thanh.js"].map(f => duongDan("./" + f)),
+      ...["postprocessing/EffectComposer.js", "postprocessing/OutputPass.js", "postprocessing/RenderPass.js", "postprocessing/UnrealBloomPass.js", "postprocessing/Pass.js",
+        "postprocessing/ShaderPass.js", "postprocessing/MaskPass.js", "shaders/CopyShader.js", "shaders/LuminosityHighPassShader.js", "shaders/OutputShader.js"].map(f => duongDan(TV + f)),
+      ...["../thu_tran_dau.html", "../dt_tran_dau.js", "../dt_quai.js", "../dt_ve_quai.js", "../dt_nguon_kho.js", "../du_lieu/cau_hinh_tran_dau.json"].map(duongDan)
+    ].filter(Boolean));
+  } catch (e) { /* tải sẵn hỏng: vào trận sẽ tải */ }
+  setTimeout(() => { dangTaiSan = false; }, 3000);
+}, 5000);
 
 // ---------------- Thanh điều khiển cuối màn hình (TC_D06D) ----------------
 // Ô "đang xem": thứ vừa chạm (nhà, Lều, ruộng, cây / mỏ, quái); chạm đất / chọn người thì về người đang chọn.
@@ -365,7 +388,7 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
 ctx.khiDo(so => {
   Object.assign(window.__dt3d, so);
   fpsEl.textContent = so.fps + " khung/giây";
-  if (!NHE && so.fps < 24) { if (++chamLien === 4) baoGoiY("Máy hơi chậm. Bấm ✨ để chọn đồ họa Nhẹ nhé."); } else chamLien = 0;
+  if (!NHE && so.fps < 24 && !dangTaiSan) { if (++chamLien === 4) baoGoiY("Máy hơi chậm. Bấm ✨ để chọn đồ họa Nhẹ nhé."); } else chamLien = 0;
 });
 
 capNhatKho();
@@ -389,3 +412,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (nút 💥 Phá Lều ở thanh dưới Lều trại của mình, lời hỏi riêng: dời làng)
 // 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)
 // 11/11/2026 - BƯỚC: KC_06B2 (cầu nối dt-kho-hoi cho trang trận)
+// 12/11/2026 - BƯỚC: KC_06B2 (tải sẵn cảnh trận khi mở game: tướng của bé + động tác, lưu trong trình duyệt)

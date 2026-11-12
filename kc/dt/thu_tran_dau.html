@@ -33,7 +33,7 @@
              KC_06B2 (11/11/2026: trận thật hỏi câu KHO CÂU CHUNG, máy bé không có đáp án, MÁY CHỦ CHẤM (Hướng Dẫn 3.17);
              nhờ bản đồ gọi máy chủ qua postMessage "dt-kho-hoi" / "dt-kho-dap" (ô câu, lô câu, chấm, số Quản trị); PHA TỤ LỰC che
              lúc chờ chấm (đồng hồ dừng lúc bé chạm, chờ mạng lâu thì "Đang chờ mạng..."); trang thật KHÔNG nạp bộ sinh câu nữa.
-             Trang thử (không ?nhung) vẫn dùng bộ sinh; &kho=gia: thử đường kho bằng kho giả dựng từ bộ sinh, &tre=<ms> giả mạng chậm)
+             Trang thử (không ?nhung) vẫn dùng bộ sinh; &kho=gia: thử đường kho bằng kho giả dựng từ bộ sinh, &tre=<ms> giả mạng chậm; &nhanh=0: kho giả không kèm mã chấm nhanh)
        NGÀY: 29/10/2026; 29/10/2026 22:47; 30/10/2026; 30/10/2026 06:00; 30/10/2026 (TC_D06A); 04/11/2026 (TC_D06C2a)
        PHỤ THUỘC: chung/nv_ve.js, dt/dt_trinh_do.js, dt/dt_nguon_kho.js (KC_06B2), dt/dt_sinh_toan.js + dt/dt_sinh_tieng_anh.js (chỉ trang thử),
                   dt/dt_cau_hoi.js, dt/dt_quai.js, dt/dt_tran_dau.js, dt/dt_ve_quai.js,
@@ -326,7 +326,7 @@
     // Trận thật (?nhung): nhờ bản đồ (dt3d_thu.js) gọi máy chủ: { loai: "dt-kho-hoi", so, ham: "o" | "lo" | "cham" | "cauHinh", ts }
     // -> { loai: "dt-kho-dap", so, kq }. Trang thử &kho=gia: kho giả dựng từ bộ sinh (dt_nguon_kho.js khoGia).
     const KHO = NHUNG || TS.get("kho") === "gia";
-    let kho = null, tuLucCh = { toiThieuGiay: 0.35, manhSauGiay: 1.5, choMangGiay: 6 }, soMo = 0, latBai = 0;
+    let kho = null, tuLucCh = { toiThieuGiay: 0.5, manhSauGiay: 1.5, choMangGiay: 6 }, soMo = 0, latBai = 0;
     const choKho = new Map(); let soKho = 0;
     window.addEventListener("message", e => {
       if (e.source !== window.parent || !e.data || e.data.loai !== "dt-kho-dap") return;
@@ -347,12 +347,19 @@
       const henManh = tl ? setTimeout(() => tl.manh(), ch.manhSauGiay * 1000) : 0;
       let daBaoCho = false;
       const henCho = setTimeout(() => { daBaoCho = true; if (tl) tl.choMang(true); hienChoMang(true); }, ch.choMangGiay * 1000);
-      const kq = await kho.cham(cau, chon, Math.max(0, (t0 - tMo) / 1000), { dung: () => T !== Tcu }); // lỗi mạng: tự gửi lại cùng mã lượt
+      const kq = await kho.cham(cau, chon, Math.max(0, (t0 - tMo) / 1000), { dung: () => T !== Tcu, khiLoiGiai: lg => capLoiGiai(cau, lg) }); // lỗi mạng: tự gửi lại cùng mã lượt; chấm nhanh: có kết quả ngay
       clearTimeout(henManh); clearTimeout(henCho);
       const con = ch.toiThieuGiay * 1000 - (bayGio() - t0);
       if (tl && con > 0) await ngu(con);
       if (daBaoCho) { hienChoMang(false); if (tl) tl.choMang(false); }
       return kq;
+    }
+    // chấm nhanh (12/11/2026): lời giải về sau kết quả (máy chủ chấm ở nền) -> điền vào khi tới
+    function capLoiGiai(cau, lg) {
+      if (!lg) return;
+      cau.loiGiai = lg;
+      const e = cau === cauNay && $("cKetQua").querySelector(".loi-giai");
+      if (e) e.textContent = "💡 " + lg;
     }
     function hienChoMang(bat) {
       let d = $("cKetQua").querySelector(".cho-mang");
@@ -687,7 +694,7 @@
       gan(k.beChon, "be", "Bạn"); gan(k.quaiChon, "quai", T.quai().ten);
       $("cKetQua").innerHTML = '<div class="kieu"></div><div class="loi-giai"></div>';
       $("cKetQua").querySelector(".kieu").textContent = textKetQua(k);
-      $("cKetQua").querySelector(".loi-giai").textContent = "💡 " + (k.loiGiai || "");
+      $("cKetQua").querySelector(".loi-giai").textContent = k.loiGiai ? "💡 " + k.loiGiai : ""; // chấm nhanh: lời giải điền sau (capLoiGiai)
       capNhatDongHo();
       if (san3d) san3d.ketQua(k);
       // hiệu ứng: bên tấn công lao tới, bên kia trúng / né
@@ -878,7 +885,7 @@
       if (ST) ngSinh.toan = ST;
       if (khoTu && TA) { try { ngSinh.tieng_anh = TA.tao(khoTu, chTD); } catch (e) { console.warn("Không dựng được câu Tiếng Anh", e); } }
       if (KHO) { // KC_06B2: câu kho chung, máy chủ chấm
-        const gia = NHUNG ? null : NK.khoGia(ngSinh, { soMoiO: 8, chamMs: Math.max(0, Number(TS.get("tre")) || 0) });
+        const gia = NHUNG ? null : NK.khoGia(ngSinh, { soMoiO: 8, chamMs: Math.max(0, Number(TS.get("tre")) || 0), nhanh: TS.get("nhanh") !== "0" });
         kho = NK.tao({ goi: gia ? gia.goi : hoiKho, gapO: TRU ? "dau_truong_tru" : "dau_truong_quai" });
         for (let lan = 0; !(await kho.batDau()); lan++) {
           $("cNoiDung").textContent = "⚠️ Chưa lấy được câu hỏi. Đang thử lại…";
@@ -926,7 +933,6 @@
       });
       if (NHUNG || /#vao/.test(location.hash)) vaoTran(); else moChon(false);
       requestAnimationFrame(ve);
-      batSan3d();
     }
 
     // Sân 3D (cùng bộ hình với làng). Không có WebGL / tải lỗi / quá 15 giây: vẽ 2D trên canvas.
@@ -979,6 +985,7 @@
     const napSinh = NHUNG ? Promise.resolve([null]) : Promise.all([nap("../tu_vung/kho_tu.json"), napJs("dt_sinh_toan.js"), napJs("dt_sinh_tieng_anh.js")]).then(([kt]) => {
       ST = window.KC_DT_SINH_TOAN || null; TA = window.KC_DT_SINH_TA || null; return [kt];
     });
+    batSan3d(); // KC_06B2 (sửa 12/11): tải sân 3D + tướng NGAY, song song với số Quản trị + câu kho (trước đây chờ xong mới tải)
     Promise.all([napCh("cau_hinh_tran_dau"), napCh("cau_hinh_trinh_do"), napSinh]).then(([a, b, [c]]) => khoiDong(a, b, c));
   })();
   </script>
@@ -989,3 +996,4 @@
 <!-- 08/11/2026 - BƯỚC: TC_D06C7b (loaiTru=ct_rao / ct_nha: trận đánh công trình thường của bạn) -->
 <!-- 07/11/2026 - BƯỚC: TC_D05D (kieu "do": phòng thủ đúng đỡ trọn; "Né được!" khi né) -->
 <!-- 11/11/2026 - BƯỚC: KC_06B2 (câu kho chung, máy chủ chấm qua bản đồ; pha tụ lực; số Quản trị; trang thật không nạp bộ sinh câu) -->
+<!-- 12/11/2026 - BƯỚC: KC_06B2 (sửa: tải sân 3D ngay từ đầu, không chờ câu kho; chấm nhanh trên máy, tụ chiêu cố định toiThieuGiay rồi phát) -->

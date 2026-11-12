@@ -60,7 +60,7 @@ QD.NHAN = {
   // khối
   lang: "Làng & nông dân", xay: "Xây nhà", kho: "Kho chứa", danSo: "Dân số", banDo: "Bản đồ", congTrinh: "Công trình", quaiBanDo: "Quái trên bản đồ",
   tru: "Trụ & trận công trình", muaCau: "Mua câu phòng thủ", sua: "Sửa công trình", chay: "Lửa cháy", thuVien: "Thư viện câu hỏi",
-  thoiGian: "Thời gian suy nghĩ", thongTha: "Thong thả (bé nhỏ)", latBaiGiay: "Lật bài (giây)", tuLuc: "Tụ lực lúc chờ chấm", toiThieuGiay: "Ít nhất (giây)", manhSauGiay: "Tụ mạnh sau (giây)", choMangGiay: "Báo chờ mạng sau (giây)", satThuong: "Sát thương", combo: "Combo",
+  thoiGian: "Thời gian suy nghĩ", thongTha: "Thong thả (bé nhỏ)", latBaiGiay: "Lật bài (giây)", tuLuc: "Tụ lực lúc chờ chấm", toiThieuGiay: "Thời gian tụ (giây)", manhSauGiay: "Tụ mạnh sau (giây)", choMangGiay: "Báo chờ mạng sau (giây)", satThuong: "Sát thương", combo: "Combo",
   chiMang: "Chí mạng", ne: "Né", luatChan: "Luật chặn đòn", thua: "Khi thua", thuLinh: "Thủ lĩnh", nongDan: "Nông dân", quai: "Quái (trận đấu)",
   K: "Tốc độ đổi trình độ (K)", onTap: "Ôn tập", thuong: "Thưởng theo độ khó", thanhThao: "Thành thạo chủ đề", tiengAnh: "Tiếng Anh",
   // làng

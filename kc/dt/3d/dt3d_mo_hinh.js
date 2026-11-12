@@ -10,14 +10,19 @@
 //   BoNhieuBan: them(x, y, z, ti, gocDo, chu, mau) -> i; dat(i, x, y, z, ti, gocDo); an(i);
 //               mau(i, color); rung(i, t); chuCua(i); xong() (tính lại khối bao để chạm trúng)
 // LUẬT NỐI: chỉ dùng ctx của dt3d_canh.js.
-// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C)
+// BƯỚC: TC_D02A (tách từ dt_lang_3d.js của TC_D01C); KC_06B2 (12/11/2026: .glb lưu sẵn trong trình duyệt)
 // NGÀY: 23/10/2026
 // ================================================================
 import * as THREE from "three";
 import { GLTFLoader } from "../../thu_vien/three/loaders/GLTFLoader.js";
+import { layTep } from "./dt3d_luu_san.js";
 
-export const taiGlb = (url, baoTai) => new Promise((ok, loi) => new GLTFLoader().load(url, ok,
-  e => { if (baoTai && e.loaded) baoTai(url, e.loaded, e.total || e.loaded); }, loi));
+// KC_06B2 (12/11/2026): file .glb lấy qua bộ lưu sẵn của trình duyệt (dt3d_luu_san.js: ping bản mới, cũ thì dùng bản lưu)
+export const taiGlb = (url, baoTai) => /\.glb(\?|$)/i.test(url)
+  ? layTep(url, baoTai ? (da, tong) => baoTai(url, da, tong) : null).then(buf => new Promise((ok, loi) =>
+      new GLTFLoader().parse(buf, new URL(".", new URL(url, location.href)).href, ok, loi)))
+  : new Promise((ok, loi) => new GLTFLoader().load(url, ok,
+      e => { if (baoTai && e.loaded) baoTai(url, e.loaded, e.total || e.loaded); }, loi));
 
 export function taoBoMoHinh(ctx, glbLang) {
   const mauGoc = {};
@@ -70,3 +75,4 @@ export function taoBoMoHinh(ctx, glbLang) {
   return { mauGoc, vatLieu, kichThuoc, BoNhieuBan };
 }
 // 23/10/2026 18:00 - BƯỚC: TC_D02A
+// 12/11/2026 - BƯỚC: KC_06B2 (taiGlb lấy .glb qua dt3d_luu_san.js)
