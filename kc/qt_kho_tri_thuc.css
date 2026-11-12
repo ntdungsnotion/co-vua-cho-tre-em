@@ -1,0 +1,101 @@
+/* ================================================================
+   FILE: kc/qt_kho_tri_thuc.css
+   CHỨC NĂNG: Giao diện mục "📚 Kho tri thức" của trang Quản trị chung (qt_kho_tri_thuc.js, KC_03B1).
+     - Điện thoại (< 900px): lưới kho 2 ô một hàng; bộ lọc gập trong "⚙️ Bộ lọc"; thẻ một cột; bảng rộng cuộn ngang trong thẻ.
+     - Máy tính (>= 900px): lưới kho 4-6 ô; bộ lọc mở sẵn nhiều cột; >= 1280px thẻ 2 cột, >= 1700px 3 cột (khối rộng tới 1600px).
+   BƯỚC: KC_03B1 - NGÀY: 12/11/2026
+   ================================================================ */
+
+#manhinh-khotrithuc .adminKhoi { max-width: 1600px; }
+
+/* ---- lưới các kho ---- */
+.qttKho { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.qttOKho { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; align-items: center;
+  text-align: left; padding: 8px 10px; border: 2px solid var(--mau-vien); border-radius: 12px; background: var(--mau-nen-trang);
+  font-family: inherit; color: var(--mau-chu); cursor: pointer; min-width: 0; }
+.qttOKho:hover { border-color: var(--mau-chinh); }
+.qttOKho.dangChon { border-color: var(--mau-chinh-dam); background: var(--mau-chinh-nhat); }
+.qttOKho.trong { opacity: 0.6; }
+.qttOKho.qttOTu { border-style: dashed; }
+.qttBieuTuong { grid-row: 1 / 3; font-size: 1.6rem; line-height: 1; }
+.qttTenKho { font-weight: bold; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qttOKho small { color: var(--mau-chu-nhat); font-size: 0.76rem; }
+
+/* ---- bộ lọc ---- */
+.qttLoc { margin-bottom: 6px; }
+#qttTim { width: 100%; box-sizing: border-box; padding: 9px 14px; border: 2px solid var(--mau-vien); border-radius: 999px; font-family: inherit;
+  font-size: 0.95rem; margin-bottom: 8px; }
+.qttLocThem summary { cursor: pointer; font-weight: bold; color: var(--mau-chinh-dam); padding: 4px 0; }
+.qttLocLuoi { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 6px 0 4px; align-items: end; }
+.qttLocLuoi label { display: flex; flex-direction: column; gap: 3px; font-size: 0.82rem; font-weight: bold; color: var(--mau-chinh-dam); min-width: 0; }
+.qttLocLuoi select { width: 100%; box-sizing: border-box; padding: 7px 8px; border: 1px solid var(--mau-vien); border-radius: 8px; font-family: inherit;
+  font-size: 0.92rem; font-weight: normal; color: var(--mau-chu); background: #fff; }
+.qttLocLuoi label.qttHop { flex-direction: row; align-items: center; gap: 6px; font-weight: normal; color: var(--mau-chu); font-size: 0.88rem; cursor: pointer; align-self: center; }
+.qttTom { margin: 4px 0 10px; font-size: 0.9rem; color: var(--mau-chu-nhat); }
+.qttDo { color: var(--mau-that-bai); font-weight: bold; }
+
+/* ---- thẻ ---- */
+.qttDs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+.qttThe { background: var(--mau-nen-khoi); border: 2px solid var(--mau-vien); border-radius: 14px; padding: 12px; min-width: 0; }
+.qttNhanDong { display: flex; flex-wrap: wrap; gap: 4px; }
+.qttNhan { display: inline-block; font-size: 0.74rem; padding: 2px 8px; border-radius: 999px; background: var(--mau-chinh-nhat); color: var(--mau-chinh-dam); white-space: nowrap; }
+.qttNhanMon { background: #e3f1ff; color: #1d5fa0; font-weight: bold; }
+.qttNhanHd { background: #fff1cc; color: var(--mau-phu-dam); }
+.qttNhanRieng { background: #efe3d1; color: #7a4a12; }
+.qttNhanNhay { background: #ffe4cc; color: #9a4b00; }
+.qttNhanSuotDoi { background: #dff6ea; color: #17784a; }
+.qttNhanHan { background: #fde6e6; color: #a32b2f; font-weight: bold; }
+.qttNhanAn { background: #eceff3; color: #5d6b7c; }
+.qttTieuDe { margin: 8px 0 6px; font-size: 1.08rem; line-height: 1.3; }
+.qttNoiDung { font-size: 0.94rem; line-height: 1.45; overflow-wrap: anywhere; }
+.qttNoiDung ul, .qttNoiDung ol { margin: 4px 0; padding-left: 22px; }
+.qttGhi { margin: 4px 0; font-size: 0.84rem; color: #5d6b7c; }
+.qttNguCanh { margin: 8px 0 4px; padding: 6px 10px; border-left: 3px solid var(--mau-chinh); background: #faf8ff; font-size: 0.88rem; border-radius: 0 8px 8px 0; }
+.qttChan { margin: 6px 0 0; font-size: 0.76rem; color: var(--mau-chu-nhat); overflow-wrap: anywhere; }
+.qttChan code { font-size: 0.76rem; }
+.qttChip { display: inline-block; margin: 2px 3px 2px 0; padding: 2px 9px; border-radius: 8px; background: #f3f0fb; border: 1px solid #e3dcf7; font-size: 0.86rem; }
+.qttManh summary { cursor: pointer; font-size: 0.86rem; font-weight: bold; color: var(--mau-chinh-dam); margin-top: 6px; }
+.qttManh div { padding-top: 4px; }
+.qttBang { border-collapse: collapse; font-size: 0.9rem; }
+.qttBang td, .qttBang th { padding: 3px 8px 3px 0; vertical-align: top; text-align: left; }
+.qttBangKe { width: 100%; }
+.qttBangKe th { border-bottom: 2px solid var(--mau-vien); font-size: 0.8rem; color: var(--mau-chinh-dam); white-space: nowrap; }
+.qttBangKe td { border-bottom: 1px dashed #eee8fb; }
+.qttCuon { overflow-x: auto; max-height: 320px; overflow-y: auto; }
+.qttCongThucLon { font-size: 1.35rem; font-weight: bold; margin: 4px 0 6px; font-family: "Cambria Math", "Times New Roman", serif; }
+.qttPhatBieu { margin: 2px 0 4px; font-weight: 600; }
+.qttDay { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.qttMuiTen { color: var(--mau-chu-nhat); padding: 0 2px; }
+.qttNhom { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.qttONhom { border: 1px dashed var(--mau-vien); border-radius: 10px; padding: 6px; }
+.qttONhom b { display: block; font-size: 0.84rem; margin-bottom: 4px; color: var(--mau-chinh-dam); }
+.qttTho { font-style: italic; }
+.qttTho p { margin: 4px 0 8px; }
+.qttMau { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid #0003; vertical-align: -2px; margin-right: 4px; }
+.qttHinhNho { max-height: 48px; vertical-align: middle; }
+.qttMa { font-family: Consolas, monospace; white-space: pre; }
+.qttKhongDuoc { font-size: 0.84rem; color: #a32b2f; }
+.qttTrenHinh { position: relative; max-width: 300px; margin: 4px auto; }
+.qttTrenHinh img { display: block; width: 100%; height: auto; border-radius: 10px; background: #f6fbf4; }
+.qttThieuHinh { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #f2f2f2; border-radius: 10px; color: #888; }
+.qttDiem { position: absolute; transform: translate(-6px, -6px); display: inline-flex; align-items: center; gap: 3px; font-size: 0.78rem; font-weight: bold;
+  background: #fffffff0; border-radius: 999px; padding: 0 7px 0 0; box-shadow: 0 1px 3px #0003; white-space: nowrap; }
+.qttDiem i { width: 12px; height: 12px; border-radius: 50%; background: var(--mau-that-bai); border: 2px solid #fff; }
+.qttTrang { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 14px 0 4px; font-size: 0.9rem; }
+
+@media (min-width: 600px) { .qttKho { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 900px) {
+  .qttKho { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .qttLocLuoi { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  .qttKho { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .qttDs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qttLocLuoi { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (min-width: 1700px) {
+  .qttKho { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .qttDs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .qttLocLuoi { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+}
+/* 12/11/2026 - BƯỚC: KC_03B1 */

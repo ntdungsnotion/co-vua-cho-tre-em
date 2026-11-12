@@ -26,6 +26,8 @@
               logic DÙNG LẠI admin_NC.js ở gốc repo (không viết lại).
        CẬP NHẬT: 20/10/2026 - TC_T03B: thêm mục "📖 Kho từ vựng" (Quản trị chung): sửa kho từ
                  dùng chung + tải hình của từ, lưu thẳng vào repo qua GitHub API (qt_kho_tu.js/.css).
+       CẬP NHẬT: 12/11/2026 - KC_03B1: mục "📚 Kho tri thức" (Quản trị chung): xem thẻ nhớ mọi môn theo kho / bộ / lớp / hình dạng,
+                 xem trước nội dung theo 9 khuôn + mảnh nhớ (qt_kho_tri_thuc.js/.css, kc_the_nho_khuon.js, SQL KC_03B1).
        CẬP NHẬT: 12/11/2026 - KC_06C: mục "❓ Kho câu hỏi" (Quản trị chung): duyệt / sửa / loại / xoá câu (từng câu + hàng loạt),
                  nhập JSON, ô thiếu câu, từ cấm, nhật ký chặn, cấu hình kho (qt_kho_cau.js/.css, SQL KC_06C).
        CẬP NHẬT: 10/11/2026 - TC_D18A: nhóm "⚔️ Đấu Trường Tri Thức" trong Trò Chơi, mục "🎛️ Thông số" (qt_dau_truong.js/.css,
@@ -55,6 +57,7 @@
   <link rel="stylesheet" href="qt_kho_tu.css">
   <link rel="stylesheet" href="qt_dau_truong.css"> <!-- TC_D18A -->
   <link rel="stylesheet" href="qt_kho_cau.css"> <!-- KC_06C -->
+  <link rel="stylesheet" href="qt_kho_tri_thuc.css"> <!-- KC_03B1 -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -454,6 +457,7 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinhchung" type="button">⚙️ Cấu hình chung</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotu" type="button">📖 Kho từ vựng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khocau" type="button">❓ Kho câu hỏi</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="khotrithuc" type="button">📚 Kho tri thức</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="giongdoc" type="button">🔊 Giọng đọc</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="donkho" type="button">🧹 Dọn kho ảnh</button>
       </div>
@@ -1496,6 +1500,18 @@
     <!-- MÀN HÌNH 9: DỌN KHO ẢNH - FILE MỒ CÔI (NC_06A-2) -->
     <!-- ============================================================ -->
     <!-- ============================================================ -->
+    <!-- KC_03B1 - MÀN HÌNH: KHO TRI THỨC (THẺ NHỚ MỌI MÔN; qt_kho_tri_thuc.js dựng nội dung trong #qttGoc) -->
+    <section class="adminManHinh" id="manhinh-khotrithuc">
+      <div class="adminKhoi">
+        <h3>📚 Kho tri thức</h3>
+        <p class="adminGhiChu">
+          Những điều các bé phải nhớ ở mọi môn, chia thành thẻ nhớ. Mỗi thẻ gồm nhiều <b>mảnh nhớ</b>: Sổ Ghi Nhớ theo dõi bé đã thuộc
+          hay còn quên từng mảnh. Kho dùng chung cho cả app (Ôn thẻ, câu hỏi trong trò chơi). Từ vựng tiếng Anh ở kho riêng 📖 Kho từ vựng.
+        </p>
+        <div id="qttGoc"></div>
+      </div>
+    </section>
+
     <!-- KC_06C - MÀN HÌNH: KHO CÂU HỎI CHUNG TOÀN APP (qt_kho_cau.js dựng nội dung trong #qkcGoc) -->
     <!-- ============================================================ -->
     <section class="adminManHinh" id="manhinh-khocau">
@@ -1570,6 +1586,8 @@
   <script src="quantri_NC.js"></script>
   <script src="qt_kho_tu.js"></script>
   <script src="qt_kho_cau.js"></script>       <!-- KC_06C: ❓ Kho câu hỏi -->
+  <script src="kc_the_nho_khuon.js"></script> <!-- KC_03B1: khuôn 9 hình dạng thẻ nhớ -->
+  <script src="qt_kho_tri_thuc.js"></script>  <!-- KC_03B1: 📚 Kho tri thức -->
   <script src="qt_loi_dong_vien.js"></script>
   <script src="qt_goi_y.js"></script>
   <!-- TC_D18A: Đấu Trường Tri Thức. Khung trước, rồi mỗi mục một file (thứ tự ở đây = thứ tự trên thanh bên).
