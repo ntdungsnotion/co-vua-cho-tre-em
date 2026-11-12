@@ -1,6 +1,6 @@
 // ================================================================
 // FILE: dt/3d/dt3d_cau_cua_be.js  (ES module) - "✏️ CÂU CỦA CON": BÉ TỰ ĐẶT CÂU HỎI (KC_06D, Thiet_Ke_Kho_Cau_Hoi.md mục 4, 5, 9)
-// CHỨC NĂNG: - Thẻ "✏️ Câu của con" trong bảng 📝 Cập nhật câu hỏi (dt3d_tru.js): nút ➕ Đặt câu mới + số lượt còn hôm nay, danh sách
+// CHỨC NĂNG: - Thẻ "✏️ Câu của con" trong bảng 📝 Cập nhật câu hỏi (dt3d_tru.js): 2 lựa chọn 📚 Chọn trong kho của con | ➕ Thêm câu mới + số lượt còn hôm nay, danh sách
 //              câu bé đã đặt với nhãn trạng thái thân thiện (⏳ đang xem / ✅ dùng được / ✏️ cần sửa / 🙈 đã cất). Câu dùng được
 //              chạm là gắn vào công trình (như câu thư viện). Câu cần sửa / đã cất có lý do + gợi ý và nút ✏️ Sửa lại.
 //              Câu có tin mới (vừa được duyệt / bị loại) tô sáng, rồi báo máy chủ "đã xem".
@@ -74,9 +74,12 @@ export function taoCauCuaBe(the) {
   async function ve(cd, ol, chonCau) {
     veLai = () => ve(cd, ol, chonCau);
     cd.textContent = ""; ol.textContent = "⏳";
-    const moi = nut("➕ Đặt câu mới", "d3CbMoi"); moi.addEventListener("click", () => soanMoi(null));
+    // Hai lựa chọn (người dùng 12/11/2026): chọn câu trong kho của con | thêm câu mới
+    const kho = nut("📚 Chọn trong kho của con", "d3CnChip d3CbKho"); kho.setAttribute("aria-pressed", "true");
+    kho.addEventListener("click", () => ve(cd, ol, chonCau));
+    const moi = nut("➕ Thêm câu mới", "d3CbMoi"); moi.addEventListener("click", () => soanMoi(null));
     const luot = tao("span", "d3CbLuot");
-    cd.append(moi, luot);
+    cd.append(kho, moi, luot);
     const kq = await mayChu.cauCuaBe().catch(() => null);
     if (!ol.isConnected) return;
     ol.textContent = "";
@@ -86,12 +89,15 @@ export function taoCauCuaBe(the) {
     if (l.khoa) { luot.textContent = "Hôm nay mình nghỉ đặt câu nhé, mai con thử lại!"; moi.disabled = true; }
     else if (l.conLai === 0) { luot.textContent = "Hôm nay con đặt đủ " + (l.gioiHan || 10) + " câu rồi, mai đặt tiếp nhé!"; moi.disabled = true; }
     else if (Number.isInteger(l.conLai)) luot.textContent = "Hôm nay con còn " + l.conLai + " lượt đặt câu";
-    const ds = kq.cau || [];
+    // câu dùng được lên đầu, rồi câu cần sửa / đã cất, cuối cùng câu đang chờ (giữ thứ tự mới nhất trong từng nhóm)
+    const THU_TU = { dat: 0, sua: 1, cat: 2, cho: 3 };
+    const ds = (kq.cau || []).map((c, i) => [c, i]).sort((a, b) => (THU_TU[(TRANG_THAI[a[0].trangThai] || {}).lop] - THU_TU[(TRANG_THAI[b[0].trangThai] || {}).lop]) || a[1] - b[1]).map(x => x[0]);
     if (!ds.length) {
       const g = tao("li", "d3CbTrong");
       g.append(tao("b", "", "Con chưa đặt câu nào."), tao("div", "", "Con nghĩ ra một câu đố thật hay, cô chú xem xong là con gắn vào công trình để thử tài các bạn khác!"));
       ol.appendChild(g); return;
     }
+    if (ds.some(c => (TRANG_THAI[c.trangThai] || {}).lop === "dat")) ol.appendChild(tao("li", "d3CbGoiY", "Chạm một câu có ✅ để gắn vào công trình."));
     const moiXem = [];
     for (const c of ds) {
       const tt = TRANG_THAI[c.trangThai] || TRANG_THAI.cho_nguoi, dung = tt.lop === "dat";
