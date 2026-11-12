@@ -238,7 +238,8 @@
     return { goi, soCau: cau.length, dap: id => { const c = theoId.get(id); return c ? c.dung[0] : null; } };
   }
 
-  goc.KC_DT_NGUON_KHO = { tao, khoGia, doiCau };
+  goc.KC_DT_NGUON_KHO = { tao, khoGia, doiCau, dapAnNhanh }; // KC_06B3: dapAnNhanh(cau) cho trận trụ / công trình (chấm ngay)
 })(typeof window !== "undefined" ? window : globalThis);
 // 11/11/2026 - BƯỚC: KC_06B2
 // 12/11/2026 - BƯỚC: KC_06B2 (chấm nhanh trên máy: lô kèm muoi + k, máy chủ chấm ở nền)
+// 12/11/2026 - BƯỚC: KC_06B3 (xuất dapAnNhanh cho trận trụ / công trình của bạn)

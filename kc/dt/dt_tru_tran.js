@@ -31,6 +31,8 @@
 //   traLoi(tr, CH, bay, { chon, beDung }, cauTru) -> kết quả { so, ben, kieu, satThuong, dapAnDung?, mau{be, tru}, ket? }
 //     tr = trạng thái trận (máy chủ giữ): { soCau, tiLe, cong, beDanh, mauBe, mauBeToiDa, mauTru, mauTruToiDa,
 //          so (số lượt đã mở), ben, moLuc, truDung, giayTru, ket }; hai hàm sửa thẳng tr.
+//   KC_06B3: duDoan(luot, mau { be, tru }, { chon, beDung }, dapAnDung) -> kết quả như traLoi, tính NGAY trên máy bé từ lượt máy chủ gửi
+//     (beDanh, cong, soCau, so, ben, truDung) | null (lượt thiếu số: máy chủ chưa chạy SQL kc06b3; lượt bé chưa biết đáp án)
 // BƯỚC: TC_D06C2g
 // NGÀY: 05/11/2026
 // ================================================================
@@ -119,6 +121,16 @@
     return kq;
   }
 
+  // KC_06B3: trang trận dự đoán kết quả lượt ngay (chấm trên máy như trận quái) bằng đúng traLoi; máy chủ vẫn chấm lại, giữ máu
+  function duDoan(luot, mau, tl, dapAnDung) {
+    const so = k => Number.isFinite(luot && luot[k]);
+    if (!luot || !so("beDanh") || !so("cong") || !so("soCau") || !so("so") || !mau) return null;
+    if (luot.ben === "tru" ? typeof luot.truDung !== "boolean" : luot.ben !== "be" || !Number.isInteger(dapAnDung)) return null;
+    const tr = { soCau: luot.soCau, cong: luot.cong, beDanh: luot.beDanh, mauBe: mau.be, mauTru: mau.tru, so: luot.so, ben: luot.ben,
+      moLuc: 0, truDung: luot.ben === "tru" ? luot.truDung : null, ket: null };
+    return traLoi(tr, { tru: { giayBe: Infinity, treGiay: 0 } }, 0, tl || {}, { dung: luot.ben === "be" ? [dapAnDung] : [] });
+  }
+
   // TC_D06C7b: chọn n câu cho trận công trình thường từ kho (kho ít hơn n thì lặp lại kho đã xáo)
   function chonCau(kho, n, rng) {
     if (!Array.isArray(kho) || !kho.length || !(n > 0)) return null;
@@ -181,7 +193,7 @@
     return m / s.mauToiDa <= ((CH.chay || {}).to == null ? 0.5 : CH.chay.to) ? 2 : 1;
   }
 
-  goc.KC_DT_TRU_TRAN = { laTru, soTru, congNguoi, beDanhCt, laDanh, danhDuoc, soDanh, kcMep, trongBaoHo, chonCau, hpThuLinh, hpNongDan, banMot, moLuot, traLoi,
+  goc.KC_DT_TRU_TRAN = { laTru, soTru, congNguoi, beDanhCt, laDanh, danhDuoc, soDanh, kcMep, trongBaoHo, chonCau, hpThuLinh, hpNongDan, banMot, moLuot, traLoi, duDoan,
     soCt, mauCt, coSan, giaCau, cauSua, cauDu, ganCauMua, doiCau, phanMat, giaSua, giaySua, mucChay };
 })(typeof window !== "undefined" ? window : globalThis);
 // 05/11/2026 - BƯỚC: TC_D06C2g (trụ phòng thủ tấn công người chơi khác)
@@ -190,3 +202,4 @@
 // 08/11/2026 - BƯỚC: TC_D06C7d (soCt, mauCt, coSan, giaCau, cauSua, cauDu: số câu riêng từng công trình, bé mua bằng vàng)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (ganCauMua: câu bé tự chọn; giaSua / giaySua: sửa bằng tài nguyên, nông dân sửa; mucChay: cháy nhỏ / to)
 // 09/11/2026 - BƯỚC: TC_D06E (doiCau: bé đổi từng câu bằng thư viện câu hỏi)
+// 12/11/2026 - BƯỚC: KC_06B3 (duDoan: trang trận trụ / công trình chấm ngay trên máy)

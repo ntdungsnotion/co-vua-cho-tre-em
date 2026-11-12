@@ -34,6 +34,9 @@
              nhờ bản đồ gọi máy chủ qua postMessage "dt-kho-hoi" / "dt-kho-dap" (ô câu, lô câu, chấm, số Quản trị); PHA TỤ LỰC che
              lúc chờ chấm (đồng hồ dừng lúc bé chạm, chờ mạng lâu thì "Đang chờ mạng..."); trang thật KHÔNG nạp bộ sinh câu nữa.
              Trang thử (không ?nhung) vẫn dùng bộ sinh; &kho=gia: thử đường kho bằng kho giả dựng từ bộ sinh, &tre=<ms> giả mạng chậm; &nhanh=0: kho giả không kèm mã chấm nhanh)
+             KC_06B3 (12/11/2026: trận TRỤ / CÔNG TRÌNH của bạn chấm ngay trên máy như trận quái: lượt kèm số trận + mã kiểm câu,
+             trang dự đoán kết quả sau tụ 0,5 giây, máy chủ chấm lại và giữ máu (lệch thì sửa thanh máu theo máy chủ);
+             lượt trụ gửi mã lượt + mã câu phòng thủ để máy chủ tự chấm)
        NGÀY: 29/10/2026; 29/10/2026 22:47; 30/10/2026; 30/10/2026 06:00; 30/10/2026 (TC_D06A); 04/11/2026 (TC_D06C2a)
        PHỤ THUỘC: chung/nv_ve.js, dt/dt_trinh_do.js, dt/dt_nguon_kho.js (KC_06B2), dt/dt_sinh_toan.js + dt/dt_sinh_tieng_anh.js (chỉ trang thử),
                   dt/dt_cau_hoi.js, dt/dt_quai.js, dt/dt_tran_dau.js, dt/dt_ve_quai.js,
@@ -270,6 +273,7 @@
   <script src="dt_cau_hoi.js"></script>
   <script src="dt_quai.js"></script>
   <script src="dt_tran_dau.js"></script>
+  <script src="dt_tru_tran.js"></script> <!-- KC_06B3: duDoan (trận trụ / công trình chấm ngay trên máy) -->
   <script src="dt_ve_quai.js"></script>
   <script type="importmap">{ "imports": { "three": "../thu_vien/three/three.module.min.js" } }</script>
   <script type="module" src="3d/dt3d_tran.js"></script>
@@ -440,7 +444,7 @@
       const so = k => Math.max(0, Math.round(Number(TS.get(k)) || 0));
       const be = { hp: so("mauBe"), hpToiDa: Math.max(1, so("mauBeToiDa")), mp: 0, mpToiDa: 1, combo: 0 };
       const q = { ten: TS.get("tenTru") || "Trụ tên", lv: so("cap") || 1, hp: so("mauTru"), hpToiDa: Math.max(1, so("mauTruToiDa")), mp: 0, mpToiDa: 1, combo: 0, mon: "bat_ky" };
-      tru = { luot: null, ket: null, tk: { soLuot: 0, beDung: 0, beBam: 0, comboCaoNhat: 0, satThuongGay: 0, satThuongNhan: 0 } };
+      tru = { luot: null, ket: null, cho: null, tk: { soLuot: 0, beDung: 0, beBam: 0, comboCaoNhat: 0, satThuongGay: 0, satThuongNhan: 0 } };
       return {
         be: () => be, quai: () => q, giayBe: Number(TS.get("giayBe")) || 15, // giây (đồng hồ lượt bé)
         luot: () => tru.luot && { so: tru.luot.so, tanCong: tru.luot.tanCong, han: tru.luot.han, thongTha: false },
@@ -457,7 +461,7 @@
               if (l.daChon == null && !l.choLat) { l.choLat = true; const so = l.so; chamKho(cauNay, null, l.tMo, null).then(kq => { if (tru.luot && tru.luot.so === so) xongChamTru(kq, null); }); }
               return null;
             }
-            guiTru({ beDung: !!l.beDung });
+            guiTru(tlThu(l)); // KC_06B3: máy chủ tự chấm lại câu phòng thủ theo mã câu
           }
           return null;
         },
@@ -492,6 +496,8 @@
     }
     async function moLuotTru(lan) {
       clearTimeout(henTiep); beThu = false; quaiThu = false;
+      if (tru.cho) { const tiep = await tru.cho; tru.cho = null; if (!tiep) return; } // KC_06B3: lượt trước (đã hiện theo dự đoán) chờ máy chủ ghi xong
+      if (tru.ket) return;
       const kq = await hoiBanDo("luot", {});
       if (!kq.ok) {
         if (kq.ma === "het_tran" || (lan || 0) >= 3) { baoBanDo({ loai: "dt-tran-dong", hpBe: T.be().hp }); return; }
@@ -505,11 +511,12 @@
         if (!x || !x.cau) { $("cKetQua").textContent = "⚠️ Chưa lấy được câu hỏi · đang thử lại…"; henTiep = setTimeout(() => moLuotTru(lan), 2500); return; }
         cauNay = x.cau;
         const t1 = bayGio();
-        tru.luot = { so: l.so, tanCong: "quai", tMo: t1, tTru: t1 + (Number(l.giayTru) || 4) * 1000, han: t1 + (Number(l.giayTru) || 4) * 1000, daGui: false };
+        tru.luot = { so: l.so, tanCong: "quai", tMo: t1, tTru: t1 + (Number(l.giayTru) || 4) * 1000, han: t1 + (Number(l.giayTru) || 4) * 1000, daGui: false, sv: l };
         hienCau(cauNay, false);
-      } else { // bé tấn công: câu của trụ (máy chủ không gửi đáp án)
+      } else { // bé tấn công: câu của trụ (máy chủ không gửi đáp án; KC_06B3: gửi mã kiểm muoi + k để chấm ngay trên máy)
         cauNay = Object.assign({ dung: [], loiGiai: "" }, l.cau || { noiDung: "…", dapAn: [] });
-        tru.luot = { so: l.so, tanCong: "be", tMo: t, han: t + (Number(l.han) || 15) * 1000, daGui: false };
+        cauNay.lgSan = typeof cauNay.loiGiai === "string" ? cauNay.loiGiai : ""; cauNay.loiGiai = "";
+        tru.luot = { so: l.so, tanCong: "be", tMo: t, han: t + (Number(l.han) || 15) * 1000, daGui: false, sv: l };
         hienCau(cauNay, true);
       }
       capNhatDongHo();
@@ -544,22 +551,69 @@
       if (l.beDung) { tru.tk.beDung++; beThu = true; if (san3d) san3d.thu("be", true); }
       if (l.daChon != null) l.tTru = Math.min(l.tTru, bayGio() + chTran.tuaKhiDaBamGiay * 1000);
     }
-    async function guiTru(tl, lan) {
+    // KC_06B3: lượt trụ gửi lựa chọn + mã lượt + mã câu phòng thủ (máy chủ tự chấm lại, thôi tin "bé đúng" máy gửi)
+    const tlThu = l => ({ beDung: !!l.beDung, chon: l.daChon != null ? l.daChon : null, maLuot: (cauNay && cauNay.maLuot) || null, id: cauNay && Number.isInteger(cauNay.id) ? cauNay.id : null });
+    // Gửi máy chủ, lỗi mạng thử lại tối đa 3 lần (cách 2 giây)
+    let soDuDoan = 0;
+    async function goiTra(tl) {
+      for (let lan = 0; ; lan++) {
+        const kq = await hoiBanDo("tra", tl);
+        if (kq.ok || kq.ma === "het_tran" || lan >= 3) return kq;
+        $("cKetQua").textContent = "⚠️ " + (kq.lyDo || "Mất kết nối") + " · đang thử lại…";
+        await ngu(2000);
+      }
+    }
+    // KC_06B3 (người dùng 12/11/2026 "đồng nhất cách hoạt động"): dự đoán kết quả lượt NGAY trên máy như trận quái, cùng luật
+    // dt_tru_tran.js traLoi (số trận máy chủ gửi kèm lượt: beDanh, cong, soCau; lượt trụ: truDung; lượt bé: mã kiểm muoi + k).
+    // Không dự đoán được (máy chủ chưa chạy SQL kc06b3) -> null = chờ máy chủ như cũ.
+    async function duDoan(l, tl) {
+      const TTR = window.KC_DT_TRU_TRAN; if (!TTR || !TTR.duDoan) return null;
+      const d = l.tanCong === "be" && cauNay && cauNay.k ? await NK.dapAnNhanh(cauNay) : null;
+      const r = TTR.duDoan(l.sv, { be: T.be().hp, tru: T.quai().hp }, tl, d);
+      if (r && r.ben === "be") r.loiGiai = cauNay.lgSan || "";
+      return r;
+    }
+    const taoKetTru = r => ({ thang: r.ket === "be" ? "be" : r.ket === "tru" ? "quai" : null, lyDo: r.ket, tongKet: Object.assign({}, tru.tk),
+      nghiDen: bayGio() + (Number(TS.get("nghi")) || 120) * 1000 });
+    async function guiTru(tl) {
       const l = tru.luot; if (!l) return;
       l.daGui = true;
-      const kq = await hoiBanDo("tra", tl);
-      if (l.tl) { // KC_06B2: tụ lực kéo tối thiểu rồi bung (trúng) / tan (sai, hết giờ)
-        const con = tuLucCh.toiThieuGiay * 1000 - (bayGio() - (l.tBam || 0));
-        if (con > 0) await ngu(con);
-        if (kq.ok && kq.kq && kq.kq.kieu === "trung") l.tl.bung(); else l.tl.tan();
-        l.tl = null;
+      const P = goiTra(tl), du = await duDoan(l, tl);
+      if (du && !du.ket) { // KC_06B3: hiện ngay theo dự đoán; máy chủ trả về thì sửa thanh máu theo máy chủ (máy chủ là gốc)
+        tru.cho = P.then(kq => doiChieuTru(kq)); soDuDoan++;
+        await xongTuLuc(l, du.kieu === "trung");
+        apDungTru(du, l);
+        return;
       }
-      if (!kq.ok) {
-        if (kq.ma === "het_tran" || (lan || 0) >= 3) { baoBanDo({ loai: "dt-tran-dong", hpBe: T.be().hp }); return; }
-        $("cKetQua").textContent = "⚠️ " + (kq.lyDo || "Mất kết nối") + " · đang thử lại…";
-        setTimeout(() => guiTru(tl, (lan || 0) + 1), 2000); return;
+      // trận sắp kết thúc theo dự đoán / không dự đoán được: chờ máy chủ (kết thúc trận luôn theo máy chủ)
+      const kq = await P;
+      await xongTuLuc(l, !!(kq.ok && kq.kq && kq.kq.kieu === "trung"));
+      if (!kq.ok) { baoBanDo({ loai: "dt-tran-dong", hpBe: T.be().hp }); return; }
+      apDungTru(kq.kq, l);
+    }
+    // KC_06B2: tụ lực kéo tối thiểu rồi bung (trúng) / tan (sai, hết giờ)
+    async function xongTuLuc(l, trung) {
+      if (!l.tl) return;
+      const con = tuLucCh.toiThieuGiay * 1000 - (bayGio() - (l.tBam || 0));
+      if (con > 0) await ngu(con);
+      if (l.tl) { if (trung) l.tl.bung(); else l.tl.tan(); }
+      l.tl = null;
+    }
+    // Máy chủ trả kết quả lượt đã hiện theo dự đoán: máu theo máy chủ; máy chủ báo hết trận (lệch dự đoán) thì kết thúc. -> tiếp tục được?
+    function doiChieuTru(kq) {
+      if (!kq.ok) { baoBanDo({ loai: "dt-tran-dong", hpBe: T.be().hp }); return false; }
+      const r = kq.kq, be = T.be(), q = T.quai();
+      if (r.mau && (be.hp !== r.mau.be || q.hp !== r.mau.tru)) { be.hp = r.mau.be; q.hp = r.mau.tru; veThanh(); }
+      if (r.ket && !tru.ket) {
+        clearTimeout(henTiep); tru.ket = taoKetTru(r); ketThucLuc = bayGio();
+        if (san3d) san3d.ketThuc(tru.ket.thang);
+        setTimeout(() => moKetThuc(tru.ket), 1500);
+        return false;
       }
-      const r = kq.kq, be = T.be(), q = T.quai(), beDanh = r.ben === "be";
+      return true;
+    }
+    function apDungTru(r, l) {
+      const be = T.be(), q = T.quai(), beDanh = r.ben === "be";
       be.hp = r.mau.be; q.hp = r.mau.tru;
       if (beDanh) {
         cauNay.dung = Number.isInteger(r.dapAnDung) ? [r.dapAnDung] : []; cauNay.loiGiai = r.loiGiai || "";
@@ -570,11 +624,7 @@
       const k = { so: r.so, tanCong: beDanh ? "be" : "quai", kieu: r.kieu === "sai" ? "hut" : r.kieu, satThuong: r.satThuong || 0, chiMang: false, neThu: false,
         beChon: l.daChon != null ? l.daChon : null, quaiChon: null, dapAnDung: cauNay.dung[0], loiGiai: beDanh ? r.loiGiai : cauNay.loiGiai || "",
         mp: { be: 0, quai: 0 }, hp: { be: be.hp, quai: q.hp }, combo: { be: 0, quai: 0 }, phanDon: r.phanDon || 0, tKet: bayGio() };
-      if (r.ket) {
-        tru.ket = { thang: r.ket === "be" ? "be" : r.ket === "tru" ? "quai" : null, lyDo: r.ket, tongKet: Object.assign({}, tru.tk),
-          nghiDen: bayGio() + (Number(TS.get("nghi")) || 120) * 1000 };
-        k.ketThuc = tru.ket;
-      }
+      if (r.ket) { tru.ket = taoKetTru(r); k.ketThuc = tru.ket; }
       xuLyKetQua(k);
     }
     function textTru(k) {
@@ -975,7 +1025,7 @@
       ve(); n.classList.remove("an");
     }
 
-    window.__dtTran = { tran: () => T, cau: () => cauNay, san: () => san3d }; // cho kịch bản thử Chrome biết trạng thái
+    window.__dtTran = { tran: () => T, cau: () => cauNay, san: () => san3d, soDuDoan: () => soDuDoan }; // cho kịch bản thử Chrome biết trạng thái (KC_06B3: số lượt trụ hiện theo dự đoán)
 
     const nap = u => fetch(u, { cache: "no-cache" }).then(r => r.json()).catch(() => null);
     const napJs = u => new Promise(x => { const sc = document.createElement("script"); sc.src = u; sc.onload = sc.onerror = () => x(); document.head.appendChild(sc); });
