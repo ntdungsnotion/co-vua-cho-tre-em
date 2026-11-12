@@ -7,9 +7,10 @@
 //   - Danh sách thẻ: nhãn (môn, lớp, hình dạng, bộ, riêng / nhạy cảm / ôn suốt đời / hạn soát), XEM TRƯỚC nội dung theo khuôn
 //     (bảng hỏi đáp, bảng nhiều mặt, công thức + ký hiệu, quy tắc, dãy thứ tự, nhóm, thơ, điểm trên hình, các bước),
 //     danh sách mảnh nhớ (đơn vị Sổ Ghi Nhớ ghi tiến độ), ngữ cảnh, nguồn.
-//   Bản này CHỈ XEM. Nhập JSON / sửa / ẩn thẻ, phụ huynh giao thẻ: KC_03B2.
+//   KC_03B2 (12/11/2026): thanh công cụ ➕ Thêm thẻ / 📥 Nhập nhiều thẻ (khung soạn ở qt_the_nho_soan.js, kiểm trùng trước khi lưu);
+//     mỗi thẻ có nút ✏️ Sửa và 🙈 Ẩn / 👁 Hiện (RPC kc_the_nho_admin_an, SQL/supabase_kc03b2_them_the.sql). Giao thẻ cho bé: KC_03B3.
 //   RPC: kc_the_nho_admin_ds (kiểm admin ở máy chủ, SQL/supabase_kc03b1_kho_tri_thuc.sql ở repo_rieng), kc_mon_chu_de.
-// BƯỚC: KC_03B1 - NGÀY: 12/11/2026
+// BƯỚC: KC_03B1 - NGÀY: 12/11/2026 · KC_03B2 - 12/11/2026
 // PHỤ THUỘC: ../api.js, ../admin_NC.js (adminGoiRpc, adminThoat), kc_the_nho_khuon.js (KC_THE_NHO), quantri_NC.html có nút
 //   data-manhinh="khotrithuc" + section #manhinh-khotrithuc (#qttGoc), qt_kho_tri_thuc.css.
 // ================================================================
@@ -21,7 +22,7 @@
   var T = adminThoat, K = window.KC_THE_NHO, CO = 24;
   var NHAN_HD = { hoi_dap: "❓ Hỏi đáp", nhieu_mat: "🔀 Nhiều mặt", cong_thuc: "🧮 Công thức", quy_tac: "📏 Quy tắc", thu_tu: "🔢 Thứ tự",
     nhom: "🗂️ Nhóm", thuoc_long: "📜 Thuộc lòng", tren_hinh: "🖼️ Trên hình", quy_trinh: "🪜 Quy trình" };
-  var mon = [], bo = [], hinhNen = {}, thongKe = null, tong = 0, trang = 0, lanTai = 0, daMo = false;
+  var mon = [], bo = [], hinhNen = {}, thongKe = null, tong = 0, trang = 0, lanTai = 0, daMo = false, dsThe = {};
   var loc = { tim: "", mon: "", bo: "", lop: "", hinhDang: "", rieng: "", denHanSoat: false, an: false };
 
   function el(id) { return document.getElementById(id); }
@@ -129,7 +130,7 @@
     return h;
   }
 
-  function theHtml(t) {
+  function theHtml(t, khongNut) {
     var m = monCua(t.mon), b = bo.filter(function (x) { return x.ma === t.bo; })[0], hn = homNay();
     var nhan = '<span class="qttNhan qttNhanMon">' + T(m.bieuTuong + " " + m.ten) + "</span>"
       + '<span class="qttNhan">' + T(lopChu(t)) + "</span>"
@@ -149,7 +150,9 @@
       + (t.nguCanh ? '<p class="qttNguCanh">💬 ' + T(t.nguCanh) + "</p>" : "")
       + '<details class="qttManh"><summary>🧩 ' + manh.length + " mảnh nhớ</summary><div>"
       + manh.map(function (x) { return '<span class="qttChip" title="' + T(x.ma) + '">' + T(x.ten || x.ma) + "</span>"; }).join("") + "</div></details>"
-      + '<p class="qttChan"><code>' + T(t.id) + "</code>" + (t.nguon ? " · " + T(t.nguon) : "") + " · bản " + (t.phienBan | 0) + "</p>"
+      + '<p class="qttChan"><code>' + T(t.id) + "</code>" + (t.nguon ? " · " + T(t.nguon) : "") + (t.phienBan ? " · bản " + (t.phienBan | 0) : "") + "</p>"
+      + (khongNut ? "" : '<div class="qttNutThe"><button type="button" class="adminNut adminNutPhu" data-sua="' + T(t.id) + '">✏️ Sửa</button>'
+        + '<button type="button" class="adminNut adminNutPhu" data-an="' + T(t.id) + '" data-hien="' + (t.hien ? "0" : "1") + '">' + (t.hien ? "🙈 Ẩn" : "👁 Hiện lại") + "</button></div>")
       + "</article>";
   }
 
@@ -157,7 +160,9 @@
   function veKhung() {
     var lop = '<option value="">Mọi lớp</option>';
     for (var i = 1; i <= 12; i++) lop += '<option value="' + i + '">Lớp ' + i + "</option>";
-    goc.innerHTML = '<div id="qttKho" class="qttKho"></div>'
+    goc.innerHTML = '<div class="qttCongCu"><button type="button" class="adminNut adminNutThanhCong" id="qttThem">➕ Thêm thẻ</button>'
+      + '<button type="button" class="adminNut adminNutPhu" id="qttNhap">📥 Nhập nhiều thẻ (JSON)</button></div><div id="qtsKhung"></div>'
+      + '<div id="qttKho" class="qttKho"></div>'
       + '<div class="qttLoc">'
       + '<input type="search" id="qttTim" placeholder="Tìm chữ trong thẻ, mã thẻ…" aria-label="Tìm thẻ">'
       + '<details class="qttLocThem" id="qttLocThem"><summary>⚙️ Bộ lọc</summary><div class="qttLocLuoi">'
@@ -186,11 +191,28 @@
       if (ma === "__tu") { var nut = document.querySelector('.adminNutManHinh[data-manhinh="khotu"]'); if (nut) nut.click(); return; }
       chonMon(loc.mon === ma ? "" : ma);
     });
+    el("qttThem").addEventListener("click", function () { if (window.QTS) window.QTS.moi(); });
+    el("qttNhap").addEventListener("click", function () { if (window.QTS) window.QTS.nhap(); });
+    el("qttDs").addEventListener("click", function (su) {
+      var n = su.target.closest("[data-sua]");
+      if (n) { if (window.QTS && dsThe[n.getAttribute("data-sua")]) window.QTS.sua(dsThe[n.getAttribute("data-sua")]); return; }
+      n = su.target.closest("[data-an]");
+      if (n) anHien(n);
+    });
     el("qttTrang").addEventListener("click", function (su) {
       var n = su.target.closest("[data-trang]"); if (!n) return;
       trang = Number(n.getAttribute("data-trang")); taiDs(); goc.scrollIntoView({ block: "start" });
     });
     if (window.matchMedia("(min-width: 900px)").matches) el("qttLocThem").open = true;
+  }
+  function anHien(nut) {
+    var id = nut.getAttribute("data-an"), hien = nut.getAttribute("data-hien") === "1", t = dsThe[id];
+    if (!hien && !window.confirm("Ẩn thẻ \"" + (t ? t.tieuDe : id) + "\"?\nBé sẽ không thấy thẻ này nữa. Tiến độ đã học vẫn giữ, có thể hiện lại.")) return;
+    nut.disabled = true;
+    goi("kc_the_nho_admin_an", { p_id: id, p_hien: hien }).then(function (kq) {
+      if (!kq.thanhCong) { nut.disabled = false; window.alert("❌ " + kq.thongBao + canSql(kq).replace("KC_03B1", "KC_03B2")); return; }
+      taiDs();
+    });
   }
   function chonMon(ma) {
     loc = { tim: "", mon: ma, bo: "", lop: "", hinhDang: "", rieng: "", denHanSoat: false, an: false };
@@ -232,7 +254,8 @@
         + (tk.denHanSoat ? ' · <span class="qttDo">🔁 ' + tk.denHanSoat + " thẻ đến hạn soát</span>" : "")
         + (tk.rieng ? " · 🔒 " + tk.rieng + " thẻ riêng" : "");
       var ds = kq.the || [];
-      o.innerHTML = ds.length ? ds.map(theHtml).join("") : '<p class="adminGhiChu">Không có thẻ nào khớp bộ lọc.</p>';
+      dsThe = {}; ds.forEach(function (t) { dsThe[t.id] = t; });
+      o.innerHTML = ds.length ? ds.map(function (t) { return theHtml(t); }).join("") : '<p class="adminGhiChu">Không có thẻ nào khớp bộ lọc.</p>';
       var soTrang = Math.max(1, Math.ceil(tong / CO)), h = "";
       if (soTrang > 1) {
         h = '<button type="button" class="adminNut adminNutPhu" data-trang="' + Math.max(0, trang - 1) + '"' + (trang === 0 ? " disabled" : "") + ">‹ Trước</button>"
@@ -252,6 +275,7 @@
   }
   document.addEventListener("adminDaChuyenManHinh", function (su) { if (su.detail && su.detail.ten === "khotrithuc") moLanDau(); });
   if (el("manhinh-khotrithuc").classList.contains("dangHien")) moLanDau();
-  window.QTT = { mo: moLanDau, xemTruoc: xemTruoc };
+  window.QTT = { mo: moLanDau, xemTruoc: xemTruoc, theHtml: theHtml, goi: goi, taiLai: function () { taiDs(); },
+    mon: function () { return mon; }, bo: function () { return bo; }, hinhNen: function () { return hinhNen; } };
 })();
-// 12/11/2026 - BƯỚC: KC_03B1
+// 12/11/2026 - BƯỚC: KC_03B1 · KC_03B2 (12/11/2026: thanh công cụ thêm / nhập, nút sửa / ẩn mỗi thẻ)

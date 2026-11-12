@@ -4,6 +4,9 @@
      - Điện thoại (< 900px): lưới kho 2 ô một hàng; bộ lọc gập trong "⚙️ Bộ lọc"; thẻ một cột; bảng rộng cuộn ngang trong thẻ.
      - Máy tính (>= 900px): lưới kho 4-6 ô; bộ lọc mở sẵn nhiều cột; >= 1280px thẻ 2 cột, >= 1700px 3 cột (khối rộng tới 1600px).
    BƯỚC: KC_03B1 - NGÀY: 12/11/2026
+   KC_03B2 (12/11/2026): phần cuối file = khung ➕ Thêm thẻ / 📥 Nhập nhiều thẻ + kết quả kiểm trùng (qt_the_nho_soan.js).
+     Điện thoại: ô soạn một cột, xem trước + kiểm trùng ở dưới. Máy tính (>= 1000px): 2 cột (soạn | xem trước + kiểm trùng);
+     danh sách nhập nhiều thẻ 2 cột từ 1280px.
    ================================================================ */
 
 #manhinh-khotrithuc .adminKhoi { max-width: 1600px; }
@@ -98,4 +101,76 @@
   .qttDs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .qttLocLuoi { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 }
-/* 12/11/2026 - BƯỚC: KC_03B1 */
+
+/* ================= KC_03B2: thêm / sửa / nhập thẻ + kiểm trùng ================= */
+.qttCongCu { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.qttNutThe { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.qttNutThe .adminNut { padding: 5px 12px; font-size: 0.86rem; }
+.qtsKhung { border: 3px solid var(--mau-chinh); border-radius: 16px; background: #fff; padding: 12px; margin-bottom: 14px; }
+.qtsDau { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.qtsDau h4 { margin: 0; font-size: 1.1rem; color: var(--mau-chinh-dam); }
+.qtsLuoi { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.qtsCot { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.qtsKhung label { display: flex; flex-direction: column; gap: 3px; font-size: 0.84rem; font-weight: bold; color: var(--mau-chinh-dam); min-width: 0; }
+.qtsKhung input:not([type=checkbox]):not([type=file]), .qtsKhung select, .qtsKhung textarea { width: 100%; box-sizing: border-box; padding: 8px 9px;
+  border: 1px solid var(--mau-vien); border-radius: 8px; font-family: inherit; font-size: 0.95rem; font-weight: normal; color: var(--mau-chu); background: #fff; }
+.qtsKhung input:disabled, .qtsKhung select:disabled { background: #f2f2f5; color: #666; }
+.qtsKhung .an { display: none; }
+.qtsO4, .qtsO2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.qtsKhung label.qtsHop { flex-direction: row; align-items: center; gap: 6px; font-weight: normal; color: var(--mau-chu); }
+.qtsNoiDungDau { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.9rem; color: var(--mau-chinh-dam); }
+.qtsChe { display: inline-flex; border: 1px solid var(--mau-vien); border-radius: 999px; overflow: hidden; }
+.qtsChe button { border: 0; background: #fff; padding: 5px 12px; font-family: inherit; font-size: 0.84rem; cursor: pointer; color: var(--mau-chu); }
+.qtsChe button.dangChon { background: var(--mau-chinh); color: #fff; font-weight: bold; }
+.qtsKhung textarea.qtsNoiDung { min-height: 180px; line-height: 1.45; resize: vertical; }
+.qtsKhung textarea.qtsJson { font-family: Consolas, "Courier New", monospace; font-size: 0.85rem; }
+.qtsGhi { margin: 0; font-size: 0.8rem; color: var(--mau-chu-nhat); font-weight: normal; }
+.qtsThem summary { cursor: pointer; font-weight: bold; color: var(--mau-chinh-dam); font-size: 0.9rem; padding: 4px 0; }
+.qtsThem .qtsO2 { padding-top: 6px; }
+.qtsNhanXem { font-size: 0.84rem; font-weight: bold; color: var(--mau-chinh-dam); }
+.qtsLoiKhuon { background: #fdeeee; border: 1px solid #f3c2c2; color: #8a2125; border-radius: 10px; padding: 8px 10px; font-size: 0.86rem; overflow-wrap: anywhere; }
+.qtsLoiKhuon ul { margin: 4px 0 0; padding-left: 18px; }
+.qtsKetQuaKhung { border: 2px solid #f0b54a; background: #fffaf0; border-radius: 12px; padding: 8px 10px; font-size: 0.9rem; }
+.qtsKetQuaKhung > ul, .qtsDsTrung { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.qtsTrung { border-left: 4px solid #f0b54a; padding: 6px 8px; background: #fff; border-radius: 0 8px 8px 0; font-size: 0.88rem; overflow-wrap: anywhere; }
+.qtsTrung.vuong { border-left-color: var(--mau-that-bai); }
+.qtsTrung.daXong { border-left-color: #2e9e5b; }
+.qtsTrung.nhac { border-left-color: #8fa3bf; }
+.qtsChipTrung { margin-top: 4px; }
+.qtsDaChon { color: #17784a; font-weight: bold; font-size: 0.86rem; }
+.qtsNutTrung { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.qtsNutTrung .adminNut { padding: 5px 11px; font-size: 0.84rem; }
+.qtsXemCu { margin-top: 4px; width: 100%; }
+.qtsXemCu summary { cursor: pointer; font-size: 0.86rem; color: var(--mau-chinh-dam); font-weight: bold; }
+.qtsXemCu .qttThe, .qtsThamKhao .qttThe { margin-top: 6px; background: #fbfaff; }
+.qtsThamKhao { border: 2px dashed var(--mau-vien); border-radius: 12px; padding: 6px 10px; margin-bottom: 10px; }
+.qtsThamKhao summary { cursor: pointer; font-weight: bold; font-size: 0.88rem; color: var(--mau-chinh-dam); }
+.qtsKhongTrung { margin: 0; color: #17784a; font-weight: bold; }
+.qtsNutLuu { position: sticky; bottom: 0; background: #fff; padding: 6px 0 2px; }
+.qtsNutLuu .adminNut { width: 100%; font-size: 1rem; padding: 10px; }
+.qtsXong { background: #e9f8ef; border: 2px solid #2e9e5b; border-radius: 12px; padding: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.qtsNhapO { display: flex; flex-direction: column; gap: 8px; }
+.qtsNhapO textarea { font-family: Consolas, "Courier New", monospace; font-size: 0.84rem; min-height: 140px; }
+.qtsNhapNut { display: flex; flex-wrap: wrap; gap: 8px; }
+.qtsKhung label.qtsTep { flex-direction: row; display: inline-flex; color: inherit; font-size: inherit; cursor: pointer; }
+.qtsTep input { display: none; }
+.qtsTomNhap { margin: 10px 0 4px; font-size: 0.92rem; }
+.qtsDsNhap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 8px; align-items: start; }
+.qtsDong { border: 2px solid var(--mau-vien); border-radius: 12px; padding: 8px 10px; background: var(--mau-nen-khoi); min-width: 0; }
+.qtsDong_vuong { border-color: var(--mau-that-bai); }
+.qtsDong_sai { border-color: #e08a8a; background: #fff7f7; }
+.qtsDong_bo { opacity: 0.55; }
+.qtsDong_moi { border-color: #9fd8b5; }
+.qtsDongDau { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; margin-bottom: 4px; }
+.qtsTT { font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+.qtsMaNho { font-size: 0.74rem; color: var(--mau-chu-nhat); overflow-wrap: anywhere; }
+@media (min-width: 600px) { .qtsO4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1000px) {
+  .qtsLuoi { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  .qtsCotXem { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; }
+  .qtsKhung { padding: 16px; }
+  .qtsNutLuu .adminNut { width: auto; min-width: 260px; }
+}
+@media (min-width: 1280px) { .qtsDsNhap { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1700px) { .qtsDsNhap { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* 12/11/2026 - BƯỚC: KC_03B1 · KC_03B2 */
