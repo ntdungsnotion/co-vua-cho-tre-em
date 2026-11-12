@@ -8,8 +8,9 @@
 //            - cauTiep(hs, mon): khoảng tiLeOnTap số câu là ÔN TẬP (chủ đề bé yếu nhất, câu dễ hơn),
 //              còn lại chọn (lớp, mức) vừa sức rồi chọn dạng của lớp đó, tránh lặp dạng vừa hỏi.
 //            - traLoi(hs, cau, chiSo): chấm, cập nhật trình độ + thành thạo chủ đề, trả hệ số thưởng.
-//            Câu trong trận đấu thật sẽ chấm ở máy chủ khi có SQL (đáp án không lộ); bước này chấm tại máy.
-// BƯỚC: TC_D04A; TC_D04B (giao diện nguồn chung, thêm Tiếng Anh)
+//            KC_06B2: trận thật dùng nguồn "kho" (dt_nguon_kho.js, câu không có đáp án): máy chủ chấm, trang gọi ghiKetQua.
+//            Bộ sinh câu chỉ còn ở trang thử + công cụ soạn câu.
+// BƯỚC: KC_06B2 (ghiKetQua); TC_D04A; TC_D04B (giao diện nguồn chung, thêm Tiếng Anh)
 // NGÀY: 29/10/2026
 // PHỤ THUỘC: dt/dt_trinh_do.js (KC_DT_TRINH_DO), dt/dt_sinh_toan.js (KC_DT_SINH_TOAN), dt/dt_sinh_tieng_anh.js
 // ================================================================
@@ -68,9 +69,16 @@
       return kq;
     }
 
-    return { ch, cauTiep, traLoi, lopCoCau, coMon };
+    // KC_06B2: câu kho do MÁY CHỦ chấm -> chỉ cập nhật trình độ + thành thạo chủ đề theo kết quả máy chủ trả
+    function ghiKetQua(hs, cau, dung) {
+      const kq = TD.capNhat(hs, cau, !!dung, ch, lopCoCau(cau.mon));
+      kq.dung = !!dung;
+      return kq;
+    }
+
+    return { ch, cauTiep, traLoi, ghiKetQua, lopCoCau, coMon };
   }
 
   goc.KC_DT_CAU_HOI = { taoBoChon };
 })(typeof window !== "undefined" ? window : globalThis);
-// 29/10/2026 - BƯỚC: TC_D04A
+// 29/10/2026 - BƯỚC: TC_D04A; 11/11/2026 - KC_06B2 (ghiKetQua: kết quả máy chủ chấm)

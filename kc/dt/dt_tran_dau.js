@@ -16,7 +16,9 @@
 //            Lõi không chọn câu (nhận từ dt_cau_hoi.js qua moLuot), không đụng DOM, không đọc đồng hồ:
 //            mọi hàm nhận thời điểm t (mili giây) từ ngoài => kiểm thử node chạy tua nhanh được.
 //            Mọi con số đọc từ du_lieu/cau_hinh_tran_dau.json.
-// BƯỚC: TC_D05; TC_D05D (07/11/2026: luatChan: phòng thủ đúng đỡ trọn, sai mới tính né); TC_D06C2a (quaiTruoc: quái đánh lượt đầu); TC_D06C2b (bên bé là nông dân: chiSoNongDan, tc.be, hpQuai, soLuotDau)
+//            KC_06B2 (11/11/2026): câu kho KHÔNG có đáp án trên máy (Hướng Dẫn 3.17): beBam chỉ ghi lựa chọn (cho: true),
+//            trang hỏi máy chủ chấm rồi gọi ganDapAn(d, loiGiai) -> kết quả lượt; lượt hết mà chưa biết đáp án thì canDapAn().
+// BƯỚC: KC_06B2; TC_D05; TC_D05D (07/11/2026: luatChan: phòng thủ đúng đỡ trọn, sai mới tính né); TC_D06C2a (quaiTruoc: quái đánh lượt đầu); TC_D06C2b (bên bé là nông dân: chiSoNongDan, tc.be, hpQuai, soLuotDau)
 // NGÀY: 29/10/2026; 04/11/2026; 04/11/2026 23:xx
 // PHỤ THUỘC: dt/dt_quai.js (KC_DT_QUAI)
 // ================================================================
@@ -80,7 +82,9 @@
       luot = {
         so: soLuot, tanCong, cau, tMo: t, han,
         quai: { t: tQuai, dung: tl.dung, chiSo: tl.chiSo },
-        be: null, ketQua: null, daGaySatThuong: false
+        be: null, ketQua: null, daGaySatThuong: false,
+        biet: !!(cau.dung && cau.dung.length), // KC_06B2: false = câu kho, đáp án do máy chủ chấm (ganDapAn)
+        choChot: null // KC_06B2: thời điểm lượt đã hết (bé bấm / hết giờ / quái bấm) nhưng chưa biết đáp án
       };
       luot.info = { so: soLuot, tanCong, han, thongTha };
       return luot.info;
@@ -92,8 +96,16 @@
     function beBam(chiSo, t) {
       if (!luot || luot.ketQua || luot.be || ketThuc) return { nhan: false };
       // quái tấn công đã bấm trước lúc này: lượt đã xong (nếu trang chưa gọi capNhat thì chốt ngay)
-      if (luot.tanCong === "quai" && luot.quai.t <= t) { const kq = chot(luot.quai.t); return { nhan: false, ketQua: kq }; }
-      if (luot.tanCong === "be" && t > luot.han) { const kq = chot(luot.han); return { nhan: false, ketQua: kq }; }
+      if (luot.choChot != null) return { nhan: false }; // KC_06B2: lượt đã hết, đang chờ đáp án
+      if (luot.tanCong === "quai" && luot.quai.t <= t) return hetLuot(luot.quai.t);
+      if (luot.tanCong === "be" && t > luot.han) return hetLuot(luot.han);
+      if (!luot.biet) { // KC_06B2: chờ máy chủ chấm; đồng hồ dừng lúc bé chạm (chốt tại t)
+        luot.be = { t, chiSo, dung: null };
+        tongKet.beBam++;
+        if (luot.tanCong === "be") { luot.choChot = t; return { nhan: true, cho: true, ketQua: null }; }
+        luot.quai.t = Math.min(luot.quai.t, t + ch.tuaKhiDaBamGiay * 1000);
+        return { nhan: true, cho: true, ketQua: null };
+      }
       const dung = luot.cau.dung.indexOf(chiSo) >= 0;
       luot.be = { t, chiSo, dung };
       tongKet.beBam++; if (dung) tongKet.beDung++;
@@ -102,13 +114,39 @@
       return { nhan: true, ketQua: null };
     }
 
+    // bé bấm khi lượt đã hết (trang chưa kịp gọi capNhat): chốt ngay, câu kho chưa có đáp án thì chờ (canDapAn)
+    function hetLuot(tKet) {
+      if (!luot.biet) { luot.choChot = tKet; return { nhan: false }; }
+      return { nhan: false, ketQua: chot(tKet) };
+    }
+
     // Gọi đều đặn với thời điểm hiện tại: chốt lượt khi quái tấn công bấm hoặc bé hết giờ.
     function capNhat(t) {
       if (!luot || luot.ketQua || ketThuc) return null;
-      if (luot.tanCong === "quai" && t >= luot.quai.t) return chot(luot.quai.t);
-      if (luot.tanCong === "be" && t >= luot.han) return chot(luot.han);
+      if (luot.choChot != null) return null; // KC_06B2: đã hết lượt, đang chờ đáp án
+      let tKet = null;
+      if (luot.tanCong === "quai" && t >= luot.quai.t) tKet = luot.quai.t;
+      else if (luot.tanCong === "be" && !luot.be && t >= luot.han) tKet = luot.han;
+      if (tKet == null) return null;
+      if (!luot.biet) { luot.choChot = tKet; return null; }
+      return chot(tKet);
+    }
+
+    // KC_06B2: máy chủ trả đáp án đúng d (vị trí) + lời giải. Lượt đã hết thì chốt ngay và trả kết quả; chưa hết (bé vừa
+    // phòng thủ, quái chưa bấm) thì chỉ ghi lại, capNhat chốt như thường. Trả kết quả lượt hoặc null.
+    function ganDapAn(d, loiGiai) {
+      if (!luot || luot.ketQua || ketThuc || luot.biet) return null;
+      const L = luot, c = L.cau;
+      c.dung = [d]; if (loiGiai != null) c.loiGiai = loiGiai;
+      L.biet = true;
+      if (L.quai.chiSo == null) L.quai.chiSo = QU.chonO(L.quai.dung, d, (c.dapAn || []).length, rng);
+      if (L.be && L.be.dung == null) { L.be.dung = L.be.chiSo === d; if (L.be.dung) tongKet.beDung++; }
+      if (L.choChot != null) { const t0 = L.choChot; L.choChot = null; return chot(t0); }
       return null;
     }
+    // KC_06B2: lượt đã hết mà chưa biết đáp án (trang hỏi máy chủ: bé đã bấm thì đang chấm, chưa bấm thì xin lật bài)
+    const canDapAn = () => !!luot && !luot.ketQua && !luot.biet && luot.choChot != null;
+    const dangCham = () => !!luot && !luot.ketQua && !luot.biet && !!luot.be;
 
     function chot(tKet) {
       const L = luot;
@@ -178,14 +216,15 @@
     }
 
     return {
-      moLuot, beBam, capNhat, quaiDaBam,
+      moLuot, beBam, capNhat, quaiDaBam, ganDapAn, canDapAn, dangCham,
       be: () => be, quai: () => quai, lop, thongTha, giayBe,
       luot: () => luot && luot.info, ketQuaLuot: () => luot && luot.ketQua,
       dangLuot: () => !!luot && !luot.ketQua && !ketThuc,
+      beDaBam: () => !!luot && !!luot.be,
       ketThuc: () => ketThuc, tongKet: () => Object.assign({}, tongKet)
     };
   }
 
   goc.KC_DT_TRAN_DAU = { taoTran, chiSoThuLinh, chiSoNongDan, tiLeNe, satThuong };
 })(typeof window !== "undefined" ? window : globalThis);
-// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (đồng hồ bé theo cấp quái: T.giayBe); 04/11/2026 - TC_D06C2a (quaiTruoc); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái); 07/11/2026 - TC_D05D (luatChan)
+// 29/10/2026 - BƯỚC: TC_D05; 29/10/2026 23:40 - TC_D05B1 (đồng hồ bé theo cấp quái: T.giayBe); 04/11/2026 - TC_D06C2a (quaiTruoc); 04/11/2026 23:xx - TC_D06C2b (nông dân đánh quái); 07/11/2026 - TC_D05D (luatChan); 11/11/2026 - KC_06B2 (máy chủ chấm: ganDapAn / canDapAn / dangCham)

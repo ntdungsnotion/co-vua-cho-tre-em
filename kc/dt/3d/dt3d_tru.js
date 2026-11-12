@@ -42,7 +42,7 @@
 //             conNghi, datNghi, dungTl, themTranNgoai, datBanNgoai, danBoChay, veNut, dangTran), be: { ten, hoSo, lop }, baoGoiY,
 //             lop (DOM phủ cảnh), cam, diaHinh, hinhCt(id) (dt3d_cong_trinh.js), nhinVe(x, z), chonDv(dv) (TC_D06C2h) }
 // LUẬT NỐI: trang phải nạp dt_tru_tran.js, dt_trinh_do.js, dt_sinh_toan.js, dt_sinh_tieng_anh.js, dt_cau_hoi.js.
-// BƯỚC: TC_D06C2g
+// BƯỚC: KC_06B2 (máy chủ giả mới sinh câu, nạp bộ sinh khi cần); TC_D06C2g
 // NGÀY: 05/11/2026
 // ================================================================
 import { taoAmThanh } from "./dt3d_am_thanh.js";
@@ -74,8 +74,10 @@ export function taoTruBanDo(the) {
   let boChon = null; // Promise<{ bo, hs, mon[] }>
   function nguonCau() {
     if (boChon) return boChon;
-    const TD = window.KC_DT_TRINH_DO, ST = window.KC_DT_SINH_TOAN, TA = window.KC_DT_SINH_TA, CHQ = window.KC_DT_CAU_HOI;
-    boChon = Promise.all([napTd(), nap("../../tu_vung/kho_tu.json")]).then(([chTd0, kho]) => {
+    // KC_06B2: chỉ máy chủ GIẢ (trang thử / kịch bản thử) còn sinh câu trên máy; trang game không nạp bộ sinh -> nạp khi cần
+    const MC = window.KC_DT_MAY_CHU, sinh = MC && MC.napBoSinh ? MC.napBoSinh() : Promise.resolve();
+    boChon = Promise.all([napTd(), nap("../../tu_vung/kho_tu.json"), sinh]).then(([chTd0, kho]) => {
+      const TD = window.KC_DT_TRINH_DO, ST = window.KC_DT_SINH_TOAN, TA = window.KC_DT_SINH_TA, CHQ = window.KC_DT_CAU_HOI;
       const chTD = TD.cauHinh(chTd0), NG = { toan: ST };
       if (kho && TA) { try { NG.tieng_anh = TA.tao(kho, chTD); } catch (e) { /* thiếu kho từ: chỉ Toán */ } }
       let hs = null;
@@ -801,3 +803,4 @@ export function taoTruBanDo(the) {
 // 09/11/2026 - BƯỚC: TC_D06E (📝 Cập nhật câu hỏi: bé đổi từng câu của công trình bằng thư viện câu hỏi theo môn -> chủ đề)
 // 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)
 // 11/11/2026 - BƯỚC: KC_06B1 (máy chủ thật: câu công trình = câu kho có mã; trụ mới máy chủ tự bốc; 🛡️ gợi ý kho theo lớp; 📝 thư viện kho; bỏ cauKho / câu dự phòng)
+// 11/11/2026 - BƯỚC: KC_06B2 (máy chủ giả: nạp bộ sinh câu khi cần, trang game không nạp sẵn)

@@ -10,7 +10,7 @@
 //   - Lịch sử mọi lần sửa + ↩ hoàn tác (kc_dt_admin_hoan_tac).
 //   Mỗi ô: tên dễ hiểu + mã khoá, số mặc định, nút ↺ về mặc định; ô khác mặc định tô vàng, ô chưa lưu tô xanh.
 //   Ô tìm + "chỉ ô đã sửa". Máy tính: lưới nhiều cột + bảng như Excel; điện thoại: một cột, bảng thành thẻ.
-// BƯỚC: TC_D18A - NGÀY: 10/11/2026
+// BƯỚC: TC_D18A - NGÀY: 10/11/2026; KC_06B2 11/11/2026 (nhãn Tụ lực lúc chờ chấm)
 // PHỤ THUỘC: qt_dt_khung.js (QDT: mục này gắn vào khung, vỏ màn hình dựng ở QDT.dangKyMuc bên dưới), ../admin_NC.js, quantri_NC.js,
 //   dt/dt_cau_hinh.js (KC_DT_CAU_HINH: tron, khac), qt_dau_truong.css; SQL repo_rieng SQL/supabase_tc_d18a_thong_so.sql.
 // ================================================================
@@ -45,7 +45,7 @@ QD.GHI_CHU = {
   "cau_hinh.danSo": ["_ghiChuDanSo"], "cau_hinh.banDo": ["_ghiChuBanDo"], "cau_hinh.congTrinh": ["_ghiChuCongTrinh", "_ghiChuRuong", "_ghiChuChoi"],
   "cau_hinh.quaiBanDo": ["_ghiChuQuaiBanDo"], "cau_hinh.tru": ["_ghiChuTru", "_ghiChuMauCongTrinh", "_ghiChuDanh"],
   "cau_hinh.muaCau": ["_ghiChuMuaCau"], "cau_hinh.sua": ["_ghiChuSua"], "cau_hinh.chay": ["_ghiChuSua"],
-  "cau_hinh_tran_dau.*": ["_ghiChu", "_ghiChuSatThuong"], "cau_hinh_tran_dau.thoiGian": ["_ghiChuLuot"], "cau_hinh_tran_dau.latBaiGiay": ["_ghiChuLatBai"],
+  "cau_hinh_tran_dau.*": ["_ghiChu", "_ghiChuSatThuong"], "cau_hinh_tran_dau.thoiGian": ["_ghiChuLuot"], "cau_hinh_tran_dau.latBaiGiay": ["_ghiChuLatBai"], "cau_hinh_tran_dau.tuLuc": ["_ghiChuTuLuc"],
   "cau_hinh_tran_dau.satThuong": ["_ghiChuSatThuong"], "cau_hinh_tran_dau.luatChan": ["_ghiChuChan"], "cau_hinh_tran_dau.thuLinh": ["_ghiChuThuLinh"],
   "cau_hinh_tran_dau.nongDan": ["_ghiChuNongDan"], "cau_hinh_tran_dau.quai": ["_ghiChuQuai"],
   "cau_hinh_trinh_do.*": ["_ghiChu", "_ghiChuThang"], "cau_hinh_trinh_do.K": ["_ghiChuK"], "cau_hinh_trinh_do.onTap": ["_ghiChuOnTap"],
@@ -60,7 +60,7 @@ QD.NHAN = {
   // khối
   lang: "Làng & nông dân", xay: "Xây nhà", kho: "Kho chứa", danSo: "Dân số", banDo: "Bản đồ", congTrinh: "Công trình", quaiBanDo: "Quái trên bản đồ",
   tru: "Trụ & trận công trình", muaCau: "Mua câu phòng thủ", sua: "Sửa công trình", chay: "Lửa cháy", thuVien: "Thư viện câu hỏi",
-  thoiGian: "Thời gian suy nghĩ", thongTha: "Thong thả (bé nhỏ)", latBaiGiay: "Lật bài (giây)", satThuong: "Sát thương", combo: "Combo",
+  thoiGian: "Thời gian suy nghĩ", thongTha: "Thong thả (bé nhỏ)", latBaiGiay: "Lật bài (giây)", tuLuc: "Tụ lực lúc chờ chấm", toiThieuGiay: "Ít nhất (giây)", manhSauGiay: "Tụ mạnh sau (giây)", choMangGiay: "Báo chờ mạng sau (giây)", satThuong: "Sát thương", combo: "Combo",
   chiMang: "Chí mạng", ne: "Né", luatChan: "Luật chặn đòn", thua: "Khi thua", thuLinh: "Thủ lĩnh", nongDan: "Nông dân", quai: "Quái (trận đấu)",
   K: "Tốc độ đổi trình độ (K)", onTap: "Ôn tập", thuong: "Thưởng theo độ khó", thanhThao: "Thành thạo chủ đề", tiengAnh: "Tiếng Anh",
   // làng

@@ -15,7 +15,8 @@
 //       TC_D02B2b (thung lũng tách sang dt3d_vung.js, trang game); TC_D02B3a (trang game dùng máy chủ
 //       Supabase dt/dt_may_chu_sb.js; kịch bản thử đặt sessionStorage kc_dt_may_chu_gia = "1" để dùng bản giả);
 //       TC_D02B3b (đưa capNhatKho cho thung lũng: kho bị trừ phần máy chủ cắt thì vẽ lại thanh);
-//       TC_D06A (thung lũng có quái lang thang dt3d_quai_ban_do.js, chạm quái vào trận)
+//       TC_D06A (thung lũng có quái lang thang dt3d_quai_ban_do.js, chạm quái vào trận);
+//       KC_06B2 (11/11/2026: trang trận nhờ gọi máy chủ "dt-kho-hoi": câu kho, chấm, số Quản trị)
 // NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 30/10/2026
 // PHỤ THUỘC: chung/nv_ve.js (KC_NV), dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), các phần dt/3d/*.js;
 //            thung lũng thêm dt/dt_ban_do.js, dt/dt_may_chu.js; trang game thêm chung/nv_ho_so.js,
@@ -172,6 +173,27 @@ if (VUNG) {
   hTl = boNv.tao(dvTl, "thu_linh", hoSoTl);
   for (const p of banDo.batDau.nongDan || []) themNongDan(p.x, p.z);
 }
+
+// ---------------- KC_06B2: trang trận (khung dt/thu_tran_dau.html) nhờ gọi máy chủ: câu kho + chấm + số Quản trị ----------------
+// { loai: "dt-kho-hoi", so, ham: "o" | "lo" | "cham" | "cauHinh", ts } -> { loai: "dt-kho-dap", so, kq }. Máy chủ thật / giả đều có kho().
+const SO_QT = ["cau_hinh_tran_dau", "cau_hinh_trinh_do"], boNhoCh = {};
+window.addEventListener("message", async e => {
+  const d = e.data;
+  if (e.origin !== location.origin || !d || d.loai !== "dt-kho-hoi" || !e.source) return;
+  let kq;
+  try {
+    if (d.ham === "cauHinh") {
+      const ten = SO_QT.indexOf(d.ts && d.ts.ten) >= 0 ? d.ts.ten : null;
+      const url = ten && duongDan("../du_lieu/" + ten + ".json");
+      const ch = !ten ? null : await (boNhoCh[ten] || (boNhoCh[ten] = (window.KC_DT_CAU_HINH ? window.KC_DT_CAU_HINH.tai(ten, url) : fetch(url, { cache: "no-cache" }).then(r => r.json())).catch(() => null)));
+      kq = ch ? { ok: true, ch } : { ok: false, ma: "mang" };
+    } else {
+      const mc = vung && vung.mayChu;
+      kq = mc && mc.kho ? await mc.kho(d.ham, d.ts || {}) : { ok: false, ma: "mang" };
+    }
+  } catch (er) { kq = { ok: false, ma: "mang" }; }
+  try { e.source.postMessage({ loai: "dt-kho-dap", so: d.so, kq }, location.origin); } catch (er) { /* khung đã đóng */ }
+});
 
 // ---------------- Thanh điều khiển cuối màn hình (TC_D06D) ----------------
 // Ô "đang xem": thứ vừa chạm (nhà, Lều, ruộng, cây / mỏ, quái); chạm đất / chọn người thì về người đang chọn.
@@ -366,3 +388,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (lửa cháy dt3d_chay.js; thanh dưới: nông dân / công trình đang sửa; móc __dt3d.chay)
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (nút 💥 Phá Lều ở thanh dưới Lều trại của mình, lời hỏi riêng: dời làng)
 // 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)
+// 11/11/2026 - BƯỚC: KC_06B2 (cầu nối dt-kho-hoi cho trang trận)

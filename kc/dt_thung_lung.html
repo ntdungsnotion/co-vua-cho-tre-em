@@ -19,7 +19,7 @@
                   (trang thử: dt_thu_3d.html?vung, máy chủ giả trên máy).
                   TC_D06A: quái lang thang (dt/dt_quai_ban_do.js + dt/3d/dt3d_quai_ban_do.js); chọn Thủ lĩnh
                   chạm quái -> màn chiến đấu phủ lên trang (khung dt/thu_tran_dau.html?nhung=1).
-       BƯỚC: TC_D02B2b; TC_D02B3a (máy chủ Supabase); TC_D06A (quái trên bản đồ)
+       BƯỚC: KC_06B2 (không nạp bộ sinh câu); TC_D02B2b; TC_D02B3a (máy chủ Supabase); TC_D06A (quái trên bản đồ)
        NGÀY: 27/10/2026; 27/10/2026 18:55; 30/10/2026
        PHỤ THUỘC: supabase-js@2 (CDN, như cả app), kc_config.js, kc_api.js,
                   thu_vien/three (Three.js r170, MIT), chung/nv_ve.js, chung/nv_ho_so.js,
@@ -104,8 +104,7 @@
   <script src="dt/dt_dan_danh.js"></script> <!-- TC_D06C2b: nông dân tự đánh quái -->
   <script src="dt/dt_tru_tran.js"></script> <!-- TC_D06C2g: trụ phòng thủ (luật + chọn câu cho trụ) -->
   <script src="dt/dt_trinh_do.js"></script>
-  <script src="dt/dt_sinh_toan.js"></script>
-  <script src="dt/dt_sinh_tieng_anh.js"></script>
+  <!-- KC_06B2: KHÔNG nạp bộ sinh câu (dt_sinh_toan / dt_sinh_tieng_anh): mọi câu từ kho câu chung, máy chủ chấm -->
   <script src="dt/dt_cau_hoi.js"></script>
   <script src="dt/dt_thu_vien_cau.js"></script> <!-- TC_D06E: thư viện câu hỏi (📝 Cập nhật câu hỏi) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -119,3 +118,4 @@
 <!-- 01/11/2026 17:53 - BƯỚC: TC_D06C1 giao diện bảng điều khiển công trình; 04/11/2026 - TC_D06D thanh điều khiển cuối màn hình -->
 <!-- 05/11/2026 - BƯỚC: TC_D06C2d (dân số lên thanh trên, bỏ % khám phá) -->
 <!-- 10/11/2026 - BƯỚC: TC_D18A (nạp dt/dt_cau_hinh.js: số mặc định + phần quản trị đã sửa) -->
+<!-- 11/11/2026 - BƯỚC: KC_06B2 (bỏ nạp bộ sinh câu: trận quái hỏi câu kho, máy chủ chấm) -->
