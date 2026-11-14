@@ -32,6 +32,8 @@
 //              -> bảng #d3CapNhat: các câu của công trình (chỗ chưa gắn = "câu ngẫu nhiên trong kho") -> chạm một câu -> THƯ VIỆN theo
 //              môn -> chủ đề (dt_thu_vien_cau.js, cau_hinh.json thuVien; không lọc lớp, mỗi câu có nhãn lớp) -> chạm câu là đổi
 //              (mayChu.doiCau, miễn phí). Nút "✏️ Câu của con" để sẵn, mờ (bé tự ra câu: TC_D06E2).
+//            - KC_06D (12/11/2026): thẻ "✏️ Câu của con" mở được khi máy chủ có cauCuaBe (dt3d_cau_cua_be.js): bé đặt câu, xem trạng thái,
+//              chạm câu đã duyệt để gắn (doiCau với mã câu như câu thư viện).
 //            - KC_06B1 (11/11/2026, Hướng Dẫn 3.17): máy chủ thật (mayChu.thuVien) -> MỌI câu của công trình là câu trong KHO kc_cau_hoi,
 //              gửi máy chủ bằng MÃ câu: trụ mới gắn câu = máy chủ tự bốc (truCau không kèm câu); bảng chọn câu 🛡️ = gợi ý theo lớp của bé
 //              (mayChu.thuVien); 📝 thư viện = KC_DT_THU_VIEN.taoThuVienKho (môn -> chủ đề của kho); không gửi kho câu (cauKho) / câu dự
@@ -46,6 +48,7 @@
 // NGÀY: 05/11/2026
 // ================================================================
 import { taoAmThanh } from "./dt3d_am_thanh.js";
+import { taoCauCuaBe } from "./dt3d_cau_cua_be.js";
 
 const TT = window.KC_DT_TRU_TRAN;
 const nap = u => fetch(new URL(u, import.meta.url), { cache: "no-cache" }).then(r => (r.ok ? r.json() : null)).catch(() => null);
@@ -63,6 +66,8 @@ export function taoTruBanDo(the) {
   let am = null; try { am = taoAmThanh(); } catch (e) { am = null; }
   const coKho = !!(mayChu.thuVien && mayChu.mucLuc); // KC_06B1: máy chủ thật có kho câu chung (công trình chỉ nhận mã câu)
   const lopBe = () => Math.max(1, Math.min(12, Math.floor(be.lop) || 2));
+  const cauBe = taoCauCuaBe({ mayChu, lopBe, baoGoiY }); // KC_06D: thẻ ✏️ Câu của con (bé tự đặt câu)
+  const BE = "_cua_be"; // tvMon của thẻ Câu của con
   // KC_06B1: n câu kho gợi ý theo lớp của bé (bảng chọn câu 🛡️), bỏ câu đã có trong công trình (mã)
   async function goiYKho(n, ct) {
     const boQua = (ct && ct.cau || []).map(c => c.id).filter(Number.isInteger);
@@ -651,7 +656,8 @@ export function taoTruBanDo(the) {
     if (!p.isConnected) return p;
     if (!tv) { olTv.textContent = "Chưa mở được thư viện câu hỏi, con thử lại sau nhé."; veDs(); return p; } // KC_06B1: mất mạng
     const dsMon = tv.dsMon();
-    if (!tvMon || !dsMon.some(m => m.ma === tvMon)) tvMon = dsMon.length ? dsMon[0].ma : null;
+    // người dùng 12/11/2026: mở bảng luôn ở KHO CHUNG; thẻ câu riêng của con chỉ mở khi bé bấm (rồi mới hiện 2 lựa chọn)
+    if (!tvMon || tvMon === BE || !dsMon.some(m => m.ma === tvMon)) tvMon = dsMon.length ? dsMon[0].ma : null;
     function veMon() {
       hangMon.textContent = "";
       for (const m of dsMon) {
@@ -659,11 +665,15 @@ export function taoTruBanDo(the) {
         b.addEventListener("click", () => { tvMon = m.ma; veMon(); veCd(); veCau(); });
         hangMon.appendChild(b);
       }
-      const sau = nutNho("✏️ Câu của con · sắp có", "d3CnTab"); sau.disabled = true; sau.title = "Con tự ra câu: làm ở bước sau"; // TC_D06E2
-      hangMon.appendChild(sau);
+      // KC_06D: bé tự đặt câu (máy chủ thật có cauCuaBe); máy chủ giả: nút mờ như cũ
+      const be = nutNho("✏️ Câu riêng của con" + (cauBe.co ? "" : " · sắp có"), "d3CnTab d3CnTabBe"); be.dataset.mon = BE;
+      if (cauBe.co) { be.setAttribute("role", "tab"); be.setAttribute("aria-selected", String(tvMon === BE)); be.addEventListener("click", () => { tvMon = BE; veMon(); veCd(); veCau(); }); }
+      else { be.disabled = true; be.title = "Con tự ra câu: làm ở bước sau"; }
+      hangMon.appendChild(be);
     }
     function veCd() {
-      hangCd.textContent = "";
+      hangCd.textContent = ""; khac.hidden = tvMon === BE;
+      if (tvMon === BE) return; // thanh của thẻ Câu của con do veCau vẽ
       const ds = tvMon ? tv.dsChuDe(tvMon) : [];
       if (!ds.some(c => c.ma === tvCd[tvMon])) tvCd[tvMon] = ds.length ? ds[0].ma : null;
       for (const c of ds) {
@@ -676,6 +686,9 @@ export function taoTruBanDo(the) {
     let lanVe = 0;
     async function veCau() {
       const lan = ++lanVe, cd = tvCd[tvMon];
+      if (tvMon === BE) { // KC_06D: câu bé tự đặt; câu đã duyệt chạm là gắn
+        return cauBe.ve(hangCd, olTv, async c => { const so = await doiCau(ct, o, c); if (so) { o = so - 1; veDs(o); p.dataset.che = "ds"; } });
+      }
       olTv.textContent = tv.kho ? "⏳" : "";
       const tranh = new Set((ct.cau || []).map(c => (tv.kho && Number.isInteger(c.id) ? c.id : c.noiDung))); // KC_06B1: kho tránh theo mã câu
       const ds = cd ? await tv.cau(tvMon, cd, (cauHinh.thuVien || {}).soGoiY || 4, null, tranh) : [];
@@ -786,7 +799,7 @@ export function taoTruBanDo(the) {
       cnChuDe: ma => { const b = document.querySelector("#d3CapNhat .d3CnChip[data-cd=\"" + ma + "\"]"); if (b) b.click(); return !!b; },
       cnCau: i => { const li = document.querySelectorAll("#d3CapNhat .d3CnTv .d3CauChon")[i || 0]; if (!li) return null; const nd = li.children[1] && li.children[1].textContent; li.click(); return nd; },
       cnTrangThai: () => { const p = document.getElementById("d3CapNhat"); return p ? { che: p.dataset.che, soO: p.querySelectorAll(".d3CnO").length,
-        mon: [...p.querySelectorAll(".d3CnTab[data-mon]")].map(b => b.dataset.mon), soCd: p.querySelectorAll(".d3CnChip").length,
+        mon: [...p.querySelectorAll(".d3CnTab[data-mon]:not(.d3CnTabBe)")].map(b => b.dataset.mon), soCd: p.querySelectorAll(".d3CnChip").length,
         soCau: p.querySelectorAll(".d3CnTv .d3CauChon").length, dangChon: [...p.querySelectorAll(".d3CnO")].findIndex(li => li.classList.contains("dangChon")) } : null; },
       soDoi: () => soDoi,
       nutChu: id => { const ct = lang.congTrinh.find(c => c.id === id); const t = ct && thongTin(ct); return t ? (t.nut || []).map(n => ({ id: n.id, chu: n.chu.replace(/<[^>]+>/g, "") })) : null; },
@@ -805,3 +818,4 @@ export function taoTruBanDo(the) {
 // 11/11/2026 - BƯỚC: KC_06B1 (máy chủ thật: câu công trình = câu kho có mã; trụ mới máy chủ tự bốc; 🛡️ gợi ý kho theo lớp; 📝 thư viện kho; bỏ cauKho / câu dự phòng)
 // 11/11/2026 - BƯỚC: KC_06B2 (máy chủ giả: nạp bộ sinh câu khi cần, trang game không nạp sẵn)
 // 12/11/2026 - BƯỚC: KC_06B3 (truTra gửi mã lượt + mã câu phòng thủ để máy chủ tự chấm)
+// 12/11/2026 - BƯỚC: KC_06D (thẻ ✏️ Câu của con trong bảng 📝: dt3d_cau_cua_be.js)
