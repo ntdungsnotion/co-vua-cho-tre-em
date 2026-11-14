@@ -35,6 +35,7 @@
   var CAU_HINH = {
     "gioi_han.cau_moi_ngay": ["Giới hạn", "Số câu mỗi bé được gửi mỗi ngày"],
     "gioi_han.chan_moi_ngay": ["Giới hạn", "Bị chặn quá số lần này trong ngày thì tạm khoá đặt câu hôm đó"],
+    "gioi_han.kiem_moi_ngay": ["Giới hạn", "Số lần mỗi bé được bấm 🔍 Kiểm tra câu mỗi ngày"],
     "trung.nguong": ["Chặn trùng", "Ngưỡng gần giống (0,1 - 1; càng nhỏ càng chặt)"],
     "trung.nguong_cung_dap_an": ["Chặn trùng", "Ngưỡng gần giống khi cùng đáp án đúng"],
     "trung.do_dai_toi_thieu": ["Chặn trùng", "Câu ngắn hơn số ký tự này chỉ xét trùng y hệt"],

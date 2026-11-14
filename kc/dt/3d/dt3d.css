@@ -6,7 +6,7 @@
               biểu tượng trên nút, nút lệnh một hàng vuốt ngang.
               Dùng cho trang game kc/dt_thung_lung.html và trang thử kc/dt_thu_3d.html.
    BƯỚC: TC_D02B2b (tách từ <style> của dt_thu_3d.html, TC_D01C..TC_D02B2a)
-   NGÀY: 27/10/2026
+   NGÀY: 27/10/2026. Sửa 14/11/2026 KC_06E2 (🔍 Kiểm tra / 📨 Gửi, lời Cô Cú, 🛡️ chọn tuỳ ý)
    ================================================================ */
 :root { --dem: #14204a; --dem2: #1f2f6b; --vang: #ffc24b; --cam: #ff8a3d; --sang: #fff6dc; --nhat: #b9c3ec; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); color: var(--sang);
@@ -287,6 +287,17 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   .d3CnTv { border-left: 1px solid rgba(255, 255, 255, .15); padding-left: 18px; }
 }
 @media (prefers-reduced-motion: reduce) { .d3CnO.vuaDoi { animation: none; } }
+/* KC_06E2: 🛡️ +1 câu chọn tuỳ ý (bảng 📝 chế độ thêm câu: chỉ cột thư viện, ◀ Quay lại về bảng 🛡️) */
+.d3ChonTuy { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.d3ChonTuy .d3Nut { flex: 1 1 160px; min-height: 48px; border-radius: 14px; border: 2px solid #c9a35e; background: linear-gradient(180deg, #6a4f35, #44301d); color: #fff6dc;
+  font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1rem; cursor: pointer; }
+.d3CapNhat.d3CnMua .d3CnDs { display: none !important; }
+.d3CapNhat.d3CnMua .d3CnLui { display: inline-flex !important; }
+@media (min-width: 900px) {
+  .d3CapNhat.d3CnMua { width: min(760px, calc(100vw - 48px)); }
+  .d3CapNhat.d3CnMua .d3CnThan { display: block; }
+  .d3CapNhat.d3CnMua .d3CnTv { border-left: 0; padding-left: 0; }
+}
 /* 09/11/2026 - BƯỚC: TC_D06E (bảng 📝 Cập nhật câu hỏi: điện thoại 1 cột chuyển qua lại, máy tính 2 cột) */
 /* KC_06D: ✏️ Câu của con (thẻ trong bảng 📝) + màn soạn câu #d3SoanCau.
    Điện thoại: một cột cuộn, nút to. Máy tính (>= 900px): hộp rộng 2 cột (trái câu hỏi, phải 4 đáp án), chữ to hơn. */
@@ -312,6 +323,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   background: rgba(20, 32, 74, .97); }
 .d3SoanCau .d3BangCauDau .d3Nut { border-radius: 10px; border: 2px solid #c9a35e; background: linear-gradient(180deg, #6a4f35, #44301d); color: #fff6dc; min-width: 44px; min-height: 44px; }
 .d3SoanCau .d3ScThu, .d3SoanCau .d3ScKq { display: none; }
+.d3ScGopY { margin: 4px 0 12px; padding: 10px 14px; border-radius: 14px; background: #3a2f12; border: 2px solid #ffd35a; color: #ffe9a8; font-weight: 600; line-height: 1.45; }
+.d3ScGopY p { margin: 6px 0 0; } .d3ScGopY[hidden] { display: none; }
+.d3ScGopY.dat { background: #143a22; border-color: #7ee08a; color: #c9f5cf; }
+.d3ScGopY.doi { background: #12304a; border-color: #9fd3ff; color: #d6ecff; }
+.d3ScGopY.doi > div:last-child, .d3ScGopY.doi > p:last-child { animation: d3ScDoi 1.2s ease-in-out infinite; }
+.d3ScGopY.nhac { background: #2a2a40; border-color: #b9b4ff; color: #e6e3ff; }
+.d3ScGui:disabled { opacity: .45; filter: grayscale(.7); cursor: not-allowed; }
+.d3ScKiem { background: #3b82c4 !important; color: #fff !important; }
+.d3SoanCau[data-buoc="thu"] .d3ScGopY, .d3SoanCau[data-buoc="kq"] .d3ScGopY,
 .d3SoanCau[data-buoc="thu"] .d3ScSoan, .d3SoanCau[data-buoc="kq"] .d3ScSoan, .d3SoanCau[data-buoc="kq"] .d3ScThu { display: none; }
 .d3SoanCau[data-buoc="thu"] .d3ScThu, .d3SoanCau[data-buoc="kq"] .d3ScKq { display: block; }
 .d3ScNhan { display: block; font-family: "Baloo 2", sans-serif; font-weight: 700; color: var(--vang); margin: 10px 0 4px; }
@@ -331,6 +351,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3ScBao { min-height: 1.4em; margin: 10px 0 0 !important; font-weight: 600; }
 .d3ScBao.loi { color: #ffd35a; }
 .d3ScBao.vui { color: #7ee08a; }
+.d3ScBao.doi { color: #9fd3ff; animation: d3ScDoi 1.2s ease-in-out infinite; }
+@keyframes d3ScDoi { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .d3ScBao.doi, .d3ScGopY.doi > * { animation: none !important; } }
 .d3ScHang { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; }
 .d3ScHang .d3Nut { min-height: 48px; padding: 6px 18px; border-radius: 14px; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.05rem; }
 .d3ScChinh { background: var(--vang); color: #2a1d05; border: 0; }

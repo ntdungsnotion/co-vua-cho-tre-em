@@ -45,7 +45,7 @@
 //             lop (DOM phủ cảnh), cam, diaHinh, hinhCt(id) (dt3d_cong_trinh.js), nhinVe(x, z), chonDv(dv) (TC_D06C2h) }
 // LUẬT NỐI: trang phải nạp dt_tru_tran.js, dt_trinh_do.js, dt_sinh_toan.js, dt_sinh_tieng_anh.js, dt_cau_hoi.js.
 // BƯỚC: KC_06B2 (máy chủ giả mới sinh câu, nạp bộ sinh khi cần); TC_D06C2g
-// NGÀY: 05/11/2026
+// NGÀY: 05/11/2026. Sửa 14/11/2026 KC_06E2: 🛡️ +1 câu chọn tuỳ ý (📚 thư viện / ✏️ câu riêng của con)
 // ================================================================
 import { taoAmThanh } from "./dt3d_am_thanh.js";
 import { taoCauCuaBe } from "./dt3d_cau_cua_be.js";
@@ -568,6 +568,19 @@ export function taoTruBanDo(the) {
     const ol = document.createElement("ol"); ol.className = "d3ChonCauDs"; p.appendChild(ol);
     const doi = document.createElement("button"); doi.type = "button"; doi.className = "d3Nut d3NutMua"; doi.id = "d3CauKhac"; doi.textContent = "🔄 Câu khác";
     p.appendChild(doi);
+    // KC_06E2 (người dùng 14/11/2026): thêm câu cũng chọn tuỳ ý được: thư viện (môn -> chủ đề) hoặc câu riêng của con (kho của con / đặt câu mới)
+    if (window.KC_DT_THU_VIEN) {
+      const tuy = document.createElement("div"); tuy.className = "d3ChonTuy";
+      const tv = document.createElement("button"); tv.type = "button"; tv.className = "d3Nut"; tv.id = "d3MuaThuVien"; tv.textContent = "📚 Chọn trong thư viện";
+      tv.addEventListener("click", () => { p.remove(); moCapNhatCau(ct, { mua: true }); });
+      tuy.appendChild(tv);
+      if (cauBe.co) {
+        const be = document.createElement("button"); be.type = "button"; be.className = "d3Nut"; be.id = "d3MuaCauBe"; be.textContent = "✏️ Câu riêng của con";
+        be.addEventListener("click", () => { p.remove(); moCapNhatCau(ct, { mua: true, mon: BE }); });
+        tuy.appendChild(be);
+      }
+      p.appendChild(tuy);
+    }
     document.body.appendChild(p);
     const daCo = new Set((ct.cau || []).map(c => c.noiDung));
     async function ve() {
@@ -612,11 +625,13 @@ export function taoTruBanDo(the) {
     li.appendChild(da);
   }
   const nutNho = (chu, lop) => { const b = document.createElement("button"); b.type = "button"; b.className = "d3Nut " + (lop || ""); b.textContent = chu; return b; };
-  async function moCapNhatCau(ct) {
+  // KC_06E2: che = { mua: true, mon? } -> cùng bảng nhưng để THÊM câu (🛡️ +1 câu, trả giá như cũ): chỉ cột thư viện, chạm câu = mua câu đó
+  async function moCapNhatCau(ct, che) {
+    const mua = !!(che && che.mua);
     ["d3CapNhat", "d3BangCau", "d3ChonCau"].forEach(id => { const cu = document.getElementById(id); if (cu) cu.remove(); });
-    const p = document.createElement("div"); p.id = "d3CapNhat"; p.className = "d3BangCau d3Khung d3CapNhat"; p.setAttribute("role", "dialog"); p.dataset.che = "ds";
+    const p = document.createElement("div"); p.id = "d3CapNhat"; p.className = "d3BangCau d3Khung d3CapNhat" + (mua ? " d3CnMua" : ""); p.setAttribute("role", "dialog"); p.dataset.che = mua ? "tv" : "ds";
     const dau = document.createElement("div"); dau.className = "d3BangCauDau";
-    const td = document.createElement("b"); td.textContent = "📝 Câu hỏi giữ " + tenTru(ct);
+    const td = document.createElement("b"); td.textContent = mua ? "🛡️ Thêm câu giữ " + tenTru(ct) + " · " + giaChu(TT.giaCau(cauHinh, ct.loai), 1) : "📝 Câu hỏi giữ " + tenTru(ct);
     const dong = nutNho("✖"); dong.setAttribute("aria-label", "Đóng"); dong.addEventListener("click", () => p.remove());
     dau.append(td, dong); p.appendChild(dau);
     const than = document.createElement("div"); than.className = "d3CnThan"; p.appendChild(than);
@@ -627,7 +642,7 @@ export function taoTruBanDo(the) {
     // --- cột thư viện ---
     const cotTv = document.createElement("section"); cotTv.className = "d3CnTv";
     const tvDau = document.createElement("div"); tvDau.className = "d3CnTvDau";
-    const lui = nutNho("◀ Quay lại", "d3CnLui"); lui.addEventListener("click", () => { p.dataset.che = "ds"; });
+    const lui = nutNho("◀ Quay lại", "d3CnLui"); lui.addEventListener("click", () => { if (mua) { p.remove(); moChonCau(ct); } else p.dataset.che = "ds"; });
     const tdTv = document.createElement("b"); tvDau.append(lui, tdTv); cotTv.appendChild(tvDau);
     const hangMon = document.createElement("div"); hangMon.className = "d3CnMon"; hangMon.setAttribute("role", "tablist"); cotTv.appendChild(hangMon);
     const hangCd = document.createElement("div"); hangCd.className = "d3CnCd"; cotTv.appendChild(hangCd);
@@ -658,6 +673,7 @@ export function taoTruBanDo(the) {
     const dsMon = tv.dsMon();
     // người dùng 12/11/2026: mở bảng luôn ở KHO CHUNG; thẻ câu riêng của con chỉ mở khi bé bấm (rồi mới hiện 2 lựa chọn)
     if (!tvMon || tvMon === BE || !dsMon.some(m => m.ma === tvMon)) tvMon = dsMon.length ? dsMon[0].ma : null;
+    if (mua && che.mon === BE && cauBe.co) tvMon = BE; // 🛡️ -> ✏️ Câu riêng của con
     function veMon() {
       hangMon.textContent = "";
       for (const m of dsMon) {
@@ -687,7 +703,10 @@ export function taoTruBanDo(the) {
     async function veCau() {
       const lan = ++lanVe, cd = tvCd[tvMon];
       if (tvMon === BE) { // KC_06D: câu bé tự đặt; câu đã duyệt chạm là gắn
-        return cauBe.ve(hangCd, olTv, async c => { const so = await doiCau(ct, o, c); if (so) { o = so - 1; veDs(o); p.dataset.che = "ds"; } });
+        return cauBe.ve(hangCd, olTv, async c => {
+          if (mua) { if (await muaCau(ct, 1, [c])) p.remove(); return; }
+          const so = await doiCau(ct, o, c); if (so) { o = so - 1; veDs(o); p.dataset.che = "ds"; }
+        });
       }
       olTv.textContent = tv.kho ? "⏳" : "";
       const tranh = new Set((ct.cau || []).map(c => (tv.kho && Number.isInteger(c.id) ? c.id : c.noiDung))); // KC_06B1: kho tránh theo mã câu
@@ -699,7 +718,10 @@ export function taoTruBanDo(the) {
         const li = document.createElement("li"); li.className = "d3CauChon"; li.tabIndex = 0; li.setAttribute("role", "button");
         const nhan = document.createElement("small"); nhan.className = "d3CnNhan"; nhan.textContent = (c.lop ? "Lớp " + c.lop : "") + (c.doKho ? " · " + (TEN_MUC[c.doKho] || c.doKho) : "") + (c.cuaBe ? " · ✏️ Câu của bạn nhỏ" : "");
         li.appendChild(nhan); veCauVao(li, c);
-        const chon = async () => { const so = await doiCau(ct, o, c); if (so) { o = so - 1; veDs(o); veCau(); p.dataset.che = "ds"; } };
+        const chon = async () => {
+          if (mua) { if (await muaCau(ct, 1, [c])) p.remove(); return; }
+          const so = await doiCau(ct, o, c); if (so) { o = so - 1; veDs(o); veCau(); p.dataset.che = "ds"; }
+        };
         li.addEventListener("click", chon);
         li.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); chon(); } });
         olTv.appendChild(li);
@@ -707,7 +729,7 @@ export function taoTruBanDo(the) {
     }
     khac.addEventListener("click", veCau);
     o = Math.min(daGan().length, soN() - 1); // máy tính: sẵn chỗ "ngẫu nhiên" đầu tiên (hoặc câu cuối)
-    tdTv.textContent = "Đổi câu " + (o + 1);
+    tdTv.textContent = mua ? "Chọn câu để thêm" : "Đổi câu " + (o + 1);
     veDs(); veMon(); veCd(); veCau();
     return p;
   }

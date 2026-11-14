@@ -93,6 +93,12 @@
     // KC_06B1: câu (hoặc số) -> mảng mã câu kho; câu không có mã (máy sinh cũ) bị bỏ
     const dsMa = ds => (Array.isArray(ds) ? ds : []).map(c => (c && typeof c === "object" ? c.id : c)).filter(m => Number.isInteger(m) && m > 0);
     // KC_06B1: RPC kho câu dùng chung toàn app (không theo vùng: không gửi p_ma_vung)
+    async function goiCau(ham, thamSo) { // KC_06D/E2: trả cả mã lỗi + chi tiết (loai, giongVoi, luot...) cho màn soạn câu
+      let kq;
+      try { kq = await opt.goiRpc(ham, Object.assign({ p_ten: opt.ten, p_ma_phien: opt.maPhien }, thamSo)); } catch (e) { kq = null; }
+      if (!kq || typeof kq !== "object") return { ok: false, ma: "mang" };
+      return Object.assign({}, kq, { ok: kq.thanhCong === true, ma: kq.thanhCong === true ? undefined : (kq.ma || "mang") });
+    }
     async function goiKho(ham, thamSo) {
       let kq;
       try { kq = await opt.goiRpc(ham, Object.assign({ p_ten: opt.ten, p_ma_phien: opt.maPhien }, thamSo)); } catch (e) { kq = null; }
@@ -205,13 +211,19 @@
       //   hoặc { ok: false, ma (het_luot | khoa | chan | trung | sai_khuon | khong_sua | dang_nhap | mang), loai?, giongVoi?, luot? };
       //   daXemCau(ids): bé đã đọc tin của các câu; monChuDe(): danh sách môn của kho (RPC không cần đăng nhập)
       async cauCuaBe() { return goiKho("kc_cau_hoi_cua_be", {}); },
-      async guiCau(id, cau) {
-        let kq;
-        try { kq = await opt.goiRpc("kc_cau_hoi_gui", { p_ten: opt.ten, p_ma_phien: opt.maPhien, p_id: Number.isInteger(id) ? id : null, p_cau: cau || {} }); }
-        catch (e) { kq = null; }
-        if (!kq || typeof kq !== "object") return { ok: false, ma: "mang" };
-        return Object.assign({}, kq, { ok: kq.thanhCong === true, ma: kq.thanhCong === true ? undefined : (kq.ma || "mang") });
+      // KC_06E2: phải 🔍 Kiểm tra trước (kiemCau -> maKiem), Gửi kèm maKiem; ma 'chua_kiem' = chưa kiểm / câu đã đổi sau khi kiểm
+      async guiCau(id, cau, maKiem) { return goiCau("kc_cau_hoi_gui", { p_id: Number.isInteger(id) ? id : null, p_cau: cau || {}, p_ma_kiem: maKiem || null }); },
+      //   kiemCau(id | null, cau) -> { ok, maKiem, goiAi, nhayCam, luot } | { ok: false, ma (chan | trung | sai_khuon | het_kiem | khoa ...), cuaBe? }
+      async kiemCau(id, cau) { return goiCau("kc_cau_hoi_kiem", { p_id: Number.isInteger(id) ? id : null, p_cau: cau || {} }); },
+      //   aiKiem(maKiem): Cô Cú (AI) chấm phiếu kiểm -> { ok, ketQua (dat | loai | loi | bo_qua), lyDo, goiY, nhayCam }
+      async aiKiem(maKiem) {
+        const sb = typeof window !== "undefined" ? window.kcSupabaseClient : null;
+        if (!sb || !sb.functions) return { ok: false, ma: "mang" };
+        try { const r = await sb.functions.invoke("kc-duyet-cau", { body: { nguon: "be", maKiem } }); return Object.assign({ ok: !r.error }, r.data || {}); }
+        catch (e) { return { ok: false, ma: "mang" }; }
       },
+      //   xemKiem(maKiem) -> { ok, ai (tat | cho | dat | loai | loi), lyDo, goiY, nhayCam }
+      async xemKiem(maKiem) { return goiKho("kc_cau_hoi_kiem_xem", { p_ma: maKiem }); },
       // KC_06E: đánh thức AI chấm hàng chờ (Edge Function kc-duyet-cau; khoá Gemini chỉ ở máy chủ). Lỗi thì thôi: lịch máy chủ chấm sau.
       async goiAi() {
         const sb = typeof window !== "undefined" ? window.kcSupabaseClient : null;
@@ -243,4 +255,4 @@
 // 12/11/2026 - BƯỚC: KC_06B2 (kho("lo", { nhanh }): kc_cau_hoi_lo_tran, chấm nhanh trên máy)
 // 12/11/2026 - BƯỚC: KC_06B3 (truTra: p_ma_luot + p_cau_id, cần SQL kc06b3)
 // 12/11/2026 - BƯỚC: KC_06D (cauCuaBe / guiCau / daXemCau / monChuDe: bé tự đặt câu; cần SQL KC_06D)
-// 12/11/2026 - BƯỚC: KC_06E (goiAi: đánh thức AI chấm câu bé đặt)
+// 14/11/2026 - BƯỚC: KC_06E2 (kiemCau / aiKiem / xemKiem: Kiểm tra trước, Gửi sau)
