@@ -331,6 +331,13 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3ScGopY.nhac { background: #2a2a40; border-color: #b9b4ff; color: #e6e3ff; }
 .d3ScGui:disabled { opacity: .45; filter: grayscale(.7); cursor: not-allowed; }
 .d3ScKiem { background: #3b82c4 !important; color: #fff !important; }
+/* KC_06E3: hàng nút của câu trong kho của con */
+.d3CbNutHang { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.d3CbNutHang .d3Nut { min-height: 40px; padding: 4px 12px; border-radius: 12px; font-weight: 700; }
+.d3CbNutHang .d3CbChon { background: #2e8b4e; border-color: #7ee08a; color: #fff; }
+.d3CbNutHang .d3CbDocLai { background: #2f5d8a; border-color: #9fd3ff; color: #fff; }
+.d3CbNutHang .d3CbXoa { margin-left: auto; background: transparent; border-color: rgba(255, 255, 255, .3); color: #ffd2c4; }
+.d3CbNutHang .d3CbXoa.hoi { background: #8a2f2f; border-color: #ff9a8a; color: #fff; }
 .d3SoanCau[data-buoc="thu"] .d3ScGopY, .d3SoanCau[data-buoc="kq"] .d3ScGopY,
 .d3SoanCau[data-buoc="thu"] .d3ScSoan, .d3SoanCau[data-buoc="kq"] .d3ScSoan, .d3SoanCau[data-buoc="kq"] .d3ScThu { display: none; }
 .d3SoanCau[data-buoc="thu"] .d3ScThu, .d3SoanCau[data-buoc="kq"] .d3ScKq { display: block; }

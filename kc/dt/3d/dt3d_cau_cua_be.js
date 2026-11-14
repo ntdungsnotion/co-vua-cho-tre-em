@@ -115,17 +115,55 @@ export function taoCauCuaBe(the) {
         const ly = [c.lyDo, c.goiY].filter(Boolean).join(" ");
         if (ly) li.appendChild(tao("p", "d3CbLyDo", "💬 " + ly));
       }
+      // KC_06E3 (người dùng 14/11/2026): hàng nút của mỗi câu: 🛡️ Chọn câu này / 🦉 Nhờ Cô Cú đọc lại / ✏️ Sửa lại / 🗑 Xoá
+      const hang = tao("div", "d3CbNutHang");
+      let ganVao = null;
+      if (dung && chonCau) {
+        const cau = { id: c.id, noiDung: c.noiDung, dapAn: c.dapAn, dung: c.dung, loiGiai: c.loiGiai || "", mon: c.mon, doKho: c.muc || "", hinhChu: "", amThanh: "", lop: c.lop, chuDe: c.chuDe, cuaBe: true };
+        ganVao = () => chonCau(cau);
+        const chonNut = nut("🛡️ Chọn câu này", "d3CbChon"); chonNut.addEventListener("click", e => { e.stopPropagation(); ganVao(); });
+        hang.appendChild(chonNut);
+      }
+      if (c.trangThai === "cho_ai" && mayChu.docLai) {
+        const doc = nut("🦉 Nhờ Cô Cú đọc lại", "d3CbDocLai");
+        doc.addEventListener("click", async e => {
+          e.stopPropagation(); doc.disabled = true; doc.textContent = "🦉 Cô Cú đang đọc...";
+          const kq = await mayChu.docLai(c.id).catch(() => null);
+          if (!kq || !kq.ok) {
+            doc.textContent = kq && kq.ma === "vua_doc" ? "Cô Cú vừa đọc xong, con chờ 1 phút nhé" : "Chưa nhờ được, con thử lại sau nhé";
+            setTimeout(() => { doc.disabled = false; doc.textContent = "🦉 Nhờ Cô Cú đọc lại"; }, 4000); return;
+          }
+          if (mayChu.goiAi) await Promise.race([mayChu.goiAi().catch(() => null), new Promise(r => setTimeout(r, CHO_AI_MS))]);
+          if (veLai) veLai();
+        });
+        hang.appendChild(doc);
+      }
       if (SUA_DUOC.indexOf(c.trangThai) >= 0 && tt.lop !== "cho") {
         const sua = nut("✏️ Sửa lại", "d3CbSua"); sua.addEventListener("click", e => { e.stopPropagation(); soanMoi(c); });
-        li.appendChild(sua);
+        hang.appendChild(sua);
       }
-      if (dung && chonCau) {
+      if (!c.congKhai && mayChu.xoaCau) { // chạm 2 lần mới xoá (không dùng hộp hỏi của trình duyệt)
+        const xoa = nut("🗑 Xoá", "d3CbXoa"); let hoi = false, hen = null;
+        xoa.addEventListener("click", async e => {
+          e.stopPropagation();
+          if (!hoi) {
+            hoi = true; xoa.classList.add("hoi");
+            xoa.textContent = c.soCongTrinh ? "Xoá thật? Câu đang giữ " + c.soCongTrinh + " công trình" : "Chạm lần nữa để xoá";
+            hen = setTimeout(() => { hoi = false; xoa.classList.remove("hoi"); xoa.textContent = "🗑 Xoá"; }, 4000); return;
+          }
+          clearTimeout(hen); xoa.disabled = true;
+          const kq = await mayChu.xoaCau(c.id).catch(() => null);
+          if (kq && kq.ok) { if (typeof baoGoiY === "function") baoGoiY("🗑 Đã xoá câu của con"); if (veLai) veLai(); }
+          else { xoa.textContent = kq && kq.ma === "cong_khai" ? "Câu đã vào thư viện chung, không xoá được" : "Chưa xoá được, con thử lại nhé"; }
+        });
+        hang.appendChild(xoa);
+      }
+      if (hang.childNodes.length) li.appendChild(hang);
+      if (ganVao) {
         li.classList.add("d3CauChon"); li.tabIndex = 0; li.setAttribute("role", "button");
         li.title = "Chạm để gắn câu này vào công trình";
-        const cau = { id: c.id, noiDung: c.noiDung, dapAn: c.dapAn, dung: c.dung, loiGiai: c.loiGiai || "", mon: c.mon, doKho: c.muc || "", hinhChu: "", amThanh: "", lop: c.lop, chuDe: c.chuDe, cuaBe: true };
-        const chon = () => chonCau(cau);
-        li.addEventListener("click", chon);
-        li.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); chon(); } });
+        li.addEventListener("click", ganVao);
+        li.addEventListener("keydown", e => { if (e.target === li && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); ganVao(); } });
       }
       if (!c.daXem) moiXem.push(c.id);
       ol.appendChild(li);
@@ -314,7 +352,8 @@ export function taoCauCuaBe(the) {
       daKiem = { ma: kq.maKiem, ban, ai: ai.ketQua, nhay }; thu.disabled = false; thu.title = "";
       if (ai.ketQua === "dat") veGopY("dat", "✅ Cô Cú khen: " + (ai.lyDo || "Câu hay lắm!"), nhay ? NHAY_CAM : "", "Con bấm 📨 Gửi nhé!");
       else if (ai.ketQua === "tat") veGopY("dat", "✅ Câu qua vòng kiểm rồi!", "Gửi xong cô chú sẽ xem, duyệt rồi con gắn vào công trình được. Con bấm 📨 Gửi nhé!");
-      else veGopY("dat", "✅ Câu qua vòng kiểm của app.", "🦉 Cô Cú đang bận, con cứ gửi: Cô Cú đọc xong thì con gắn vào công trình được. Con bấm 📨 Gửi nhé!");
+      else veGopY("nhac", "✅ Câu qua vòng kiểm của app.", "⚠️ Nhưng Cô Cú đang bận, CHƯA đọc được câu của con.",
+        "Con vẫn gửi được: câu vào kho của con và chờ Cô Cú đọc, đọc xong đạt thì mới gắn vào công trình được.");
       try { thu.focus({ preventScroll: true }); } catch (e) { /* bỏ qua */ }
     });
 
@@ -356,4 +395,4 @@ export function taoCauCuaBe(the) {
 
   return { co, ve, soanMoi, loiChoBe };
 }
-// 14/11/2026 - BƯỚC: KC_06E2
+// 14/11/2026 - BƯỚC: KC_06E3 (nút 🛡️ Chọn câu này, 🦉 Nhờ Cô Cú đọc lại, 🗑 Xoá); KC_06E2
