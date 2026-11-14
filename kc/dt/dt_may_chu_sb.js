@@ -222,6 +222,9 @@
         try { const r = await sb.functions.invoke("kc-duyet-cau", { body: { nguon: "be", maKiem } }); return Object.assign({ ok: !r.error }, r.data || {}); }
         catch (e) { return { ok: false, ma: "mang" }; }
       },
+      // KC_06E3: xoaCau(id) -> { ok, goCongTrinh } | { ok: false, ma (cong_khai | khong_xoa) }; docLai(id): nhờ Cô Cú đọc lại câu đang chờ
+      async xoaCau(id) { return goiCau("kc_cau_hoi_be_xoa", { p_id: id }); },
+      async docLai(id) { return goiCau("kc_cau_hoi_be_doc_lai", { p_id: id }); },
       //   xemKiem(maKiem) -> { ok, ai (tat | cho | dat | loai | loi), lyDo, goiY, nhayCam }
       async xemKiem(maKiem) { return goiKho("kc_cau_hoi_kiem_xem", { p_ma: maKiem }); },
       // KC_06E: đánh thức AI chấm hàng chờ (Edge Function kc-duyet-cau; khoá Gemini chỉ ở máy chủ). Lỗi thì thôi: lịch máy chủ chấm sau.
@@ -255,4 +258,4 @@
 // 12/11/2026 - BƯỚC: KC_06B2 (kho("lo", { nhanh }): kc_cau_hoi_lo_tran, chấm nhanh trên máy)
 // 12/11/2026 - BƯỚC: KC_06B3 (truTra: p_ma_luot + p_cau_id, cần SQL kc06b3)
 // 12/11/2026 - BƯỚC: KC_06D (cauCuaBe / guiCau / daXemCau / monChuDe: bé tự đặt câu; cần SQL KC_06D)
-// 14/11/2026 - BƯỚC: KC_06E2 (kiemCau / aiKiem / xemKiem: Kiểm tra trước, Gửi sau)
+// 14/11/2026 - BƯỚC: KC_06E3 (xoaCau, docLai); KC_06E2 (kiemCau / aiKiem / xemKiem: Kiểm tra trước, Gửi sau)
