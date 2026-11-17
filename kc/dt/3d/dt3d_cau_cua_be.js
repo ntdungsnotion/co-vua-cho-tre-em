@@ -37,7 +37,8 @@ const MON_MAC_DINH = [
   { ma: "do_vui", ten: "Đố vui", bieuTuong: "🧩" },
 ];
 const SO_DAP_AN = 4;
-const CHO_AI_MS = 35000; // bé chờ Cô Cú chấm tối đa (Edge Function chờ Gemini 20 giây mặc định)
+const CHO_AI_MS = 35000; // 🦉 Nhờ Cô Cú đọc lại: chờ tối đa (Edge Function chờ Gemini 20 giây mặc định)
+const CHO_BE_GIAY = 12;  // KC_06F2 (người dùng 17/11/2026): 🔍 Kiểm tra chờ Cô Cú tối đa 12 giây (máy chủ gửi ai.giay_cho_be, admin sửa)
 // Câu có chủ đề nhạy cảm học tập (chiến tranh, bệnh...): nằm trong Câu của con, admin duyệt xong mới gắn được (người dùng 12/11/2026)
 const NHAY_CAM = "🔎 Câu này có chủ đề cần người lớn xem (như chiến tranh, bệnh tật...). Cô chú duyệt xong thì con mới gắn vào công trình được nhé.";
 
@@ -76,7 +77,8 @@ export function taoCauCuaBe(the) {
   }
 
   // ---------- thẻ "Câu của con" trong bảng 📝 ----------
-  async function ve(cd, ol, chonCau) {
+  // soi (KC_06F2): mã câu cần tô sáng + cuộn tới (bé chạm một tin ở 💡)
+  async function ve(cd, ol, chonCau, soi) {
     veLai = () => ve(cd, ol, chonCau); ganCau = chonCau || null;
     cd.textContent = ""; ol.textContent = "⏳";
     // Hai lựa chọn (người dùng 12/11/2026): chọn câu trong kho của con | thêm câu mới
@@ -102,11 +104,13 @@ export function taoCauCuaBe(the) {
       g.append(tao("b", "", "Con chưa đặt câu nào."), tao("div", "", "Con nghĩ ra một câu đố thật hay, cô chú xem xong là con gắn vào công trình để thử tài các bạn khác!"));
       ol.appendChild(g); return;
     }
-    if (ds.some(c => (TRANG_THAI[c.trangThai] || {}).lop === "dat")) ol.appendChild(tao("li", "d3CbGoiY", "Chạm một câu có ✅ để gắn vào công trình."));
+    if (ds.some(c => (TRANG_THAI[c.trangThai] || {}).lop === "dat")) ol.appendChild(tao("li", "d3CbGoiY", chonCau ? "Chạm một câu có ✅ để gắn vào công trình."
+      : "Câu có ✅ con gắn vào công trình ở nút 📝 / 🛡️ của công trình nhé."));
     const moiXem = [];
     for (const c of ds) {
       const tt = TRANG_THAI[c.trangThai] || TRANG_THAI.cho_nguoi, dung = tt.lop === "dat";
-      const li = tao("li", "d3CauBe d3CauBe_" + tt.lop + (c.daXem ? "" : " d3CbMoiTin"));
+      const li = tao("li", "d3CauBe d3CauBe_" + tt.lop + (c.daXem ? "" : " d3CbMoiTin") + (soi && c.id === soi ? " d3CbSoi" : ""));
+      li.dataset.cauId = String(c.id);
       const nhan = tao("small", "d3CbNhan", tt.nhan + (dung && c.soCongTrinh ? " · đang giữ " + c.soCongTrinh + " công trình" : ""));
       li.appendChild(nhan);
       const nd = tao("div", "", c.noiDung); li.appendChild(nd);
@@ -172,6 +176,9 @@ export function taoCauCuaBe(the) {
       ol.appendChild(li);
     }
     if (moiXem.length && mayChu.daXemCau) mayChu.daXemCau(moiXem).catch(() => null);
+    const soiLi = soi ? ol.querySelector('[data-cau-id="' + soi + '"]') : null;
+    if (soiLi) { try { soiLi.scrollIntoView({ block: "center" }); } catch (e) { /* bỏ qua */ } }
+    else if (soi) ol.insertBefore(tao("li", "d3CbGoiY", "Câu này không còn trong kho của con nữa."), ol.firstChild);
   }
 
   // ---------- màn soạn câu ----------
@@ -398,9 +405,11 @@ export function taoCauCuaBe(the) {
     };
     soan.addEventListener("input", doiChu); soan.addEventListener("click", () => setTimeout(doiChu, 0)); chonLop.addEventListener("change", doiChu);
 
-    const choAi = async ma => { // Cô Cú chấm phiếu kiểm; quá giờ thì hỏi máy chủ kết quả một lần
+    // Cô Cú chấm phiếu kiểm; quá giờ (KC_06F2: ai.giay_cho_be, mặc định 12 giây) thì hỏi máy chủ kết quả một lần rồi thôi chờ.
+    // Cô Cú vẫn đọc tiếp ở máy chủ: bé gửi trước thì kết quả ghi vào câu + tin ở 💡 (SQL kc06f2).
+    const choAi = async (ma, ms) => {
       let kq = null;
-      if (mayChu.aiKiem) kq = await Promise.race([mayChu.aiKiem(ma).catch(() => null), new Promise(r => setTimeout(() => r(null), CHO_AI_MS))]);
+      if (mayChu.aiKiem) kq = await Promise.race([mayChu.aiKiem(ma).catch(() => null), new Promise(r => setTimeout(() => r(null), ms || CHO_AI_MS))]);
       if (kq && (kq.ketQua === "dat" || kq.ketQua === "loai")) return kq;
       if (mayChu.xemKiem) { const x = await mayChu.xemKiem(ma).catch(() => null); if (x && x.ok && (x.ai === "dat" || x.ai === "loai")) return Object.assign({ ketQua: x.ai }, x); }
       return { ketQua: "loi" };
@@ -425,8 +434,13 @@ export function taoCauCuaBe(the) {
       }
       let ai = { ketQua: "tat" };
       if (kq.goiAi) {
-        veGopY("doi", "✅ Câu qua vòng kiểm của app.", "🦉 Cô Cú đang đọc câu của con, con chờ một chút nhé...");
-        ai = await choAi(kq.maKiem);
+        // KC_06F2: bé chờ tối đa giayChoBe giây (máy chủ gửi; máy chủ cũ chưa có thì 12), có đếm ngược
+        const giay = Math.max(5, Math.min(60, Math.round(Number(kq.giayChoBe)) || CHO_BE_GIAY));
+        let con = giay;
+        const dem = () => veGopY("doi", "✅ Câu qua vòng kiểm của app.", "🦉 Cô Cú đang đọc câu của con, con chờ một chút nhé... ⏱️ " + con);
+        dem();
+        const hen = setInterval(() => { con = Math.max(0, con - 1); if (p.isConnected && gopY.classList.contains("doi")) dem(); }, 1000);
+        try { ai = await choAi(kq.maKiem, giay * 1000); } finally { clearInterval(hen); }
         if (!p.isConnected) return;
       }
       kiemNut.disabled = false;
@@ -439,8 +453,8 @@ export function taoCauCuaBe(the) {
       daKiem = { ma: kq.maKiem, ban, ai: ai.ketQua, nhay }; thu.disabled = false; thu.title = "";
       if (ai.ketQua === "dat") veGopY("dat", "✅ Cô Cú khen: " + (ai.lyDo || "Câu hay lắm!"), nhay ? NHAY_CAM : "", "Con bấm 📨 Gửi nhé!");
       else if (ai.ketQua === "tat") veGopY("dat", "✅ Câu qua vòng kiểm rồi!", "Gửi xong cô chú sẽ xem, duyệt rồi con gắn vào công trình được. Con bấm 📨 Gửi nhé!");
-      else veGopY("nhac", "✅ Câu qua vòng kiểm của app.", "⚠️ Nhưng Cô Cú đang bận, CHƯA đọc được câu của con.",
-        "Con vẫn gửi được: câu vào kho của con và chờ Cô Cú đọc, đọc xong đạt thì mới gắn vào công trình được.");
+      else veGopY("nhac", "✅ Câu qua vòng kiểm của app.", "🦉 Cô Cú đọc hơi lâu, con không cần chờ nữa!",
+        "Con bấm 📨 Gửi, tự trả lời câu của con là câu vào kho. Cô Cú đọc tiếp, đọc xong sẽ báo con ở 💡 trên cùng màn hình. Đạt thì con gắn vào công trình được.");
       try { thu.focus({ preventScroll: true }); } catch (e) { /* bỏ qua */ }
     });
 
@@ -475,7 +489,11 @@ export function taoCauCuaBe(the) {
       if (kq.goiAi && mayChu.goiAi) mayChu.goiAi().catch(() => null); // Cô Cú bận lúc kiểm: đánh thức chấm hàng chờ
       if (tt === "ai_dat" || tt === "dat") ketThuc("✅ Câu đã vào kho của con! Con gắn vào công trình được ngay rồi.", l, c);
       else if (c.nhayCam) ketThuc("📨 Câu đã vào kho của con. " + NHAY_CAM, l);
-      else if (tt === "cho_ai") ketThuc("📨 Câu đã vào kho của con. 🦉 Cô Cú đọc xong là con gắn vào công trình được. Con xem ở thẻ ✏️ Câu riêng của con nhé!", l);
+      else if (tt === "cho_ai") {
+        // KC_06F2: Cô Cú chấm ngầm -> 💡 hỏi máy chủ dày hơn một lúc để báo bé sớm
+        try { window.dispatchEvent(new CustomEvent("kc-cau-cho-ngam", { detail: { id: c.id } })); } catch (e) { /* bỏ qua */ }
+        ketThuc("📨 Câu đã vào kho của con! 🦉 Cô Cú đang đọc tiếp, đọc xong sẽ báo con ở 💡 trên cùng màn hình. Đạt là con gắn vào công trình được.", l);
+      }
       else ketThuc("📨 Câu đã vào kho của con. Cô chú duyệt xong là con gắn vào công trình được. Con xem ở thẻ ✏️ Câu riêng của con nhé!", l);
     });
   }
@@ -485,3 +503,4 @@ export function taoCauCuaBe(the) {
 // 14/11/2026 - BƯỚC: KC_06E3 (nút 🛡️ Chọn câu này, 🦉 Nhờ Cô Cú đọc lại, 🗑 Xoá); KC_06E2
 // 17/11/2026 10:00 - KC_06G sửa sau thử thật: câu cùng lời hỏi (câu máy sinh khác hình) gộp một dòng, nhãn ×N
 // 17/11/2026 - BƯỚC: KC_06G (khung 🔎 Câu giống trong kho: tự lọc khi bé gõ, chạm xổ chi tiết; lời báo trùng chỉ còn cho câu y hệt)
+// 17/11/2026 - BƯỚC: KC_06F2 (🔍 chờ Cô Cú tối đa 12 giây có đếm ngược, rồi bé gửi luôn, Cô Cú chấm ngầm báo ở 💡; ve(..., soi) tô câu từ tin 💡)

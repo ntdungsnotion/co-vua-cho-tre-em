@@ -46,6 +46,7 @@
     "ai.so_lan_thu_toi_da": ["AI chấm câu của bé", "Số lần thử lại khi AI lỗi"],
     "ai.giay_cho": ["AI chấm câu của bé", "Số giây chờ AI trả lời"],
     "ai.chu_ky_phut": ["AI chấm câu của bé", "Mỗi bao nhiêu phút máy chủ gọi AI chấm hàng chờ"],
+    "ai.giay_cho_be": ["AI chấm câu của bé", "Bé bấm 🔍 Kiểm tra chờ Cô Cú tối đa bao nhiêu giây (5-60), quá thì bé gửi luôn, Cô Cú chấm ngầm báo ở 💡 (KC_06F2)"],
     "kho.cau_moi_o": ["Kho", "Số câu mục tiêu mỗi ô (môn × lớp × mức × dạng)"],
     "nhat_ky.giu_ngay": ["Nhật ký", "Giữ nhật ký chặn bao nhiêu ngày"],
     "nhat_ky.giu_luot_ngay": ["Nhật ký", "Giữ lượt trả lời chi tiết bao nhiêu ngày"]
@@ -123,7 +124,7 @@
       + '<input type="search" id="qkcTim" placeholder="Tìm chữ trong câu / đáp án, #mã câu, tên bé..." aria-label="Tìm">'
       + '<details class="qkcLocThem" id="qkcLocThem"><summary>⚙️ Bộ lọc</summary><div class="qkcLocLuoi">'
       + '<label>Nguồn<select id="qkcLNguon"><option value="">Tất cả</option><option value="he_thong">⚙️ Hệ thống</option><option value="be">✏️ Câu của bé</option></select></label>'
-      + '<label>Trạng thái<select id="qkcLTrangThai"><option value="">Tất cả</option><option value="cho_duyet">⏳ Chờ duyệt (AI / người)</option>'
+      + '<label>Trạng thái<select id="qkcLTrangThai"><option value="">Tất cả</option><option value="cho_duyet">⏳ Chờ duyệt (mọi câu Cô Cú đã / đang đọc)</option>'
       + tuyChon(TRANG_THAI, "") + "</select></label>"
       + '<label>Môn<select id="qkcLMon">' + tuyChonMon("", "Tất cả") + "</select></label>"
       + '<label>Chủ đề<select id="qkcLChuDe"><option value="">Tất cả</option></select></label>'
@@ -701,3 +702,4 @@
 })();
 // 12/11/2026 - BƯỚC: KC_06C
 // 17/11/2026 - BƯỚC: KC_06G (ô cấu hình trung.gan_giong)
+// 17/11/2026 - BƯỚC: KC_06F2 (ô cấu hình ai.giay_cho_be)

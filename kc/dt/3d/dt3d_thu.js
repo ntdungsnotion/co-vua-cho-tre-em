@@ -17,7 +17,8 @@
 //       TC_D02B3b (đưa capNhatKho cho thung lũng: kho bị trừ phần máy chủ cắt thì vẽ lại thanh);
 //       TC_D06A (thung lũng có quái lang thang dt3d_quai_ban_do.js, chạm quái vào trận);
 //       KC_06B2 (11/11/2026: trang trận nhờ gọi máy chủ "dt-kho-hoi": câu kho, chấm, số Quản trị);
-//       KC_06F1 (16/11/2026: vào thung lũng hiện tin của bé, dt3d_thong_bao.js)
+//       KC_06F1 (16/11/2026: vào thung lũng hiện tin của bé, dt3d_thong_bao.js);
+//       KC_06F2 (17/11/2026: 💡 bóng điện thông báo ở thanh trên, dt3d_bong_den.js)
 // NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 30/10/2026
 // PHỤ THUỘC: chung/nv_ve.js (KC_NV), dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), các phần dt/3d/*.js;
 //            thung lũng thêm dt/dt_ban_do.js, dt/dt_may_chu.js; trang game thêm chung/nv_ho_so.js,
@@ -30,6 +31,8 @@ import { taiTruoc } from "./dt3d_luu_san.js"; // KC_06B2: tải sẵn cảnh tr�
 import { taoDiaHinh } from "./dt3d_dia_hinh.js";
 import { taoCongTrinh } from "./dt3d_cong_trinh.js";
 import { moThongBao } from "./dt3d_thong_bao.js"; // KC_06F1: tin của bé khi vào thung lũng (câu bị trả lại đã được thay)
+import { taoBongDen } from "./dt3d_bong_den.js"; // KC_06F2: 💡 bóng điện thông báo ở thanh trên
+import { taoCauCuaBe } from "./dt3d_cau_cua_be.js"; // KC_06F2: 💡 mở ✏️ Câu riêng của con
 import { taoTaiNguyen } from "./dt3d_tai_nguyen.js";
 import { taoBoNhanVat } from "./dt3d_nhan_vat.js";
 import { taoDieuKhien } from "./dt3d_dieu_khien.js";
@@ -173,6 +176,14 @@ if (VUNG) {
   } catch (e) { console.warn("Chưa dựng được nút nông dân", e); }
   // KC_06F1: tin chưa đọc của bé (câu bị trả lại đã được thay câu khác ở công trình); không chặn việc vào làng
   if (GAME) setTimeout(() => moThongBao({ mayChu: vung.mayChu }).catch(() => null), 1200);
+  // KC_06F2: 💡 bóng điện ở thanh trên (Cô Cú chấm ngầm xong / cô chú duyệt / câu bị trả lại); máy chủ chưa có hàm thì không hiện
+  if (GAME) setTimeout(() => {
+    try {
+      const cauBe = taoCauCuaBe({ mayChu: vung.mayChu, lopBe: () => Math.max(1, Math.min(12, Math.floor(be.lop) || 2)), baoGoiY });
+      const bd = taoBongDen({ mayChu: vung.mayChu, cauBe, baoGoiY });
+      if (window.__dt3d) window.__dt3d.bongDen = bd;
+    } catch (e) { console.warn("Chưa dựng được 💡", e); }
+  }, 1500);
 } else {
   dvTl = lang.themDonVi("thu_linh", banDo.batDau.thuLinh.x, banDo.batDau.thuLinh.z, be.tenThuLinh || "Thủ lĩnh");
   hTl = boNv.tao(dvTl, "thu_linh", hoSoTl);
