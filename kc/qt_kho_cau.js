@@ -124,7 +124,7 @@
       + '<input type="search" id="qkcTim" placeholder="Tìm chữ trong câu / đáp án, #mã câu, tên bé..." aria-label="Tìm">'
       + '<details class="qkcLocThem" id="qkcLocThem"><summary>⚙️ Bộ lọc</summary><div class="qkcLocLuoi">'
       + '<label>Nguồn<select id="qkcLNguon"><option value="">Tất cả</option><option value="he_thong">⚙️ Hệ thống</option><option value="be">✏️ Câu của bé</option></select></label>'
-      + '<label>Trạng thái<select id="qkcLTrangThai"><option value="">Tất cả</option><option value="cho_duyet">⏳ Chờ duyệt (AI / người)</option>'
+      + '<label>Trạng thái<select id="qkcLTrangThai"><option value="">Tất cả</option><option value="cho_duyet">⏳ Chờ duyệt (mọi câu Cô Cú đã / đang đọc)</option>'
       + tuyChon(TRANG_THAI, "") + "</select></label>"
       + '<label>Môn<select id="qkcLMon">' + tuyChonMon("", "Tất cả") + "</select></label>"
       + '<label>Chủ đề<select id="qkcLChuDe"><option value="">Tất cả</option></select></label>'
