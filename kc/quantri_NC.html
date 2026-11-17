@@ -30,6 +30,8 @@
                  xem trước nội dung theo 9 khuôn + mảnh nhớ (qt_kho_tri_thuc.js/.css, kc_the_nho_khuon.js, SQL KC_03B1).
        CẬP NHẬT: 12/11/2026 - KC_03B2: "📚 Kho tri thức" thêm ➕ Thêm thẻ / 📥 Nhập nhiều thẻ (JSON), ✏️ Sửa, 🙈 Ẩn; KIỂM TRÙNG
                  trước khi lưu (qt_the_nho_soan.js, SQL KC_03B2).
+       CẬP NHẬT: 17/11/2026 - KC_07: mục "🗄️ Dung lượng dữ liệu" (Quản trị chung): dung lượng từng bảng, máy chủ tự dọn dữ liệu cũ
+                 mỗi đêm 3 giờ, nút Dọn ngay, số ngày giữ từng loại (qt_don_du_lieu.js/.css, SQL KC_07).
        CẬP NHẬT: 12/11/2026 - KC_06C: mục "❓ Kho câu hỏi" (Quản trị chung): duyệt / sửa / loại / xoá câu (từng câu + hàng loạt),
                  nhập JSON, ô thiếu câu, từ cấm, nhật ký chặn, cấu hình kho (qt_kho_cau.js/.css, SQL KC_06C).
        CẬP NHẬT: 10/11/2026 - TC_D18A: nhóm "⚔️ Đấu Trường Tri Thức" trong Trò Chơi, mục "🎛️ Thông số" (qt_dau_truong.js/.css,
@@ -59,6 +61,7 @@
   <link rel="stylesheet" href="qt_kho_tu.css">
   <link rel="stylesheet" href="qt_dau_truong.css"> <!-- TC_D18A -->
   <link rel="stylesheet" href="qt_kho_cau.css"> <!-- KC_06C -->
+  <link rel="stylesheet" href="qt_don_du_lieu.css"> <!-- KC_07 -->
   <link rel="stylesheet" href="qt_kho_tri_thuc.css"> <!-- KC_03B1 -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -462,6 +465,7 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="khotrithuc" type="button">📚 Kho tri thức</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="giongdoc" type="button">🔊 Giọng đọc</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="donkho" type="button">🧹 Dọn kho ảnh</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="dungluong" type="button">🗄️ Dung lượng dữ liệu</button>
       </div>
 
       <div class="qtNhom">
@@ -1528,6 +1532,18 @@
       </div>
     </section>
 
+    <!-- KC_07 - MÀN HÌNH: DUNG LƯỢNG DỮ LIỆU + DỌN DỮ LIỆU CŨ (qt_don_du_lieu.js dựng nội dung trong #qddGoc) -->
+    <section class="adminManHinh" id="manhinh-dungluong">
+      <div class="adminKhoi">
+        <h3>🗄️ Dung lượng dữ liệu</h3>
+        <p class="adminGhiChu">
+          Tin đã đọc, câu bị loại, lịch sử cũ... ngày càng nhiều. Máy chủ <strong>tự dọn mỗi đêm lúc 3 giờ sáng</strong> theo số ngày giữ bên dưới,
+          kể cả khi không ai mở app. 🔒 Không bao giờ đụng tới tiến độ học, công trình, làng của các bé và dữ liệu Cờ Vua.
+        </p>
+        <div id="qddGoc"></div>
+      </div>
+    </section>
+
     <section class="adminManHinh" id="manhinh-donkho">
       <div class="adminKhoi">
         <h3>🧹 Dọn Kho Ảnh (file mồ côi trong Storage)</h3>
@@ -1589,6 +1605,7 @@
   <script src="quantri_NC.js"></script>
   <script src="qt_kho_tu.js"></script>
   <script src="qt_kho_cau.js"></script>       <!-- KC_06C: ❓ Kho câu hỏi -->
+  <script src="qt_don_du_lieu.js"></script>   <!-- KC_07: 🗄️ Dung lượng dữ liệu -->
   <script src="kc_the_nho_khuon.js"></script> <!-- KC_03B1: khuôn 9 hình dạng thẻ nhớ -->
   <script src="qt_kho_tri_thuc.js"></script>  <!-- KC_03B1: 📚 Kho tri thức -->
   <script src="qt_the_nho_soan.js"></script>  <!-- KC_03B2: ➕ thêm / sửa / nhập thẻ + kiểm trùng -->
