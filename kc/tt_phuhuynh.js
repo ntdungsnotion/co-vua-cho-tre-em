@@ -11,6 +11,8 @@
 // CẬP NHẬT: KC_00B - 14/10/2026 21:57: mở trang bằng địa chỉ có đuôi
 //   #dang-ky-phu-huynh (link "Đăng ký tài khoản phụ huynh" ở màn hình đăng
 //   nhập chung của Cờ Vua) thì hiện thẳng form đăng ký phụ huynh.
+// CẬP NHẬT: 18/11/2026 - KC_03B3: mỗi bé có nút "🎓 Học của con" mở khối dùng chung kc_hoc_cua_be.js
+//   (lớp, thẻ riêng, nhạy cảm, giao thẻ; máy chủ kiểm phụ huynh đã liên kết). Mỗi lúc mở một bé.
 // PHỤ THUỘC: kc_config.js, kc_api.js, kc_auth.js phải nạp TRƯỚC file này.
 //            Lắng nghe sự kiện "kcSanSang" do kc_auth.js bắn ra (hợp đồng ở
 //            đầu file kc_auth.js), đọc biến toàn cục kcTaiKhoanHienTai.
@@ -199,6 +201,16 @@ function ttPhVeDanhSachTre(danhSach) {
 
     dong.appendChild(thongTin);
 
+    // KC_03B3: 🎓 Học của con
+    if (window.KcHocCuaBe) {
+      var nutHoc = document.createElement("button");
+      nutHoc.className = "ttNutHoc";
+      nutHoc.type = "button";
+      nutHoc.textContent = "🎓 Học của con";
+      nutHoc.addEventListener("click", function () { ttPhMoHoc(dong, nutHoc, tre.tenDangNhap); });
+      dong.appendChild(nutHoc);
+    }
+
     var nutGo = document.createElement("button");
     nutGo.className = "ttNutGoLienKet";
     nutGo.type = "button";
@@ -208,6 +220,25 @@ function ttPhVeDanhSachTre(danhSach) {
 
     oDs.appendChild(dong);
   });
+}
+
+/** KC_03B3: mở / đóng khối "🎓 Học của con" ngay dưới dòng của bé (mỗi lúc một bé) */
+function ttPhMoHoc(dong, nut, tenTre) {
+  var dangMo = dong.querySelector(".ttKhungHoc");
+  Array.prototype.forEach.call(document.querySelectorAll("#ttDanhSachTre .ttKhungHoc"), function (k) { k.remove(); });
+  Array.prototype.forEach.call(document.querySelectorAll("#ttDanhSachTre .ttNutHoc"), function (n) {
+    n.classList.remove("dangMo"); n.textContent = "🎓 Học của con";
+  });
+  if (dangMo) return;
+  var khung = document.createElement("div");
+  khung.className = "ttKhungHoc";
+  dong.appendChild(khung);
+  nut.classList.add("dangMo");
+  nut.textContent = "✕ Đóng";
+  KcHocCuaBe.mo(khung, { be: tenTre, goi: function (ham, ts) {
+    ts.p_nguoi = kcTaiKhoanHienTai.tenDangNhap; ts.p_ma_phien = kcTaiKhoanHienTai.maPhien;
+    return kcGoiRpc(ham, ts);
+  } });
 }
 
 /** Avatar là emoji HOẶC URL ảnh (Sổ Tay D7): bắt đầu bằng 'http' -> <img> */
