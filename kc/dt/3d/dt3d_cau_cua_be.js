@@ -7,6 +7,9 @@
 //            - Màn soạn (#d3SoanCau): môn, lớp (mặc định lớp của bé), câu hỏi, 4 đáp án (chạm ⭕ để chọn đáp án đúng), lời giải
 //              (không bắt buộc) -> 🔍 Kiểm tra (KC_06E2) -> 📨 Gửi sáng -> bé tự trả lời đúng câu của mình (đáp án xáo) -> 📨 Gửi câu.
 //              Điện thoại: một cột cuộn. Máy tính: 2 cột (trái câu hỏi, phải đáp án), chữ to.
+//            - KC_06G: khung 🔎 Câu giống trong kho (mayChu.tuongTu): bé gõ câu hỏi thì tự lọc câu tương tự (kho chung đã duyệt + câu của
+//              chính bé), chạm một câu xổ đáp án / đáp án đúng / lời giải / môn / lớp. Chỉ tham khảo: máy chủ chỉ chặn câu y hệt.
+//              Máy tính rộng: cột thứ 3; điện thoại: khung gọn giữa câu hỏi và đáp án, chạm để mở. Máy chủ chưa có hàm: ẩn khung.
 //            - Máy chủ chặn lại hết (giới hạn ngày, từ cấm, thông tin riêng, trùng, khoá tạm): trang chỉ đổi MÃ lỗi thành lời
 //              nhẹ nhàng, không bao giờ nói từ nào bị bắt.
 //            - Câu có chủ đề nhạy cảm học tập (máy chủ trả nhayCam): vẫn vào Câu của con nhưng chỉ gắn được khi admin duyệt, kể cả khi AI
@@ -48,7 +51,7 @@ function loiChoBe(kq) {
       if (k.loai === "ca_nhan") return "Câu này có thông tin riêng (số điện thoại, địa chỉ, tên tài khoản, đường link...). Con bỏ phần đó đi rồi gửi lại nhé.";
       if (k.loai === "rac") return "Câu này hơi khó đọc, con viết lại rõ ràng hơn nhé.";
       return "Câu này có chữ chưa phù hợp với các bạn nhỏ, con sửa lại nhé.";
-    case "trung": return "Thư viện có câu này rồi, con thử nghĩ câu khác nhé!";
+    case "trung": return "Kho đã có câu y hệt rồi (cùng câu hỏi, cùng đáp án đúng). Con đổi cách hỏi hoặc đổi đáp án nhé!";
     case "khong_sua": return "Câu này không sửa được nữa, con đặt câu mới nhé.";
     case "sai_khuon": return "Câu chưa đủ phần, con kiểm tra lại câu hỏi và 4 đáp án nhé.";
     case "dang_nhap": return "Con cần đăng nhập lại rồi mới gửi câu được.";
@@ -218,7 +221,13 @@ export function taoCauCuaBe(the) {
     const thu = nut("📨 Gửi", "d3ScChinh d3ScGui"); thu.disabled = true; thu.title = "Con bấm 🔍 Kiểm tra trước nhé";
     hangNut.append(huy, kiemNut, thu);
     phai.append(nhanDa, dsDa, bao, hangNut);
-    soan.append(trai, phai);
+    // KC_06G (người dùng 17/11/2026): khung 🔎 Câu giống trong kho — bé gõ thì tự lọc, chạm một câu để xổ chi tiết. Chỉ tham khảo, không chặn.
+    const tt = tao("section", "d3ScTT"); tt.hidden = !mayChu.tuongTu;
+    const ttDau = nut("", "d3ScTTDau"); ttDau.setAttribute("aria-controls", "d3ScTTThan");
+    const ttThan = tao("div", "d3ScTTThan"); ttThan.id = "d3ScTTThan";
+    const ttBao = tao("p", "d3ScTTBao"); const ttDs = tao("ul", "d3ScTTDs");
+    ttThan.append(ttBao, ttDs); tt.append(ttDau, ttThan);
+    soan.append(trai, tt, phai);
 
     // --- bước 2: tự trả lời
     const thuB = tao("div", "d3ScThu");
@@ -253,13 +262,91 @@ export function taoCauCuaBe(the) {
       hangMon.textContent = "";
       for (const m of monDs) {
         const b = nut(m.bieuTuong + " " + m.ten, "d3ScMonNut"); b.setAttribute("role", "radio"); b.setAttribute("aria-checked", String(m.ma === mon));
-        b.addEventListener("click", () => { mon = m.ma; veMon(); });
+        b.addEventListener("click", () => { mon = m.ma; veMon(); henLoc(true); });
         hangMon.appendChild(b);
       }
     }
     veMon();
     // máy tính: con trỏ sẵn ở ô câu hỏi; điện thoại thì không (bàn phím bật lên che màn)
     if (window.matchMedia && window.matchMedia("(min-width: 900px)").matches) { try { oCau.focus({ preventScroll: true }); } catch (e) { /* bỏ qua */ } }
+
+    // ---------- KC_06G: 🔎 CÂU GIỐNG TRONG KHO ----------
+    // Máy tính: khung luôn mở (cột phải). Điện thoại: thu gọn thành một dòng có số câu, chạm để mở; kho có câu y hệt thì tự mở.
+    const mayTinh = () => !!(window.matchMedia && window.matchMedia("(min-width: 900px)").matches);
+    let ttMo = mayTinh(), ttSo = 0, ttHen = null, ttLuot = 0, ttChu = null, ttDaCo = false;
+    const veDauTT = () => {
+      ttDau.textContent = "🔎 Câu giống trong kho" + (ttSo ? " (" + ttSo + ")" : "") + (mayTinh() ? "" : ttMo ? " ▴" : " ▾");
+      ttDau.setAttribute("aria-expanded", String(ttMo)); ttThan.hidden = !ttMo;
+    };
+    ttDau.addEventListener("click", () => { if (mayTinh()) return; ttMo = !ttMo; veDauTT(); });
+    const loGop = c => [c.bieuTuong ? c.bieuTuong + " " + c.monTen : c.monTen, c.chuDe && c.chuDe !== "Khác" ? c.chuDe : "",
+      Number.isInteger(c.lopTu) ? "Lớp " + c.lopTu + (Number.isInteger(c.lopDen) && c.lopDen !== c.lopTu ? "-" + c.lopDen : "") : ""].filter(Boolean).join(" · ");
+    function veChiTiet(c) { // phần xổ xuống của một câu
+      const ct = tao("div", "d3ScTTCt");
+      const da = tao("ol", "d3ScTTDa");
+      (c.dapAn || []).forEach((x, i) => { const li = tao("li", i === c.dung ? "dung" : "", (i === c.dung ? "✅ " : "") + x); da.appendChild(li); });
+      ct.appendChild(da);
+      if (c.loiGiai) ct.appendChild(tao("p", "d3ScTTLg", "💡 " + c.loiGiai));
+      ct.appendChild(tao("small", "d3ScTTMeta", loGop(c)));
+      if (c.soCung > 1) ct.appendChild(tao("small", "d3ScTTMeta", "Kho có " + c.soCung + " câu cùng lời hỏi này (khác hình, khác đáp án). Đây là một câu mẫu."));
+      if (c.cuaBe && TRANG_THAI[c.trangThai]) ct.appendChild(tao("small", "d3ScTTMeta", TRANG_THAI[c.trangThai].nhan));
+      return ct;
+    }
+    // gộp câu cùng lời hỏi (câu máy sinh "Có bao nhiêu bông hoa?" ×N chỉ khác hình): máy chủ đã gộp + trả soCung; đây gộp phòng hờ
+    const gopCung = ds => {
+      const theo = new Map();
+      for (const c of ds) {
+        const k = String(c.noiDung || "").toLowerCase().replace(/\s+/g, " ").trim();
+        const cu = theo.get(k);
+        if (cu) cu.soCung = (cu.soCung || 1) + (c.soCung || 1); else theo.set(k, { ...c });
+      }
+      return [...theo.values()];
+    };
+    function veTT(ds) {
+      ds = gopCung(ds);
+      ttDs.textContent = ""; ttSo = ds.length;
+      const yHet = ds.some(c => c.yHet);
+      if (!oCau.value.trim()) { ttBao.textContent = "Con gõ câu hỏi, câu giống trong kho sẽ hiện ở đây để con tham khảo."; ttBao.className = "d3ScTTBao"; }
+      else if (!ds.length) { ttBao.textContent = "✨ Chưa có câu nào giống. Câu của con mới toanh!"; ttBao.className = "d3ScTTBao moi"; }
+      else if (yHet) { ttBao.textContent = "📌 Kho đã có câu hỏi y như vậy. Con vẫn gửi được nếu đáp án đúng của con khác câu trong kho."; ttBao.className = "d3ScTTBao yhet"; }
+      else { ttBao.textContent = "Các bạn đã hỏi những câu này. Con hỏi kiểu khác, hay đổi đáp án đều được nhé! Chạm một câu để xem."; ttBao.className = "d3ScTTBao"; }
+      for (const c of ds) {
+        const li = tao("li", "d3ScTTO" + (c.yHet ? " yhet" : ""));
+        const b = nut("", "d3ScTTCau"); b.setAttribute("aria-expanded", "false");
+        b.append(tao("span", "d3ScTTMui", "▸"), tao("span", "d3ScTTNd", c.noiDung));
+        const nhan = tao("span", "d3ScTTNhan", (c.cuaBe ? "📚 của con" : (c.bieuTuong || "📘")) + (c.soCung > 1 ? " ×" + c.soCung : ""));
+        b.appendChild(nhan);
+        let ct = null;
+        b.addEventListener("click", () => {
+          const mo = b.getAttribute("aria-expanded") !== "true";
+          ttDs.querySelectorAll(".d3ScTTCau[aria-expanded='true']").forEach(x => { x.setAttribute("aria-expanded", "false"); x.firstChild.textContent = "▸"; x.parentNode.classList.remove("mo"); });
+          if (!mo) return;
+          if (!ct) { ct = veChiTiet(c); li.appendChild(ct); }
+          b.setAttribute("aria-expanded", "true"); b.firstChild.textContent = "▾"; li.classList.add("mo");
+        });
+        li.appendChild(b); ttDs.appendChild(li);
+      }
+      if (yHet && !ttMo) ttMo = true;
+      veDauTT();
+    }
+    async function locTT() {
+      const chu = oCau.value.trim().replace(/\s+/g, " ");
+      if (chu === ttChu && ttChu !== null) return;
+      ttChu = chu;
+      const luot = ++ttLuot;
+      if (chu.length < 4) { veTT([]); return; }
+      const kq = await mayChu.tuongTu(chu, mon, suaId).catch(() => null);
+      if (luot !== ttLuot || !p.isConnected) return;
+      // lần đầu đã lỗi (máy chủ chưa có hàm vì chưa chạy SQL KC_06G, hoặc mất mạng): ẩn khung, bé soạn câu như cũ
+      if (!kq || !kq.ok) { if (!ttDaCo) tt.hidden = true; return; }
+      ttDaCo = true;
+      veTT(Array.isArray(kq.cau) ? kq.cau : []);
+    }
+    function henLoc(ngay) { if (tt.hidden) return; clearTimeout(ttHen); if (ngay) ttChu = null; ttHen = setTimeout(locTT, ngay ? 0 : 450); }
+    if (!tt.hidden) {
+      oCau.addEventListener("input", () => henLoc());
+      veTT([]); if (oCau.value.trim()) henLoc(true);
+    }
 
     function kiem() { // trình duyệt chỉ kiểm cho bé đỡ mất công; máy chủ kiểm lại hết
       const nd = oCau.value.trim().replace(/\s+/g, " ");
@@ -396,3 +483,5 @@ export function taoCauCuaBe(the) {
   return { co, ve, soanMoi, loiChoBe };
 }
 // 14/11/2026 - BƯỚC: KC_06E3 (nút 🛡️ Chọn câu này, 🦉 Nhờ Cô Cú đọc lại, 🗑 Xoá); KC_06E2
+// 17/11/2026 10:00 - KC_06G sửa sau thử thật: câu cùng lời hỏi (câu máy sinh khác hình) gộp một dòng, nhãn ×N
+// 17/11/2026 - BƯỚC: KC_06G (khung 🔎 Câu giống trong kho: tự lọc khi bé gõ, chạm xổ chi tiết; lời báo trùng chỉ còn cho câu y hệt)

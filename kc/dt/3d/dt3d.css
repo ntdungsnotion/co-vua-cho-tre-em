@@ -410,3 +410,45 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3TbChan .d3Nut { min-height: 48px; padding: 0 20px; font-size: 1.05rem; }
 @media (max-width: 600px) { .d3TbChan .d3Nut { flex: 1; } }
 @media (min-width: 900px) { .d3ThongBao { top: 100px; max-height: calc(100vh - 230px); padding: 16px 22px; } .d3TbChan { bottom: -16px; margin: 0 -22px -16px; padding: 10px 22px 16px; } .d3TbTin { font-size: 1.08rem; padding: 12px 16px; } .d3TbChan .d3Nut { min-height: 52px; font-size: 1.15rem; } }
+/* KC_06G (17/11/2026): khung 🔎 Câu giống trong kho trong màn soạn câu. Điện thoại: khung gọn giữa phần câu hỏi và đáp án,
+   chạm để mở. Máy tính rộng (>= 1200px): cột thứ 3 bên phải luôn mở; 900-1199px: dải dưới 2 cột. */
+.d3ScTT { margin: 12px 0 4px; border: 2px solid #6f8fd6; border-radius: 14px; background: rgba(40, 70, 140, .22); }
+.d3ScTT[hidden] { display: none; }
+.d3ScTTDau { display: block; width: 100%; min-height: 48px; text-align: left; padding: 8px 14px; border: 0; background: none; color: #d6e4ff;
+  font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.05rem; cursor: pointer; }
+.d3ScTTThan { padding: 0 10px 10px; }
+.d3ScTTThan[hidden] { display: none; }
+.d3ScTTBao { margin: 0 4px 8px; font-size: .92rem; line-height: 1.4; opacity: .9; }
+.d3ScTTBao.moi { color: #9fe8a8; }
+.d3ScTTBao.yhet { color: #ffe08a; font-weight: 700; opacity: 1; }
+.d3ScTTDs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.d3ScTTO { border-radius: 12px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); }
+.d3ScTTO.yhet { border-color: #ffd35a; }
+.d3ScTTO.mo { background: rgba(255, 255, 255, .11); }
+.d3ScTTCau { display: flex; gap: 8px; align-items: flex-start; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; background: none;
+  color: #fff6dc; text-align: left; font: inherit; font-size: .98rem; line-height: 1.35; cursor: pointer; border-radius: 12px; }
+.d3ScTTCau:focus-visible { outline: 3px solid var(--vang); outline-offset: -3px; }
+.d3ScTTMui { flex: none; width: 1em; color: #9fc0ff; }
+.d3ScTTNd { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.d3ScTTNhan { flex: none; font-size: .8rem; opacity: .85; white-space: nowrap; }
+.d3ScTTCt { padding: 0 12px 10px 28px; }
+.d3ScTTDa { margin: 0 0 6px; padding-left: 1.3em; display: grid; gap: 3px; font-size: .95rem; }
+.d3ScTTDa li.dung { color: #9fe8a8; font-weight: 700; }
+.d3ScTTLg { margin: 4px 0; font-size: .9rem; opacity: .9; }
+.d3ScTTMeta { display: block; font-size: .82rem; opacity: .75; }
+@media (min-width: 900px) {
+  .d3SoanCau { width: min(1280px, calc(100vw - 48px)); }
+  .d3ScSoan { grid-template-areas: "trai phai" "tt tt"; }
+  .d3ScTrai { grid-area: trai; } .d3ScPhai { grid-area: phai; } .d3ScTT { grid-area: tt; margin: 0; }
+  .d3ScTTDau { cursor: default; }
+  .d3ScTTThan[hidden] { display: block; }
+  .d3ScTTDs { max-height: 260px; overflow: auto; }
+}
+@media (min-width: 1200px) {
+  .d3ScSoan { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(280px, 330px); grid-template-areas: "trai phai tt"; }
+  .d3ScTT { align-self: stretch; display: flex; flex-direction: column; max-height: calc(100vh - 200px); }
+  .d3ScTT[hidden] { display: none; }
+  .d3ScTTThan { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .d3ScTTDs { max-height: none; flex: 1; min-height: 0; overflow: auto; }
+}
+/* 17/11/2026 - BƯỚC: KC_06G */
