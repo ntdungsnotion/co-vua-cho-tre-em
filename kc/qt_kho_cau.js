@@ -657,7 +657,8 @@
       if (!kq.thanhCong) { p.innerHTML = '<p class="adminGhiChu">❌ ' + T(kq.thongBao) + T(loiKhongCoHam(kq)) + "</p>"; return; }
       cauHinh = kq;
       var nhom = {};
-      (kq.khoa || []).forEach(function (k) { var d = k.duong.join("."), m = CAU_HINH[d] || ["Khác", d]; (nhom[m[0]] = nhom[m[0]] || []).push([d, k, m[1]]); });
+      // KC_07: số ngày giữ dữ liệu (don.*) sửa ở mục 🗄️ Dung lượng dữ liệu, không hiện ở đây
+      (kq.khoa || []).filter(function (k) { return k.duong[0] !== "don"; }).forEach(function (k) { var d = k.duong.join("."), m = CAU_HINH[d] || ["Khác", d]; (nhom[m[0]] = nhom[m[0]] || []).push([d, k, m[1]]); });
       p.innerHTML = '<p class="adminGhiChu">Một bảng cấu hình cho cả kho câu hỏi (bảng <code>kc_cau_hoi_cau_hinh</code>). Lần sửa cuối: ' + T(adminDinhDangGio(kq.suaLuc)) + (kq.suaBoi ? " · " + T(kq.suaBoi) : "") + ".</p>"
         + '<div class="qkcLuoiCh">' + Object.keys(nhom).map(function (n) {
           return '<section class="qkcTheLon"><h4>' + T(n) + "</h4>" + nhom[n].map(function (x) {
@@ -714,3 +715,4 @@
 // 17/11/2026 - BƯỚC: KC_06F2 (ô cấu hình ai.giay_cho_be)
 // 17/11/2026 - BƯỚC: KC_06E4 (nhãn 🛑 Google chặn / 🤔 Cô Cú chưa chắc đáp án)
 // 17/11/2026 - BƯỚC: KC_06E5 (nhãn ✏️ Bé gửi dù Cô Cú góp ý / ⚠️ Cô Cú thấy vi phạm; dòng AI hiện gợi ý sửa)
+// 17/11/2026 - BƯỚC: KC_07 (ẩn ô don.* trong ⚙️ Cấu hình: sửa ở 🗄️ Dung lượng dữ liệu)

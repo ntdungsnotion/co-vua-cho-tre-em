@@ -1,0 +1,61 @@
+/* ================================================================
+   FILE: kc/qt_don_du_lieu.css
+   CHỨC NĂNG: Giao diện mục "🗄️ Dung lượng dữ liệu" của trang Quản trị chung (qt_don_du_lieu.js, KC_07).
+     - Điện thoại (< 900px): một cột thẻ; bảng lớn nhất thành danh sách 2 dòng (tên / số).
+     - Máy tính (>= 900px): 2 cột (trái: tổng + sẽ dọn + số ngày giữ; phải: bảng lớn nhất + các lần dọn); ô số ngày 2 cột.
+   BƯỚC: KC_07 - NGÀY: 17/11/2026
+   ================================================================ */
+
+#manhinh-dungluong .adminKhoi { max-width: 1400px; }
+.qddLuoi { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.qddCot { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.qddThe { border: 2px solid var(--mau-vien); border-radius: 14px; background: var(--mau-nen-trang); padding: 12px 14px; }
+.qddThe h4 { margin: 0 0 8px; color: var(--mau-chinh-dam); }
+.qddRong { margin: 4px 0; }
+
+/* ---- tổng dung lượng ---- */
+.qddSoLon b { font-size: 1.6rem; color: var(--mau-chinh-dam); }
+.qddSoLon span { color: var(--mau-chu); opacity: 0.75; font-size: 0.9rem; }
+.qddThanh { height: 12px; border-radius: 999px; background: #eef1f6; overflow: hidden; margin: 8px 0 10px; }
+.qddThanh i { display: block; height: 100%; background: var(--mau-thanh-cong, #2e9e5b); border-radius: 999px; }
+.qddThanh.vang i { background: #f0a020; }
+.qddThanh.do i { background: var(--mau-that-bai); }
+.qddDong { margin: 4px 0; font-size: 0.92rem; }
+.qddNut { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.qddNut .adminNut { flex: 1 1 auto; }
+
+/* ---- danh sách số dòng ---- */
+.qddDs { list-style: none; margin: 0; padding: 0; }
+.qddDs li { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 6px 2px; border-bottom: 1px dashed var(--mau-vien); font-size: 0.92rem; }
+.qddDs li:last-child { border-bottom: 0; }
+.qddDs li.mo { opacity: 0.5; }
+.qddDs li.tong { font-weight: bold; border-top: 2px solid var(--mau-vien); border-bottom: 0; }
+.qddDs li > b { white-space: nowrap; }
+.qddDs small { display: block; opacity: 0.75; font-size: 0.8rem; margin-top: 2px; }
+
+/* ---- số ngày giữ ---- */
+.qddFormNgay { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.qddO { display: flex; flex-direction: column; gap: 4px; font-size: 0.88rem; font-weight: bold; }
+.qddO small { display: block; font-weight: normal; opacity: 0.75; font-size: 0.78rem; }
+.qddNhap { display: flex; align-items: center; gap: 8px; }
+.qddNhap input { width: 90px; padding: 7px 10px; border: 2px solid var(--mau-vien); border-radius: 10px; font-family: inherit; font-size: 0.95rem; }
+.qddNhap input.loi { border-color: var(--mau-that-bai); background: #ffecec; }
+.qddNhap em { font-style: normal; font-weight: normal; font-size: 0.8rem; opacity: 0.75; }
+
+/* ---- bảng lớn nhất ---- */
+.qddBang { display: flex; flex-direction: column; }
+.qddHang { display: flex; flex-direction: column; gap: 2px; padding: 7px 2px; border-bottom: 1px dashed var(--mau-vien); font-size: 0.9rem; }
+.qddTen code { font-size: 0.75rem; opacity: 0.6; word-break: break-all; }
+.qddSo { display: flex; justify-content: space-between; gap: 10px; }
+.qddSo span { opacity: 0.75; }
+.qddNhan { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: bold; white-space: nowrap; }
+.qddNhan.xanh { background: #e2f6ea; color: #1d7a45; }
+.qddNhan.xam { background: #eceef2; color: #555; }
+
+@media (min-width: 900px) {
+  .qddLuoi { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .qddFormNgay { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 16px; }
+  .qddNut .adminNut { flex: 0 0 auto; }
+  .qddHang { flex-direction: row; align-items: center; justify-content: space-between; }
+  .qddSo { flex: 0 0 auto; gap: 16px; min-width: 190px; justify-content: flex-end; }
+}
