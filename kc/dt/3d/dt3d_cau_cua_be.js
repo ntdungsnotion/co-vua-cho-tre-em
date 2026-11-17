@@ -20,6 +20,7 @@
 // BƯỚC: KC_06D - NGÀY: 12/11/2026. Sửa 14/11/2026 KC_06E2: nút 🔍 Kiểm tra (app tự kiểm + trùng + Cô Cú/AI) -> đạt thì 📨 Gửi mới sáng;
 //   gửi xong câu AI đạt có nút 🛡️ Gắn vào công trình.
 //   Sửa 17/11/2026 KC_06E4: Cô Cú nhờ cô chú (máy chủ trả nhoNguoi: câu đố / chưa chắc đáp án / Google chặn) -> lời riêng, không "khen".
+//   Sửa 17/11/2026 KC_06E5: Cô Cú chỉ góp ý, không chặn: phiếu "loai" vẫn sáng 📨 Gửi -> câu chờ cô chú duyệt (máy chủ trả gopY).
 // ================================================================
 
 const TRANG_THAI = {
@@ -27,7 +28,7 @@ const TRANG_THAI = {
   cho_nguoi: { nhan: "⏳ Cô chú đang xem câu của con...", lop: "cho" },
   ai_dat: { nhan: "✅ Câu hay! Con dùng được rồi", lop: "dat" },
   dat: { nhan: "✅ Câu hay! Con dùng được rồi", lop: "dat" },
-  ai_loai: { nhan: "✏️ Cần sửa một chút", lop: "sua" },
+  ai_loai: { nhan: "✏️ Cô Cú góp ý · cô chú vẫn xem", lop: "sua" }, // KC_06E5: góp ý, không bắt sửa
   loai: { nhan: "🙈 Câu này chưa đúng, cô chú đã cất đi", lop: "cat" },
 };
 const SUA_DUOC = ["cho_ai", "cho_nguoi", "ai_loai", "loai"];
@@ -44,6 +45,8 @@ const CHO_BE_GIAY = 12;  // KC_06F2 (người dùng 17/11/2026): 🔍 Kiểm tra
 // KC_06E4: Cô Cú nhờ cô chú (câu đố / chưa chắc đáp án / Google chặn) cũng đi đường này -> lời chung cho cả hai
 const NHAY_CAM = "🔎 Câu này cần cô chú đọc thêm (chủ đề cần người lớn xem, hoặc Cô Cú chưa chắc đáp án). Cô chú duyệt xong thì con gắn vào công trình được nhé.";
 const NHO_CO_CHU = "🔎 Câu đố, câu có nhiều cách hiểu thì cô chú sẽ đọc thêm giúp con. Cô chú duyệt xong là con gắn vào công trình được.";
+// KC_06E5: Cô Cú chỉ góp ý (có thể sai) -> bé vẫn gửi được, câu chờ cô chú duyệt
+const GOP_Y_GUI = "Con sửa theo góp ý rồi bấm 🔍 Kiểm tra lại, hoặc con thấy câu đúng rồi thì bấm 📨 Gửi để cô chú xem nhé!";
 
 // Mã lỗi máy chủ -> lời cho bé
 function loiChoBe(kq) {
@@ -449,12 +452,10 @@ export function taoCauCuaBe(the) {
       kiemNut.disabled = false;
       if (banCau() !== ban) { veGopY("nhac", "✏️ Con vừa sửa câu, bấm 🔍 Kiểm tra lại nhé."); return; }
       const nhay = kq.nhayCam || ai.nhayCam;
-      if (ai.ketQua === "loai") {
-        veGopY("loi", "🦉 Cô Cú góp ý: " + (ai.lyDo || "Câu này chưa ổn lắm."), ai.goiY ? "💡 " + ai.goiY : "", "Con sửa rồi bấm 🔍 Kiểm tra lại nhé!");
-        return;
-      }
       daKiem = { ma: kq.maKiem, ban, ai: ai.ketQua, nhay }; thu.disabled = false; thu.title = "";
-      if (ai.ketQua === "dat" && ai.nhoNguoi) veGopY("dat", "🦉 " + (ai.lyDo || "Cô Cú nhờ cô chú đọc thêm câu này giúp con."), NHO_CO_CHU, "Con bấm 📨 Gửi nhé!"); // KC_06E4
+      // KC_06E5 (người dùng 17/11/2026): Cô Cú chỉ góp ý, không chặn -> bé sửa theo góp ý HOẶC gửi luôn cho cô chú xem
+      if (ai.ketQua === "loai") veGopY("nhac", "🦉 Cô Cú góp ý: " + (ai.lyDo || "Câu này chưa ổn lắm."), ai.goiY ? "💡 " + ai.goiY : "", GOP_Y_GUI);
+      else if (ai.ketQua === "dat" && ai.nhoNguoi) veGopY("dat", "🦉 " + (ai.lyDo || "Cô Cú nhờ cô chú đọc thêm câu này giúp con."), NHO_CO_CHU, "Con bấm 📨 Gửi nhé!"); // KC_06E4
       else if (ai.ketQua === "dat") veGopY("dat", "✅ Cô Cú khen: " + (ai.lyDo || "Câu hay lắm!"), nhay ? NHAY_CAM : "", "Con bấm 📨 Gửi nhé!");
       else if (ai.ketQua === "tat") veGopY("dat", "✅ Câu qua vòng kiểm rồi!", "Gửi xong cô chú sẽ xem, duyệt rồi con gắn vào công trình được. Con bấm 📨 Gửi nhé!");
       else veGopY("nhac", "✅ Câu qua vòng kiểm của app.", "🦉 Cô Cú đọc hơi lâu, con không cần chờ nữa!",
@@ -491,7 +492,8 @@ export function taoCauCuaBe(the) {
       if (typeof baoGoiY === "function") baoGoiY("📨 Đã gửi câu của con");
       if (veLai) veLai();
       if (kq.goiAi && mayChu.goiAi) mayChu.goiAi().catch(() => null); // Cô Cú bận lúc kiểm: đánh thức chấm hàng chờ
-      if (tt === "ai_dat" || tt === "dat") ketThuc("✅ Câu đã vào kho của con! Con gắn vào công trình được ngay rồi.", l, c);
+      if (kq.gopY) ketThuc("📨 Câu đã vào kho của con! Cô chú sẽ đọc câu cùng góp ý của Cô Cú. Cô chú duyệt xong là con gắn vào công trình được nhé.", l); // KC_06E5
+      else if (tt === "ai_dat" || tt === "dat") ketThuc("✅ Câu đã vào kho của con! Con gắn vào công trình được ngay rồi.", l, c);
       else if (c.nhayCam) ketThuc("📨 Câu đã vào kho của con. " + NHAY_CAM, l);
       else if (tt === "cho_ai") {
         // KC_06F2: Cô Cú chấm ngầm -> 💡 hỏi máy chủ dày hơn một lúc để báo bé sớm
