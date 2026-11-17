@@ -242,6 +242,8 @@
       // KC_06F1: tin chưa đọc của bé (câu bị trả lại đã được thay ở công trình...) -> { ok, tong, tin: [{ id, loai, duLieu, luc }] }
       async thongBao() { return goiKho("kc_be_thong_bao_xem", {}); },
       async daXemThongBao(ids) { return goiKho("kc_be_thong_bao_da_xem", { p_ids: dsMa(ids) }); },
+      // KC_06F2: danh sách 💡 (cả tin đã đọc, mới nhất trước) -> { ok, tong (chưa đọc), tin: [{ id, loai, duLieu, luc, daXem }] }
+      async dsThongBao(so) { return goiKho("kc_be_thong_bao_ds", { p_so: Number.isInteger(so) ? so : 30 }); },
       async monChuDe() {
         let kq; try { kq = await opt.goiRpc("kc_mon_chu_de", {}); } catch (e) { kq = null; }
         return kq && kq.thanhCong === true ? Object.assign({ ok: true }, kq) : { ok: false, ma: "mang" };
@@ -269,3 +271,4 @@
 // 14/11/2026 - BƯỚC: KC_06E3 (xoaCau, docLai); KC_06E2 (kiemCau / aiKiem / xemKiem: Kiểm tra trước, Gửi sau)
 // 16/11/2026 - BƯỚC: KC_06F1 (thongBao / daXemThongBao: tin của bé, câu bị trả lại được thay ở công trình; cần SQL KC_06F1)
 // 17/11/2026 - BƯỚC: KC_06G (tuongTu: khung 🔎 Câu giống trong kho ở màn soạn câu; cần SQL KC_06G)
+// 17/11/2026 - BƯỚC: KC_06F2 (dsThongBao: danh sách 💡 bóng điện; cần SQL KC_06F2)

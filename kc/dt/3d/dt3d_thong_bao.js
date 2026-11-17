@@ -19,11 +19,50 @@ function gopTen(ds) {
   return Array.from(dem, ([t, n]) => (n > 1 ? n + " " : "") + t).join(", ");
 }
 
+// KC_06F2: các loại tin của 💡 (Cô Cú chấm ngầm xong / admin duyệt). Bảng 🦉 khi vào làng chỉ hiện cau_bi_tra.
+export const LOAI_TIN = ["cau_bi_tra", "ai_dat", "ai_cho_nguoi", "ai_loai", "ai_thoi_thu", "admin_dat"];
+// Biểu tượng của tin (danh sách 💡)
+export function bieuTuongTin(tin) {
+  return { ai_dat: "✅", admin_dat: "🌟", ai_cho_nguoi: "⏳", ai_loai: "✏️", ai_thoi_thu: "🦉", cau_bi_tra: "🙈" }[tin && tin.loai] || "💡";
+}
+// Tin có câu của chính bé để mở ở ✏️ Câu riêng của con -> mã câu, không thì null
+export function cauCuaTin(tin) {
+  const d = (tin && tin.duLieu) || {};
+  if (!tin || !Number.isInteger(d.cauId)) return null;
+  if (tin.loai === "cau_bi_tra") return d.cuaCon && d.viec !== "xoa" ? d.cauId : null;
+  return LOAI_TIN.indexOf(tin.loai) > 0 ? d.cauId : null;
+}
+
 // Một tin -> các dòng chữ cho bé. Loại tin chưa biết (bản trang cũ hơn máy chủ) -> null (bỏ qua, vẫn đánh dấu đã đọc)
 export function loiTin(tin) {
   const d = (tin && tin.duLieu) || {};
-  if (!tin || tin.loai !== "cau_bi_tra") return null;
+  if (!tin || LOAI_TIN.indexOf(tin.loai) < 0) return null;
   const cau = "“" + rutGon(d.noiDung) + "”", ct = gopTen(d.congTrinh), dong = [];
+  switch (tin.loai) {
+    case "ai_dat":
+      dong.push(["chinh", "✅ Cô Cú đọc xong câu của con: " + cau]);
+      if (d.khen) dong.push(["thay", "🦉 Cô Cú khen: " + d.khen]);
+      dong.push(["goiY", "🛡️ Câu dùng được rồi! Con gắn vào công trình ở nút 📝 / 🛡️ của công trình nhé."]);
+      return dong;
+    case "ai_cho_nguoi":
+      dong.push(["chinh", "⏳ Cô Cú đọc xong câu của con: " + cau]);
+      dong.push(["lyDo", "🔎 Câu có chủ đề cần người lớn xem (như chiến tranh, bệnh tật...). Cô chú duyệt xong là con gắn vào công trình được."]);
+      return dong;
+    case "ai_loai":
+      dong.push(["chinh", "✏️ Câu của con cần sửa một chút: " + cau]);
+      if (d.lyDo) dong.push(["lyDo", "🦉 Cô Cú góp ý: " + d.lyDo]);
+      if (d.goiY) dong.push(["thay", "💡 " + d.goiY]);
+      dong.push(["goiY", "Chạm để mở câu, bấm ✏️ Sửa lại nhé!"]);
+      return dong;
+    case "ai_thoi_thu":
+      dong.push(["chinh", "🦉 Cô Cú chưa đọc được câu của con: " + cau]);
+      dong.push(["lyDo", "Cô chú sẽ xem giúp con. Con chờ một chút nhé!"]);
+      return dong;
+    case "admin_dat":
+      dong.push(["chinh", "🌟 Cô chú đã duyệt câu của con: " + cau]);
+      dong.push(["thay", d.congKhai ? "📚 Câu vào thư viện chung rồi, các bạn khác cũng gặp câu của con!" : "🛡️ Con gắn vào công trình được rồi."]);
+      return dong;
+  }
   if (d.cuaCon) {
     dong.push(["chinh", (d.viec === "xoa" ? "🙈 Cô chú đã cất câu của con: " : "🙈 Câu của con bị trả lại: ") + cau]);
     if (d.lyDo) dong.push(["lyDo", "💬 Cô chú nhắn: " + d.lyDo]);
@@ -41,11 +80,14 @@ export async function moThongBao(the) {
   const mayChu = the && the.mayChu;
   if (!mayChu || !mayChu.thongBao || !mayChu.daXemThongBao) return 0;
   let kq; try { kq = await mayChu.thongBao(); } catch (e) { kq = null; }
-  const ds = kq && kq.ok && Array.isArray(kq.tin) ? kq.tin : [];
+  // KC_06F2: chỉ tin câu bị trả lại mở bảng; tin khác (Cô Cú chấm xong, admin duyệt) để ở 💡, không đánh dấu đã đọc
+  const tatCa = kq && kq.ok && Array.isArray(kq.tin) ? kq.tin : [];
+  const ds = tatCa.filter(t => t && (t.loai === "cau_bi_tra" || LOAI_TIN.indexOf(t.loai) < 0));
   if (!ds.length) return 0;
   const ids = ds.map(t => t.id), hien = ds.map(t => ({ t, dong: loiTin(t) })).filter(x => x.dong);
   if (!hien.length) { mayChu.daXemThongBao(ids).catch(() => null); return 0; }
-  const con = Math.max(0, (Number(kq.tong) || ds.length) - ds.length);
+  // còn tin chưa đọc ngoài trang này (chỉ khi cả trang toàn tin của bảng này: tin 💡 không tính)
+  const con = ds.length === tatCa.length ? Math.max(0, (Number(kq.tong) || ds.length) - ds.length) : 0;
 
   const cu = document.getElementById("d3ThongBao"); if (cu) cu.remove();
   const p = tao("div", "d3BangCau d3Khung d3ThongBao"); p.id = "d3ThongBao"; p.setAttribute("role", "dialog"); p.setAttribute("aria-label", "Tin từ Cô Cú");
@@ -75,3 +117,4 @@ export async function moThongBao(the) {
   });
 }
 // 16/11/2026 - BƯỚC: KC_06F1
+// 17/11/2026 - BƯỚC: KC_06F2 (loiTin / bieuTuongTin / cauCuaTin cho 💡 bóng điện dt3d_bong_den.js; bảng 🦉 chỉ còn tin câu bị trả lại)
