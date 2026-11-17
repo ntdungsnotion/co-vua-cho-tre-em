@@ -10,6 +10,8 @@
 // CÁCH DÙNG: KcHocCuaBe.mo(khungDom, { be: "tên bé", goi: function (tenHam, thamSo) -> Promise<kết quả RPC> })
 //   `goi` tự thêm p_nguoi + p_ma_phien của người đang đăng nhập. Hai khổ: điện thoại 1 cột, máy tính 2 cột (kc_hoc_cua_be.css).
 // BƯỚC: KC_03B3 - NGÀY: 18/11/2026
+// CẬP NHẬT: 18/11/2026 - KC_03B3 (người dùng thử): thêm nhánh bằng TÊN tiếng Việt (tự đặt mã bỏ dấu, RPC kc_hs_them_nhanh,
+//   tên lưu ở kc_nhanh_hoc, SQL supabase_kc03b3b_nhanh.sql); đổi lớp thì dòng gợi ý đổi theo ngay.
 // ================================================================
 (function () {
   "use strict";
@@ -33,7 +35,11 @@
     return den === tu ? t : t + "-" + den;
   }
   function tenLop(l) { return l === 0 ? "Mẫu giáo (lớp 0)" : "Lớp " + l; }
-  function tenNhanh(m) { return NHANH_TEN[m] || m; }
+  // Tên -> mã nhánh: bỏ dấu, chữ thường, a-z 0-9 _ (vd "Công nghệ thông tin (CNTT)" -> cong_nghe_thong_tin_cntt)
+  function maTuTen(ten) {
+    return String(ten || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[đĐ]/g, "d").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40).replace(/_+$/, "");
+  }
 
   function KhoiHoc(khung, ch) {
     this.k = khung; this.be = ch.be; this.goi = ch.goi;
@@ -41,7 +47,14 @@
     var self = this;
     khung.classList.add("hcb");
     khung.onclick = function (e) { self.bam(e); };
+    khung.onchange = function (e) {
+      if (e.target && e.target.classList.contains("hcbLop")) {
+        var o = khung.querySelector(".hcbGoiYLop");
+        if (o) o.textContent = self.goiYLop(e.target.value === "" ? null : Number(e.target.value));
+      }
+    };
     khung.onkeydown = function (e) {
+      if (e.key === "Enter" && e.target && e.target.classList.contains("hcbONhanh")) { e.preventDefault(); self.themNhanh(); return; }
       if (e.key === "Enter" && e.target && e.target.classList.contains("hcbOTim")) { e.preventDefault(); self.timThe(); }
     };
     this.tai();
@@ -92,18 +105,21 @@
       ? "Chưa đặt (theo Đấu Trường: " + tenLop(d.lopDauTruong) + ")" : "Chưa đặt") + "</option>";
     for (var l = 0; l <= 12; l++) opt += '<option value="' + l + '"' + (lopHs === l ? " selected" : "") + ">" + tenLop(l) + "</option>";
     var vung = VUNG.map(function (v) { return '<option value="' + v[0] + '"' + ((hs.vung || "") === v[0] ? " selected" : "") + ">" + v[1] + "</option>"; }).join("");
-    var dsNhanh = Object.keys(NHANH_TEN);
+    var ten = {}, dsNhanh = [];
+    (d.nhanhDs || Object.keys(NHANH_TEN).map(function (m) { return { ma: m, ten: NHANH_TEN[m] }; })).forEach(function (n) {
+      if (!ten[n.ma]) { ten[n.ma] = n.ten; dsNhanh.push(n.ma); }
+    });
     (d.nhanhCo || []).concat(hs.nhanh || []).forEach(function (m) { if (dsNhanh.indexOf(m) < 0) dsNhanh.push(m); });
     var nhanh = dsNhanh.map(function (m) {
       return '<label class="hcbHop"><input type="checkbox" class="hcbNhanh" value="' + thoat(m) + '"'
-        + ((hs.nhanh || []).indexOf(m) >= 0 ? " checked" : "") + "> " + thoat(tenNhanh(m)) + "</label>";
+        + ((hs.nhanh || []).indexOf(m) >= 0 ? " checked" : "") + "> " + thoat(ten[m] || m) + "</label>";
     }).join("");
     return '<section class="hcbKhoi"><h4>📅 Lớp và hồ sơ học</h4>'
       + '<label class="hcbNhan">Năm học này bé học<select class="hcbLop">' + opt + "</select></label>"
       + '<p class="hcbGoiY hcbGoiYLop">' + this.goiYLop(lopHs) + "</p>"
       + '<label class="hcbNhan">Vùng miền<select class="hcbVung">' + vung + "</select></label>"
       + '<div class="hcbNhan">Nhánh học (THPT, chuyên đề)<div class="hcbDsHop">' + nhanh + "</div></div>"
-      + (d.laAdmin ? '<div class="hcbHang"><input class="hcbONhanh" placeholder="mã nhánh mới, vd cd_toan_10_1" maxlength="40">'
+      + (d.laAdmin ? '<div class="hcbHang"><input class="hcbONhanh" placeholder="Tên nhánh mới, vd Công nghệ thông tin" maxlength="80">'
         + '<button type="button" class="hcbNut hcbNutPhu" data-hd="themNhanh">➕ Thêm nhánh</button></div>' : "")
       + '<div class="hcbHang"><button type="button" class="hcbNut" data-hd="luuHoSo">💾 Lưu hồ sơ</button>'
       + (hs.boi ? '<span class="hcbGhiChu">Sửa lần cuối: ' + thoat(hs.boi) + "</span>" : "") + "</div>"
@@ -233,14 +249,7 @@
       return this.giao("nhay_cam", n.getAttribute("data-ma"), n.checked ? "bat" : "");
     }
     if (hd === "luuHoSo") return this.luuHoSo(n);
-    if (hd === "themNhanh") {
-      var o = this.k.querySelector(".hcbONhanh"), ma = (o.value || "").trim().toLowerCase();
-      if (!/^[a-z0-9_]{2,40}$/.test(ma)) return this.bao("Mã nhánh chỉ gồm a-z, 0-9, _ (2-40 ký tự).", false);
-      var hop = document.createElement("label"); hop.className = "hcbHop";
-      hop.innerHTML = '<input type="checkbox" class="hcbNhanh" value="' + thoat(ma) + '" checked> ' + thoat(ma);
-      this.k.querySelector(".hcbDsHop").appendChild(hop); o.value = "";
-      return;
-    }
+    if (hd === "themNhanh") return this.themNhanh(n);
     if (hd === "giao") return this.giao(n.getAttribute("data-loai"), n.getAttribute("data-ma"), n.getAttribute("data-gt"));
     if (hd === "tim") return this.timThe();
     if (hd === "themRieng") {
@@ -271,6 +280,25 @@
         self.bao("Đã xoá thẻ riêng.", true); self.tai();
       });
     }
+  };
+
+  // Thêm nhánh bằng tên (chỉ admin): lưu tên vào danh mục, tích sẵn cho bé; bấm 💾 Lưu hồ sơ mới gán cho bé.
+  KhoiHoc.prototype.themNhanh = function (n) {
+    var self = this, o = this.k.querySelector(".hcbONhanh"), ten = (o && o.value || "").trim(), ma = maTuTen(ten);
+    if (ma.length < 2) return this.bao("Gõ tên nhánh (ít nhất 2 chữ cái), vd Công nghệ thông tin.", false);
+    var co = this.k.querySelector('.hcbNhanh[value="' + ma + '"]');
+    if (co) { co.checked = true; o.value = ""; return this.bao("Nhánh này đã có, đã tích chọn. Bấm 💾 Lưu hồ sơ.", true); }
+    if (n) n.disabled = true;
+    this.goi("kc_hs_them_nhanh", { p_ma: ma, p_ten: ten }).then(function (kq) {
+      if (n) n.disabled = false;
+      kq = kq || {};
+      if (!kq.thanhCong) return self.bao("❌ " + (kq.thongBao || "Chưa thêm được nhánh"), false);
+      (self.d.nhanhDs = self.d.nhanhDs || []).push({ ma: kq.ma, ten: kq.ten });
+      var hop = document.createElement("label"); hop.className = "hcbHop";
+      hop.innerHTML = '<input type="checkbox" class="hcbNhanh" value="' + thoat(kq.ma) + '" checked> ' + thoat(kq.ten);
+      self.k.querySelector(".hcbDsHop").appendChild(hop); o.value = "";
+      self.bao("Đã thêm nhánh \"" + kq.ten + "\" và tích chọn. Bấm 💾 Lưu hồ sơ để gán cho bé.", true);
+    }, function () { if (n) n.disabled = false; self.bao("❌ Không kết nối được máy chủ.", false); });
   };
 
   KhoiHoc.prototype.luuHoSo = function (n) {
