@@ -288,10 +288,22 @@ export function taoCauCuaBe(the) {
       ct.appendChild(da);
       if (c.loiGiai) ct.appendChild(tao("p", "d3ScTTLg", "💡 " + c.loiGiai));
       ct.appendChild(tao("small", "d3ScTTMeta", loGop(c)));
+      if (c.soCung > 1) ct.appendChild(tao("small", "d3ScTTMeta", "Kho có " + c.soCung + " câu cùng lời hỏi này (khác hình, khác đáp án). Đây là một câu mẫu."));
       if (c.cuaBe && TRANG_THAI[c.trangThai]) ct.appendChild(tao("small", "d3ScTTMeta", TRANG_THAI[c.trangThai].nhan));
       return ct;
     }
+    // gộp câu cùng lời hỏi (câu máy sinh "Có bao nhiêu bông hoa?" ×N chỉ khác hình): máy chủ đã gộp + trả soCung; đây gộp phòng hờ
+    const gopCung = ds => {
+      const theo = new Map();
+      for (const c of ds) {
+        const k = String(c.noiDung || "").toLowerCase().replace(/\s+/g, " ").trim();
+        const cu = theo.get(k);
+        if (cu) cu.soCung = (cu.soCung || 1) + (c.soCung || 1); else theo.set(k, { ...c });
+      }
+      return [...theo.values()];
+    };
     function veTT(ds) {
+      ds = gopCung(ds);
       ttDs.textContent = ""; ttSo = ds.length;
       const yHet = ds.some(c => c.yHet);
       if (!oCau.value.trim()) { ttBao.textContent = "Con gõ câu hỏi, câu giống trong kho sẽ hiện ở đây để con tham khảo."; ttBao.className = "d3ScTTBao"; }
@@ -302,7 +314,7 @@ export function taoCauCuaBe(the) {
         const li = tao("li", "d3ScTTO" + (c.yHet ? " yhet" : ""));
         const b = nut("", "d3ScTTCau"); b.setAttribute("aria-expanded", "false");
         b.append(tao("span", "d3ScTTMui", "▸"), tao("span", "d3ScTTNd", c.noiDung));
-        const nhan = tao("span", "d3ScTTNhan", c.cuaBe ? "📚 của con" : (c.bieuTuong || "📘"));
+        const nhan = tao("span", "d3ScTTNhan", (c.cuaBe ? "📚 của con" : (c.bieuTuong || "📘")) + (c.soCung > 1 ? " ×" + c.soCung : ""));
         b.appendChild(nhan);
         let ct = null;
         b.addEventListener("click", () => {
@@ -471,4 +483,5 @@ export function taoCauCuaBe(the) {
   return { co, ve, soanMoi, loiChoBe };
 }
 // 14/11/2026 - BƯỚC: KC_06E3 (nút 🛡️ Chọn câu này, 🦉 Nhờ Cô Cú đọc lại, 🗑 Xoá); KC_06E2
+// 17/11/2026 10:00 - KC_06G sửa sau thử thật: câu cùng lời hỏi (câu máy sinh khác hình) gộp một dòng, nhãn ×N
 // 17/11/2026 - BƯỚC: KC_06G (khung 🔎 Câu giống trong kho: tự lọc khi bé gõ, chạm xổ chi tiết; lời báo trùng chỉ còn cho câu y hệt)
