@@ -8,7 +8,7 @@
 //            Bảng tin này để 💡 bóng điện (KC_06F2) dùng lại.
 // DÙNG: moThongBao({ mayChu }) -> Promise<số tin đã hiện>; mayChu cần thongBao() + daXemThongBao(ids)
 //       (dt_may_chu_sb.js; máy chủ giả không có -> không làm gì). Máy chủ chưa có hàm (chưa chạy SQL) -> không hiện gì.
-// BƯỚC: KC_06F1 - NGÀY: 16/11/2026
+// BƯỚC: KC_06F1 - NGÀY: 16/11/2026. Sửa 17/11/2026 KC_06E4: tin ai_cho_nguoi có nhoNguoi -> lời "Cô Cú nhờ cô chú đọc thêm".
 // ================================================================
 const tao = (the, lop, chu) => { const e = document.createElement(the); if (lop) e.className = lop; if (chu !== undefined) e.textContent = chu; return e; };
 const rutGon = s => { const c = String(s || "").trim(); return c.length > 90 ? c.slice(0, 88) + "…" : c; };
@@ -46,7 +46,9 @@ export function loiTin(tin) {
       return dong;
     case "ai_cho_nguoi":
       dong.push(["chinh", "⏳ Cô Cú đọc xong câu của con: " + cau]);
-      dong.push(["lyDo", "🔎 Câu có chủ đề cần người lớn xem (như chiến tranh, bệnh tật...). Cô chú duyệt xong là con gắn vào công trình được."]);
+      dong.push(["lyDo", d.nhoNguoi // KC_06E4: Cô Cú chưa chắc (câu đố, nhiều cách hiểu) / Google chặn -> nhờ cô chú
+        ? "🔎 Cô Cú nhờ cô chú đọc thêm câu này (câu đố, câu có nhiều cách hiểu). Cô chú duyệt xong là con gắn vào công trình được."
+        : "🔎 Câu có chủ đề cần người lớn xem (như chiến tranh, bệnh tật...). Cô chú duyệt xong là con gắn vào công trình được."]);
       return dong;
     case "ai_loai":
       dong.push(["chinh", "✏️ Câu của con cần sửa một chút: " + cau]);
