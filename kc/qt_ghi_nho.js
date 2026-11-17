@@ -8,6 +8,7 @@
 //   Cách gắn: bọc hàm adminMoHoSoTre (admin_NC.js) để mỗi lần mở hồ sơ một bé thì tải sổ của bé đó vào #htGhiNho.
 // BƯỚC: KC_03A - NGÀY: 11/11/2026
 // CẬP NHẬT: 11/11/2026 - KC_03A (người dùng thử): chuyển từ ⚔️ Đấu Trường › 👤 Tài khoản sang 👦 Hồ sơ các bé, dạng bảng.
+// CẬP NHẬT: 18/11/2026 - KC_03B3: mở hồ sơ bé thì nạp luôn khối 🎓 Học & thẻ nhớ (kc_hoc_cua_be.js) vào #htHocThe.
 // PHỤ THUỘC: ../admin_NC.js nạp TRƯỚC (adminMoHoSoTre, adminGoiRpc, adminThoat, adminDinhDangGio); quantri_NC.html có
 //   nút tiểu mục data-tieumuc="ghinho" + khung #htGhiNho.
 // ================================================================
@@ -68,6 +69,14 @@
   window.adminMoHoSoTre = function (ten) {
     var kq = moCu.apply(this, arguments);
     tai(ten);
+    var oHoc = document.getElementById("htHocThe");   // KC_03B3
+    if (oHoc && window.KcHocCuaBe) {
+      oHoc.innerHTML = "";
+      KcHocCuaBe.mo(oHoc, { be: ten, goi: function (ham, ts) {
+        ts.p_nguoi = adminTaiKhoan.tenDangNhap; ts.p_ma_phien = adminTaiKhoan.maPhien;
+        return apiGoiRpc(ham, ts);
+      } });
+    }
     return kq;
   };
 })();

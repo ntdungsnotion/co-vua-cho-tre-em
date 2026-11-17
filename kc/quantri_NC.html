@@ -37,6 +37,8 @@
        CẬP NHẬT: 10/11/2026 - TC_D18A: nhóm "⚔️ Đấu Trường Tri Thức" trong Trò Chơi, mục "🎛️ Thông số" (qt_dau_truong.js/.css,
                  dt/dt_cau_hinh.js): sửa mọi số cân bằng + 3 bảng Supabase, lịch sử + hoàn tác (SQL TC_D18A).
                  Cùng bước: KHUNG gắn mục (qt_dt_khung.js, chỗ gắn #qdtMenu + #qdtManHinh) + mục "👤 Tài khoản" (qt_dt_tai_khoan.js).
+       CẬP NHẬT: 18/11/2026 - KC_03B3: tiểu mục "🎓 Học & thẻ nhớ" trong 👦 Hồ sơ các bé (kc_hoc_cua_be.js/.css dùng chung với khu phụ huynh):
+                 lớp / vùng / nhánh, thẻ riêng, bật nhạy cảm, giao thêm / bỏ thẻ (RPC kc_hs_..., SQL KC_03B3).
        CẬP NHẬT: 11/11/2026 - KC_03A: tiểu mục "📒 Sổ ghi nhớ" trong 👦 Hồ sơ các bé (qt_ghi_nho.js, RPC kc_ghi_nho_admin_xem);
                  lúc đầu đặt ở Đấu Trường › 👤 Tài khoản, người dùng chuyển về hồ sơ chung (sổ gom mọi trò chơi).
        CẬP NHẬT: 23/10/2026 11:50 - TC_03C: ghi chú khóa Cờ Tướng chơi 2 người (kc_co_tuong_kc_2n_..., kc_co_tuong_2n_so_nuoc_toi_thieu).
@@ -63,6 +65,7 @@
   <link rel="stylesheet" href="qt_kho_cau.css"> <!-- KC_06C -->
   <link rel="stylesheet" href="qt_don_du_lieu.css"> <!-- KC_07 -->
   <link rel="stylesheet" href="qt_kho_tri_thuc.css"> <!-- KC_03B1 -->
+  <link rel="stylesheet" href="kc_hoc_cua_be.css"> <!-- KC_03B3 -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -1265,6 +1268,7 @@
           <button class="htNutTieuMuc" data-tieumuc="covua" type="button">♟️ Cờ Vua</button>
           <button class="htNutTieuMuc" data-tieumuc="santu" type="button">🐱 Giải Cứu Mèo Con</button>
           <button class="htNutTieuMuc" data-tieumuc="ghinho" type="button">📒 Sổ ghi nhớ</button>
+          <button class="htNutTieuMuc" data-tieumuc="hocthe" type="button">🎓 Học &amp; thẻ nhớ</button>
           <button class="htNutTieuMuc" data-tieumuc="khac" type="button">🎯 Thử Thách · 📚 Học Tập · 🧭 Khám Phá</button>
         </div>
 
@@ -1366,6 +1370,11 @@
         <!-- KC_03A: TIỂU MỤC SỔ GHI NHỚ (chung mọi trò chơi / học tập; qt_ghi_nho.js) -->
         <div class="htTieuMuc" data-tieumuc="ghinho" style="display:none;">
           <div id="htGhiNho"><p class="adminGhiChu">Chọn một bé để xem.</p></div>
+        </div>
+
+        <!-- KC_03B3: TIỂU MỤC HỌC & THẺ NHỚ (lớp, thẻ riêng, nhạy cảm, giao thẻ; kc_hoc_cua_be.js) -->
+        <div class="htTieuMuc" data-tieumuc="hocthe" style="display:none;">
+          <div id="htHocThe"><p class="adminGhiChu">Chọn một bé để xem.</p></div>
         </div>
 
         <!-- TIỂU MỤC: CÁC LĨNH VỰC SẮP CÓ -->
@@ -1617,6 +1626,7 @@
   <script src="qt_dt_khung.js"></script>
   <script src="qt_dau_truong.js"></script>   <!-- 🎛️ Thông số -->
   <script src="qt_dt_tai_khoan.js"></script> <!-- 👤 Tài khoản -->
+  <script src="kc_hoc_cua_be.js"></script>   <!-- KC_03B3: khối Học của con dùng chung -->
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
 </body>
