@@ -215,6 +215,11 @@
       async guiCau(id, cau, maKiem) { return goiCau("kc_cau_hoi_gui", { p_id: Number.isInteger(id) ? id : null, p_cau: cau || {}, p_ma_kiem: maKiem || null }); },
       //   kiemCau(id | null, cau) -> { ok, maKiem, goiAi, nhayCam, luot } | { ok: false, ma (chan | trung | sai_khuon | het_kiem | khoa ...), cuaBe? }
       async kiemCau(id, cau) { return goiCau("kc_cau_hoi_kiem", { p_id: Number.isInteger(id) ? id : null, p_cau: cau || {} }); },
+      // KC_06G: khung 🔎 Câu giống trong kho (chỉ tham khảo, không chặn). tuongTu(chữ đang gõ, môn, id câu đang sửa)
+      //   -> { ok, cau: [{ id, noiDung, dapAn, dung, loiGiai, hinhChu, monTen, bieuTuong, chuDe, lopTu, lopDen, cuaBe, trangThai, giong, yHet }] }
+      async tuongTu(noiDung, mon, boQua) {
+        return goiKho("kc_cau_hoi_tuong_tu", { p_noi_dung: String(noiDung || "").slice(0, 300), p_mon: mon || null, p_bo_qua: Number.isInteger(boQua) ? boQua : null });
+      },
       //   aiKiem(maKiem): Cô Cú (AI) chấm phiếu kiểm -> { ok, ketQua (dat | loai | loi | bo_qua), lyDo, goiY, nhayCam }
       async aiKiem(maKiem) {
         const sb = typeof window !== "undefined" ? window.kcSupabaseClient : null;
@@ -263,3 +268,4 @@
 // 12/11/2026 - BƯỚC: KC_06D (cauCuaBe / guiCau / daXemCau / monChuDe: bé tự đặt câu; cần SQL KC_06D)
 // 14/11/2026 - BƯỚC: KC_06E3 (xoaCau, docLai); KC_06E2 (kiemCau / aiKiem / xemKiem: Kiểm tra trước, Gửi sau)
 // 16/11/2026 - BƯỚC: KC_06F1 (thongBao / daXemThongBao: tin của bé, câu bị trả lại được thay ở công trình; cần SQL KC_06F1)
+// 17/11/2026 - BƯỚC: KC_06G (tuongTu: khung 🔎 Câu giống trong kho ở màn soạn câu; cần SQL KC_06G)
