@@ -211,7 +211,11 @@
       + '<span class="qkcNhan">' + T(lopChu(q)) + " · " + T(MUC[q.muc] || q.muc) + "</span>"
       + (q.nguon === "be" ? '<span class="qkcNhan nguonBe">' + T(NGUON.be) + (q.congKhai ? " · 📚 thư viện" : "") + "</span>" : "")
       + (q.soCongTrinh ? '<span class="qkcNhan dangDung" title="Số công trình đang gắn câu này">🏰 ' + q.soCongTrinh + " công trình</span>" : "")
-      + ((q.nhanLoc || []).indexOf("nhay_cam_hoc_tap") >= 0 ? '<span class="qkcNhan nhayCam">⚠️ nhạy cảm học tập</span>' : "")
+      // KC_06E4: Cô Cú nhờ cô chú (Google chặn / chưa chắc đáp án) -> câu cũng mang nhãn nhạy cảm để chờ duyệt; hiện đúng lý do
+      + (q.aiKetQua && q.aiKetQua.bi_chan ? '<span class="qkcNhan nhayCam" title="Mức Google chấm: ' + T((q.aiKetQua.xep_hang_google || []).join(", ") || "không rõ")
+          + '">🛑 Google chặn (' + T(q.aiKetQua.ly_do_google || "?") + ") · Cô Cú nhờ duyệt</span>"
+        : q.aiKetQua && q.aiKetQua.can_nguoi_xem ? '<span class="qkcNhan nhayCam">🤔 Cô Cú chưa chắc đáp án · nhờ duyệt</span>'
+        : (q.nhanLoc || []).indexOf("nhay_cam_hoc_tap") >= 0 ? '<span class="qkcNhan nhayCam">⚠️ nhạy cảm học tập</span>' : "")
       + (q.amThanh ? '<span class="qkcNhan">🔊 câu nghe</span>' : "") + (q.hinh ? '<span class="qkcNhan">🖼️ có hình</span>' : "");
     var ai = q.aiKetQua ? '<div class="qkcAi">🤖 AI: ' + T(q.aiKetQua.ly_do || "") + (q.aiKetQua.diem_tu_tin !== undefined ? " · tự tin " + T(q.aiKetQua.diem_tu_tin) : "")
       + ((q.aiKetQua.nhom_vi_pham || []).length ? " · " + T(q.aiKetQua.nhom_vi_pham.map(function (n) { return NHOM[n] || n; }).join(", ")) : "") + "</div>" : "";
@@ -703,3 +707,4 @@
 // 12/11/2026 - BƯỚC: KC_06C
 // 17/11/2026 - BƯỚC: KC_06G (ô cấu hình trung.gan_giong)
 // 17/11/2026 - BƯỚC: KC_06F2 (ô cấu hình ai.giay_cho_be)
+// 17/11/2026 - BƯỚC: KC_06E4 (nhãn 🛑 Google chặn / 🤔 Cô Cú chưa chắc đáp án)

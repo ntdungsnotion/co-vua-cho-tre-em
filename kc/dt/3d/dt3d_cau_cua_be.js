@@ -19,6 +19,7 @@
 //   cd, ol: chỗ vẽ thanh công cụ + danh sách (hàng chủ đề + danh sách câu của thư viện); chonCau(câu có id) gắn vào công trình.
 // BƯỚC: KC_06D - NGÀY: 12/11/2026. Sửa 14/11/2026 KC_06E2: nút 🔍 Kiểm tra (app tự kiểm + trùng + Cô Cú/AI) -> đạt thì 📨 Gửi mới sáng;
 //   gửi xong câu AI đạt có nút 🛡️ Gắn vào công trình.
+//   Sửa 17/11/2026 KC_06E4: Cô Cú nhờ cô chú (máy chủ trả nhoNguoi: câu đố / chưa chắc đáp án / Google chặn) -> lời riêng, không "khen".
 // ================================================================
 
 const TRANG_THAI = {
@@ -40,7 +41,9 @@ const SO_DAP_AN = 4;
 const CHO_AI_MS = 35000; // 🦉 Nhờ Cô Cú đọc lại: chờ tối đa (Edge Function chờ Gemini 20 giây mặc định)
 const CHO_BE_GIAY = 12;  // KC_06F2 (người dùng 17/11/2026): 🔍 Kiểm tra chờ Cô Cú tối đa 12 giây (máy chủ gửi ai.giay_cho_be, admin sửa)
 // Câu có chủ đề nhạy cảm học tập (chiến tranh, bệnh...): nằm trong Câu của con, admin duyệt xong mới gắn được (người dùng 12/11/2026)
-const NHAY_CAM = "🔎 Câu này có chủ đề cần người lớn xem (như chiến tranh, bệnh tật...). Cô chú duyệt xong thì con mới gắn vào công trình được nhé.";
+// KC_06E4: Cô Cú nhờ cô chú (câu đố / chưa chắc đáp án / Google chặn) cũng đi đường này -> lời chung cho cả hai
+const NHAY_CAM = "🔎 Câu này cần cô chú đọc thêm (chủ đề cần người lớn xem, hoặc Cô Cú chưa chắc đáp án). Cô chú duyệt xong thì con gắn vào công trình được nhé.";
+const NHO_CO_CHU = "🔎 Câu đố, câu có nhiều cách hiểu thì cô chú sẽ đọc thêm giúp con. Cô chú duyệt xong là con gắn vào công trình được.";
 
 // Mã lỗi máy chủ -> lời cho bé
 function loiChoBe(kq) {
@@ -451,7 +454,8 @@ export function taoCauCuaBe(the) {
         return;
       }
       daKiem = { ma: kq.maKiem, ban, ai: ai.ketQua, nhay }; thu.disabled = false; thu.title = "";
-      if (ai.ketQua === "dat") veGopY("dat", "✅ Cô Cú khen: " + (ai.lyDo || "Câu hay lắm!"), nhay ? NHAY_CAM : "", "Con bấm 📨 Gửi nhé!");
+      if (ai.ketQua === "dat" && ai.nhoNguoi) veGopY("dat", "🦉 " + (ai.lyDo || "Cô Cú nhờ cô chú đọc thêm câu này giúp con."), NHO_CO_CHU, "Con bấm 📨 Gửi nhé!"); // KC_06E4
+      else if (ai.ketQua === "dat") veGopY("dat", "✅ Cô Cú khen: " + (ai.lyDo || "Câu hay lắm!"), nhay ? NHAY_CAM : "", "Con bấm 📨 Gửi nhé!");
       else if (ai.ketQua === "tat") veGopY("dat", "✅ Câu qua vòng kiểm rồi!", "Gửi xong cô chú sẽ xem, duyệt rồi con gắn vào công trình được. Con bấm 📨 Gửi nhé!");
       else veGopY("nhac", "✅ Câu qua vòng kiểm của app.", "🦉 Cô Cú đọc hơi lâu, con không cần chờ nữa!",
         "Con bấm 📨 Gửi, tự trả lời câu của con là câu vào kho. Cô Cú đọc tiếp, đọc xong sẽ báo con ở 💡 trên cùng màn hình. Đạt thì con gắn vào công trình được.");
