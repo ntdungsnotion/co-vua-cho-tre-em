@@ -216,9 +216,14 @@
           + '">🛑 Google chặn (' + T(q.aiKetQua.ly_do_google || "?") + ") · Cô Cú nhờ duyệt</span>"
         : q.aiKetQua && q.aiKetQua.can_nguoi_xem ? '<span class="qkcNhan nhayCam">🤔 Cô Cú chưa chắc đáp án · nhờ duyệt</span>'
         : (q.nhanLoc || []).indexOf("nhay_cam_hoc_tap") >= 0 ? '<span class="qkcNhan nhayCam">⚠️ nhạy cảm học tập</span>' : "")
+      // KC_06E5: Cô Cú chỉ góp ý -> bé vẫn gửi (câu chờ duyệt); Cô Cú thấy vi phạm -> nhãn ⚠️ để admin đọc kỹ
+      + (q.aiKetQua && q.aiKetQua.be_gui_du_gop_y ? '<span class="qkcNhan nhayCam" title="Cô Cú bảo sửa, bé vẫn gửi để cô chú xem">✏️ Bé gửi dù Cô Cú góp ý</span>' : "")
+      + (q.aiKetQua && (q.aiKetQua.nhom_vi_pham || []).filter(function (n) { return n !== "nhay_cam_hoc_tap"; }).length
+          ? '<span class="qkcNhan nhayCam">⚠️ Cô Cú thấy vi phạm · đọc kỹ</span>' : "")
       + (q.amThanh ? '<span class="qkcNhan">🔊 câu nghe</span>' : "") + (q.hinh ? '<span class="qkcNhan">🖼️ có hình</span>' : "");
     var ai = q.aiKetQua ? '<div class="qkcAi">🤖 AI: ' + T(q.aiKetQua.ly_do || "") + (q.aiKetQua.diem_tu_tin !== undefined ? " · tự tin " + T(q.aiKetQua.diem_tu_tin) : "")
-      + ((q.aiKetQua.nhom_vi_pham || []).length ? " · " + T(q.aiKetQua.nhom_vi_pham.map(function (n) { return NHOM[n] || n; }).join(", ")) : "") + "</div>" : "";
+      + ((q.aiKetQua.nhom_vi_pham || []).length ? " · " + T(q.aiKetQua.nhom_vi_pham.map(function (n) { return NHOM[n] || n; }).join(", ")) : "")
+      + (q.aiKetQua.goi_y_sua ? " · 💡 gợi ý: " + T(q.aiKetQua.goi_y_sua) : "") + "</div>" : ""; // KC_06E5: hiện cả gợi ý sửa của Cô Cú
     var nut = (q.trangThai !== "dat" ? '<button type="button" class="adminNut adminNutThanhCong" data-viec="dat">✅ Đạt</button>' : "")
       + (q.trangThai !== "loai" ? '<button type="button" class="adminNut adminNutPhu" data-viec="loai">🙈 Loại</button>' : "")
       + '<button type="button" class="adminNut" data-viec="sua">✏️ Sửa</button>'
@@ -708,3 +713,4 @@
 // 17/11/2026 - BƯỚC: KC_06G (ô cấu hình trung.gan_giong)
 // 17/11/2026 - BƯỚC: KC_06F2 (ô cấu hình ai.giay_cho_be)
 // 17/11/2026 - BƯỚC: KC_06E4 (nhãn 🛑 Google chặn / 🤔 Cô Cú chưa chắc đáp án)
+// 17/11/2026 - BƯỚC: KC_06E5 (nhãn ✏️ Bé gửi dù Cô Cú góp ý / ⚠️ Cô Cú thấy vi phạm; dòng AI hiện gợi ý sửa)

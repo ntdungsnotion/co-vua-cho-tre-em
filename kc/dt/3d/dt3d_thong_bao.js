@@ -9,6 +9,7 @@
 // DÙNG: moThongBao({ mayChu }) -> Promise<số tin đã hiện>; mayChu cần thongBao() + daXemThongBao(ids)
 //       (dt_may_chu_sb.js; máy chủ giả không có -> không làm gì). Máy chủ chưa có hàm (chưa chạy SQL) -> không hiện gì.
 // BƯỚC: KC_06F1 - NGÀY: 16/11/2026. Sửa 17/11/2026 KC_06E4: tin ai_cho_nguoi có nhoNguoi -> lời "Cô Cú nhờ cô chú đọc thêm".
+//   Sửa 17/11/2026 KC_06E5: tin ai_loai là GÓP Ý (bé sửa hay để nguyên đều được, cô chú vẫn xem).
 // ================================================================
 const tao = (the, lop, chu) => { const e = document.createElement(the); if (lop) e.className = lop; if (chu !== undefined) e.textContent = chu; return e; };
 const rutGon = s => { const c = String(s || "").trim(); return c.length > 90 ? c.slice(0, 88) + "…" : c; };
@@ -51,10 +52,11 @@ export function loiTin(tin) {
         : "🔎 Câu có chủ đề cần người lớn xem (như chiến tranh, bệnh tật...). Cô chú duyệt xong là con gắn vào công trình được."]);
       return dong;
     case "ai_loai":
-      dong.push(["chinh", "✏️ Câu của con cần sửa một chút: " + cau]);
+      dong.push(["chinh", "✏️ Cô Cú góp ý câu của con: " + cau]);
       if (d.lyDo) dong.push(["lyDo", "🦉 Cô Cú góp ý: " + d.lyDo]);
       if (d.goiY) dong.push(["thay", "💡 " + d.goiY]);
-      dong.push(["goiY", "Chạm để mở câu, bấm ✏️ Sửa lại nhé!"]);
+      // KC_06E5: Cô Cú chỉ góp ý (có thể sai) -> câu vẫn chờ cô chú, bé sửa hay để nguyên đều được
+      dong.push(["goiY", "Con muốn sửa thì chạm để mở câu, bấm ✏️ Sửa lại. Con thấy câu đúng rồi thì cứ để nguyên, cô chú sẽ xem nhé!"]);
       return dong;
     case "ai_thoi_thu":
       dong.push(["chinh", "🦉 Cô Cú chưa đọc được câu của con: " + cau]);
