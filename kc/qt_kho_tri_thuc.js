@@ -11,6 +11,8 @@
 //     mỗi thẻ có nút ✏️ Sửa và 🙈 Ẩn / 👁 Hiện (RPC kc_the_nho_admin_an, SQL/supabase_kc03b2_them_the.sql). Giao thẻ cho bé: KC_03B3.
 //   RPC: kc_the_nho_admin_ds (kiểm admin ở máy chủ, SQL/supabase_kc03b1_kho_tri_thuc.sql ở repo_rieng), kc_mon_chu_de.
 // BƯỚC: KC_03B1 - NGÀY: 12/11/2026 · KC_03B2 - 12/11/2026
+// KC_06C2 (18/11/2026): mỗi thẻ chung có mục "❓ Câu hỏi gắn với thẻ" (mở ra mới tải, RPC kc_the_nho_admin_cau): số câu từng mảnh,
+//   mảnh CHƯA có câu tô cam (chỗ cần soạn câu), chạm mảnh / nút để sang ❓ Kho câu hỏi lọc đúng thẻ / mảnh (window.QKC.locTheo).
 // PHỤ THUỘC: ../api.js, ../admin_NC.js (adminGoiRpc, adminThoat), kc_the_nho_khuon.js (KC_THE_NHO), quantri_NC.html có nút
 //   data-manhinh="khotrithuc" + section #manhinh-khotrithuc (#qttGoc), qt_kho_tri_thuc.css.
 // ================================================================
@@ -150,6 +152,7 @@
       + (t.nguCanh ? '<p class="qttNguCanh">💬 ' + T(t.nguCanh) + "</p>" : "")
       + '<details class="qttManh"><summary>🧩 ' + manh.length + " mảnh nhớ</summary><div>"
       + manh.map(function (x) { return '<span class="qttChip" title="' + T(x.ma) + '">' + T(x.ten || x.ma) + "</span>"; }).join("") + "</div></details>"
+      + (t.chiChoBe || khongNut ? "" : '<details class="qttCau" data-cau-the="' + T(t.id) + '"><summary>❓ Câu hỏi gắn với thẻ</summary><div class="qttCauNoi"><p class="adminDangTai">Đang đếm câu...</p></div></details>')
       + '<p class="qttChan"><code>' + T(t.id) + "</code>" + (t.nguon ? " · " + T(t.nguon) : "") + (t.phienBan ? " · bản " + (t.phienBan | 0) : "") + "</p>"
       + (khongNut ? "" : '<div class="qttNutThe"><button type="button" class="adminNut adminNutPhu" data-sua="' + T(t.id) + '">✏️ Sửa</button>'
         + '<button type="button" class="adminNut adminNutPhu" data-an="' + T(t.id) + '" data-hien="' + (t.hien ? "0" : "1") + '">' + (t.hien ? "🙈 Ẩn" : "👁 Hiện lại") + "</button></div>")
@@ -199,6 +202,18 @@
       n = su.target.closest("[data-an]");
       if (n) anHien(n);
     });
+    // KC_06C2: mở "❓ Câu hỏi gắn với thẻ" thì mới đếm (toggle không nổi bọt -> nghe ở pha bắt)
+    el("qttDs").addEventListener("toggle", function (su) {
+      var d = su.target;
+      if (!d.classList || !d.classList.contains("qttCau") || !d.open || d.getAttribute("data-da-tai")) return;
+      d.setAttribute("data-da-tai", "1");
+      taiCauCuaThe(d);
+    }, true);
+    el("qttDs").addEventListener("click", function (su) {
+      var n = su.target.closest("[data-xem-cau]"); if (!n || !window.QKC || !window.QKC.locTheo) return;
+      var t = dsThe[n.getAttribute("data-xem-cau")] || {};
+      window.QKC.locTheo({ theNho: n.getAttribute("data-xem-cau"), manh: n.getAttribute("data-manh") || "", theTen: t.tieuDe || "", manhTen: n.getAttribute("data-manh-ten") || "" });
+    });
     el("qttTrang").addEventListener("click", function (su) {
       var n = su.target.closest("[data-trang]"); if (!n) return;
       trang = Number(n.getAttribute("data-trang")); taiDs(); goc.scrollIntoView({ block: "start" });
@@ -212,6 +227,26 @@
     goi("kc_the_nho_admin_an", { p_id: id, p_hien: hien }).then(function (kq) {
       if (!kq.thanhCong) { nut.disabled = false; window.alert("❌ " + kq.thongBao + canSql(kq).replace("KC_03B1", "KC_03B2")); return; }
       taiDs();
+    });
+  }
+  function taiCauCuaThe(d) {
+    var id = d.getAttribute("data-cau-the"), o = d.querySelector(".qttCauNoi");
+    goi("kc_the_nho_admin_cau", { p_the: id }).then(function (kq) {
+      if (!kq.thanhCong) {
+        d.removeAttribute("data-da-tai");
+        o.innerHTML = '<p class="adminGhiChu">❌ ' + T(kq.thongBao) + (/function|does not exist|schema cache|chưa có hàm/i.test(kq.thongBao || "") ? " Hãy chạy SQL KC_06C2 trong Supabase." : "") + "</p>";
+        return;
+      }
+      var ds = kq.manh || [], co = ds.filter(function (m) { return m.soDat > 0; }).length, tong = ds.reduce(function (a, m) { return a + m.soDat; }, 0);
+      o.innerHTML = '<p class="qttCauTom"><b>' + tong + " câu</b> dùng được · <b>" + co + "/" + ds.length + "</b> mảnh đã có câu"
+        + (co < ds.length ? ' · <span class="qttDo">' + (ds.length - co) + " mảnh chưa có câu</span>" : " 👏")
+        + (kq.lacManh ? ' · <span class="qttDo">⚠️ ' + kq.lacManh + " câu gắn mảnh không còn</span>" : "") + "</p>"
+        + '<div class="qttCauManh">' + ds.map(function (m) {
+          return '<button type="button" class="qttChip qttCauChip' + (m.soDat ? "" : " chua") + '" data-xem-cau="' + T(id) + '" data-manh="' + T(m.ma) + '" data-manh-ten="' + T(m.ten) + '"'
+            + ' title="' + (m.soDat ? m.soDat + " câu dùng được" : "Chưa có câu nào dùng được") + (m.soKhac ? ", " + m.soKhac + " câu đang chờ / bị loại" : "") + '">'
+            + T(m.ten) + " <b>" + m.soDat + "</b></button>";
+        }).join("") + "</div>"
+        + '<div class="qttNutThe"><button type="button" class="adminNut adminNutPhu" data-xem-cau="' + T(id) + '">📋 Xem các câu của thẻ</button></div>';
     });
   }
   function chonMon(ma) {
@@ -279,3 +314,4 @@
     mon: function () { return mon; }, bo: function () { return bo; }, hinhNen: function () { return hinhNen; } };
 })();
 // 12/11/2026 - BƯỚC: KC_03B1 · KC_03B2 (12/11/2026: thanh công cụ thêm / nhập, nút sửa / ẩn mỗi thẻ)
+// 18/11/2026 - BƯỚC: KC_06C2 (mục ❓ Câu hỏi gắn với thẻ: số câu từng mảnh, mảnh chưa có câu)
