@@ -174,3 +174,13 @@
 @media (min-width: 1280px) { .qtsDsNhap { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1700px) { .qtsDsNhap { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 /* 12/11/2026 - BƯỚC: KC_03B1 · KC_03B2 */
+/* ---- KC_06C2: câu hỏi gắn với thẻ ---- */
+.qttCau { margin: 8px 0 0; }
+.qttCau summary { cursor: pointer; font-weight: bold; color: var(--mau-chinh-dam); font-size: 0.9rem; }
+.qttCauTom { margin: 6px 0; font-size: 0.86rem; }
+.qttCauManh { display: flex; flex-wrap: wrap; gap: 4px; }
+.qttCauChip { border: 1px solid #b9e3c9; background: #eaf8f0; color: #17784a; font-family: inherit; cursor: pointer; }
+.qttCauChip b { margin-left: 4px; padding: 0 6px; border-radius: 999px; background: #fff; }
+.qttCauChip.chua { border-color: #f3c08f; background: #fff1e3; color: #9a4b00; }
+.qttCau .qttNutThe { margin-top: 8px; }
+/* 18/11/2026 - BƯỚC: KC_06C2 */

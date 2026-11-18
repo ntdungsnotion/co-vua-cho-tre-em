@@ -5,6 +5,7 @@
      - Máy tính (>= 900px): bộ lọc mở sẵn thành lưới nhiều cột; phần Thêm / Nhập, Từ cấm chia 2 cột.
      - Máy rộng (>= 1280px): thẻ câu 2 cột; >= 1700px: 3 cột. Khối rộng tới 1600px (không co thành cột hẹp).
    BƯỚC: KC_06C - NGÀY: 12/11/2026
+   KC_06C2 (18/11/2026): nhãn tri thức 🃏 / 🔤 (chạm để lọc), dòng "đang xem câu của thẻ / từ", khối 🔗 chọn thẻ + mảnh / từ.
    ================================================================ */
 
 #manhinh-khocau .adminKhoi { max-width: 1600px; }
@@ -171,6 +172,41 @@ textarea.loi, input.loi { border: 2px solid var(--mau-that-bai) !important; }
 }
 @media (min-width: 1700px) {
   .qkcDs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .qkcLocLuoi { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+  .qkcLocLuoi { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+}
+/* ---- KC_06C2: tri thức của câu ---- */
+.qkcNhan.qkcNhanGan { border: 1px solid #b9e3c9; background: #eaf8f0; color: #17784a; font-family: inherit; cursor: pointer; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; }
+.qkcNhan.qkcNhanGan:hover { border-color: #17784a; }
+.qkcNhan.qkcNhanGanLoi { border-color: #f3c08f; background: #ffe4cc; color: #9a4b00; }
+.qkcLocTriThuc { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 8px; padding: 8px 12px; border-radius: 12px;
+  background: #eaf8f0; border: 1px solid #b9e3c9; font-size: 0.92rem; }
+.qkcLocTriThuc[hidden] { display: none; }
+.qkcLocTriThuc span { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.qkcLocTriThuc .adminNut { padding: 6px 10px; font-size: 0.85rem; }
+.qkcTriThuc { border: 1px dashed #b9e3c9; border-radius: 12px; padding: 10px; background: #f7fcf9; min-width: 0; }
+.qkcTriThuc .qkcNhanO small { font-weight: normal; color: var(--mau-chu-nhat); }
+.qkcKieuGan { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 6px 0; }
+.qkcTriThuc input[type="radio"] { width: 20px; height: 20px; flex: 0 0 auto; padding: 0; margin: 0; accent-color: var(--mau-thanh-cong); }
+.qkcTriThuc label.qkcHop { font-weight: normal; color: var(--mau-chu); }
+.qkcGanThe, .qkcGanTu { margin-top: 6px; min-width: 0; }
+.qkcTimThe, .qkcOTu { width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid var(--mau-vien); border-radius: 8px; font-family: inherit; font-size: 0.95rem; }
+.qkcOTu { max-width: 260px; }
+.qkcKqThe { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin-top: 6px; }
+.qkcKqMot { text-align: left; border: 1px solid var(--mau-vien); background: #fff; border-radius: 8px; padding: 8px 10px; font-family: inherit;
+  font-size: 0.9rem; cursor: pointer; overflow-wrap: anywhere; }
+.qkcKqMot:hover { border-color: var(--mau-chinh); background: #fbf9ff; }
+.qkcKqMot small { color: var(--mau-chu-nhat); }
+.qkcTheChon { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin-bottom: 6px; overflow-wrap: anywhere; }
+.qkcTheChon .adminNut { padding: 4px 10px; font-size: 0.82rem; }
+.qkcTheChon code { font-size: 0.78rem; color: var(--mau-chu-nhat); }
+.qkcNghiaTu { display: inline-block; margin: 6px 0 0 8px; font-size: 0.9rem; color: #17784a; }
+.qkcNghiaTu.loi { color: #9a4b00; }
+.qkcLoiGan { color: var(--mau-that-bai); font-weight: bold; font-size: 0.86rem; margin: 6px 0 0; }
+.qkcHopThoai .qkcTriThuc { margin-top: 8px; }
+@media (min-width: 900px) {
+  .qkcKqThe { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qkcHopThoai:has(.qkcTriThuc) { max-width: 720px; }
 }
 /* 12/11/2026 - BƯỚC: KC_06C */
+/* 18/11/2026 - BƯỚC: KC_06C2 (tri thức của câu) */

@@ -12,6 +12,9 @@
 //   ⚙️ Cấu hình    : giới hạn mỗi ngày, ngưỡng trùng, AI, số câu mục tiêu, thời gian giữ nhật ký.
 //   Mọi RPC kc_cau_hoi_admin_* kiểm quyền admin ở máy chủ (SQL/supabase_kc06c_quan_tri_kho_cau.sql ở repo_rieng).
 // BƯỚC: KC_06C - NGÀY: 12/11/2026
+// KC_06C2 (18/11/2026): mỗi câu trỏ tới MỘT tri thức (mảnh của thẻ nhớ, hoặc một từ vựng): nhãn 🃏 / 🔤 trên câu (chạm để lọc),
+//   bộ lọc "Tri thức", khối 🔗 chọn thẻ + mảnh / từ khi sửa / thêm câu, nút 🔗 Gắn tri thức cho nhiều câu (cả 🪄 tự đoán),
+//   JSON nhập có theNho + manh hoặc tu. RPC kc_cau_hoi_admin_gan (SQL/supabase_kc06c2_noi_tri_thuc.sql). window.QKC.locTheo cho 📚 Kho tri thức.
 // PHỤ THUỘC: ../api.js (apiGoiRpc), ../admin_NC.js (adminGoiRpc, adminThoat, adminBaoTin, adminDinhDangGio), quantri_NC.html
 //   có nút data-manhinh="khocau" + section #manhinh-khocau (#qkcGoc), qt_kho_cau.css.
 // ================================================================
@@ -54,8 +57,11 @@
   var CO = 30;
 
   var mon = [];             // [{ma, ten, bieuTuong, chuDe:[{ma, ten}]}]
-  var loc = { nguon: "", trangThai: "", mon: "", chuDe: "", lop: "", muc: "", tim: "", dangDung: false, sap: "moi" };
+  var LOC_GOC = { nguon: "", trangThai: "", mon: "", chuDe: "", lop: "", muc: "", tim: "", dangDung: false, sap: "moi", gan: "", theNho: "", manh: "", tu: "" };
+  var loc = Object.assign({}, LOC_GOC);
+  var GAN = { co: "🔗 Đã gắn tri thức", chua: "Chưa gắn tri thức", the: "🃏 Gắn thẻ nhớ", tu: "🔤 Gắn từ vựng", loi: "⚠️ Gắn mảnh không còn trong thẻ" };
   var trang = 0, tong = 0, dsCau = [], chon = {}, daMo = false, phanHienTai = "cau", lanTai = 0;
+  var locCho = null;     // KC_06C2: lọc theo thẻ / từ chờ áp khi khung dựng xong
 
   // ---------------- tiện ích ----------------
   function el(id) { return document.getElementById(id); }
@@ -130,15 +136,17 @@
       + '<label>Chủ đề<select id="qkcLChuDe"><option value="">Tất cả</option></select></label>'
       + '<label>Lớp<select id="qkcLLop"><option value="">Tất cả</option>' + [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(function (l) { return '<option value="' + l + '">Lớp ' + l + "</option>"; }).join("") + "</select></label>"
       + '<label>Mức<select id="qkcLMuc">' + tuyChon(MUC, "", "Tất cả") + "</select></label>"
+      + '<label>Tri thức<select id="qkcLGan">' + tuyChon(GAN, "", "Tất cả") + "</select></label>"
       + '<label>Sắp xếp<select id="qkcLSap"><option value="moi">Mới thêm trước</option><option value="sua">Mới sửa trước</option><option value="cu">Cũ trước</option><option value="dung">Đang dùng nhiều</option></select></label>'
       + '<label class="qkcHop"><input type="checkbox" id="qkcLDangDung"> Chỉ câu đang ở công trình</label>'
       + '<button type="button" class="adminNut adminNutPhu" id="qkcBoLoc">↺ Bỏ lọc</button>'
       + "</div></details></div>"
+      + '<div id="qkcLocTriThuc" class="qkcLocTriThuc" hidden></div>'
       + '<div class="qkcDongTom"><label class="qkcHop"><input type="checkbox" id="qkcChonTrang"> Chọn cả trang</label><span id="qkcTom"></span></div>'
       + '<div id="qkcDs" class="qkcDs"></div><div class="qkcTrang" id="qkcPhanTrang"></div>';
     var hen = null;
     el("qkcTim").addEventListener("input", function () { clearTimeout(hen); hen = setTimeout(function () { loc.tim = el("qkcTim").value; trang = 0; taiDs(); }, 350); });
-    [["qkcLNguon", "nguon"], ["qkcLTrangThai", "trangThai"], ["qkcLMon", "mon"], ["qkcLChuDe", "chuDe"], ["qkcLLop", "lop"], ["qkcLMuc", "muc"], ["qkcLSap", "sap"]].forEach(function (x) {
+    [["qkcLNguon", "nguon"], ["qkcLTrangThai", "trangThai"], ["qkcLMon", "mon"], ["qkcLChuDe", "chuDe"], ["qkcLLop", "lop"], ["qkcLMuc", "muc"], ["qkcLSap", "sap"], ["qkcLGan", "gan"]].forEach(function (x) {
       el(x[0]).addEventListener("change", function () {
         loc[x[1]] = el(x[0]).value;
         if (x[1] === "mon") { loc.chuDe = ""; el("qkcLChuDe").innerHTML = tuyChonChuDe(loc.mon, "", "Tất cả"); }
@@ -147,7 +155,7 @@
     });
     el("qkcLDangDung").addEventListener("change", function () { loc.dangDung = el("qkcLDangDung").checked; trang = 0; taiDs(); });
     el("qkcBoLoc").addEventListener("click", function () {
-      loc = { nguon: "", trangThai: "", mon: "", chuDe: "", lop: "", muc: "", tim: "", dangDung: false, sap: "moi" }; trang = 0; datOLoc(); taiDs();
+      loc = Object.assign({}, LOC_GOC); trang = 0; datOLoc(); taiDs();
     });
     el("qkcChonTrang").addEventListener("change", function () {
       var c = el("qkcChonTrang").checked;
@@ -155,6 +163,11 @@
       veDs(); capNhatThanhChon();
     });
     el("qkcDs").addEventListener("click", bamTrongDs);
+    el("qkcLocTriThuc").addEventListener("click", function (su) {
+      var n = su.target.closest("[data-bo-loc]"); if (!n) return;
+      if (n.getAttribute("data-bo-loc") === "manh") { loc.manh = ""; loc.manhTen = ""; } else { loc.theNho = ""; loc.manh = ""; loc.tu = ""; loc.theTen = ""; loc.manhTen = ""; }
+      trang = 0; veLocTriThuc(); taiDs();
+    });
     el("qkcDs").addEventListener("change", function (su) {
       var h = su.target.closest("[data-chon]");
       if (!h) return;
@@ -172,7 +185,21 @@
   function datOLoc() {
     el("qkcTim").value = loc.tim; el("qkcLNguon").value = loc.nguon; el("qkcLTrangThai").value = loc.trangThai; el("qkcLMon").value = loc.mon;
     el("qkcLChuDe").innerHTML = tuyChonChuDe(loc.mon, loc.chuDe, "Tất cả"); el("qkcLLop").value = loc.lop; el("qkcLMuc").value = loc.muc;
-    el("qkcLSap").value = loc.sap; el("qkcLDangDung").checked = loc.dangDung;
+    el("qkcLSap").value = loc.sap; el("qkcLDangDung").checked = loc.dangDung; el("qkcLGan").value = loc.gan;
+    veLocTriThuc();
+  }
+  // KC_06C2: dòng "đang lọc theo thẻ / từ" (chạm nhãn 🃏 / 🔤 trên câu, hoặc từ 📚 Kho tri thức)
+  function veLocTriThuc() {
+    var o = el("qkcLocTriThuc"); if (!o) return;
+    var chu = loc.theNho ? "🃏 Thẻ <b>" + T(loc.theTen || loc.theNho) + "</b>" + (loc.manh ? " · mảnh <b>" + T(loc.manhTen || loc.manh) + "</b>" : " (mọi mảnh)")
+      : loc.tu ? "🔤 Từ <b>" + T(loc.tu) + "</b>" : "";
+    o.hidden = !chu;
+    o.innerHTML = chu ? "<span>Đang xem câu của " + chu + "</span>" + (loc.manh ? '<button type="button" class="adminNut adminNutPhu" data-bo-loc="manh">Mọi mảnh của thẻ</button>' : "")
+      + '<button type="button" class="adminNut adminNutPhu" data-bo-loc="het">✕ Bỏ lọc này</button>' : "";
+  }
+  function locTheo(x) {
+    loc = Object.assign({}, LOC_GOC, { theNho: x.theNho || "", manh: x.manh || "", tu: x.tu || "", theTen: x.theTen || "", manhTen: x.manhTen || "" });
+    trang = 0; datOLoc(); taiDs();
   }
   function timCau(id) { for (var i = 0; i < dsCau.length; i++) if (dsCau[i].id === id) return dsCau[i]; return chon[id] || null; }
 
@@ -220,7 +247,8 @@
       + (q.aiKetQua && q.aiKetQua.be_gui_du_gop_y ? '<span class="qkcNhan nhayCam" title="Cô Cú bảo sửa, bé vẫn gửi để cô chú xem">✏️ Bé gửi dù Cô Cú góp ý</span>' : "")
       + (q.aiKetQua && (q.aiKetQua.nhom_vi_pham || []).filter(function (n) { return n !== "nhay_cam_hoc_tap"; }).length
           ? '<span class="qkcNhan nhayCam">⚠️ Cô Cú thấy vi phạm · đọc kỹ</span>' : "")
-      + (q.amThanh ? '<span class="qkcNhan">🔊 câu nghe</span>' : "") + (q.hinh ? '<span class="qkcNhan">🖼️ có hình</span>' : "");
+      + (q.amThanh ? '<span class="qkcNhan">🔊 câu nghe</span>' : "") + (q.hinh ? '<span class="qkcNhan">🖼️ có hình</span>' : "")
+      + nhanTriThuc(q);
     var ai = q.aiKetQua ? '<div class="qkcAi">🤖 AI: ' + T(q.aiKetQua.ly_do || "") + (q.aiKetQua.diem_tu_tin !== undefined ? " · tự tin " + T(q.aiKetQua.diem_tu_tin) : "")
       + ((q.aiKetQua.nhom_vi_pham || []).length ? " · " + T(q.aiKetQua.nhom_vi_pham.map(function (n) { return NHOM[n] || n; }).join(", ")) : "")
       + (q.aiKetQua.goi_y_sua ? " · 💡 gợi ý: " + T(q.aiKetQua.goi_y_sua) : "") + "</div>" : ""; // KC_06E5: hiện cả gợi ý sửa của Cô Cú
@@ -239,6 +267,17 @@
       + (q.duyetBoi ? " · duyệt " + T(q.duyetBoi) : "") + (q.phienBan > 1 ? " · sửa " + (q.phienBan - 1) + " lần" : "") + (q.maNgoai ? " · " + T(q.maNgoai) : "") + "</p></div>"
       + '<div class="qkcNutThe">' + nut + "</div></article>";
   }
+  // KC_06C2: nhãn tri thức của câu; chạm để xem mọi câu cùng thẻ / mảnh / từ
+  function nhanTriThuc(q) {
+    if (q.theNho) {
+      var mat = !q.manhTen;
+      return '<button type="button" class="qkcNhan qkcNhanGan' + (mat ? " qkcNhanGanLoi" : "") + '" data-loc-the="' + T(q.theNho) + '" data-loc-manh="' + T(q.manh || "")
+        + '" data-the-ten="' + T(q.theTieuDe || q.theNho) + '" data-manh-ten="' + T(q.manhTen || q.manh || "") + '" title="' + (mat ? "Mảnh này không còn trong thẻ (thẻ đã sửa): chấm câu chỉ ghi vào câu. Sửa câu để gắn lại" : "Bé trả lời câu này thì Sổ Ghi Nhớ cộng vào mảnh này. Chạm để xem mọi câu của mảnh") + '">'
+        + (mat ? "⚠️ " : "🃏 ") + T(q.theTieuDe || q.theNho) + " · " + T(q.manhTen || q.manh || "?") + (mat ? " (mảnh không còn)" : "") + "</button>";
+    }
+    if (q.tu) return '<button type="button" class="qkcNhan qkcNhanGan" data-loc-tu="' + T(q.tu) + '" title="Bé trả lời câu này thì Sổ Ghi Nhớ cộng vào từ này. Chạm để xem mọi câu của từ">🔤 ' + T(q.tu) + "</button>";
+    return "";
+  }
   function veDs() {
     var o = el("qkcDs");
     if (!dsCau.length) { o.innerHTML = '<p class="adminGhiChu qkcRong">Không có câu nào khớp bộ lọc.</p>'; el("qkcChonTrang").checked = false; return; }
@@ -246,6 +285,12 @@
     el("qkcChonTrang").checked = dsCau.every(function (q) { return chon[q.id]; });
   }
   function bamTrongDs(su) {
+    var g = su.target.closest("[data-loc-the], [data-loc-tu]");
+    if (g) {
+      locTheo({ theNho: g.getAttribute("data-loc-the"), manh: g.getAttribute("data-loc-manh"), tu: g.getAttribute("data-loc-tu"),
+        theTen: g.getAttribute("data-the-ten"), manhTen: g.getAttribute("data-manh-ten") });
+      window.scrollTo(0, 0); return;
+    }
     var n = su.target.closest("[data-viec]"); if (!n) return;
     var the = n.closest(".qkcThe"), id = Number(the.getAttribute("data-id")), q = timCau(id), v = n.getAttribute("data-viec");
     if (v === "dat") hopDat([id], q && q.nguon === "be");
@@ -268,7 +313,8 @@
   var thanh = document.createElement("div");
   thanh.className = "qkcThanhChon"; thanh.id = "qkcThanhChon";
   thanh.innerHTML = '<span id="qkcSoChon"></span><button type="button" class="adminNut adminNutThanhCong" data-loat="dat">✅ Đạt</button>'
-    + '<button type="button" class="adminNut adminNutPhu" data-loat="loai">🙈 Loại</button><button type="button" class="adminNut adminNutNguyHiem" data-loat="xoa">🗑️ Xoá</button>'
+    + '<button type="button" class="adminNut adminNutPhu" data-loat="loai">🙈 Loại</button><button type="button" class="adminNut adminNutPhu" data-loat="gan">🔗 Gắn tri thức</button>'
+    + '<button type="button" class="adminNut adminNutNguyHiem" data-loat="xoa">🗑️ Xoá</button>'
     + '<button type="button" class="adminNut adminNutPhu" data-loat="bo">✕ Bỏ chọn</button>';
   document.body.appendChild(thanh);
   thanh.addEventListener("click", function (su) {
@@ -277,6 +323,7 @@
     if (v === "bo") { chon = {}; veDs(); capNhatThanhChon(); }
     else if (v === "dat") hopDat(ids, coBe);
     else if (v === "loai") hopLoai(ids, coBe);
+    else if (v === "gan") hopGan(ids);
     else xoa(ids);
   });
   function capNhatThanhChon() {
@@ -331,6 +378,24 @@
     });
     nen.querySelector("#qkcHopMau").addEventListener("change", function () { if (this.value) nen.querySelector("#qkcHopLyDo").value = this.value; });
   }
+  // KC_06C2: gắn tri thức cho nhiều câu: 🪄 máy tự đoán (câu máy sinh), gắn cùng một thẻ + mảnh / từ, hoặc bỏ gắn
+  function hopGan(ids) {
+    var bc = boChonTriThuc(null, true);
+    var nen = hop("🔗 Gắn tri thức cho " + ids.length + " câu",
+      '<p class="adminGhiChu">Bé trả lời câu đã gắn thì Sổ Ghi Nhớ cộng vào đúng mảnh nhớ / từ đó (không chỉ cộng cho câu). Mỗi câu chỉ gắn MỘT tri thức.</p>'
+      + '<div id="qkcHopGanCho"></div>', "🔗 Gắn", "adminNutThanhCong", function (nen, dong) {
+      var g = bc.lay();
+      if (g.loi) return bc.baoLoi(g.loi);
+      var viec = g.doan ? "doan" : g.bo ? "bo" : "gan";
+      goi("kc_cau_hoi_admin_gan", { p_ids: ids, p_viec: viec, p_gan: viec === "gan" ? g.gan : null }).then(function (kq) {
+        if (!kq.thanhCong) return bc.baoLoi((kq.thongBao || "Có lỗi") + loiKhongCoHam(kq));
+        dong();
+        var chu = (viec === "bo" ? "Đã bỏ gắn " : "Đã gắn ") + (kq.so | 0) + " câu" + (kq.khongDoan ? " · " + kq.khongDoan + " câu máy không đoán được (câu soạn tay: gắn tay)" : "");
+        sauLoat({ thanhCong: true, so: kq.so, loi: (kq.loi || []).map(function (l) { return { id: l.id, loi: l.loi }; }) }, chu);
+      });
+    });
+    nen.querySelector("#qkcHopGanCho").appendChild(bc.el);
+  }
   function xoa(ids) {
     var dangDung = ids.reduce(function (s, i) { var q = timCau(i); return s + (q && q.soCongTrinh ? 1 : 0); }, 0);
     hop("🗑️ Xoá hẳn " + ids.length + " câu", '<p>Xoá rồi không lấy lại được.' + (dangDung ? " <b>" + dangDung + " câu đang ở công trình</b>: công trình tự lấy câu khác khi có trận." : "")
@@ -364,11 +429,14 @@
       + '<div class="qkcRong2"><div class="qkcNhanO">Đáp án <small>(chạm ◉ để chọn đáp án đúng, 2-6 đáp án)</small></div><div class="qkcDsDapAn"></div>'
       + '<button type="button" class="adminNut adminNutPhu qkcThemDa">＋ Thêm đáp án</button></div>'
       + '<label class="qkcRong2">Lời giải (không bắt buộc)<textarea name="loiGiai" rows="2" maxlength="300">' + T(c.loiGiai) + "</textarea></label>"
+      + '<div class="qkcRong2 qkcOGan"></div>'
       + (c.nguon === "be" ? '<label class="qkcHop qkcRong2"><input type="checkbox" name="congKhai"' + (c.congKhai || c.trangThai !== "dat" ? " checked" : "") + "> 📚 Đưa vào thư viện chung</label>" : "")
       + "</div><p class=\"qkcLoiForm\" hidden></p>"
       + '<div class="qkcNutForm">' + (huy ? '<button type="button" class="adminNut adminNutPhu" data-f="huy">Huỷ</button>' : "")
       + '<button type="submit" class="adminNut adminNutThanhCong">' + (moi ? "➕ Thêm vào kho" : "💾 Lưu (thành ✅ Đạt)") + "</button></div>";
     var sMon = f.elements.mon, sCd = f.elements.chuDe, oCdMoi = f.querySelector(".qkcCdMoi"), dsDa = f.querySelector(".qkcDsDapAn");
+    var bcGan = boChonTriThuc(c, false), ganCu = khoaGan(c);
+    f.querySelector(".qkcOGan").appendChild(bcGan.el);
     function veCd(chonCd) {
       sCd.innerHTML = tuyChonChuDe(sMon.value, chonCd) + '<option value="__moi">➕ Chủ đề mới...</option>';
       if (chonCd && !cacChuDe(sMon.value).some(function (d) { return d.ma === chonCd; })) sCd.insertAdjacentHTML("afterbegin", '<option value="' + T(chonCd) + '" selected>' + T(chonCd) + "</option>");
@@ -390,6 +458,7 @@
     var nutHuy = f.querySelector('[data-f="huy"]'); if (nutHuy) nutHuy.addEventListener("click", huy);
     var oLoi = f.querySelector(".qkcLoiForm");
     function loiF(chu) { oLoi.hidden = !chu; oLoi.textContent = chu || ""; }
+    bcGan.el.addEventListener("input", function () { loiF(""); }); // gõ / chọn lại thì bỏ lời báo cũ (không dùng "change": lúc rời ô làm nút Lưu nhảy chỗ)
     function guiDi(boQuaTrung) {
       var dong = Array.prototype.slice.call(dsDa.children), dapAn = [], dung = -1;
       dong.forEach(function (d) { var v = d.querySelector('input[type="text"]').value.trim(); if (v) { if (d.querySelector('input[type="radio"]').checked) dung = dapAn.length; dapAn.push(v); } });
@@ -411,6 +480,8 @@
       var cau = { mon: sMon.value, chuDe: cd, chuDeTen: cdTen, lopTu: lt === "" ? null : Number(lt), lopDen: ld === "" ? (lt === "" ? null : Number(lt)) : Number(ld),
         muc: f.elements.muc.value, noiDung: nd, dapAn: dapAn, dung: [dung], loiGiai: f.elements.loiGiai.value.trim(), hinhChu: f.elements.hinhChu.value.trim() };
       if (f.elements.congKhai) cau.congKhai = f.elements.congKhai.checked;
+      var g = bcGan.lay();
+      if (g.loi) return loiF(g.loi);
       loiF("");
       var nutLuu = f.querySelector('[type="submit"]'); nutLuu.disabled = true;
       goi("kc_cau_hoi_admin_sua", { p_id: moi ? null : q.id, p_cau: cau, p_phien_ban: moi ? null : q.phienBan, p_bo_qua_trung: !!boQuaTrung }).then(function (kq) {
@@ -418,8 +489,17 @@
         if (kq.thanhCong) {
           if (cdTen) taiMon();
           var canh = (kq.canhBao || []).length ? " ⚠️ Có chữ trong nhóm: " + kq.canhBao.map(function (n) { return NHOM[n] || n; }).join(", ") + " (admin chịu trách nhiệm)" : "";
-          adminBaoTin((canh ? "⚠️ " : "✅ ") + (moi ? "Đã thêm câu #" + kq.cau.id : "Đã lưu câu #" + kq.cau.id) + (kq.nhayCam ? " · có từ nhạy cảm học tập" : "") + canh, !canh);
-          sauLuu(kq);
+          var chuLuu = (moi ? "Đã thêm câu #" + kq.cau.id : "Đã lưu câu #" + kq.cau.id) + (kq.nhayCam ? " · có từ nhạy cảm học tập" : "") + canh;
+          // KC_06C2: tri thức đổi -> gắn sau khi lưu câu, rồi đọc lại câu cho đúng nhãn
+          if (khoaGan(g.gan || {}) === ganCu || (moi && !g.gan)) { adminBaoTin((canh ? "⚠️ " : "✅ ") + chuLuu, !canh); sauLuu(kq); return; }
+          goi("kc_cau_hoi_admin_gan", { p_ids: [kq.cau.id], p_viec: g.gan ? "gan" : "bo", p_gan: g.gan || null }).then(function (kg) {
+            var loiGan = !kg.thanhCong ? (kg.thongBao || "") + loiKhongCoHam(kg) : (kg.loi || []).length ? kg.loi[0].loi : "";
+            adminBaoTin(loiGan ? "⚠️ " + chuLuu + " · CHƯA gắn được tri thức: " + loiGan : (canh ? "⚠️ " : "✅ ") + chuLuu + " · đã gắn tri thức", !loiGan && !canh);
+            goi("kc_cau_hoi_admin_ds", { p_loc: { tim: "#" + kq.cau.id }, p_trang: 0, p_co: 5 }).then(function (kd) {
+              if (kd.thanhCong && kd.cau && kd.cau[0]) kq.cau = kd.cau[0];
+              sauLuu(kq);
+            });
+          });
         } else if (kq.trung && kq.trung.tang === 2 && !boQuaTrung) {
           if (window.confirm("Câu này gần giống câu #" + kq.trung.id + ":\n\"" + kq.trung.noiDung + "\"\n\nVẫn lưu?")) guiDi(true);
         } else if (kq.xungDot) {
@@ -429,6 +509,110 @@
     }
     f.addEventListener("submit", function (su) { su.preventDefault(); guiDi(false); });
     return f;
+  }
+
+  // ---------------- KC_06C2: khối chọn tri thức (thẻ + mảnh / từ) ----------------
+  function khoaGan(c) { return c && c.theNho ? "the:" + c.theNho + ":" + (c.manh || "") : c && c.tu ? "tu:" + c.tu : ""; }
+  var khoTu = null, huaKhoTu = null;
+  function taiKhoTu() {
+    if (huaKhoTu) return huaKhoTu;
+    huaKhoTu = fetch("tu_vung/kho_tu.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (d) {
+      khoTu = {}; (d.tu || []).forEach(function (t) { if (t && t.en) khoTu[String(t.en).toLowerCase()] = t; });
+      return khoTu;
+    }, function () { huaKhoTu = null; return null; });
+    return huaKhoTu;
+  }
+  // c: câu (theNho, manh, theTieuDe, manhTen, tu) hoặc null; nhieu = hộp gắn nhiều câu (thêm 🪄 tự đoán, ✕ bỏ gắn).
+  // Trả { el, lay() -> { gan: {theNho, manh} | {tu} | null, doan?, bo?, loi? }, baoLoi(chu) }
+  function boChonTriThuc(c, nhieu) {
+    c = c || {};
+    var ten = "gan" + Math.random().toString(36).slice(2, 8), the = null, hen = null, lanTim = 0;
+    var kieu = c.theNho ? "the" : c.tu ? "tu" : nhieu ? "doan" : "khong";
+    var d = document.createElement("div");
+    d.className = "qkcTriThuc";
+    var lc = function (k, chu) { return '<label class="qkcHop"><input type="radio" name="' + ten + '" value="' + k + '"' + (kieu === k ? " checked" : "") + "> " + chu + "</label>"; };
+    d.innerHTML = '<div class="qkcNhanO">🔗 Tri thức câu này kiểm tra <small>(bé trả lời câu → Sổ Ghi Nhớ cộng vào đúng mảnh nhớ / từ)</small></div>'
+      + '<div class="qkcKieuGan">' + (nhieu ? lc("doan", "🪄 Máy tự đoán (câu máy sinh: Tiếng Anh, bảng cộng / nhân / chia)") : lc("khong", "Không gắn"))
+      + lc("the", "🃏 Một mảnh của thẻ nhớ") + lc("tu", "🔤 Một từ vựng tiếng Anh") + (nhieu ? lc("bo", "✕ Bỏ gắn") : "") + "</div>"
+      + '<div class="qkcGanThe" hidden><input type="search" class="qkcTimThe" maxlength="60" placeholder="Tìm thẻ: tên hoặc mã (vd bảng nhân 7, toan_3_nhan_7)" aria-label="Tìm thẻ nhớ">'
+      + '<div class="qkcKqThe"></div><div class="qkcTheDaChon"></div></div>'
+      + '<div class="qkcGanTu" hidden><input type="text" class="qkcOTu" maxlength="60" autocomplete="off" spellcheck="false" placeholder="vd cat" aria-label="Từ tiếng Anh" value="' + T(c.tu || "") + '">'
+      + '<span class="qkcNghiaTu"></span></div><p class="qkcLoiGan" hidden></p>';
+    var oThe = d.querySelector(".qkcGanThe"), oTu = d.querySelector(".qkcGanTu"), oKq = d.querySelector(".qkcKqThe"), oChon = d.querySelector(".qkcTheDaChon"),
+      oTim = d.querySelector(".qkcTimThe"), oNhapTu = d.querySelector(".qkcOTu"), oNghia = d.querySelector(".qkcNghiaTu"), oLoi = d.querySelector(".qkcLoiGan");
+    function baoLoi(chu) { oLoi.hidden = !chu; oLoi.textContent = chu || ""; }
+    function hien() {
+      kieu = (d.querySelector('input[name="' + ten + '"]:checked') || {}).value || "khong";
+      oThe.hidden = kieu !== "the"; oTu.hidden = kieu !== "tu"; baoLoi("");
+      if (kieu === "tu") { taiKhoTu().then(xemTu); }
+      if (kieu === "the" && !the && !oTim.value) oTim.focus();
+    }
+    function veThe(manhChon) {
+      if (!the) { oChon.innerHTML = ""; return; }
+      oChon.innerHTML = '<div class="qkcTheChon"><b>🃏 ' + T(the.tieuDe) + '</b> <code>' + T(the.id) + "</code> <small>" + T(the.manh.length + " mảnh") + '</small>'
+        + '<button type="button" class="adminNut adminNutPhu qkcDoiThe">Đổi thẻ</button></div>'
+        + '<label class="qkcNhanO">Mảnh nhớ<select class="qkcChonManh">' + (the.manh.length > 1 ? '<option value="">Chọn mảnh...</option>' : "")
+        + the.manh.map(function (m) { return '<option value="' + T(m.ma) + '"' + (m.ma === manhChon ? " selected" : "") + ">" + T(m.ten || m.ma) + (m.ten && m.ten !== m.ma ? " (" + T(m.ma) + ")" : "") + "</option>"; }).join("")
+        + "</select></label>";
+      oKq.innerHTML = ""; oTim.hidden = true;
+    }
+    function timThe() {
+      var chu = oTim.value.trim(), so = ++lanTim;
+      if (chu.length < 2) { oKq.innerHTML = ""; return; }
+      oKq.innerHTML = '<p class="adminDangTai">Đang tìm thẻ...</p>';
+      goi("kc_the_nho_admin_ds", { p_loc: { tim: chu, rieng: "chung" }, p_trang: 0, p_co: 8 }).then(function (kq) {
+        if (so !== lanTim) return;
+        if (!kq.thanhCong) { oKq.innerHTML = '<p class="adminGhiChu">❌ ' + T(kq.thongBao) + "</p>"; return; }
+        var ds = kq.the || [];
+        oKq.innerHTML = ds.length ? ds.map(function (t, i) {
+          return '<button type="button" class="qkcKqMot" data-i="' + i + '"><b>' + T(t.tieuDe) + "</b> <small>" + T(tenMon(t.mon)) + " · lớp " + T(t.lopTu) + " · " + (t.manh || []).length + " mảnh</small></button>";
+        }).join("") + (kq.tong > ds.length ? '<p class="adminGhiChu">… còn ' + (kq.tong - ds.length) + " thẻ, gõ cụ thể hơn</p>" : "")
+          : '<p class="adminGhiChu">Không thấy thẻ nào. Thẻ thêm ở 📚 Kho tri thức.</p>';
+        oKq.onclick = function (su) { var b = su.target.closest("[data-i]"); if (b) { the = ds[Number(b.getAttribute("data-i"))]; veThe(""); } };
+      });
+    }
+    function xemTu() {
+      var w = oNhapTu.value.trim().toLowerCase();
+      if (!w) { oNghia.textContent = ""; return; }
+      if (!khoTu) { oNghia.textContent = ""; return; }
+      var t = khoTu[w];
+      oNghia.className = "qkcNghiaTu" + (t ? "" : " loi");
+      oNghia.textContent = t ? "= " + t.vi + (t.e ? " " + t.e : "") + " · cấp " + t.cap : "⚠️ không có trong 📖 Kho từ vựng";
+    }
+    d.querySelector(".qkcKieuGan").addEventListener("change", hien);
+    oTim.addEventListener("input", function () { clearTimeout(hen); hen = setTimeout(timThe, 300); });
+    oTim.addEventListener("keydown", function (su) { if (su.key === "Enter") su.preventDefault(); });
+    oChon.addEventListener("click", function (su) { if (su.target.closest(".qkcDoiThe")) { the = null; veThe(""); oTim.hidden = false; oTim.focus(); timThe(); } });
+    oNhapTu.addEventListener("input", xemTu);
+    oNhapTu.addEventListener("keydown", function (su) { if (su.key === "Enter") su.preventDefault(); });
+    // câu đã gắn thẻ: tải thẻ để có danh sách mảnh
+    if (c.theNho) {
+      oChon.innerHTML = '<p class="adminDangTai">Đang tải thẻ ' + T(c.theNho) + "...</p>"; oTim.hidden = true;
+      goi("kc_the_nho_admin_ds", { p_loc: { tim: c.theNho }, p_trang: 0, p_co: 20 }).then(function (kq) {
+        the = ((kq && kq.the) || []).filter(function (t) { return t.id === c.theNho; })[0] || null;
+        if (the) veThe(c.manh); else { oTim.hidden = false; oChon.innerHTML = '<p class="adminGhiChu">⚠️ Không tìm thấy thẻ ' + T(c.theNho) + ", chọn thẻ khác.</p>"; }
+      });
+    }
+    hien();
+    return {
+      el: d, baoLoi: baoLoi,
+      lay: function () {
+        if (kieu === "doan") return { doan: true };
+        if (kieu === "bo") return { bo: true };
+        if (kieu === "khong") return { gan: null };
+        if (kieu === "tu") {
+          var w = oNhapTu.value.trim().toLowerCase();
+          if (!w) return { loi: "Gõ từ tiếng Anh câu này kiểm tra (hoặc chọn Không gắn)." };
+          if (!/^[a-z][a-z' -]{0,59}$/.test(w)) return { loi: "Từ chỉ gồm chữ cái tiếng Anh (a-z)." };
+          if (khoTu && !khoTu[w]) return { loi: "Từ \"" + w + "\" không có trong 📖 Kho từ vựng: thêm từ vào kho trước, hoặc gõ đúng từ." };
+          return { gan: { tu: w } };
+        }
+        if (!the) return { loi: "Tìm và chạm chọn một thẻ nhớ (hoặc chọn Không gắn)." };
+        var sm = oChon.querySelector(".qkcChonManh"), m = sm ? sm.value : "";
+        if (!m) return { loi: "Chọn mảnh nhớ của thẻ \"" + the.tieuDe + "\" mà câu này kiểm tra." };
+        return { gan: { theNho: the.id, manh: m } };
+      }
+    };
   }
 
   // ================================================================
@@ -444,7 +628,7 @@
       + '<section class="qkcTheLon"><h4>📥 Nhập nhiều câu từ JSON</h4>'
       + '<p class="adminGhiChu">Dán JSON (hoặc chọn file .json) là một mảng câu, tối đa 500 câu mỗi lần. Câu trùng câu đã có thì bỏ qua; câu sai khuôn thì <b>không lưu câu nào</b> và báo câu sai. Môn có sẵn: '
       + mon.map(function (m) { return "<code>" + T(m.ma) + "</code>"; }).join(", ") + ".</p>"
-      + '<details class="qkcMau"><summary>Xem khuôn mẫu</summary><pre>' + T(MAU_JSON) + "</pre><p class=\"adminGhiChu\">Bắt buộc: <code>mon</code>, <code>noiDung</code>, <code>dapAn</code> (2-6), <code>dung</code> (vị trí đáp án đúng, đếm từ 0). Không bắt buộc: <code>chuDe</code> + <code>chuDeTen</code> (chủ đề mới tự tạo), <code>lopTu</code>, <code>lopDen</code>, <code>muc</code> (de / vua / kho), <code>loiGiai</code>, <code>hinhChu</code>, <code>maNgoai</code> (mã riêng để nhập lại không trùng).</p></details>"
+      + '<details class="qkcMau"><summary>Xem khuôn mẫu</summary><pre>' + T(MAU_JSON) + "</pre><p class=\"adminGhiChu\">Bắt buộc: <code>mon</code>, <code>noiDung</code>, <code>dapAn</code> (2-6), <code>dung</code> (vị trí đáp án đúng, đếm từ 0). Không bắt buộc: <code>chuDe</code> + <code>chuDeTen</code> (chủ đề mới tự tạo), <code>lopTu</code>, <code>lopDen</code>, <code>muc</code> (de / vua / kho), <code>loiGiai</code>, <code>hinhChu</code>, <code>maNgoai</code> (mã riêng để nhập lại không trùng), tri thức câu kiểm tra: <code>theNho</code> + <code>manh</code> (mã thẻ + mã mảnh, xem ở 📚 Kho tri thức) <b>hoặc</b> <code>tu</code> (từ tiếng Anh trong 📖 Kho từ vựng). Câu máy sinh có <code>dangSinh</code> mà không ghi tri thức thì máy tự gắn.</p></details>"
       + '<input type="file" id="qkcFile" accept=".json,application/json">'
       + '<textarea id="qkcJson" rows="10" spellcheck="false" placeholder="[ { &quot;mon&quot;: &quot;toan&quot;, ... } ]"></textarea>'
       + '<label class="qkcHop"><input type="checkbox" id="qkcTrungGan" checked> Bỏ qua cả câu gần giống câu đã có</label>'
@@ -500,6 +684,12 @@
       if (c.muc !== undefined && !MUC[c.muc]) l.push("muc chỉ là de / vua / kho");
       ["lopTu", "lopDen"].forEach(function (k) { if (c[k] !== undefined && c[k] !== null && (!Number.isInteger(c[k]) || c[k] < 0 || c[k] > 12)) l.push(k + " phải là số 0-12"); });
       if (c.chuDe !== undefined && !/^[a-z0-9_]{1,40}$/.test(c.chuDe)) l.push("chuDe chỉ gồm a-z, 0-9, _ (tên có dấu để ở chuDeTen)");
+      // KC_06C2: tri thức
+      if (c.theNho && c.tu) l.push("chỉ ghi MỘT tri thức: theNho + manh hoặc tu");
+      if (c.theNho !== undefined && c.theNho !== null && c.theNho !== "" && !/^[a-z0-9_]{2,80}$/.test(c.theNho)) l.push("theNho là mã thẻ (a-z, 0-9, _)");
+      if (c.manh && !c.theNho) l.push("có manh thì phải có theNho");
+      if (c.manh !== undefined && c.manh !== null && c.manh !== "" && !/^[a-z0-9_-]{1,40}$/.test(c.manh)) l.push("manh là mã mảnh (a-z, 0-9, _, -)");
+      if (c.tu !== undefined && c.tu !== null && c.tu !== "" && !/^[a-z][a-z' -]{0,59}$/i.test(String(c.tu).trim())) l.push("tu là một từ tiếng Anh (chữ a-z)");
       if (l.length) loi.push("Câu " + n + " (" + T(String(c.noiDung || "").slice(0, 40)) + "): " + l.join("; "));
     });
     if (loi.length) { o.innerHTML = '<div class="qkcKq loi"><b>❌ ' + loi.length + " câu sai, sửa rồi kiểm lại:</b>" + loi.slice(0, 50).map(function (x) { return "<div>" + x + "</div>"; }).join("") + "</div>"; return null; }
@@ -697,6 +887,7 @@
     el("qkcPhan_cau").innerHTML = '<p class="adminDangTai">Đang tải...</p>';
     taiMon().then(function () {
       veKhungCau();
+      if (locCho) { var x = locCho; locCho = null; locTheo(x); return; }
       // mặc định: có câu chờ duyệt thì mở thẳng danh sách chờ duyệt (thiết kế mục 8)
       goi("kc_cau_hoi_admin_ds", { p_loc: { trangThai: "cho_duyet" }, p_trang: 0, p_co: 5 }).then(function (kq) {
         if (kq.thanhCong && kq.tong > 0) { loc.trangThai = "cho_duyet"; datOLoc(); }
@@ -708,7 +899,15 @@
     });
   }
   if (el("manhinh-khocau").classList.contains("dangHien")) moLanDau();
-  window.QKC = { mo: moLanDau, moPhan: moPhan };
+  // KC_06C2: 📚 Kho tri thức gọi để mở danh sách câu của một thẻ / mảnh
+  function locTheoNgoai(x) {
+    var nut = document.querySelector('.adminNutManHinh[data-manhinh="khocau"]');
+    if (nut && !el("manhinh-khocau").classList.contains("dangHien")) nut.click();
+    if (el("qkcLGan")) { if (phanHienTai !== "cau") moPhan("cau"); locTheo(x); window.scrollTo(0, 0); return; }
+    locCho = x;           // khung chưa dựng xong: moLanDau áp lọc này thay cho lọc "chờ duyệt" mặc định
+    if (!daMo) moLanDau();
+  }
+  window.QKC = { mo: moLanDau, moPhan: moPhan, locTheo: locTheoNgoai };
 })();
 // 12/11/2026 - BƯỚC: KC_06C
 // 17/11/2026 - BƯỚC: KC_06G (ô cấu hình trung.gan_giong)
@@ -716,3 +915,4 @@
 // 17/11/2026 - BƯỚC: KC_06E4 (nhãn 🛑 Google chặn / 🤔 Cô Cú chưa chắc đáp án)
 // 17/11/2026 - BƯỚC: KC_06E5 (nhãn ✏️ Bé gửi dù Cô Cú góp ý / ⚠️ Cô Cú thấy vi phạm; dòng AI hiện gợi ý sửa)
 // 17/11/2026 - BƯỚC: KC_07 (ẩn ô don.* trong ⚙️ Cấu hình: sửa ở 🗄️ Dung lượng dữ liệu)
+// 18/11/2026 - BƯỚC: KC_06C2 (nhãn / lọc / gắn tri thức: thẻ + mảnh hoặc từ; gắn nhiều câu; JSON theNho / manh / tu)
