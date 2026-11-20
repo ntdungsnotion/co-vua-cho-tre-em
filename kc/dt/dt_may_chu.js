@@ -1243,13 +1243,13 @@
         if (l.ketQua) return { ok: true, cu: true, ketQua: l.ketQua };
         if (l.traLoi.length < l.cau.length) return { ok: false, ma: "chua_xong", luot: ttJson(l) };
         const goc2 = l.cau.map((c, i) => ({ c, t: l.traLoi[i] })).filter(x => !x.c.hoiLai), n = goc2.length, d = goc2.filter(x => x.t.dung).length;
-        // TC_D34B sửa (như SQL tc_d34b): tối đa 3 / câu − 3 × sai; trong vùng giỏi không trừ, quá vùng giỏi trừ đều, hết giờ = 0
-        const ty = n ? Math.floor(100 * d / n) : 0, T = ttGiay(l, "tong"), G = Math.min(ttGiay(l, "gioi"), T - 1), dungGiay = l.traLoi.reduce((a, t) => a + t.giay, 0);
-        const toiDa = 3 * n, tru = 3 * (n - d), truocGio = Math.max(0, toiDa - tru), qua = Math.min(dungGiay, T) - G;
-        const tongKc = qua > 0 ? Math.max(0, truocGio - Math.ceil(qua * toiDa / Math.max(1, T - G))) : truocGio;
+        // TC_D34B sửa (như SQL tc_d34b): tối đa 3 / câu − 3 × sai; 0 → t0 không trừ, t0 → a cứ (a − t0) / tối đa giây trừ 1, sau a = 0
+        const ty = n ? Math.floor(100 * d / n) : 0, gio = ttGio(l), T = gio.a, G = gio.t0, dungGiay = l.traLoi.reduce((a, t) => a + t.giay, 0);
+        const toiDa = 3 * n, tru = 3 * (n - d), truocGio = Math.max(0, toiDa - tru), qua = dungGiay - G;
+        const tongKc = dungGiay >= T ? 0 : qua > 0 ? Math.max(0, truocGio - Math.floor(qua * toiDa / (T - G))) : truocGio;
         l.trangThai = "xong";
         l.ketQua = { soCauGoc: n, dungGoc: d, tyLe: ty, khoan: [{ ma: "toi_da", kc: toiDa }, { ma: "sai", so: n - d, kc: -Math.min(tru, toiDa) },
-          { ma: "thoi_gian", giay: Math.round(dungGiay * 10) / 10, giayTong: T, giayGioi: G, kc: tongKc - truocGio }], giayTong: T, giayGioi: G, giayDaDung: Math.round(dungGiay * 10) / 10,
+          { ma: "thoi_gian", giay: Math.round(dungGiay * 10) / 10, giayTong: T, giayGioi: G, kc: tongKc - truocGio }], giayTong: T, giayGioi: G, gio, giayDaDung: Math.round(dungGiay * 10) / 10,
           tongKc, kc: tongKc, vang: 0, catTran: false, daNhanHomNay: tongKc, tranNgay: 600, khongPhaiBe: false, tienBo: d, thuocMoi: 0 };
         return { ok: true, cu: false, ketQua: l.ketQua };
       },
@@ -1269,18 +1269,22 @@
       return { viTri: i, tong: l.cau.length, hoiLai: c.hoiLai, noiDung: q.nd, khuon: "trac_nghiem", muc: "de", mon: q.mon, monTen: q.mon === "toan" ? "Toán" : "Tiếng Anh",
         monBieuTuong: q.mon === "toan" ? "🔢" : "🔤", hinhChu: q.hc || "", hinh: "", amThanh: q.am || "", dapAn: c.hv.map(k => q.da[k]) };
     }
-    // giây mỗi câu theo số chữ (như kc_tt_giay_cau, hệ số mặc định): vùng giỏi 1 + 0,3 / chữ; vùng trừ max(2, 0,6 / chữ); chặn 40
-    function ttGiay(l, phan) {
-      const dem = x => String(x || "").trim().split(/\s+/).filter(Boolean).length;
-      return Math.ceil(l.cau.filter(c => !c.hoiLai).reduce((a, c) => {
-        const n = dem(c.q.nd) + c.q.da.reduce((s, x) => s + dem(x), 0), g = 1 + 0.3 * n, w = Math.max(2, 0.6 * n);
-        return a + Math.round(10 * (phan === "gioi" ? Math.min(g, 20) : Math.min(g + w, 40))) / 10;
-      }, 0));
+    // giờ cả bài như kc_tt_gio_bai (số mặc định, bé lớp 2, câu dễ): t0 = P90 bé giỏi; a = t0 + max((P90 khá − t0) / 0,3, (P90 TB − t0) / 0,5)
+    function ttGio(l) {
+      const dem = x => String(x || "").trim().split(/\s+/).filter(Boolean).length, f = 0.55, P = [];
+      const doc = [3, 2.2, 1.6], nghi = [1.5, 2.5, 3.5], cau = l.cau.filter(c => !c.hoiLai);
+      for (let i = 0; i < 3; i++) {
+        let mu = 0, va = 0;
+        for (const c of cau) { const n = dem(c.q.nd) + c.q.da.reduce((s, x) => s + dem(x), 0), m = nghi[i] + n / (doc[i] * f); mu += m; va += (0.35 * m) ** 2; }
+        P.push(mu + 1.2816 * Math.sqrt(va + (0.15 * mu) ** 2));
+      }
+      const t0 = Math.ceil(P[0]);
+      return { t0, a: t0 + Math.max(1, Math.ceil(Math.max((P[1] - P[0]) / 0.3, (P[2] - P[0]) / 0.5))) };
     }
     function ttJson(l) {
       return { id: l.id, cheDo: l.cheDo, trangThai: l.trangThai, tong: l.cau.length, viTri: l.traLoi.length, soGoc: l.cau.filter(c => !c.hoiLai).length,
         daTraLoi: l.traLoi.map((t, i) => ({ dung: t.dung, hoiLai: l.cau[i].hoiLai })), cau: l.trangThai === "dang" ? ttCau(l) : null, ketQua: l.ketQua,
-        giayTong: ttGiay(l, "tong"), giayGioi: Math.min(ttGiay(l, "gioi"), ttGiay(l, "tong") - 1), giayDaDung: Math.round(l.traLoi.reduce((a, t) => a + t.giay, 0) * 10) / 10,
+        giayTong: ttGio(l).a, giayGioi: ttGio(l).t0, giayDaDung: Math.round(l.traLoi.reduce((a, t) => a + t.giay, 0) * 10) / 10,
         kcToiDa: 3 * l.cau.filter(c => !c.hoiLai).length, truMoiSai: 3 };
     }
     return api;

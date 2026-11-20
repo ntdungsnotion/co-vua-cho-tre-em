@@ -72,9 +72,9 @@
     return new Promise(xong => {
       // trạng thái lượt
       let daTraLoi = (luot.daTraLoi || []).map(x => ({ dung: !!x.dung, hoiLai: !!x.hoiLai }));
-      // TC_D34B (người dùng 20/11/2026): ĐỒNG HỒ đếm ngược (giayTong = cộng giây từng câu theo số chữ) chỉ chạy lúc câu đang mở.
-      // giayGioi = vùng bé giỏi: trả lời trong vùng này không bị trừ 💎; quá vùng thì trừ đều tới hết giờ = 0 💎 (máy chủ tính lại khi kết thúc).
-      // 💎 còn nhận = tối đa − trừ × số câu gốc sai − phần trừ theo giờ. Hết giờ: 0 💎, vẫn ôn tiếp.
+      // TC_D34B (người dùng 20/11/2026 13:21): ĐỒNG HỒ cả bài, chỉ chạy lúc câu đang mở. giayTong = a, giayGioi = t0 (máy chủ tính
+      // theo số chữ, độ khó, lớp của bé). 0 → t0: đủ 💎; t0 → a: cứ (a − t0) / tối đa giây trừ 1 💎; hết giờ: 0 💎, vẫn ôn tiếp.
+      // 💎 còn nhận = tối đa − trừ × số câu gốc sai − phần trừ theo giờ (máy chủ tính lại khi kết thúc).
       const taoDh = l => (l && l.giayTong > 0 ? { tong: +l.giayTong, gioi: Math.max(0, Math.min(+l.giayGioi || 0, +l.giayTong - 1)), daDung: +l.giayDaDung || 0, kcToiDa: Number.isFinite(+l.kcToiDa) && l.kcToiDa != null ? +l.kcToiDa : null, tru: +l.truMoiSai || 0 } : null);
       let dh = taoDh(luot), dhChay = false, dhHen = 0, dhBaoHet = false;
       const lichSu = []; // câu đã trả lời trong lần mở màn này (xem lại đáp án + lời giải ở màn nhận thưởng)
@@ -127,9 +127,9 @@
         if (dh.kcToiDa == null) kcO.hidden = true;
         else {
           const sai = daTraLoi.filter(x => x && !x.dung && !x.hoiLai).length;
-          // người dùng 20/11/2026: trong vùng giỏi không trừ; quá vùng giỏi thì trừ đều, hết giờ = 0 💎; mỗi câu sai trừ thêm
-          const qua = Math.min(giayDung(), dh.tong) - dh.gioi;
-          const truGio = qua > 0 ? Math.ceil(qua * dh.kcToiDa / Math.max(1, dh.tong - dh.gioi)) : 0;
+          // người dùng 20/11/2026 13:21: trước t0 không trừ; sau t0 cứ (a − t0) / tối đa giây trừ 1; hết giờ = 0 💎; mỗi câu sai trừ thêm
+          const u = giayDung(), qua = u - dh.gioi;
+          const truGio = u >= dh.tong ? Infinity : qua > 0 ? Math.floor(qua * dh.kcToiDa / Math.max(1, dh.tong - dh.gioi)) : 0;
           kcO.querySelector("b").textContent = String(Math.max(0, dh.kcToiDa - dh.tru * sai - truGio));
         }
         if (con <= 0 && !dhBaoHet && !goc0.classList.contains("ketQua")) { dhBaoHet = true; o.dataset.het = "1"; coCu("⏰ Hết giờ rồi! Lần này không có 💎, con ôn tiếp cho nhớ nhé"); tieng.tram(); }
