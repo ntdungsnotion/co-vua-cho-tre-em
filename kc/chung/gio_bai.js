@@ -15,18 +15,27 @@
      KC_GIO_BAI.napCauHinh(goiRpc)           // tuỳ chọn: lấy số admin đã sửa (RPC kc_gio_bai_doc_cau_hinh), lưu làm mặc định
      KC_GIO_BAI.MAC_DINH                     // số mặc định (giống kc_gio_bai_mac_dinh trong SQL)
    Đặc tả: repo riêng Thiet_Ke_On_The.md mục 4.0.
-   BƯỚC: TC_D34B (phần 2; phần 3: truSai; phần 4: số mặc định nhanh hơn)
+   BƯỚC: TC_D34B (phần 2; phần 3: truSai; phần 4: số theo tài liệu khoa học)
    NGÀY: 20/11/2026
    ================================================================ */
 (function (goc) {
   "use strict";
   const MAC_DINH = Object.freeze({
     he_so_k: 1,
-    // người dùng 20/11/2026 15:50: bộ số cũ quá chậm (330 giây / 10 câu) → nhanh hơn (SQL tc_d34b4)
-    doc_gioi: 4, doc_kha: 3.2, doc_tb: 2.6, nghi_gioi: 1, nghi_kha: 1.5, nghi_tb: 2,
+    // Số theo tài liệu (người dùng 20/11/2026 15:55: "tham khảo tài liệu khoa học, không dự đoán"; nguồn: đặc tả 4.0):
+    // doc_tb_lop[lớp 0..12] = tiếng / phút của bé trung bình: lớp 1-5 theo chuẩn GDPT 2018 môn Tiếng Việt
+    //   (40-60, 60-70, 70-80, 80-90, 90-100 tiếng / phút, lấy giữa), từ lớp 3 đọc thầm nhanh hơn đọc to ≥ 30 %
+    //   (Hiebert, Samuels, Rasinski 2014); lớp 6-12 tăng ~12 / lớp (Carver 1989), lớp 12 gần người lớn 238 (Brysbaert 2019).
+    // khá = bách phân vị 75 ≈ × 1,2; giỏi = bách phân vị 90 ≈ × 1,4 (Hasbrouck & Tindal 2017, lớp 2-6).
+    // nghi_tb_lop = giây nghĩ + chọn mỗi câu của bé trung bình (tính nhân một chữ số: lớp 3 ~3,1 giây, lớp 4 ~2,3 giây,
+    //   Soltanlou 2015; lớp 3-5 ~1,2-1,5 giây, Dickson 2022); khá × 0,85, giỏi × 0,7; độ khó nhân vào phần nghĩ
+    //   (bài khó chậm hơn ~1,3 lần, Dickson 2022). Dao động mỗi câu ~ 30 % (Soltanlou 2015: SD / trung bình ≈ 0,4 gồm cả khác biệt giữa các bé).
+    doc_tb_lop: Object.freeze([40, 50, 65, 98, 110, 124, 140, 152, 164, 176, 188, 200, 212]),
+    he_so_doc_kha: 1.2, he_so_doc_gioi: 1.4,
+    nghi_tb_lop: Object.freeze([4, 3.5, 3.5, 3, 2.3, 2, 1.5, 1.5, 1.4, 1.3, 1.2, 1.1, 1]),
+    he_so_nghi_kha: 0.85, he_so_nghi_gioi: 0.7,
     he_so_de: 1, he_so_vua: 1.15, he_so_kho: 1.3, giay_hinh: 2, chu_dau: 0.5,
-    cv_cau: 0.25, cv_bai: 0.1, z: 1.2816, muc_kha: 70, muc_tb: 50,
-    he_so_lop: Object.freeze([0.5, 0.5, 0.65, 0.8, 0.9, 1, 1, 1, 1, 1, 1, 1, 1])
+    cv_cau: 0.3, cv_bai: 0.1, z: 1.2816, muc_kha: 70, muc_tb: 50
   });
   let chung = MAC_DINH; // số đang dùng (MAC_DINH hoặc số admin nạp từ máy chủ)
   const CO_CHU = /[0-9A-Za-zÀ-ÖØ-öø-ỹ]/;
@@ -42,7 +51,9 @@
     rieng = rieng || {};
     const b = Object.assign({}, chung, rieng);
     const L = Math.min(12, Math.max(0, Number.isFinite(+lop) && lop !== null ? Math.round(+lop) : 6));
-    const f = Math.max(0.1, so((b.he_so_lop || [])[L], 1));
+    const docTb = Math.max(1, so((b.doc_tb_lop || [])[L], 140)) / 60, nghiTb = Math.max(0, so((b.nghi_tb_lop || [])[L], 1.5));
+    const DOC = { gioi: so(b.he_so_doc_gioi, 1.4), kha: so(b.he_so_doc_kha, 1.2), tb: 1 };
+    const NGHI = { gioi: so(b.he_so_nghi_gioi, 0.7), kha: so(b.he_so_nghi_kha, 0.85), tb: 1 };
     const k = Math.max(0.1, so(chung.he_so_k, 1)) * Math.max(0.1, so(rieng.he_so_k, 1));
     const z = Math.max(0, so(b.z, 1.2816)), cv = Math.max(0, so(b.cv_cau, 0.35)), cvb = Math.max(0, so(b.cv_bai, 0.15));
     const mk = Math.min(99, Math.max(1, so(b.muc_kha, 70))), mt = Math.min(99, Math.max(1, so(b.muc_tb, 50)));
@@ -53,7 +64,8 @@
       for (const c of cau || []) {
         const n = donViDoc(c.noiDung, dau) + (c.dapAn || []).reduce((s, x) => s + donViDoc(x, dau), 0);
         const hm = Math.max(0.1, so(b["he_so_" + (c.muc || "vua")], 1));
-        const m = hm * (Math.max(0, so(b["nghi_" + ten], 2)) + (c.coHinh ? hinh : 0) + n / (Math.max(0.1, so(b["doc_" + ten], 2)) * f));
+        // thời gian = đọc (đơn vị / tốc độ đọc) + nghĩ × độ khó + xem hình
+        const m = n / (docTb * Math.max(0.1, DOC[ten])) + hm * nghiTb * Math.max(0.1, NGHI[ten]) + (c.coHinh ? hinh : 0);
         mu += m; va += (cv * m) ** 2;
       }
       if (mu <= 0) return { a: 0, t0: 0, lop: L, p90: null };
