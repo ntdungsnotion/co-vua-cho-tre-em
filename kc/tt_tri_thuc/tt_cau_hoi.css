@@ -4,7 +4,7 @@
               Điện thoại: 1 cột, đáp án xếp dọc / lưới 2 × 2. Máy tính (≥ 900 px): cột trái môn +
               bé cổ vũ, khung câu giữa ≤ 760 px, đáp án lưới 2 × 2 to. Laptop thấp (≤ 680 px cao): gọn lại.
    BƯỚC: TC_D34B
-   NGÀY: 20/11/2026
+   NGÀY: 20/11/2026; sửa 20/11/2026 12:xx (đồng hồ + luật 💎 mới, cần SQL tc_d34b)
    ================================================================ */
 .ttMan { --tt-dem: #14204a; --tt-dem2: #1f2f6b; --tt-vang: #ffc24b; --tt-cam: #ff8a3d; --tt-sang: #fff6dc; --tt-nhat: #b9c3ec;
   --tt-xanh: #3ddc84; --tt-do: #ff6b6b; --tt-the: #24357a;
@@ -33,6 +33,22 @@
 .ttCh.nay { border-color: var(--tt-vang); background: rgba(255,194,75,.25); transform: scale(1.15); box-shadow: 0 0 0 3px rgba(255,194,75,.2); }
 .ttCh.dung { background: var(--tt-xanh); border-color: #b5ffd5; }
 .ttCh.sai { background: #e9a23b; border-color: #ffd89a; }
+/* đồng hồ (TC_D34B sửa): giây còn lại + 💎 còn nhận, vạch ngắn dần */
+.ttDongHo { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 12px 12px; border-radius: 14px; background: rgba(20,32,74,.6);
+  border: 2px solid rgba(61,220,132,.5); font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.15rem; }
+.ttDongHo[hidden] { display: none; }
+.ttGio b { display: inline-block; min-width: 1.6em; text-align: right; font-size: 1.35rem; }
+.ttGio small { font-size: inherit; } .ttGio small[hidden] { display: none; }
+.ttDongHo[data-het] .ttGio b { color: #ffb38a; }
+.ttKcCon { margin-left: auto; padding: 0 10px; border-radius: 999px; background: rgba(127,181,255,.18); }
+.ttKcCon[hidden] { display: none; }
+.ttVach { position: absolute; left: 12px; right: 12px; bottom: 5px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+.ttVach i { display: block; height: 100%; width: 100%; background: var(--tt-xanh); transition: width .2s linear, background .3s; }
+.ttDongHo[data-muc="vang"] { border-color: rgba(255,194,75,.7); } .ttDongHo[data-muc="vang"] .ttVach i { background: var(--tt-vang); }
+.ttDongHo[data-muc="do"] { border-color: rgba(255,107,107,.8); } .ttDongHo[data-muc="do"] .ttVach i { background: var(--tt-do); }
+.ttDongHo[data-muc="do"]:not([data-het]) .ttGio { color: #ffb3b3; animation: ttGap .5s ease-in-out infinite alternate; }
+.ttDongHo[data-het] { opacity: .75; }
+@keyframes ttGap { to { transform: scale(1.08); } }
 /* câu */
 .ttCau { display: flex; flex-direction: column; gap: 12px; }
 .ttHoiLai { align-self: flex-start; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: .95rem; padding: 2px 12px; border-radius: 999px; background: rgba(127,181,255,.25); color: #cfe2ff; }
@@ -104,6 +120,7 @@
 .ttKhoan { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 360px; }
 .ttKhoan li { display: flex; justify-content: space-between; padding: 6px 12px; border-bottom: 1px dashed rgba(185,195,236,.3); font-size: 1.05rem; }
 .ttKhoan b { color: #cfe2ff; }
+.ttKhoan li.tru b { color: #ffb38a; }
 .ttGhiChu { margin: 0; color: #ffe1a6; font-size: 1rem; }
 .ttDongVien { margin: 0; padding: 10px 14px; border-radius: 14px; background: rgba(255,246,220,.1); font-size: 1.05rem; }
 .ttKq .ttNut { margin-top: 8px; }
@@ -126,6 +143,7 @@
   .ttGiua { max-width: 760px; gap: 14px; }
   .ttTieuDe b { font-size: 1.7rem; }
   .ttCh { width: 26px; height: 26px; }
+  .ttDongHo { font-size: 1.3rem; } .ttGio b { font-size: 1.6rem; }
   .ttKhung { padding: 22px 26px; }
   .ttNoiDung { font-size: 1.85rem; }
   .ttHinh { font-size: 4rem; } .ttHinh img { width: 160px; height: 160px; }
