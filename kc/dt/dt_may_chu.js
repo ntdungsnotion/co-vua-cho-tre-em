@@ -1222,14 +1222,14 @@
         return { ok: true, can: true, luot: ttJson(ttTaoLuot(tra.filter(x => !x.dung).length)) };
       },
       async ttLuotDang() { return { ok: true, luot: ttGia.luot.filter(x => x.trangThai === "dang").map(ttJson) }; },
-      async ttTraLoi(id, viTri, chon) {
+      async ttTraLoi(id, viTri, chon, giay) {
         const l = ttGia.luot.find(x => x.id === id);
         if (!l) return { ok: false, ma: "luot" };
         if (viTri < l.traLoi.length) { const t = l.traLoi[viTri], c = l.cau[viTri]; return { ok: true, cu: true, dung: t.dung, dapAnDung: c.hv.indexOf(c.q.dung), chon: t.chon, loiGiai: c.q.lg, viTri: l.traLoi.length, tong: l.cau.length, xong: l.traLoi.length >= l.cau.length, cau: ttCau(l) }; }
         if (l.trangThai !== "dang") return { ok: false, ma: "da_xong" };
         if (viTri !== l.traLoi.length) return { ok: false, ma: "vi_tri", luot: ttJson(l) };
         const c = l.cau[viTri], dap = c.hv.indexOf(c.q.dung), dung = chon === dap;
-        l.traLoi.push({ chon, dung });
+        l.traLoi.push({ chon, dung, giay: Math.max(0, Math.min(3600, Number(giay) || 0)) });
         let hoiLai = false;
         if (!dung && !c.hoiLai && l.cau.filter(x => x.hoiLai).length < 3) {
           const q = TT_BO.find(x => x.kt === c.q.kt && x !== c.q) || c.q;
@@ -1243,11 +1243,14 @@
         if (l.ketQua) return { ok: true, cu: true, ketQua: l.ketQua };
         if (l.traLoi.length < l.cau.length) return { ok: false, ma: "chua_xong", luot: ttJson(l) };
         const goc2 = l.cau.map((c, i) => ({ c, t: l.traLoi[i] })).filter(x => !x.c.hoiLai), n = goc2.length, d = goc2.filter(x => x.t.dung).length;
-        const ty = n ? Math.floor(100 * d / n) : 0, hoan = Math.floor(4 * n / 10), gioi = ty >= 80 ? Math.floor(2 * n / 10) : 0, thuoc = d >= n - 1 ? 1 : 0;
-        const tongKc = hoan + gioi + thuoc;
+        // TC_D34B sửa (như SQL tc_d34b): tối đa 3 / câu − 3 × sai; 0 → t0 không trừ, t0 → a vào khoảng (a − t0) / tối đa nào trừ 1, sau a = 0
+        const ty = n ? Math.floor(100 * d / n) : 0, gio = ttGio(l), T = gio.a, G = gio.t0, dungGiay = l.traLoi.reduce((a, t) => a + t.giay, 0);
+        const toiDa = 3 * n, tru = 3 * (n - d), truocGio = Math.max(0, toiDa - tru), qua = dungGiay - G;
+        const tongKc = dungGiay >= T ? 0 : qua > 0 ? Math.max(0, truocGio - Math.ceil(qua * toiDa / (T - G))) : truocGio;
         l.trangThai = "xong";
-        l.ketQua = { soCauGoc: n, dungGoc: d, tyLe: ty, khoan: [{ ma: "hoan_thanh", kc: hoan }, { ma: "gioi", kc: gioi }, { ma: "thuoc_moi", so: thuoc, kc: thuoc }],
-          tongKc, kc: tongKc, vang: 0, catTran: false, daNhanHomNay: tongKc, tranNgay: 600, khongPhaiBe: false, tienBo: d, thuocMoi: thuoc };
+        l.ketQua = { soCauGoc: n, dungGoc: d, tyLe: ty, khoan: [{ ma: "toi_da", kc: toiDa }, { ma: "sai", so: n - d, kc: -Math.min(tru, toiDa) },
+          { ma: "thoi_gian", giay: Math.round(dungGiay * 10) / 10, giayTong: T, giayGioi: G, kc: tongKc - truocGio }], giayTong: T, giayGioi: G, gio, giayDaDung: Math.round(dungGiay * 10) / 10,
+          tongKc, kc: tongKc, vang: 0, catTran: false, daNhanHomNay: tongKc, tranNgay: 600, khongPhaiBe: false, tienBo: d, thuocMoi: 0 };
         return { ok: true, cu: false, ketQua: l.ketQua };
       },
       _ttThu(soSai) { ttGia.luot.forEach(x => { if (x.trangThai === "dang") x.trangThai = "bo"; }); return ttJson(ttTaoLuot(soSai || 2)); }
@@ -1266,9 +1269,23 @@
       return { viTri: i, tong: l.cau.length, hoiLai: c.hoiLai, noiDung: q.nd, khuon: "trac_nghiem", muc: "de", mon: q.mon, monTen: q.mon === "toan" ? "Toán" : "Tiếng Anh",
         monBieuTuong: q.mon === "toan" ? "🔢" : "🔤", hinhChu: q.hc || "", hinh: "", amThanh: q.am || "", dapAn: c.hv.map(k => q.da[k]) };
     }
+    // giờ cả bài như kc_tt_gio_bai (số mặc định, bé lớp 2, câu dễ): t0 = P90 bé giỏi; a = t0 + max((P90 khá − t0) / 0,3, (P90 TB − t0) / 0,5)
+    function ttGio(l) {
+      const dem = x => String(x || "").trim().split(/\s+/).filter(Boolean).reduce((s, w) => s + (/[0-9A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u1EF9]/.test(w) ? 1 : 0.5), 0), f = 0.55, P = [];
+      const doc = [3, 2.2, 1.6], nghi = [1.5, 2.5, 3.5], cau = l.cau.filter(c => !c.hoiLai);
+      for (let i = 0; i < 3; i++) {
+        let mu = 0, va = 0;
+        for (const c of cau) { const n = dem(c.q.nd) + c.q.da.reduce((s, x) => s + dem(x), 0), m = nghi[i] + n / (doc[i] * f); mu += m; va += (0.35 * m) ** 2; }
+        const s2 = Math.log(1 + (va + (0.15 * mu) ** 2) / mu ** 2); P.push(mu * Math.exp(-s2 / 2 + 1.2816 * Math.sqrt(s2)));
+      }
+      const t0 = Math.ceil(P[0]);
+      return { t0, a: t0 + Math.max(1, Math.ceil(Math.max((P[1] - P[0]) / 0.3, (P[2] - P[0]) / 0.5))) };
+    }
     function ttJson(l) {
       return { id: l.id, cheDo: l.cheDo, trangThai: l.trangThai, tong: l.cau.length, viTri: l.traLoi.length, soGoc: l.cau.filter(c => !c.hoiLai).length,
-        daTraLoi: l.traLoi.map((t, i) => ({ dung: t.dung, hoiLai: l.cau[i].hoiLai })), cau: l.trangThai === "dang" ? ttCau(l) : null, ketQua: l.ketQua };
+        daTraLoi: l.traLoi.map((t, i) => ({ dung: t.dung, hoiLai: l.cau[i].hoiLai })), cau: l.trangThai === "dang" ? ttCau(l) : null, ketQua: l.ketQua,
+        giayTong: ttGio(l).a, giayGioi: ttGio(l).t0, giayDaDung: Math.round(l.traLoi.reduce((a, t) => a + t.giay, 0) * 10) / 10,
+        kcToiDa: 3 * l.cau.filter(c => !c.hoiLai).length, truMoiSai: 3 };
     }
     return api;
   }
@@ -1301,4 +1318,4 @@
 // 09/11/2026 - BƯỚC: TC_D06E (doiCau: bé đổi từng câu của công trình bằng thư viện câu hỏi)
 // 11/11/2026 - BƯỚC: KC_06B2 (kho: câu kho giả cho trận quái, máy chủ giả chấm)
 // 12/11/2026 - BƯỚC: KC_06B3 (truLuot kèm số trận + mã kiểm câu; truTra tự chấm câu phòng thủ theo mã câu)
-// 20/11/2026 - BƯỚC: TC_D34B (ôn sau trận giả: ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc, _ttThu)
+// 20/11/2026 - BƯỚC: TC_D34B (ôn sau trận giả: ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc, _ttThu); sửa 12:xx: đồng hồ + luật 💎 mới
