@@ -15,17 +15,18 @@
      KC_GIO_BAI.napCauHinh(goiRpc)           // tuỳ chọn: lấy số admin đã sửa (RPC kc_gio_bai_doc_cau_hinh), lưu làm mặc định
      KC_GIO_BAI.MAC_DINH                     // số mặc định (giống kc_gio_bai_mac_dinh trong SQL)
    Đặc tả: repo riêng Thiet_Ke_On_The.md mục 4.0.
-   BƯỚC: TC_D34B (phần 2; phần 3: truSai)
+   BƯỚC: TC_D34B (phần 2; phần 3: truSai; phần 4: số mặc định nhanh hơn)
    NGÀY: 20/11/2026
    ================================================================ */
 (function (goc) {
   "use strict";
   const MAC_DINH = Object.freeze({
     he_so_k: 1,
-    doc_gioi: 3, doc_kha: 2.2, doc_tb: 1.6, nghi_gioi: 1.5, nghi_kha: 2.5, nghi_tb: 3.5,
-    he_so_de: 1, he_so_vua: 1.2, he_so_kho: 1.5, giay_hinh: 2, chu_dau: 0.5,
-    cv_cau: 0.35, cv_bai: 0.15, z: 1.2816, muc_kha: 70, muc_tb: 50,
-    he_so_lop: Object.freeze([0.4, 0.4, 0.55, 0.7, 0.8, 0.9, 1, 1, 1, 1, 1, 1, 1])
+    // người dùng 20/11/2026 15:50: bộ số cũ quá chậm (330 giây / 10 câu) → nhanh hơn (SQL tc_d34b4)
+    doc_gioi: 4, doc_kha: 3.2, doc_tb: 2.6, nghi_gioi: 1, nghi_kha: 1.5, nghi_tb: 2,
+    he_so_de: 1, he_so_vua: 1.15, he_so_kho: 1.3, giay_hinh: 2, chu_dau: 0.5,
+    cv_cau: 0.25, cv_bai: 0.1, z: 1.2816, muc_kha: 70, muc_tb: 50,
+    he_so_lop: Object.freeze([0.5, 0.5, 0.65, 0.8, 0.9, 1, 1, 1, 1, 1, 1, 1, 1])
   });
   let chung = MAC_DINH; // số đang dùng (MAC_DINH hoặc số admin nạp từ máy chủ)
   const CO_CHU = /[0-9A-Za-zÀ-ÖØ-öø-ỹ]/;
