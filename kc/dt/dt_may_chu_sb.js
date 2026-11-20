@@ -106,6 +106,13 @@
       return Object.assign({ ok: true }, kq);
     }
 
+    async function goiTt(ham, thamSo) { // TC_D34B
+      let kq;
+      try { kq = await opt.goiRpc(ham, Object.assign({ p_ten: opt.ten, p_ma_phien: opt.maPhien }, thamSo)); } catch (e) { kq = null; }
+      if (!kq || kq.thanhCong !== true) return Object.assign({}, kq || {}, { ok: false, ma: (kq && kq.ma) || "mang" });
+      return Object.assign({ ok: true }, kq);
+    }
+
     let lech = 0; // giờ máy chủ - giờ máy bé (ms)
     const gio = () => Date.now() + lech;
     // giu = true: lúc rời trang, gửi kiểu "giữ kết nối" (opt.goiRpcGiu, fetch keepalive) để không mất phần cuối
@@ -244,6 +251,16 @@
       async daXemThongBao(ids) { return goiKho("kc_be_thong_bao_da_xem", { p_ids: dsMa(ids) }); },
       // KC_06F2: danh sách 💡 (cả tin đã đọc, mới nhất trước) -> { ok, tong (chưa đọc), tin: [{ id, loai, duLieu, luc, daXem }] }
       async dsThongBao(so) { return goiKho("kc_be_thong_bao_ds", { p_so: Number.isInteger(so) ? so : 30 }); },
+      // TC_D34B: ÔN SAU TRẬN (máy chủ Thử Thách, SQL TC_D34A). Lỗi vẫn giữ mọi trường máy chủ trả (vd luot khi ma = vi_tri / chua_xong).
+      //   ttOnTao(tuLuc ISO) -> { ok, can, gop, luot } ; ttLuotDang() -> { ok, luot: [...] }
+      //   ttTraLoi(luot, viTri, chon, giay) -> { ok, dung, dapAnDung, loiGiai, hoiLai, viTri, tong, xong, cau, cu }
+      //   ttKetThuc(luot) -> { ok, cu, ketQua: { soCauGoc, dungGoc, khoan, kc, vang, catTran, khongPhaiBe, tienBo, thuocMoi ... } }
+      async ttOnTao(tuLuc) { return goiTt("kc_tt_on_sau_tran_tao", { p_tu_luc: tuLuc || null }); },
+      async ttLuotDang() { return goiTt("kc_tt_luot_dang", {}); },
+      async ttTraLoi(luot, viTri, chon, giay) {
+        return goiTt("kc_tt_tra_loi", { p_luot: luot, p_vi_tri: viTri, p_chon: chon, p_giay: Number.isFinite(giay) ? Math.round(giay * 100) / 100 : null });
+      },
+      async ttKetThuc(luot) { return goiTt("kc_tt_ket_thuc", { p_luot: luot }); },
       async monChuDe() {
         let kq; try { kq = await opt.goiRpc("kc_mon_chu_de", {}); } catch (e) { kq = null; }
         return kq && kq.thanhCong === true ? Object.assign({ ok: true }, kq) : { ok: false, ma: "mang" };
@@ -272,3 +289,4 @@
 // 16/11/2026 - BƯỚC: KC_06F1 (thongBao / daXemThongBao: tin của bé, câu bị trả lại được thay ở công trình; cần SQL KC_06F1)
 // 17/11/2026 - BƯỚC: KC_06G (tuongTu: khung 🔎 Câu giống trong kho ở màn soạn câu; cần SQL KC_06G)
 // 17/11/2026 - BƯỚC: KC_06F2 (dsThongBao: danh sách 💡 bóng điện; cần SQL KC_06F2)
+// 20/11/2026 - BƯỚC: TC_D34B (ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc: ôn sau trận; SQL TC_D34A đã chạy)

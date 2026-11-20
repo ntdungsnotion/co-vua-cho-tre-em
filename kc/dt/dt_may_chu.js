@@ -1205,12 +1205,86 @@
         await napBoSinh();
         const NK = goc.KC_DT_NGUON_KHO;
         if (!khoGia && NK && goc.KC_DT_SINH_TOAN) goc.__khoGia = khoGia = NK.khoGia({ toan: goc.KC_DT_SINH_TOAN }, { soMoiO: 8 }); // __khoGia.dap(id): kịch bản thử bấm đúng
-        return khoGia ? khoGia.goi(ham, ts) : { ok: false, ma: "mang" };
-      }
+        const kq = khoGia ? await khoGia.goi(ham, ts) : { ok: false, ma: "mang" };
+        if (ham === "cham" && kq && kq.ok && !kq.cu) ttGia.daTra.push({ luc: gio(), dung: !!kq.dung }); // TC_D34B: ôn sau trận giả đọc câu trong trận
+        return kq;
+      },
+      // TC_D34B: ÔN SAU TRẬN GIẢ (trang thử, như dt_may_chu_sb.js ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc; máy chủ thật: SQL TC_D34A).
+      // Bộ câu mẫu cố định; trận có câu trả lời (kho "cham") từ tuLuc thì có lượt ôn: câu sai + bù đủ 6 câu, sai câu gốc thì hỏi lại 1 câu.
+      // _ttThu(soSai): tạo lượt ôn ngay (kịch bản thử / chụp ảnh)
+      async ttOnTao(tuLuc) {
+        const tu = Math.max(tuLuc ? Date.parse(tuLuc) : gio() - 3600e3, ttGia.denLuc, gio() - 864e5);
+        const tra = ttGia.daTra.filter(x => x.luc >= tu);
+        ttGia.denLuc = gio();
+        const l = ttGia.luot.find(x => x.trangThai === "dang");
+        if (l) return { ok: true, can: true, gop: false, luot: ttJson(l) };
+        if (!tra.length) return { ok: true, can: false, ma: "khong_co_cau" };
+        return { ok: true, can: true, luot: ttJson(ttTaoLuot(tra.filter(x => !x.dung).length)) };
+      },
+      async ttLuotDang() { return { ok: true, luot: ttGia.luot.filter(x => x.trangThai === "dang").map(ttJson) }; },
+      async ttTraLoi(id, viTri, chon) {
+        const l = ttGia.luot.find(x => x.id === id);
+        if (!l) return { ok: false, ma: "luot" };
+        if (viTri < l.traLoi.length) { const t = l.traLoi[viTri], c = l.cau[viTri]; return { ok: true, cu: true, dung: t.dung, dapAnDung: c.hv.indexOf(c.q.dung), chon: t.chon, loiGiai: c.q.lg, viTri: l.traLoi.length, tong: l.cau.length, xong: l.traLoi.length >= l.cau.length, cau: ttCau(l) }; }
+        if (l.trangThai !== "dang") return { ok: false, ma: "da_xong" };
+        if (viTri !== l.traLoi.length) return { ok: false, ma: "vi_tri", luot: ttJson(l) };
+        const c = l.cau[viTri], dap = c.hv.indexOf(c.q.dung), dung = chon === dap;
+        l.traLoi.push({ chon, dung });
+        let hoiLai = false;
+        if (!dung && !c.hoiLai && l.cau.filter(x => x.hoiLai).length < 3) {
+          const q = TT_BO.find(x => x.kt === c.q.kt && x !== c.q) || c.q;
+          l.cau.splice(Math.min(viTri + 1 + 4, l.cau.length), 0, { q, hv: ttDao(q), hoiLai: true }); hoiLai = true;
+        }
+        return { ok: true, cu: false, dung, dapAnDung: dap, chon, loiGiai: c.q.lg, hoiLai, viTri: l.traLoi.length, tong: l.cau.length, xong: l.traLoi.length >= l.cau.length, cau: ttCau(l) };
+      },
+      async ttKetThuc(id) {
+        const l = ttGia.luot.find(x => x.id === id);
+        if (!l) return { ok: false, ma: "luot" };
+        if (l.ketQua) return { ok: true, cu: true, ketQua: l.ketQua };
+        if (l.traLoi.length < l.cau.length) return { ok: false, ma: "chua_xong", luot: ttJson(l) };
+        const goc2 = l.cau.map((c, i) => ({ c, t: l.traLoi[i] })).filter(x => !x.c.hoiLai), n = goc2.length, d = goc2.filter(x => x.t.dung).length;
+        const ty = n ? Math.floor(100 * d / n) : 0, hoan = Math.floor(4 * n / 10), gioi = ty >= 80 ? Math.floor(2 * n / 10) : 0, thuoc = d >= n - 1 ? 1 : 0;
+        const tongKc = hoan + gioi + thuoc;
+        l.trangThai = "xong";
+        l.ketQua = { soCauGoc: n, dungGoc: d, tyLe: ty, khoan: [{ ma: "hoan_thanh", kc: hoan }, { ma: "gioi", kc: gioi }, { ma: "thuoc_moi", so: thuoc, kc: thuoc }],
+          tongKc, kc: tongKc, vang: 0, catTran: false, daNhanHomNay: tongKc, tranNgay: 600, khongPhaiBe: false, tienBo: d, thuocMoi: thuoc };
+        return { ok: true, cu: false, ketQua: l.ketQua };
+      },
+      _ttThu(soSai) { ttGia.luot.forEach(x => { if (x.trangThai === "dang") x.trangThai = "bo"; }); return ttJson(ttTaoLuot(soSai || 2)); }
     };
     let khoGia = null;
+    const ttGia = { daTra: [], denLuc: 0, luot: [], so: 0 };
+    function ttDao(q) { const hv = q.da.map((_, i) => i); if (q.da.length > 2) { for (let i = hv.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [hv[i], hv[j]] = [hv[j], hv[i]]; } if (hv.every((v, i) => v === i)) hv.push(hv.shift()); } return hv; }
+    function ttTaoLuot(soSai) {
+      const ds = TT_BO.slice().sort(() => Math.random() - 0.5).slice(0, 6);
+      const l = { id: "gia-" + (++ttGia.so), cheDo: "on_sau_tran", trangThai: "dang", cau: ds.map(q => ({ q, hv: ttDao(q), hoiLai: false })), traLoi: [], ketQua: null, soSai };
+      ttGia.luot.push(l); return l;
+    }
+    function ttCau(l) {
+      const i = l.traLoi.length; if (i >= l.cau.length) return null;
+      const c = l.cau[i], q = c.q;
+      return { viTri: i, tong: l.cau.length, hoiLai: c.hoiLai, noiDung: q.nd, khuon: "trac_nghiem", muc: "de", mon: q.mon, monTen: q.mon === "toan" ? "Toán" : "Tiếng Anh",
+        monBieuTuong: q.mon === "toan" ? "🔢" : "🔤", hinhChu: q.hc || "", hinh: "", amThanh: q.am || "", dapAn: c.hv.map(k => q.da[k]) };
+    }
+    function ttJson(l) {
+      return { id: l.id, cheDo: l.cheDo, trangThai: l.trangThai, tong: l.cau.length, viTri: l.traLoi.length, soGoc: l.cau.filter(c => !c.hoiLai).length,
+        daTraLoi: l.traLoi.map((t, i) => ({ dung: t.dung, hoiLai: l.cau[i].hoiLai })), cau: l.trangThai === "dang" ? ttCau(l) : null, ketQua: l.ketQua };
+    }
     return api;
   }
+
+  // TC_D34B: bộ câu mẫu cho ôn sau trận giả (kt: kiến thức, để câu hỏi lại cùng kiến thức)
+  const TT_BO = [
+    { kt: "c7x8", mon: "toan", nd: "7 × 8 = ?", da: ["56", "54", "48", "63"], dung: 0, lg: "7 × 8 = 56 (bảy tám năm mươi sáu)." },
+    { kt: "c7x8", mon: "toan", nd: "56 : 7 = ?", da: ["8", "7", "9", "6"], dung: 0, lg: "Vì 7 × 8 = 56 nên 56 : 7 = 8." },
+    { kt: "c9x6", mon: "toan", nd: "9 × 6 = ?", da: ["54", "56", "45", "63"], dung: 0, lg: "9 × 6 = 54." },
+    { kt: "cv", mon: "toan", nd: "Hình nào có 4 cạnh bằng nhau và 4 góc vuông?", da: ["Hình vuông", "Hình tam giác", "Hình tròn", "Hình chữ nhật dài"], dung: 0, lg: "Hình vuông có 4 cạnh bằng nhau và 4 góc vuông." },
+    { kt: "cat", mon: "tieng_anh", nd: "Con mèo trong tiếng Anh là gì?", hc: "🐱", am: "doc:en:cat", da: ["cat", "dog", "cow", "bird"], dung: 0, lg: "cat = con mèo." },
+    { kt: "cat", mon: "tieng_anh", nd: "\"cat\" nghĩa là gì?", da: ["Con mèo", "Con chó", "Con gà", "Con cá"], dung: 0, lg: "cat = con mèo." },
+    { kt: "apple", mon: "tieng_anh", nd: "Quả táo trong tiếng Anh là gì?", hc: "🍎", am: "doc:en:apple", da: ["apple", "banana", "orange", "grape"], dung: 0, lg: "apple = quả táo." },
+    { kt: "c100", mon: "toan", nd: "Số liền sau của 99 là số nào?", da: ["100", "98", "90", "101"], dung: 0, lg: "99 + 1 = 100." },
+    { kt: "dsai", mon: "toan", nd: "Đúng hay sai: 5 + 5 = 11", da: ["Đúng", "Sai"], dung: 1, lg: "5 + 5 = 10, nên câu này sai." }
+  ];
 
   goc.KC_DT_MAY_CHU = { taoMayChuGia, napBoSinh };
 })(typeof window !== "undefined" ? window : globalThis);
@@ -1227,3 +1301,4 @@
 // 09/11/2026 - BƯỚC: TC_D06E (doiCau: bé đổi từng câu của công trình bằng thư viện câu hỏi)
 // 11/11/2026 - BƯỚC: KC_06B2 (kho: câu kho giả cho trận quái, máy chủ giả chấm)
 // 12/11/2026 - BƯỚC: KC_06B3 (truLuot kèm số trận + mã kiểm câu; truTra tự chấm câu phòng thủ theo mã câu)
+// 20/11/2026 - BƯỚC: TC_D34B (ôn sau trận giả: ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc, _ttThu)

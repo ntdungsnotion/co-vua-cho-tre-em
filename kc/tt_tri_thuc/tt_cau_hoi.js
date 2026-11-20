@@ -1,0 +1,375 @@
+/* ================================================================
+   FILE: tt_tri_thuc/tt_cau_hoi.js
+   CHỨC NĂNG: KHỐI CÂU HỎI + MÀN KẾT QUẢ DÙNG CHUNG của phân hệ THỬ THÁCH tri thức
+              (đặc tả Thiet_Ke_On_The.md mục 5.4, 5.5). Đấu Trường dùng cho màn "Ôn lại trận
+              vừa rồi" (TC_D34B); trang Thử Thách (KC_03C4) dùng lại cho Theo môn / Tổng hợp.
+              Máy chủ giữ lượt + chấm (RPC kc_tt_tra_loi / kc_tt_ket_thuc, TC_D34A): trang chỉ
+              hiện câu đang mở, gửi đáp án bé chọn, nhận đúng / sai + câu kế.
+              Màn phủ toàn trang. Điện thoại 1 cột; máy tính: cột trái (môn + nhân vật bé cổ vũ),
+              khung câu giữa ≤ 760 px, đáp án lưới 2 × 2, phím 1-6 chọn, Enter trả lời / câu tiếp.
+   DÙNG:      KC_TT.moLuot({
+                luot,                    // kc_tt_luot_json của máy chủ: { id, tong, viTri, daTraLoi, cau, ketQua }
+                goi: { traLoi(luotId, viTri, chon, giay), ketThuc(luotId) },   // trả { ok, ... } như dt_may_chu_sb.js
+                tieuDe, phuDe, batBuoc (true: không có nút ✕), nutKet ("Về thung lũng"),
+                goc (tiền tố đường dẫn hình câu, vd "" ở kc/, "../" ở kc/dt/), lop (lớp bé: ≤ 3 có 🔊 đọc câu),
+                hoSo (ngoại hình bé, chung/nv_ve.js: có thì vẽ bé cổ vũ ở cột trái máy tính)
+              }) -> Promise<{ ketQua | null, dong: "xong" | "bo" | "loi" }>
+   BƯỚC: TC_D34B
+   NGÀY: 20/11/2026
+   ================================================================ */
+(function (goc) {
+  "use strict";
+  const doc = goc.document;
+  const ngu = ms => new Promise(r => setTimeout(r, ms));
+  const tao = (the, lop, chu) => { const e = doc.createElement(the); if (lop) e.className = lop; if (chu != null) e.textContent = chu; return e; };
+  const TEN_KHOAN = { hoan_thanh: "Hoàn thành", gioi: "Giỏi", thuoc_moi: "Thuộc mới", nhan_tong_hop: "Tổng hợp" };
+  const DONG_VIEN = ["Con đã cố gắng rồi! Lần sau mình nhớ thêm nhé 🦉", "Sai là để nhớ lâu hơn. Cô Cú tin con! 🦉", "Từng chút một, con giỏi lên mỗi ngày 🦉"];
+
+  // ---------------- Âm thanh (WebAudio, không cần tệp) ----------------
+  let am = null;
+  function amThanh() {
+    if (am) return am;
+    try { const AC = goc.AudioContext || goc.webkitAudioContext; am = AC ? new AC() : null; } catch (e) { am = null; }
+    return am;
+  }
+  function not(tan, luc, dai, kieu, to) {
+    const a = amThanh(); if (!a) return;
+    try {
+      if (a.state === "suspended") a.resume();
+      const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + (luc || 0);
+      o.type = kieu || "sine"; o.frequency.setValueAtTime(tan, t);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(to || 0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dai);
+      o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dai + 0.05);
+    } catch (e) { /* không phát được: im lặng */ }
+  }
+  const tieng = {
+    ting() { not(1318, 0, 0.25, "sine", 0.2); not(1760, 0.08, 0.35, "sine", 0.16); },
+    tram() { not(220, 0, 0.35, "triangle", 0.14); not(185, 0.12, 0.4, "triangle", 0.1); },
+    ruong() { [523, 659, 784, 1047].forEach((f, i) => not(f, i * 0.11, 0.3, "triangle", 0.16)); },
+    kc(i) { not(1568 + (i % 4) * 120, 0, 0.12, "sine", 0.08); },
+    keng() { not(784, 0, 0.5, "square", 0.05); not(1175, 0.06, 0.6, "sine", 0.12); }
+  };
+
+  // ---------------- Đọc câu ----------------
+  function docTo(cau, lop) {
+    const ss = goc.speechSynthesis; if (!ss || !cau) return;
+    try {
+      ss.cancel();
+      const m = /^doc:en:(.+)$/.exec(cau.amThanh || "");
+      const u = new goc.SpeechSynthesisUtterance(m ? m[1] : cau.noiDung);
+      u.lang = m ? "en-US" : "vi-VN"; u.rate = m ? 0.85 : 0.95;
+      ss.speak(u);
+    } catch (e) { /* trình duyệt không đọc được */ }
+  }
+  const coDoc = (cau, lop) => !!cau && (/^doc:en:/.test(cau.amThanh || "") || (Number.isFinite(lop) && lop <= 3));
+
+  // ---------------- Màn ----------------
+  function moLuot(tc) {
+    const t = Object.assign({ tieuDe: "Ôn lại", phuDe: "", batBuoc: false, nutKet: "Xong", goc: "", lop: null, hoSo: null }, tc || {});
+    const goi = t.goi;
+    let luot = t.luot;
+    return new Promise(xong => {
+      // trạng thái lượt
+      let daTraLoi = (luot.daTraLoi || []).map(x => ({ dung: !!x.dung, hoiLai: !!x.hoiLai }));
+      let tong = luot.tong, viTri = luot.viTri, cau = luot.cau, chon = -1, luc0 = 0, dangGui = false, daCham = null, dong = false;
+
+      const goc0 = tao("div", "ttMan"); goc0.setAttribute("role", "dialog"); goc0.setAttribute("aria-modal", "true"); goc0.setAttribute("aria-label", t.tieuDe);
+      goc0.innerHTML =
+        '<div class="ttNen"></div>' +
+        '<div class="ttBo">' +
+        '  <aside class="ttCot" aria-hidden="true"><div class="ttMon"><span class="ttMonBt"></span><b class="ttMonTen"></b></div>' +
+        '    <canvas class="ttBe" width="200" height="220"></canvas><div class="ttCoCu"><span>🦉</span><p class="ttCoCuNoi">Con làm được mà!</p></div></aside>' +
+        '  <main class="ttGiua">' +
+        '    <header class="ttDau"><div class="ttTieuDe"><b></b><small></small></div><button class="ttDong" type="button" aria-label="Đóng">✕</button></header>' +
+        '    <div class="ttCham" role="progressbar" aria-label="Tiến độ"></div>' +
+        '    <section class="ttCau" aria-live="polite"></section>' +
+        '  </main>' +
+        '</div>';
+      doc.body.appendChild(goc0);
+      const $ = s => goc0.querySelector(s);
+      $(".ttTieuDe b").textContent = t.tieuDe;
+      $(".ttTieuDe small").textContent = t.phuDe || "";
+      $(".ttDong").hidden = !!t.batBuoc;
+      $(".ttDong").addEventListener("click", () => dongMan("bo", null));
+
+      // bé cổ vũ (máy tính)
+      const cv = $(".ttBe"), NV = goc.KC_NV;
+      let raf = 0, tuThe = "vay", t0 = performance.now();
+      function veBe(now) {
+        if (dong) return;
+        raf = requestAnimationFrame(veBe);
+        if (!cv.offsetParent) return; // cột trái đang ẩn (điện thoại)
+        const c = cv.getContext("2d"); c.clearRect(0, 0, cv.width, cv.height);
+        try { NV.ve(c, t.hoSo, { x: cv.width / 2, y: cv.height - 12, co: 2.2, huong: 1, t: (now - t0) / 1000, tuThe, vaiTro: "thu_linh", cam: "" }); } catch (e) { cancelAnimationFrame(raf); cv.hidden = true; }
+      }
+      if (NV && t.hoSo) raf = requestAnimationFrame(veBe); else cv.hidden = true;
+      const coCu = chu => { $(".ttCoCuNoi").textContent = chu; };
+
+      function veCham() {
+        const o = $(".ttCham"); o.innerHTML = "";
+        for (let i = 0; i < tong; i++) {
+          const d = tao("i", "ttCh");
+          const k = daTraLoi[i];
+          if (k) { d.classList.add(k.dung ? "dung" : "sai"); if (k.hoiLai) d.textContent = "🔁"; }
+          else if (i === viTri) { d.classList.add("nay"); if (cau && cau.hoiLai) d.textContent = "🔁"; }
+          o.appendChild(d);
+        }
+        o.setAttribute("aria-valuemin", "0"); o.setAttribute("aria-valuemax", String(tong)); o.setAttribute("aria-valuenow", String(daTraLoi.length));
+      }
+
+      function veCau() {
+        daCham = null; chon = -1; dangGui = false;
+        const s = $(".ttCau"); s.innerHTML = ""; s.classList.remove("daCham");
+        if (cau && cau.monBieuTuong) { $(".ttMonBt").textContent = cau.monBieuTuong; $(".ttMonTen").textContent = cau.monTen || ""; }
+        veCham();
+        if (cau.hoiLai) s.appendChild(tao("div", "ttHoiLai", "🔁 Hỏi lại cho chắc nhé"));
+        const khung = tao("div", "ttKhung");
+        const hang = tao("div", "ttHang");
+        const nd = tao("p", "ttNoiDung", cau.noiDung || "");
+        hang.appendChild(nd);
+        if (coDoc(cau, t.lop)) {
+          const n = tao("button", "ttNghe", "🔊"); n.type = "button"; n.setAttribute("aria-label", "Nghe câu hỏi");
+          n.addEventListener("click", () => docTo(cau, t.lop)); hang.appendChild(n);
+        }
+        khung.appendChild(hang);
+        if (cau.hinh || cau.hinhChu) {
+          const h = tao("div", "ttHinh");
+          if (cau.hinh) { const im = doc.createElement("img"); im.alt = ""; im.src = t.goc + cau.hinh; im.onerror = () => { h.textContent = cau.hinhChu || ""; if (!cau.hinhChu) h.remove(); }; h.appendChild(im); }
+          else h.textContent = cau.hinhChu;
+          khung.appendChild(h);
+        }
+        s.appendChild(khung);
+        const ds = tao("div", "ttDap");
+        const dai = (cau.dapAn || []).some(x => String(x).length > 22);
+        if (dai || (cau.dapAn || []).length === 3) ds.classList.add("doc");
+        (cau.dapAn || []).forEach((x, i) => {
+          const b = tao("button", "ttDa"); b.type = "button"; b.dataset.i = String(i);
+          b.appendChild(tao("span", "ttSo", String(i + 1)));
+          b.appendChild(tao("span", "ttChu", String(x)));
+          b.addEventListener("click", () => chonDa(i));
+          ds.appendChild(b);
+        });
+        s.appendChild(ds);
+        const ph = tao("div", "ttPhan"); ph.setAttribute("aria-live", "polite"); s.appendChild(ph);
+        const nut = tao("button", "ttNut ttTraLoi", "Trả lời"); nut.type = "button"; nut.disabled = true;
+        nut.addEventListener("click", guiDa);
+        s.appendChild(nut);
+        luc0 = performance.now();
+        if (/^doc:en:/.test(cau.amThanh || "")) setTimeout(() => docTo(cau, t.lop), 250);
+        coCu(viTri === 0 ? "Mình cùng ôn lại nhé!" : ["Con làm được mà!", "Cố lên nào!", "Đọc kỹ rồi chọn nhé!"][viTri % 3]);
+        tuThe = "dung";
+      }
+
+      function chonDa(i) {
+        if (daCham || dangGui) return;
+        chon = i;
+        goc0.querySelectorAll(".ttDa").forEach(b => b.classList.toggle("chon", Number(b.dataset.i) === i));
+        const n = $(".ttTraLoi"); if (n) n.disabled = false;
+      }
+
+      async function guiDa() {
+        if (daCham || dangGui || chon < 0) return;
+        dangGui = true;
+        const nut = $(".ttTraLoi"); nut.disabled = true;
+        const bChon = goc0.querySelector('.ttDa[data-i="' + chon + '"]'); if (bChon) bChon.classList.add("cho");
+        goc0.querySelectorAll(".ttDa").forEach(b => { b.disabled = true; });
+        const giay = Math.round((performance.now() - luc0) / 100) / 10, tBat = performance.now();
+        let kq = null;
+        for (let lan = 0; lan < 3; lan++) {
+          try { kq = await goi.traLoi(luot.id, viTri, chon, giay); } catch (e) { kq = null; }
+          if (kq && (kq.ok || (kq.ma && kq.ma !== "mang"))) break;
+          coCu("Mạng đang chập chờn, con đợi chút nhé");
+          await ngu(1000 * (lan + 1));
+        }
+        const conCho = 350 - (performance.now() - tBat); if (conCho > 0) await ngu(conCho); // vòng sáng ≥ 0,35 giây (luật 3.17)
+        if (bChon) bChon.classList.remove("cho");
+        if (!kq || !kq.ok) return loiTraLoi(kq);
+        nhanCham(kq);
+      }
+
+      function loiTraLoi(kq) {
+        dangGui = false;
+        const ma = kq && kq.ma;
+        if (ma === "vi_tri" && kq.luot) { napLuot(kq.luot); return; } // trang lệch với máy chủ (vd đã trả lời ở máy khác): theo máy chủ
+        if (ma === "da_xong") { ketThuc(); return; }
+        const ph = $(".ttPhan"); ph.innerHTML = "";
+        const p = tao("p", "ttLoi", ma === "dang_nhap" ? "Con đăng nhập lại rồi vào lại nhé. Bài ôn vẫn chờ con." : "Mạng đang chập chờn. Con bấm Thử lại nhé, bài ôn vẫn giữ nguyên.");
+        ph.appendChild(p);
+        const nut = $(".ttTraLoi");
+        if (ma === "dang_nhap") { chon = -1; nut.textContent = "Đóng"; nut.disabled = false; nut.onclick = () => dongMan("loi", null); return; }
+        goc0.querySelectorAll(".ttDa").forEach(b => { b.disabled = false; });
+        nut.textContent = "Thử lại"; nut.disabled = false;
+        coCu("Mạng đang chập chờn, con đợi chút nhé");
+      }
+
+      function napLuot(l) {
+        luot = l; tong = l.tong; viTri = l.viTri; cau = l.cau;
+        daTraLoi = (l.daTraLoi || []).map(x => ({ dung: !!x.dung, hoiLai: !!x.hoiLai }));
+        if (!cau || viTri >= tong) ketThuc(); else veCau();
+      }
+
+      function nhanCham(kq) {
+        dangGui = false;
+        const dung = !!kq.dung;
+        daTraLoi[viTri] = { dung, hoiLai: !!(cau && cau.hoiLai) };
+        daCham = kq;
+        tong = Number.isInteger(kq.tong) ? kq.tong : tong;
+        const s = $(".ttCau"); s.classList.add("daCham");
+        goc0.querySelectorAll(".ttDa").forEach(b => {
+          const i = Number(b.dataset.i);
+          b.disabled = true;
+          if (i === kq.dapAnDung) b.classList.add("dung");
+          if (i === chon && !dung) b.classList.add("sai");
+          if (i !== kq.dapAnDung && i !== chon) b.classList.add("mo");
+        });
+        const ph = $(".ttPhan"); ph.innerHTML = "";
+        if (dung) {
+          ph.appendChild(tao("p", "ttDung", ["🎉 Đúng rồi!", "⭐ Giỏi quá!", "🎉 Chính xác!"][viTri % 3]));
+          const b = goc0.querySelector('.ttDa[data-i="' + kq.dapAnDung + '"]'); if (b) phaoSao(b);
+          tieng.ting(); tuThe = "vay"; coCu("Tuyệt vời!");
+        } else {
+          const dap = cau.dapAn && cau.dapAn[kq.dapAnDung];
+          const p = tao("p", "ttSaiChu"); p.append("Đáp án là ", tao("b", "", dap != null ? String(dap) : "…"), ", nhớ nhé!");
+          ph.appendChild(p);
+          tieng.tram(); coCu(kq.hoiLai ? "Lát nữa Cô Cú hỏi lại để con nhớ nhé" : "Không sao, mình nhớ lần sau nhé");
+        }
+        if (kq.loiGiai) ph.appendChild(tao("p", "ttLoiGiai", "💡 " + kq.loiGiai));
+        veCham();
+        const nut = $(".ttTraLoi");
+        nut.textContent = kq.xong ? "Xem kết quả ▶" : "Câu tiếp ▶"; nut.disabled = false; nut.classList.add("tiep");
+        nut.onclick = null; nut.removeEventListener("click", guiDa);
+        nut.addEventListener("click", tiep, { once: true });
+        if (goc.matchMedia && goc.matchMedia("(pointer: fine)").matches) nut.focus({ preventScroll: true });
+        nut.scrollIntoView && nut.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+
+      function tiep() {
+        const kq = daCham; if (!kq) return;
+        viTri = Number.isInteger(kq.viTri) ? kq.viTri : viTri + 1;
+        if (kq.xong || !kq.cau) { ketThuc(); return; }
+        cau = kq.cau; veCau();
+      }
+
+      function phaoSao(b) {
+        const r = b.getBoundingClientRect(), gr = goc0.getBoundingClientRect();
+        for (let i = 0; i < 8; i++) {
+          const s = tao("span", "ttSao", "⭐");
+          s.style.left = (r.left - gr.left + r.width / 2) + "px"; s.style.top = (r.top - gr.top + r.height / 2) + "px";
+          const g = (i / 8) * Math.PI * 2; s.style.setProperty("--dx", Math.cos(g) * 70 + "px"); s.style.setProperty("--dy", Math.sin(g) * 50 - 20 + "px");
+          goc0.appendChild(s); setTimeout(() => s.remove(), 800);
+        }
+      }
+
+      // ---------------- Kết thúc + màn kết quả ----------------
+      async function ketThuc() {
+        const s = $(".ttCau"); s.innerHTML = ""; s.classList.remove("daCham");
+        veCham();
+        const cho = tao("div", "ttChoKq"); cho.appendChild(tao("div", "ttRuongNho", "🎁")); cho.appendChild(tao("p", "", "Cô Cú đang đếm phần thưởng…")); s.appendChild(cho);
+        let kq = null;
+        for (let lan = 0; lan < 4; lan++) {
+          try { kq = await goi.ketThuc(luot.id); } catch (e) { kq = null; }
+          if (kq && kq.ok) break;
+          if (kq && kq.ma === "chua_xong" && kq.luot) { napLuot(kq.luot); return; }
+          if (kq && kq.ma && kq.ma !== "mang") break;
+          await ngu(1200 * (lan + 1));
+        }
+        if (!kq || !kq.ok) {
+          s.innerHTML = "";
+          s.appendChild(tao("p", "ttLoi", kq && kq.ma === "dang_nhap" ? "Con đăng nhập lại nhé. Phần thưởng vẫn giữ cho con." : "Mạng đang chập chờn. Con bấm Thử lại để nhận thưởng nhé."));
+          const n = tao("button", "ttNut", kq && kq.ma === "dang_nhap" ? "Đóng" : "Thử lại"); n.type = "button";
+          n.addEventListener("click", () => (kq && kq.ma === "dang_nhap" ? dongMan("loi", null) : ketThuc()));
+          s.appendChild(n); return;
+        }
+        veKetQua(kq.ketQua || {});
+      }
+
+      function veKetQua(k) {
+        goc0.classList.add("ketQua");
+        const s = $(".ttCau"); s.innerHTML = "";
+        const n = k.soCauGoc || 0, d = k.dungGoc || 0, ty = n ? d / n : 0;
+        const kq = tao("div", "ttKq");
+        const ruong = tao("div", "ttRuong"); ruong.innerHTML = '<i class="ttNap"></i><i class="ttThan"></i><i class="ttKhoa"></i><i class="ttSang"></i>';
+        kq.appendChild(ruong);
+        kq.appendChild(tao("h2", "ttDiem", "Con đúng " + d + " / " + n + " câu"));
+        const tb = []; if (k.tienBo > 0) tb.push("🌱 Tiến bộ " + k.tienBo + " điều"); if (k.thuocMoi > 0) tb.push("⭐ Thuộc thêm " + k.thuocMoi + " điều");
+        if (tb.length) kq.appendChild(tao("p", "ttTienBo", tb.join(" · ")));
+        const tui = tao("div", "ttTui"); const so = tao("b", "", "0");
+        tui.append("💎 +", so); kq.appendChild(tui);
+        const ds = tao("ul", "ttKhoan");
+        (k.khoan || []).forEach(x => {
+          if (!x || (x.ma !== "hoan_thanh" && !(x.kc > 0))) return;
+          const li = tao("li"); li.append(tao("span", "", (TEN_KHOAN[x.ma] || x.ma) + (x.so ? " × " + x.so : "")), tao("b", "", "+" + (x.kc || 0) + " 💎"));
+          ds.appendChild(li);
+        });
+        if (ds.children.length) kq.appendChild(ds);
+        if (k.khongPhaiBe) kq.appendChild(tao("p", "ttGhiChu", "Tài khoản người lớn ôn thử, không nhận 💎."));
+        else if (k.vang > 0) kq.appendChild(tao("p", "ttGhiChu", "Hôm nay con đã nhận đủ 💎, phần thưởng đổi thành 🪙 " + k.vang + " xu vàng."));
+        else if (k.catTran || (k.tongKc > 0 && k.kc < k.tongKc)) kq.appendChild(tao("p", "ttGhiChu", "Hôm nay con đã nhận đủ 💎 rồi. Mai mình nhận tiếp nhé!"));
+        if (ty < 0.5) kq.appendChild(tao("p", "ttDongVien", DONG_VIEN[Math.floor(Math.random() * DONG_VIEN.length)]));
+        const nut = tao("button", "ttNut tiep", t.nutKet); nut.type = "button";
+        nut.addEventListener("click", () => dongMan("xong", k));
+        kq.appendChild(nut);
+        s.appendChild(kq);
+        coCu(ty >= 0.8 ? "Xuất sắc! Con nhớ bài rất tốt!" : ty >= 0.5 ? "Giỏi lắm! Ôn thêm là nhớ hết!" : "Cô Cú tin con sẽ nhớ hơn!");
+        tuThe = "vay";
+        // hiệu ứng: rương mở → kim cương bay vào túi → số nhảy
+        tieng.ruong();
+        setTimeout(() => ruong.classList.add("mo"), 250);
+        const kc = k.khongPhaiBe ? 0 : Math.max(0, k.kc || 0);
+        setTimeout(() => {
+          const bay = Math.min(12, Math.max(kc, 3));
+          for (let i = 0; i < bay; i++) setTimeout(() => {
+            const v = tao("span", "ttKcBay", "💎"); v.style.setProperty("--x", (Math.random() * 120 - 60) + "px");
+            ruong.appendChild(v); setTimeout(() => v.remove(), 900); tieng.kc(i);
+          }, i * 90);
+          let dem = 0; const buoc = Math.max(1, Math.ceil(kc / 12));
+          const iv = setInterval(() => { dem = Math.min(kc, dem + buoc); so.textContent = String(dem); tui.classList.remove("nay"); void tui.offsetWidth; tui.classList.add("nay"); if (dem >= kc) clearInterval(iv); }, 90);
+          if (!kc) so.textContent = "0";
+        }, 650);
+        if (ty >= 0.8) setTimeout(() => { phaoGiay(); tieng.keng(); }, 900);
+        if (goc.matchMedia && goc.matchMedia("(pointer: fine)").matches) setTimeout(() => nut.focus({ preventScroll: true }), 700);
+      }
+
+      function phaoGiay() {
+        const mau = ["#ffc24b", "#ff8a3d", "#6fe3a0", "#7fb5ff", "#ff7aa8", "#fff6dc"];
+        for (let i = 0; i < 60; i++) {
+          const p = tao("i", "ttGiay");
+          p.style.left = Math.random() * 100 + "%"; p.style.background = mau[i % mau.length];
+          p.style.animationDelay = (Math.random() * 0.6) + "s"; p.style.setProperty("--xoay", (Math.random() * 720 - 360) + "deg");
+          goc0.appendChild(p); setTimeout(() => p.remove(), 3200);
+        }
+      }
+
+      // ---------------- Phím (máy tính) ----------------
+      function phim(e) {
+        if (dong || e.altKey || e.ctrlKey || e.metaKey) return;
+        if (goc0.classList.contains("ketQua")) { if (e.key === "Enter") { const n = goc0.querySelector(".ttKq .ttNut"); if (n && doc.activeElement !== n) { e.preventDefault(); n.click(); } } return; }
+        const so = Number(e.key);
+        if (Number.isInteger(so) && so >= 1 && so <= 6 && !daCham) { const b = goc0.querySelector('.ttDa[data-i="' + (so - 1) + '"]'); if (b && !b.disabled) { e.preventDefault(); chonDa(so - 1); } return; }
+        if (e.key === "Enter") {
+          const n = goc0.querySelector(".ttTraLoi"); if (!n || n.disabled) return;
+          if (doc.activeElement && doc.activeElement.classList && doc.activeElement.classList.contains("ttDa") && !daCham) { e.preventDefault(); chonDa(Number(doc.activeElement.dataset.i)); if (chon >= 0) guiDa(); return; }
+          if (doc.activeElement !== n) { e.preventDefault(); n.click(); }
+        }
+        if (e.key === "Escape" && !t.batBuoc) dongMan("bo", null);
+      }
+      doc.addEventListener("keydown", phim, true);
+
+      function dongMan(lyDo, ketQua) {
+        if (dong) return; dong = true;
+        cancelAnimationFrame(raf);
+        doc.removeEventListener("keydown", phim, true);
+        try { goc.speechSynthesis && goc.speechSynthesis.cancel(); } catch (e) { /* bỏ qua */ }
+        goc0.classList.add("tat");
+        setTimeout(() => goc0.remove(), 250);
+        xong({ ketQua, dong: lyDo });
+      }
+
+      // bắt đầu
+      if (!cau || viTri >= tong) ketThuc(); else veCau();
+    });
+  }
+
+  goc.KC_TT = { moLuot, _tieng: tieng };
+})(typeof window !== "undefined" ? window : globalThis);
+// 20/11/2026 - BƯỚC: TC_D34B (khối câu hỏi + màn kết quả dùng chung, màn ôn sau trận Đấu Trường)
