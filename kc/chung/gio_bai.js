@@ -10,11 +10,12 @@
      KC_GIO_BAI.tinh(cau, lop, cauHinh?)     // cau: [{ noiDung, dapAn: [..], muc: "de"|"vua"|"kho", coHinh }]
                                              //  -> { a, t0, lop, p90: { gioi, kha, tb } } (giây, số nguyên)
      KC_GIO_BAI.kcSauGio(truoc, toiDa, giay, t0, a)   // 💎 còn lại sau khi trừ theo giờ
+     KC_GIO_BAI.truSai(toiDa, soCau)         // 💎 trừ mỗi câu sai = ⌊tổng 💎 / tổng câu⌋ (người dùng 20/11/2026 14:43)
      KC_GIO_BAI.donViDoc(chu, chuDau?)       // đơn vị đọc của một chuỗi (từ / số = 1, ký hiệu = 0,5)
      KC_GIO_BAI.napCauHinh(goiRpc)           // tuỳ chọn: lấy số admin đã sửa (RPC kc_gio_bai_doc_cau_hinh), lưu làm mặc định
      KC_GIO_BAI.MAC_DINH                     // số mặc định (giống kc_gio_bai_mac_dinh trong SQL)
    Đặc tả: repo riêng Thiet_Ke_On_The.md mục 4.0.
-   BƯỚC: TC_D34B (phần 2)
+   BƯỚC: TC_D34B (phần 2; phần 3: truSai)
    NGÀY: 20/11/2026
    ================================================================ */
 (function (goc) {
@@ -71,6 +72,9 @@
     return Math.max(0, truoc - Math.ceil((giay - t0) * Math.max(0, +toiDa || 0) / Math.max(1, a - t0)));
   }
 
+  // người dùng 20/11/2026 14:43: "không cố định 3, mà tổng kc / tổng câu hỏi, làm tròn xuống" (SQL kc_gio_bai_tru_sai)
+  function truSai(toiDa, soCau) { return soCau > 0 ? Math.max(0, Math.floor((+toiDa || 0) / soCau)) : 0; }
+
   async function napCauHinh(goiRpc) {
     try {
       const kq = await goiRpc("kc_gio_bai_doc_cau_hinh", {});
@@ -79,6 +83,6 @@
     return chung;
   }
 
-  goc.KC_GIO_BAI = Object.freeze({ MAC_DINH, tinh, kcSauGio, donViDoc, napCauHinh, get cauHinh() { return chung; } });
+  goc.KC_GIO_BAI = Object.freeze({ MAC_DINH, tinh, kcSauGio, truSai, donViDoc, napCauHinh, get cauHinh() { return chung; } });
 })(typeof window !== "undefined" ? window : globalThis);
 // 20/11/2026 - BƯỚC: TC_D34B (phần 2)
