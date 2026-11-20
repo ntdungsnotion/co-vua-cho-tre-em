@@ -14,7 +14,8 @@
                 goc (tiền tố đường dẫn hình câu, vd "" ở kc/, "../" ở kc/dt/), lop (lớp bé: ≤ 3 có 🔊 đọc câu),
                 hoSo (ngoại hình bé, chung/nv_ve.js: có thì vẽ bé cổ vũ ở cột trái máy tính)
               }) -> Promise<{ ketQua | null, dong: "xong" | "bo" | "loi" }>
-   BƯỚC: TC_D34B
+   CẦN NẠP TRƯỚC: chung/gio_bai.js (KC_GIO_BAI: trừ 💎 theo giờ, module chung toàn app).
+   BƯỚC: TC_D34B (phần 2: dùng module giờ chung)
    NGÀY: 20/11/2026
    ================================================================ */
 (function (goc) {
@@ -127,10 +128,9 @@
         if (dh.kcToiDa == null) kcO.hidden = true;
         else {
           const sai = daTraLoi.filter(x => x && !x.dung && !x.hoiLai).length;
-          // người dùng 20/11/2026 13:21: trước t0 không trừ; t0 → a chia (tối đa) khoảng, vào khoảng nào trừ 1; hết giờ = 0 💎; mỗi câu sai trừ thêm
-          const u = giayDung(), qua = u - dh.gioi;
-          const truGio = u >= dh.tong ? Infinity : qua > 0 ? Math.ceil(qua * dh.kcToiDa / Math.max(1, dh.tong - dh.gioi)) : 0;
-          kcO.querySelector("b").textContent = String(Math.max(0, dh.kcToiDa - dh.tru * sai - truGio));
+          // mỗi câu sai trừ trước, rồi trừ theo giờ bằng module chung chung/gio_bai.js (trước t0 không trừ; hết giờ = 0 💎)
+          const truoc = Math.max(0, dh.kcToiDa - dh.tru * sai);
+          kcO.querySelector("b").textContent = String(goc.KC_GIO_BAI.kcSauGio(truoc, dh.kcToiDa, giayDung(), dh.gioi, dh.tong));
         }
         if (con <= 0 && !dhBaoHet && !goc0.classList.contains("ketQua")) { dhBaoHet = true; o.dataset.het = "1"; coCu("⏰ Hết giờ rồi! Lần này không có 💎, con ôn tiếp cho nhớ nhé"); tieng.tram(); }
       }
