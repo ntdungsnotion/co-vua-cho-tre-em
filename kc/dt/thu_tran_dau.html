@@ -9,7 +9,8 @@
        FILE: dt/thu_tran_dau.html
        CHỨC NĂNG: Trang ĐẤU THỬ của Đấu Trường Tri Thức (không có nút dẫn tới, mở bằng địa chỉ).
                   Thủ lĩnh đấu theo lượt với một quái (Slime Số / Nấm Chữ Cái / Đom Đóm), luật ở
-                  dt_tran_dau.js; câu Toán / Tiếng Anh theo trình độ của bé (dt_cau_hoi.js, lưu ở máy này).
+                  dt_tran_dau.js; câu Toán / Tiếng Anh theo trình độ của bé (trận kho: trình độ MÁY CHỦ, dt_chon_cau_td.js + kc/chung/trinh_do.js,
+                  KC_08D; trang thử bộ sinh: dt_cau_hoi.js, lưu ở máy này).
                   Điện thoại: sân đấu nửa trên, câu hỏi nửa dưới. Máy tính: sân rộng bên trái, câu hỏi
                   bên phải. TC_D06 đưa màn này vào bản đồ (chạm quái mở trận).
        BƯỚC: TC_D05; TC_D05 sửa 29/10/2026 chiều (người dùng: bỏ chữ hướng dẫn, tự sang lượt,
@@ -37,6 +38,8 @@
              KC_06B3 (12/11/2026: trận TRỤ / CÔNG TRÌNH của bạn chấm ngay trên máy như trận quái: lượt kèm số trận + mã kiểm câu,
              trang dự đoán kết quả sau tụ 0,5 giây, máy chủ chấm lại và giữ máu (lệch thì sửa thanh máu theo máy chủ);
              lượt trụ gửi mã lượt + mã câu phòng thủ để máy chủ tự chấm)
+             KC_08D (20/11/2026: trận kho chọn câu theo TRÌNH ĐỘ MÁY CHỦ (kho("hoSo") = RPC kc_td_ho_so đầu mỗi trận), lõi chung
+             kc/chung/trinh_do.js qua dt_chon_cau_td.js; máy chỉ giữ bản tạm "kc_td_tam_<tên>" khi mất mạng; thay "kc_dt_trinh_do_<tên>")
        NGÀY: 29/10/2026; 29/10/2026 22:47; 30/10/2026; 30/10/2026 06:00; 30/10/2026 (TC_D06A); 04/11/2026 (TC_D06C2a)
        PHỤ THUỘC: chung/nv_ve.js, dt/dt_trinh_do.js, dt/dt_nguon_kho.js (KC_06B2), dt/dt_sinh_toan.js + dt/dt_sinh_tieng_anh.js (chỉ trang thử),
                   dt/dt_cau_hoi.js, dt/dt_quai.js, dt/dt_tran_dau.js, dt/dt_ve_quai.js,
@@ -268,7 +271,9 @@
   </div>
 
   <script src="../chung/nv_ve.js"></script>
-  <script src="dt_trinh_do.js"></script>
+  <script src="dt_trinh_do.js"></script> <!-- trang thử dùng bộ sinh câu (không kho) -->
+  <script src="../chung/trinh_do.js"></script> <!-- KC_08D: lõi trình độ dùng chung (KC_TRINH_DO) -->
+  <script src="dt_chon_cau_td.js"></script> <!-- KC_08D: trận kho chọn câu theo trình độ máy chủ -->
   <script src="dt_nguon_kho.js"></script> <!-- KC_06B2: câu kho chung, máy chủ chấm; bộ sinh câu chỉ nạp ở trang thử (khoiDong) -->
   <script src="dt_cau_hoi.js"></script>
   <script src="dt_quai.js"></script>
@@ -280,7 +285,7 @@
   <script>
   (function () {
     "use strict";
-    const NV = window.KC_NV, TD = window.KC_DT_TRINH_DO, NK = window.KC_DT_NGUON_KHO;
+    const NV = window.KC_NV, TD = window.KC_DT_TRINH_DO, NK = window.KC_DT_NGUON_KHO, CTD = window.KC_DT_CHON_TD;
     let ST = null, TA = null; // bộ sinh câu: chỉ trang thử (không ?nhung) mới nạp
     const CH = window.KC_DT_CAU_HOI, QU = window.KC_DT_QUAI, TR = window.KC_DT_TRAN_DAU, VQ = window.KC_DT_VE_QUAI;
     // TC_D06A: ?nhung=1 = màn chiến đấu thật mở từ bản đồ (khung phủ của dt3d_quai_ban_do.js): quái + cấp + Thủ lĩnh
@@ -375,7 +380,21 @@
 
     // ---------- lưu ở máy này ----------
     function docLuu() { try { return JSON.parse(localStorage.getItem(KHOA) || "null"); } catch (e) { return null; } }
-    function luu() { try { localStorage.setItem(KHOA, JSON.stringify({ chon, hs })); } catch (e) { /* trình duyệt chặn lưu: vẫn chơi được */ } }
+    function luu() {
+      try {
+        localStorage.setItem(KHOA, JSON.stringify(KHO ? { chon } : { chon, hs }));
+        if (KHO && hs && hs.kieu === "td") localStorage.setItem(KHOA_TD, JSON.stringify({ luc: Date.now(), kq: { ok: true, ch: hs.chGoc || {}, lop: hs.lop, nguon: hs.nguon || "khong", mon: hs.mon } }));
+      } catch (e) { /* trình duyệt chặn lưu: vẫn chơi được */ }
+    }
+    // KC_08D: trận kho chọn câu theo TRÌNH ĐỘ MÁY CHỦ (RPC kc_td_ho_so qua bản đồ, lấy đầu mỗi trận). Máy chủ không trả lời được thì dùng
+    // bản tạm lần trước trên máy này, cuối cùng khởi tạo theo lớp Đấu Trường (lớp). Bản tạm KHÔNG gửi lên: trigger máy chủ tự tính.
+    const KHOA_TD = "kc_td_tam_" + (NHUNG ? (TEN_BE || "khach") : "thu");
+    async function hoSoTd(lop) {
+      const kq = NHUNG ? await hoiKho("hoSo", {}) : null;
+      if (kq && kq.ok) return Object.assign(CTD.hoSo(kq), { chGoc: kq.ch || {} });
+      try { const tam = JSON.parse(localStorage.getItem(KHOA_TD) || "null"); if (tam && tam.kq && (NHUNG || tam.kq.lop === lop)) return Object.assign(CTD.hoSo(tam.kq), { chGoc: tam.kq.ch || {} }); } catch (e) { /* bị chặn */ }
+      return CTD.hoSo(null, lop);
+    }
 
     // Đọc to từ tiếng Anh (dạng "nghe đọc chọn từ")
     function docTo(amThanh) {
@@ -428,7 +447,7 @@
         chon.gioi = $("chonGioi").value;
         const macDinh = lopMoi <= chTran.thongTha.denLop;
         chon.thongTha = $("chonThongTha").checked === macDinh ? null : $("chonThongTha").checked;
-        if (!hs || hs.lop !== lopMoi) hs = TD.taoHoSo(lopMoi, chTD);
+        if (!hs || hs.lop !== lopMoi) { hs = KHO ? CTD.hoSo(null, lopMoi) : TD.taoHoSo(lopMoi, chTD); if (KHO) bo = CTD.taoBoChon(hs, NG); }
         chon.lop = lopMoi;
         luu();
         $("manChon").classList.add("an");
@@ -546,7 +565,7 @@
       const l = tru.luot;
       cauNay.dung = [kq.dapAnDung]; cauNay.loiGiai = kq.loiGiai || "";
       l.daCham = true; l.beDung = !!kq.dung && l.daChon != null;
-      if (l.daChon != null && !kq.loi) { bo.ghiKetQua(hs, cauNay, kq.dung); luu(); }
+      if ((l.daChon != null || bo.td) && !kq.loi) { bo.ghiKetQua(hs, cauNay, kq.dung); luu(); } // KC_08D: hết giờ (lật bài) máy chủ tính là sai
       if (tl) { if (l.beDung) tl.bung(); else tl.tan(); }
       if (l.beDung) { tru.tk.beDung++; beThu = true; if (san3d) san3d.thu("be", true); }
       if (l.daChon != null) l.tTru = Math.min(l.tTru, bayGio() + chTran.tuaKhiDaBamGiay * 1000);
@@ -717,7 +736,7 @@
 
     // KC_06B2: máy chủ trả kết quả (chon = lựa chọn của bé, null = lật bài). Cập nhật trình độ, bung / tan tụ lực, chốt lượt.
     function nhanDapAn(kq, tl, chon) {
-      if (chon != null && !kq.loi) { bo.ghiKetQua(hs, cauNay, kq.dung); luu(); }
+      if ((chon != null || bo.td) && !kq.loi) { bo.ghiKetQua(hs, cauNay, kq.dung); luu(); } // KC_08D: hết giờ (lật bài) máy chủ tính là sai
       const phongThu = T.luot().tanCong === "quai";
       const k = T.ganDapAn(kq.dapAnDung, kq.loiGiai);
       if (tl) { if (kq.dung) tl.bung(); else tl.tan(); }
@@ -966,7 +985,8 @@
         if (!$("nutRutLui").dataset.gan) $("nutRutLui").addEventListener("click", () => { clearTimeout(henTiep); baoBanDo({ loai: "dt-tran-dong", hpBe: T ? T.be().hp : undefined }); });
         $("nutVeBanDo").addEventListener("click", () => baoBanDo({ loai: "dt-tran-dong", hpBe: T ? T.be().hp : undefined }));
       }
-      if (!hs || hs.lop !== chon.lop) hs = TD.taoHoSo(chon.lop, chTD);
+      if (KHO) { hs = await hoSoTd(chon.lop); bo = CTD.taoBoChon(hs, NG); } // KC_08D
+      else if (!hs || hs.lop !== chon.lop) hs = TD.taoHoSo(chon.lop, chTD);
       const m = /#quai=(\w+)/.exec(location.hash); if (!NHUNG && m && chTran.quai.loai[m[1]]) chon.quai = m[1];
       dungHopChon();
       $("nutChonTran").addEventListener("click", () => moChon(true));
@@ -1025,7 +1045,7 @@
       ve(); n.classList.remove("an");
     }
 
-    window.__dtTran = { tran: () => T, cau: () => cauNay, san: () => san3d, soDuDoan: () => soDuDoan }; // cho kịch bản thử Chrome biết trạng thái (KC_06B3: số lượt trụ hiện theo dự đoán)
+    window.__dtTran = { tran: () => T, cau: () => cauNay, san: () => san3d, soDuDoan: () => soDuDoan, hoSo: () => hs }; // KC_08D: hoSo cho kịch bản thử // cho kịch bản thử Chrome biết trạng thái (KC_06B3: số lượt trụ hiện theo dự đoán)
 
     const nap = u => fetch(u, { cache: "no-cache" }).then(r => r.json()).catch(() => null);
     const napJs = u => new Promise(x => { const sc = document.createElement("script"); sc.src = u; sc.onload = sc.onerror = () => x(); document.head.appendChild(sc); });

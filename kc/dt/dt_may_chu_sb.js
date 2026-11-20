@@ -198,12 +198,14 @@
       },
       // KC_06B2: câu kho cho TRẬN QUÁI / lượt trụ tấn công, MÁY CHỦ CHẤM (trang trận dt/thu_tran_dau.html nhờ bản đồ gọi hộ, dt/dt_nguon_kho.js):
       //   kho("o") -> { ok, o: [{ mon, chuDe, lop, muc, n }] }        ô câu để chọn độ khó (RPC kc_cau_hoi_o)
+      //   kho("hoSo") -> { ok, ch, lop, nguon, mon: { <môn>: st } }   trình độ máy chủ (RPC kc_td_ho_so, KC_08D)
       //   kho("lo", { mon, lop, muc, chuDe?, n, boQua, nhanh? }) -> { ok, cau: [câu có id, KHÔNG có đáp án] }   (kc_cau_hoi_lo, KC_06A;
       //        nhanh: kc_cau_hoi_lo_tran kèm muoi + k để chấm nhanh trên máy, 12/11/2026)
       //   kho("cham", { maLuot, id, chon, giay, gapO }) -> { ok, dung, dapAnDung, loiGiai }   (kc_cau_hoi_cham; gửi lại cùng maLuot không tính 2 lần)
       async kho(ham, ts) {
         const h = ts || {}, so = (v, d) => Number.isInteger(v) ? v : d;
         if (ham === "o") return goiKho("kc_cau_hoi_o", {});
+        if (ham === "hoSo") return goiKho("kc_td_ho_so", {}); // KC_08D: trình độ máy chủ mọi môn (chọn câu trận bằng KC_TRINH_DO)
         if (ham === "lo") {
           const ts = { p_mon: String(h.mon || "toan"), p_lop: so(h.lop, null), p_muc: h.muc || null, p_n: so(h.n, 20), p_bo_qua: dsMa(h.boQua), p_chu_de: h.chuDe || null };
           if (h.nhanh) { const kq = await goiKho("kc_cau_hoi_lo_tran", ts); if (kq.ok) return kq; } // 12/11: lô kèm mã chấm nhanh; chưa chạy SQL mới -> lô cũ
@@ -290,3 +292,4 @@
 // 17/11/2026 - BƯỚC: KC_06G (tuongTu: khung 🔎 Câu giống trong kho ở màn soạn câu; cần SQL KC_06G)
 // 17/11/2026 - BƯỚC: KC_06F2 (dsThongBao: danh sách 💡 bóng điện; cần SQL KC_06F2)
 // 20/11/2026 - BƯỚC: TC_D34B (ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc: ôn sau trận; SQL TC_D34A đã chạy)
+// 20/11/2026 - BƯỚC: KC_08D (kho("hoSo"): RPC kc_td_ho_so, trình độ máy chủ cho trận; SQL kc08d)

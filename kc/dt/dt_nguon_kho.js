@@ -21,7 +21,7 @@
 //        cham(cau, chon, giay, { khiCho(giay), dung(), khiLoiGiai(loiGiai) }) -> Promise<{ dung, dapAnDung, loiGiai, nhanh? }> }
 //   khoGia(nguonSinh, { soMoiO, chamMs, nhanh }) -> { goi(ham, ts) } kho GIẢ dựng từ bộ sinh câu (trang thử, máy chủ giả, kiểm thử):
 //        cùng khuôn kết quả với RPC thật, giữ đáp án trong bộ nhớ.
-// BƯỚC: KC_06B2 - NGÀY: 11/11/2026
+// BƯỚC: KC_06B2 - NGÀY: 11/11/2026; KC_08D 20/11/2026 (câu dự phòng theo lớp đã mở của bộ chọn trình độ chung)
 // ================================================================
 (function (goc) {
   "use strict";
@@ -154,7 +154,7 @@
         if (x && x.cau) return x;
         await cho();
       }
-      const TD = goc.KC_DT_TRINH_DO, lop = TD ? TD.lopDuocHoi(hs, bo.ch) : (hs && hs.lop) || 1;
+      const TD = goc.KC_DT_TRINH_DO, lop = bo.lopDuocHoi ? bo.lopDuocHoi(hs, mon) : TD ? TD.lopDuocHoi(hs, bo.ch) : (hs && hs.lop) || 1; // KC_08D: bộ chọn theo trình độ chung
       const c = await cauDuPhong(mon, lop);
       return c ? { cau: c, p: null, doKho: null, onTap: false, duPhong: true } : null;
     }
