@@ -340,7 +340,8 @@
         if (ds.children.length) kq.appendChild(ds);
         const kGio = (k.khoan || []).find(x => x && x.ma === "thoi_gian");
         if (kGio && kGio.giayTong && kGio.giay >= kGio.giayTong && !k.khongPhaiBe) kq.appendChild(tao("p", "ttGhiChu", "⏰ Hết giờ nên lần này không có 💎. Lần sau trả lời nhanh hơn nhé!"));
-        if (k.khongPhaiBe) kq.appendChild(tao("p", "ttGhiChu", "Tài khoản người lớn ôn thử, không nhận 💎."));
+        // người dùng 20/11/2026 15:53: mọi tài khoản là người chơi (máy chủ tc_d34b5 không còn chặn); máy chủ cũ còn chặn thì báo nhẹ
+        if (k.khongPhaiBe) kq.appendChild(tao("p", "ttGhiChu", "Lần này chưa cộng 💎 vào túi."));
         else if (k.vang > 0) kq.appendChild(tao("p", "ttGhiChu", "Hôm nay con đã nhận đủ 💎, phần thưởng đổi thành 🪙 " + k.vang + " xu vàng."));
         else if (k.catTran || (k.tongKc > 0 && k.kc < k.tongKc)) kq.appendChild(tao("p", "ttGhiChu", "Hôm nay con đã nhận đủ 💎 rồi. Mai mình nhận tiếp nhé!"));
         if (ty < 0.5) kq.appendChild(tao("p", "ttDongVien", DONG_VIEN[Math.floor(Math.random() * DONG_VIEN.length)]));
