@@ -43,6 +43,7 @@ import { taoThanhDuoi } from "./dt3d_thanh_duoi.js";
 import { taoTruBanDo } from "./dt3d_tru.js"; // TC_D06C2g: trụ phòng thủ (05/11/2026)
 import { taoNongDan } from "./dt3d_nong_dan.js"; // TC_D06C5: nút tìm nông dân rảnh + báo nông dân bị tấn công
 import { taoChay } from "./dt3d_chay.js"; // TC_D06C7e: công trình bị đánh cháy nhỏ / cháy to
+import { ganOnSauTran } from "./dt3d_on_sau_tran.js"; // TC_D34B: ôn bắt buộc sau trận
 
 const NV = window.KC_NV, LANG = window.KC_DT_LANG, BD = window.KC_DT_BAN_DO;
 const $ = id => document.getElementById(id);
@@ -176,6 +177,8 @@ if (VUNG) {
   } catch (e) { console.warn("Chưa dựng được nút nông dân", e); }
   // KC_06F1: tin chưa đọc của bé (câu bị trả lại đã được thay câu khác ở công trình); không chặn việc vào làng
   if (GAME) setTimeout(() => moThongBao({ mayChu: vung.mayChu }).catch(() => null), 1200);
+  // TC_D34B: hết trận có câu hỏi -> màn "Ôn lại trận vừa rồi" (bắt buộc); lượt ôn còn chờ hiện lại khi vào thung lũng
+  setTimeout(() => { try { const on = ganOnSauTran({ mayChu: vung.mayChu, be, baoGoiY }); if (window.__dt3d && on) window.__dt3d.onSauTran = on; } catch (e) { console.warn("Chưa gắn được màn ôn", e); } }, 900);
   // KC_06F2: 💡 bóng điện ở thanh trên (Cô Cú chấm ngầm xong / cô chú duyệt / câu bị trả lại); máy chủ chưa có hàm thì không hiện
   if (GAME) setTimeout(() => {
     try {
@@ -428,3 +431,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)
 // 11/11/2026 - BƯỚC: KC_06B2 (cầu nối dt-kho-hoi cho trang trận)
 // 12/11/2026 - BƯỚC: KC_06B2 (tải sẵn cảnh trận khi mở game: tướng của bé + động tác, lưu trong trình duyệt)
+// 20/11/2026 - BƯỚC: TC_D34B (ôn bắt buộc sau trận: dt3d_on_sau_tran.js + khối câu hỏi chung kc/tt_tri_thuc/)
