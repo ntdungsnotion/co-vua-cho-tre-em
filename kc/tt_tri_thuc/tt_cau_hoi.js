@@ -127,9 +127,9 @@
         if (dh.kcToiDa == null) kcO.hidden = true;
         else {
           const sai = daTraLoi.filter(x => x && !x.dung && !x.hoiLai).length;
-          // người dùng 20/11/2026 13:21: trước t0 không trừ; sau t0 cứ (a − t0) / tối đa giây trừ 1; hết giờ = 0 💎; mỗi câu sai trừ thêm
+          // người dùng 20/11/2026 13:21: trước t0 không trừ; t0 → a chia (tối đa) khoảng, vào khoảng nào trừ 1; hết giờ = 0 💎; mỗi câu sai trừ thêm
           const u = giayDung(), qua = u - dh.gioi;
-          const truGio = u >= dh.tong ? Infinity : qua > 0 ? Math.floor(qua * dh.kcToiDa / Math.max(1, dh.tong - dh.gioi)) : 0;
+          const truGio = u >= dh.tong ? Infinity : qua > 0 ? Math.ceil(qua * dh.kcToiDa / Math.max(1, dh.tong - dh.gioi)) : 0;
           kcO.querySelector("b").textContent = String(Math.max(0, dh.kcToiDa - dh.tru * sai - truGio));
         }
         if (con <= 0 && !dhBaoHet && !goc0.classList.contains("ketQua")) { dhBaoHet = true; o.dataset.het = "1"; coCu("⏰ Hết giờ rồi! Lần này không có 💎, con ôn tiếp cho nhớ nhé"); tieng.tram(); }
