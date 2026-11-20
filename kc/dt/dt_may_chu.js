@@ -1245,7 +1245,7 @@
         const goc2 = l.cau.map((c, i) => ({ c, t: l.traLoi[i] })).filter(x => !x.c.hoiLai), n = goc2.length, d = goc2.filter(x => x.t.dung).length;
         // TC_D34B sửa (như SQL tc_d34b): tối đa 3 / câu − 3 × sai; 0 → t0 không trừ, t0 → a vào khoảng (a − t0) / tối đa nào trừ 1, sau a = 0
         const ty = n ? Math.floor(100 * d / n) : 0, gio = ttGio(l), T = gio.a, G = gio.t0, dungGiay = l.traLoi.reduce((a, t) => a + t.giay, 0);
-        const toiDa = 3 * n, tru = 3 * (n - d), truocGio = Math.max(0, toiDa - tru);
+        const toiDa = 3 * n, tru = window.KC_GIO_BAI.truSai(toiDa, n) * (n - d), truocGio = Math.max(0, toiDa - tru);
         const tongKc = window.KC_GIO_BAI.kcSauGio(truocGio, toiDa, dungGiay, G, T);
         l.trangThai = "xong";
         l.ketQua = { soCauGoc: n, dungGoc: d, tyLe: ty, khoan: [{ ma: "toi_da", kc: toiDa }, { ma: "sai", so: n - d, kc: -Math.min(tru, toiDa) },
@@ -1277,7 +1277,7 @@
       return { id: l.id, cheDo: l.cheDo, trangThai: l.trangThai, tong: l.cau.length, viTri: l.traLoi.length, soGoc: l.cau.filter(c => !c.hoiLai).length,
         daTraLoi: l.traLoi.map((t, i) => ({ dung: t.dung, hoiLai: l.cau[i].hoiLai })), cau: l.trangThai === "dang" ? ttCau(l) : null, ketQua: l.ketQua,
         giayTong: ttGio(l).a, giayGioi: ttGio(l).t0, giayDaDung: Math.round(l.traLoi.reduce((a, t) => a + t.giay, 0) * 10) / 10,
-        kcToiDa: 3 * l.cau.filter(c => !c.hoiLai).length, truMoiSai: 3 };
+        kcToiDa: 3 * l.cau.filter(c => !c.hoiLai).length, truMoiSai: window.KC_GIO_BAI.truSai(3 * l.cau.filter(c => !c.hoiLai).length, l.cau.filter(c => !c.hoiLai).length) };
     }
     return api;
   }
