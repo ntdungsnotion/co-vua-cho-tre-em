@@ -79,6 +79,7 @@
 .ttDa:disabled { cursor: default; }
 @keyframes ttRung { 25% { transform: translateX(-6px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
 .ttPhan:empty { display: none; }
+.ttPhan { text-align: center; }
 .ttPhan p { margin: 0 0 4px; }
 .ttDung { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.4rem; color: #9ff5c4; }
 .ttSaiChu { font-size: 1.15rem; } .ttSaiChu b { color: #9ff5c4; }
@@ -124,6 +125,18 @@
 .ttGhiChu { margin: 0; color: #ffe1a6; font-size: 1rem; }
 .ttDongVien { margin: 0; padding: 10px 14px; border-radius: 14px; background: rgba(255,246,220,.1); font-size: 1.05rem; }
 .ttKq .ttNut { margin-top: 8px; }
+/* màn nhận: 📖 Xem lại đáp án + Nhận (TC_D34B sửa 12:4x) */
+.ttHangNut { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.ttNutPhu { background: rgba(255,246,220,.12); color: var(--tt-sang); border: 2px solid rgba(255,194,75,.6); box-shadow: none; }
+.ttNutPhu:active:not(:disabled) { box-shadow: none; }
+.ttXemLai { list-style: none; margin: 6px 0 0; padding: 0; width: 100%; max-width: 680px; text-align: left; display: flex; flex-direction: column; gap: 8px; }
+.ttXemLai[hidden] { display: none; }
+.ttXemLai li { padding: 10px 14px; border-radius: 14px; background: rgba(255,246,220,.07); border-left: 5px solid var(--tt-xanh); }
+.ttXemLai li.sai { border-left-color: #e9a23b; }
+.ttXlCau { display: flex; gap: 8px; align-items: baseline; font-size: 1.08rem; }
+.ttXlDau { font-weight: 800; color: var(--tt-xanh); } .ttXemLai li.sai .ttXlDau { color: #ffb38a; }
+.ttXlDap, .ttXlGiai { margin: 4px 0 0 22px; color: var(--tt-nhat); }
+.ttXlDap b { color: #9ff5c4; } .ttXlDap s { color: #ffb38a; }
 .ttGiay { position: fixed; top: -12px; z-index: 5; width: 9px; height: 14px; border-radius: 2px; pointer-events: none; animation: ttGiay 2.6s ease-in forwards; }
 @keyframes ttGiay { to { transform: translateY(105vh) rotate(var(--xoay)); opacity: .7; } }
 /* điện thoại hẹp: đáp án dài xếp dọc */

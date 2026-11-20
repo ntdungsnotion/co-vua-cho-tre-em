@@ -38,7 +38,7 @@ export function ganOnSauTran({ mayChu, be, baoGoiY, goc = "" }) {
     let kq = null;
     try {
       kq = await window.KC_TT.moLuot({
-        luot, tieuDe: "📚 Ôn lại trận vừa rồi", phuDe: "Trả lời xong mới về thung lũng nhé", batBuoc: true, nutKet: "Về thung lũng ▶",
+        luot, tieuDe: "📚 Ôn lại trận vừa rồi", phuDe: "Trả lời xong mới về thung lũng nhé", batBuoc: true, nutKet: "🎁 Nhận thưởng",
         goc, lop: Number.isFinite(+be.lop) ? +be.lop : null, hoSo: be.hoSo || null,
         goi: { traLoi: (id, viTri, chon, giay) => mayChu.ttTraLoi(id, viTri, chon, giay), ketThuc: id => mayChu.ttKetThuc(id) }
       });

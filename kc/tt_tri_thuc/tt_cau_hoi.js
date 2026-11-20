@@ -6,7 +6,7 @@
               Máy chủ giữ lượt + chấm (RPC kc_tt_tra_loi / kc_tt_ket_thuc, TC_D34A): trang chỉ
               hiện câu đang mở, gửi đáp án bé chọn, nhận đúng / sai + câu kế.
               Màn phủ toàn trang. Điện thoại 1 cột; máy tính: cột trái (môn + nhân vật bé cổ vũ),
-              khung câu giữa ≤ 760 px, đáp án lưới 2 × 2, phím 1-6 chọn, Enter trả lời / câu tiếp.
+              khung câu giữa ≤ 760 px, đáp án lưới 2 × 2, phím 1-6 trả lời ngay (chạm là chấm, tự sang câu).
    DÙNG:      KC_TT.moLuot({
                 luot,                    // kc_tt_luot_json của máy chủ: { id, tong, viTri, daTraLoi, cau, ketQua }
                 goi: { traLoi(luotId, viTri, chon, giay), ketThuc(luotId) },   // trả { ok, ... } như dt_may_chu_sb.js
@@ -72,10 +72,12 @@
     return new Promise(xong => {
       // trạng thái lượt
       let daTraLoi = (luot.daTraLoi || []).map(x => ({ dung: !!x.dung, hoiLai: !!x.hoiLai }));
-      // TC_D34B (người dùng 20/11/2026): ĐỒNG HỒ đếm ngược (giayTong = giây / câu × số câu gốc) chỉ chạy lúc câu đang mở;
-      // 💎 còn nhận = (tối đa − trừ × số câu gốc sai) × giây còn / giây tổng (máy chủ tính lại khi kết thúc). Hết giờ: 0 💎, vẫn ôn tiếp.
-      const taoDh = l => (l && l.giayTong > 0 ? { tong: +l.giayTong, daDung: +l.giayDaDung || 0, kcToiDa: Number.isFinite(+l.kcToiDa) && l.kcToiDa != null ? +l.kcToiDa : null, tru: +l.truMoiSai || 0 } : null);
+      // TC_D34B (người dùng 20/11/2026): ĐỒNG HỒ đếm ngược (giayTong = cộng giây từng câu theo số chữ) chỉ chạy lúc câu đang mở.
+      // giayGioi = vùng bé giỏi: trả lời trong vùng này không bị trừ 💎; quá vùng thì trừ đều tới hết giờ = 0 💎 (máy chủ tính lại khi kết thúc).
+      // 💎 còn nhận = tối đa − trừ × số câu gốc sai − phần trừ theo giờ. Hết giờ: 0 💎, vẫn ôn tiếp.
+      const taoDh = l => (l && l.giayTong > 0 ? { tong: +l.giayTong, gioi: Math.max(0, Math.min(+l.giayGioi || 0, +l.giayTong - 1)), daDung: +l.giayDaDung || 0, kcToiDa: Number.isFinite(+l.kcToiDa) && l.kcToiDa != null ? +l.kcToiDa : null, tru: +l.truMoiSai || 0 } : null);
       let dh = taoDh(luot), dhChay = false, dhHen = 0, dhBaoHet = false;
+      const lichSu = []; // câu đã trả lời trong lần mở màn này (xem lại đáp án + lời giải ở màn nhận thưởng)
       let tong = luot.tong, viTri = luot.viTri, cau = luot.cau, chon = -1, luc0 = 0, dangGui = false, daCham = null, dong = false;
 
       const goc0 = tao("div", "ttMan"); goc0.setAttribute("role", "dialog"); goc0.setAttribute("aria-modal", "true"); goc0.setAttribute("aria-label", t.tieuDe);
@@ -125,7 +127,10 @@
         if (dh.kcToiDa == null) kcO.hidden = true;
         else {
           const sai = daTraLoi.filter(x => x && !x.dung && !x.hoiLai).length;
-          kcO.querySelector("b").textContent = String(Math.floor(Math.max(0, dh.kcToiDa - dh.tru * sai) * ty));
+          // người dùng 20/11/2026: trong vùng giỏi không trừ; quá vùng giỏi thì trừ đều, hết giờ = 0 💎; mỗi câu sai trừ thêm
+          const qua = Math.min(giayDung(), dh.tong) - dh.gioi;
+          const truGio = qua > 0 ? Math.ceil(qua * dh.kcToiDa / Math.max(1, dh.tong - dh.gioi)) : 0;
+          kcO.querySelector("b").textContent = String(Math.max(0, dh.kcToiDa - dh.tru * sai - truGio));
         }
         if (con <= 0 && !dhBaoHet && !goc0.classList.contains("ketQua")) { dhBaoHet = true; o.dataset.het = "1"; coCu("⏰ Hết giờ rồi! Lần này không có 💎, con ôn tiếp cho nhớ nhé"); tieng.tram(); }
       }
@@ -183,9 +188,6 @@
         });
         s.appendChild(ds);
         const ph = tao("div", "ttPhan"); ph.setAttribute("aria-live", "polite"); s.appendChild(ph);
-        const nut = tao("button", "ttNut ttTraLoi", "Trả lời"); nut.type = "button"; nut.disabled = true;
-        nut.addEventListener("click", guiDa);
-        s.appendChild(nut);
         luc0 = performance.now();
         chayDh(true);
         if (/^doc:en:/.test(cau.amThanh || "")) setTimeout(() => docTo(cau, t.lop), 250);
@@ -195,15 +197,14 @@
 
       function chonDa(i) {
         if (daCham || dangGui) return;
-        chon = i;
+        chon = i; // người dùng 20/11/2026: chạm đáp án là chấm luôn (không có nút Trả lời)
         goc0.querySelectorAll(".ttDa").forEach(b => b.classList.toggle("chon", Number(b.dataset.i) === i));
-        const n = $(".ttTraLoi"); if (n) n.disabled = false;
+        guiDa();
       }
 
       async function guiDa() {
         if (daCham || dangGui || chon < 0) return;
         dangGui = true;
-        const nut = $(".ttTraLoi"); nut.disabled = true;
         const bChon = goc0.querySelector('.ttDa[data-i="' + chon + '"]'); if (bChon) bChon.classList.add("cho");
         goc0.querySelectorAll(".ttDa").forEach(b => { b.disabled = true; });
         const giay = Math.round((performance.now() - luc0) / 100) / 10, tBat = performance.now();
@@ -229,11 +230,11 @@
         const ph = $(".ttPhan"); ph.innerHTML = "";
         const p = tao("p", "ttLoi", ma === "dang_nhap" ? "Con đăng nhập lại rồi vào lại nhé. Bài ôn vẫn chờ con." : "Mạng đang chập chờn. Con bấm Thử lại nhé, bài ôn vẫn giữ nguyên.");
         ph.appendChild(p);
-        const nut = $(".ttTraLoi");
-        if (ma === "dang_nhap") { chon = -1; nut.textContent = "Đóng"; nut.disabled = false; nut.onclick = () => dongMan("loi", null); return; }
+        const nut = tao("button", "ttNut", ma === "dang_nhap" ? "Đóng" : "Thử lại"); nut.type = "button"; ph.appendChild(nut);
+        if (ma === "dang_nhap") { chon = -1; nut.addEventListener("click", () => dongMan("loi", null)); return; }
+        const chon0 = chon;
+        nut.addEventListener("click", () => { ph.innerHTML = ""; chon = chon0; guiDa(); }, { once: true });
         goc0.querySelectorAll(".ttDa").forEach(b => { b.disabled = false; });
-        nut.textContent = "Thử lại"; nut.disabled = false;
-        luc0 = performance.now(); chayDh(true);
         coCu("Mạng đang chập chờn, con đợi chút nhé");
       }
 
@@ -260,28 +261,24 @@
           if (i !== kq.dapAnDung && i !== chon) b.classList.add("mo");
         });
         const ph = $(".ttPhan"); ph.innerHTML = "";
+        const dap = cau.dapAn && cau.dapAn[kq.dapAnDung];
+        // người dùng 20/11/2026: chỉ báo đúng / sai ngắn ở cuối màn rồi tự sang câu; lời giải xem lại ở màn nhận thưởng
+        lichSu.push({ viTri, noiDung: cau.noiDung || "", hinhChu: cau.hinhChu || "", hoiLai: !!cau.hoiLai, dapAn: (cau.dapAn || []).map(String), chon, dapAnDung: kq.dapAnDung, dung, loiGiai: kq.loiGiai || "" });
         if (dung) {
-          ph.appendChild(tao("p", "ttDung", ["🎉 Đúng rồi!", "⭐ Giỏi quá!", "🎉 Chính xác!"][viTri % 3]));
+          ph.appendChild(tao("p", "ttDung", ["✓ Đúng rồi!", "⭐ Giỏi quá!", "✓ Chính xác!"][viTri % 3]));
           const b = goc0.querySelector('.ttDa[data-i="' + kq.dapAnDung + '"]'); if (b) phaoSao(b);
           tieng.ting(); tuThe = "vay"; coCu("Tuyệt vời!");
         } else {
-          const dap = cau.dapAn && cau.dapAn[kq.dapAnDung];
-          const p = tao("p", "ttSaiChu"); p.append("Đáp án là ", tao("b", "", dap != null ? String(dap) : "…"), ", nhớ nhé!");
+          const p = tao("p", "ttSaiChu"); p.append("✗ Đáp án: ", tao("b", "", dap != null ? String(dap) : "…"));
           ph.appendChild(p);
           tieng.tram(); coCu(kq.hoiLai ? "Lát nữa Cô Cú hỏi lại để con nhớ nhé" : "Không sao, mình nhớ lần sau nhé");
         }
-        if (kq.loiGiai) ph.appendChild(tao("p", "ttLoiGiai", "💡 " + kq.loiGiai));
         veCham();
-        const nut = $(".ttTraLoi");
-        nut.textContent = kq.xong ? "Xem kết quả ▶" : "Câu tiếp ▶"; nut.disabled = false; nut.classList.add("tiep");
-        nut.onclick = null; nut.removeEventListener("click", guiDa);
-        nut.addEventListener("click", tiep, { once: true });
-        if (goc.matchMedia && goc.matchMedia("(pointer: fine)").matches) nut.focus({ preventScroll: true });
-        nut.scrollIntoView && nut.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        setTimeout(tiep, dung ? 700 : 1300);
       }
 
       function tiep() {
-        const kq = daCham; if (!kq) return;
+        const kq = daCham; if (!kq || dong) return;
         viTri = Number.isInteger(kq.viTri) ? kq.viTri : viTri + 1;
         if (kq.xong || !kq.cau) { ketThuc(); return; }
         cau = kq.cau; veCau();
@@ -347,9 +344,16 @@
         else if (k.vang > 0) kq.appendChild(tao("p", "ttGhiChu", "Hôm nay con đã nhận đủ 💎, phần thưởng đổi thành 🪙 " + k.vang + " xu vàng."));
         else if (k.catTran || (k.tongKc > 0 && k.kc < k.tongKc)) kq.appendChild(tao("p", "ttGhiChu", "Hôm nay con đã nhận đủ 💎 rồi. Mai mình nhận tiếp nhé!"));
         if (ty < 0.5) kq.appendChild(tao("p", "ttDongVien", DONG_VIEN[Math.floor(Math.random() * DONG_VIEN.length)]));
+        // người dùng 20/11/2026: nút 📖 Xem lại đáp án (muốn thì xem) + nút nhận
+        const hang = tao("div", "ttHangNut");
         const nut = tao("button", "ttNut tiep", t.nutKet); nut.type = "button";
         nut.addEventListener("click", () => dongMan("xong", k));
-        kq.appendChild(nut);
+        if (lichSu.length) {
+          const xem = tao("button", "ttNut ttNutPhu", "📖 Xem lại đáp án"); xem.type = "button"; xem.setAttribute("aria-expanded", "false");
+          const bang = veXemLai(); bang.hidden = true;
+          xem.addEventListener("click", () => { bang.hidden = !bang.hidden; xem.setAttribute("aria-expanded", String(!bang.hidden)); xem.textContent = bang.hidden ? "📖 Xem lại đáp án" : "📖 Ẩn đáp án"; if (!bang.hidden) bang.scrollIntoView({ block: "start", behavior: "smooth" }); });
+          hang.appendChild(xem); hang.appendChild(nut); kq.appendChild(hang); kq.appendChild(bang);
+        } else { hang.appendChild(nut); kq.appendChild(hang); }
         s.appendChild(kq);
         coCu(ty >= 0.8 ? "Xuất sắc! Con nhớ bài rất tốt!" : ty >= 0.5 ? "Giỏi lắm! Ôn thêm là nhớ hết!" : "Cô Cú tin con sẽ nhớ hơn!");
         tuThe = "vay";
@@ -371,6 +375,22 @@
         if (goc.matchMedia && goc.matchMedia("(pointer: fine)").matches) setTimeout(() => nut.focus({ preventScroll: true }), 700);
       }
 
+      function veXemLai() {
+        const bang = tao("ol", "ttXemLai");
+        lichSu.forEach((x, i) => {
+          const li = tao("li", x.dung ? "dung" : "sai");
+          const dau = tao("div", "ttXlCau"); dau.append(tao("span", "ttXlDau", x.dung ? "✓" : "✗"), tao("b", "", (x.hoiLai ? "🔁 " : "") + x.noiDung + (x.hinhChu ? " " + x.hinhChu : "")));
+          li.appendChild(dau);
+          const tl = tao("p", "ttXlDap");
+          if (!x.dung && x.dapAn[x.chon] != null) tl.append("Con chọn: ", tao("s", "", x.dapAn[x.chon]), " · ");
+          tl.append("Đáp án: ", tao("b", "", x.dapAn[x.dapAnDung] != null ? x.dapAn[x.dapAnDung] : "…"));
+          li.appendChild(tl);
+          if (x.loiGiai) li.appendChild(tao("p", "ttXlGiai", "💡 " + x.loiGiai));
+          bang.appendChild(li);
+        });
+        return bang;
+      }
+
       function phaoGiay() {
         const mau = ["#ffc24b", "#ff8a3d", "#6fe3a0", "#7fb5ff", "#ff7aa8", "#fff6dc"];
         for (let i = 0; i < 60; i++) {
@@ -387,11 +407,6 @@
         if (goc0.classList.contains("ketQua")) { if (e.key === "Enter") { const n = goc0.querySelector(".ttKq .ttNut"); if (n && doc.activeElement !== n) { e.preventDefault(); n.click(); } } return; }
         const so = Number(e.key);
         if (Number.isInteger(so) && so >= 1 && so <= 6 && !daCham) { const b = goc0.querySelector('.ttDa[data-i="' + (so - 1) + '"]'); if (b && !b.disabled) { e.preventDefault(); chonDa(so - 1); } return; }
-        if (e.key === "Enter") {
-          const n = goc0.querySelector(".ttTraLoi"); if (!n || n.disabled) return;
-          if (doc.activeElement && doc.activeElement.classList && doc.activeElement.classList.contains("ttDa") && !daCham) { e.preventDefault(); chonDa(Number(doc.activeElement.dataset.i)); if (chon >= 0) guiDa(); return; }
-          if (doc.activeElement !== n) { e.preventDefault(); n.click(); }
-        }
         if (e.key === "Escape" && !t.batBuoc) dongMan("bo", null);
       }
       doc.addEventListener("keydown", phim, true);
@@ -416,3 +431,4 @@
 })(typeof window !== "undefined" ? window : globalThis);
 // 20/11/2026 - BƯỚC: TC_D34B (khối câu hỏi + màn kết quả dùng chung, màn ôn sau trận Đấu Trường)
 // 20/11/2026 12:xx - BƯỚC: TC_D34B sửa (người dùng): đồng hồ đếm ngược + 💎 còn nhận giảm dần, khoản Tối đa / Sai / Thời gian
+// 20/11/2026 12:4x - BƯỚC: TC_D34B sửa (người dùng): chạm đáp án là chấm, báo đúng / sai ngắn rồi tự sang câu; 📖 Xem lại đáp án ở màn nhận
