@@ -175,6 +175,7 @@
     </div>
   </div>
 
+  <script src="../chung/am_thanh.js"></script> <!-- KC_09A: âm thanh chung toàn app -->
   <script src="dt_trinh_do.js"></script>
   <script src="dt_sinh_toan.js"></script>
   <script src="dt_sinh_tieng_anh.js"></script>
@@ -204,17 +205,9 @@
       try { localStorage.setItem(KHOA, JSON.stringify({ hs, mon, theoMon })); } catch (e) { /* trình duyệt chặn lưu: vẫn chơi được */ }
     }
 
-    // Đọc to từ tiếng Anh (dạng "nghe đọc chọn từ"): giọng của trình duyệt, không tải gì thêm
-    function docTo(amThanh) {
-      const m = /^doc:en:(.+)$/.exec(amThanh || "");
-      if (!m || !window.speechSynthesis) return;
-      try {
-        speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(m[1]);
-        u.lang = "en-US"; u.rate = 0.85;
-        speechSynthesis.speak(u);
-      } catch (e) { /* máy không đọc được: vẫn có nút đọc lại */ }
-    }
+    // Đọc câu nghe (dạng "nghe đọc chọn từ"): module chung chung/am_thanh.js (KC_09A)
+    const coNghe = c => !!(c && window.KC_AM_THANH && KC_AM_THANH.coAmThanh(c));
+    function docTo(c) { if (coNghe(c)) KC_AM_THANH.docCau(c, { goc: "../" }); }
 
     // ---------- Chơi thử ----------
     function batDau(lop) {
@@ -241,8 +234,8 @@
       else hinh.textContent = c.hinhChu || "";
       hinh.className = "hinh-chu" + (/[\u{1F550}-\u{1F567}]/u.test(c.hinhChu) ? " dong-ho" : "") + (c.hinhChu || c.hinh ? "" : " an");
       $("cNoiDung").textContent = c.noiDung;
-      $("nutNghe").classList.toggle("an", !c.amThanh);
-      docTo(c.amThanh);
+      $("nutNghe").classList.toggle("an", !coNghe(c));
+      docTo(c);
       $("cDapAn").innerHTML = "";
       c.dapAn.forEach((d, i) => {
         const b = document.createElement("button");
@@ -373,7 +366,7 @@
       $("vuotLop").addEventListener("change", () => { hs.vuotLop = $("vuotLop").checked; luu(); veBang(null); });
       $("nutLai").addEventListener("click", () => batDau(+$("chonLop").value));
       $("nutTiep").addEventListener("click", cauTiep);
-      $("nutNghe").addEventListener("click", () => cauNay && docTo(cauNay.cau.amThanh));
+      $("nutNghe").addEventListener("click", () => cauNay && docTo(cauNay.cau));
       $("nutChoi").addEventListener("click", () => chonThe(false));
       $("nutXem").addEventListener("click", () => chonThe(true));
       $("xMon").addEventListener("change", napNhom);
@@ -395,3 +388,4 @@
 </body>
 </html>
 <!-- 29/10/2026 - BƯỚC: TC_D04A, TC_D04B -->
+<!-- 21/11/2026 - BƯỚC: KC_09A (đọc câu nghe qua chung/am_thanh.js) -->
