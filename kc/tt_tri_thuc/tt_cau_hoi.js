@@ -27,43 +27,22 @@
   const soVi = x => String(Math.round(x * 10) / 10).replace(".", ",");
   const DONG_VIEN = ["Con đã cố gắng rồi! Lần sau mình nhớ thêm nhé 🦉", "Sai là để nhớ lâu hơn. Cô Cú tin con! 🦉", "Từng chút một, con giỏi lên mỗi ngày 🦉"];
 
-  // ---------------- Âm thanh (WebAudio, không cần tệp) ----------------
-  let am = null;
-  function amThanh() {
-    if (am) return am;
-    try { const AC = goc.AudioContext || goc.webkitAudioContext; am = AC ? new AC() : null; } catch (e) { am = null; }
-    return am;
-  }
-  function not(tan, luc, dai, kieu, to) {
-    const a = amThanh(); if (!a) return;
-    try {
-      if (a.state === "suspended") a.resume();
-      const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + (luc || 0);
-      o.type = kieu || "sine"; o.frequency.setValueAtTime(tan, t);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(to || 0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dai);
-      o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dai + 0.05);
-    } catch (e) { /* không phát được: im lặng */ }
-  }
+  // ---------------- Âm thanh: module chung chung/am_thanh.js (KC_09A) ----------------
+  // Tiếng đúng / sai / thưởng + đọc câu dùng chung toàn app; thiếu module (trang cũ chưa nạp) thì im lặng.
+  const AM = () => goc.KC_AM_THANH || null;
   const tieng = {
-    ting() { not(1318, 0, 0.25, "sine", 0.2); not(1760, 0.08, 0.35, "sine", 0.16); },
-    tram() { not(220, 0, 0.35, "triangle", 0.14); not(185, 0.12, 0.4, "triangle", 0.1); },
-    ruong() { [523, 659, 784, 1047].forEach((f, i) => not(f, i * 0.11, 0.3, "triangle", 0.16)); },
-    kc(i) { not(1568 + (i % 4) * 120, 0, 0.12, "sine", 0.08); },
-    keng() { not(784, 0, 0.5, "square", 0.05); not(1175, 0.06, 0.6, "sine", 0.12); }
+    ting() { const a = AM(); if (a) a.tieng.dung(); },
+    tram() { const a = AM(); if (a) a.tieng.sai(); },
+    ruong() { const a = AM(); if (a) a.tieng.thuong(); },
+    kc(i) { const a = AM(); if (a) a.tieng.kc(i); },
+    keng() { const a = AM(); if (a) a.tieng.keng(); }
   };
 
   // ---------------- Đọc câu ----------------
-  function docTo(cau, lop) {
-    const ss = goc.speechSynthesis; if (!ss || !cau) return;
-    try {
-      ss.cancel();
-      const m = /^doc:en:(.+)$/.exec(cau.amThanh || "");
-      const u = new goc.SpeechSynthesisUtterance(m ? m[1] : cau.noiDung);
-      u.lang = m ? "en-US" : "vi-VN"; u.rate = m ? 0.85 : 0.95;
-      ss.speak(u);
-    } catch (e) { /* trình duyệt không đọc được */ }
-  }
-  const coDoc = (cau, lop) => !!cau && (/^doc:en:/.test(cau.amThanh || "") || (Number.isFinite(lop) && lop <= 3));
+  function docTo(cau, lop, duongGoc) { const a = AM(); if (a && cau) a.docCau(cau, { lop, goc: duongGoc || "" }); }
+  const coDoc = (cau, lop) => { const a = AM(); return !!a && a.coDoc(cau, lop); };
+  const coAmThanh = cau => { const a = AM(); return !!a && a.coAmThanh(cau); };
+  const dungDoc = () => { const a = AM(); if (a) a.dung(); };
 
   // ---------------- Màn ----------------
   function moLuot(tc) {
@@ -166,7 +145,7 @@
         hang.appendChild(nd);
         if (coDoc(cau, t.lop)) {
           const n = tao("button", "ttNghe", "🔊"); n.type = "button"; n.setAttribute("aria-label", "Nghe câu hỏi");
-          n.addEventListener("click", () => docTo(cau, t.lop)); hang.appendChild(n);
+          n.addEventListener("click", () => docTo(cau, t.lop, t.goc)); hang.appendChild(n);
         }
         khung.appendChild(hang);
         if (cau.hinh || cau.hinhChu) {
@@ -190,7 +169,7 @@
         const ph = tao("div", "ttPhan"); ph.setAttribute("aria-live", "polite"); s.appendChild(ph);
         luc0 = performance.now();
         chayDh(true);
-        if (/^doc:en:/.test(cau.amThanh || "")) setTimeout(() => docTo(cau, t.lop), 250);
+        if (coAmThanh(cau)) setTimeout(() => { if (!dong) docTo(cau, t.lop, t.goc); }, 250); // câu nghe: tự đọc
         coCu(viTri === 0 ? "Mình cùng ôn lại nhé!" : ["Con làm được mà!", "Cố lên nào!", "Đọc kỹ rồi chọn nhé!"][viTri % 3]);
         tuThe = "dung";
       }
@@ -416,7 +395,7 @@
         if (dong) return; dong = true;
         cancelAnimationFrame(raf); clearInterval(dhHen);
         doc.removeEventListener("keydown", phim, true);
-        try { goc.speechSynthesis && goc.speechSynthesis.cancel(); } catch (e) { /* bỏ qua */ }
+        dungDoc();
         goc0.classList.add("tat");
         setTimeout(() => goc0.remove(), 250);
         xong({ ketQua, dong: lyDo });
@@ -433,3 +412,4 @@
 // 20/11/2026 - BƯỚC: TC_D34B (khối câu hỏi + màn kết quả dùng chung, màn ôn sau trận Đấu Trường)
 // 20/11/2026 12:xx - BƯỚC: TC_D34B sửa (người dùng): đồng hồ đếm ngược + 💎 còn nhận giảm dần, khoản Tối đa / Sai / Thời gian
 // 20/11/2026 12:4x - BƯỚC: TC_D34B sửa (người dùng): chạm đáp án là chấm, báo đúng / sai ngắn rồi tự sang câu; 📖 Xem lại đáp án ở màn nhận
+// 21/11/2026 - BƯỚC: KC_09A: tiếng + đọc câu chuyển sang chung/am_thanh.js (chống nuốt câu, chọn giọng, câu đọc tệp / doc:vi)

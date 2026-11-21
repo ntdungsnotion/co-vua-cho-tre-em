@@ -272,6 +272,7 @@
 
   <script src="../chung/nv_ve.js"></script>
   <script src="dt_trinh_do.js"></script> <!-- trang thử dùng bộ sinh câu (không kho) -->
+  <script src="../chung/am_thanh.js"></script> <!-- KC_09A: âm thanh chung toàn app (đọc câu nghe) -->
   <script src="../chung/trinh_do.js"></script> <!-- KC_08D: lõi trình độ dùng chung (KC_TRINH_DO) -->
   <script src="dt_chon_cau_td.js"></script> <!-- KC_08D: trận kho chọn câu theo trình độ máy chủ -->
   <script src="dt_nguon_kho.js"></script> <!-- KC_06B2: câu kho chung, máy chủ chấm; bộ sinh câu chỉ nạp ở trang thử (khoiDong) -->
@@ -396,16 +397,13 @@
       return CTD.hoSo(null, lop);
     }
 
-    // Đọc to từ tiếng Anh (dạng "nghe đọc chọn từ")
-    function docTo(amThanh) {
-      const m = /^doc:en:(.+)$/.exec(amThanh || "");
-      if (!m || !window.speechSynthesis) return;
-      try {
-        speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(m[1]); u.lang = "en-US"; u.rate = 0.85;
-        const am = san3d && san3d.am; // nhạc nền nhỏ lại khi máy đọc (TC_D05B3)
-        if (am) { am.giamNhac(true); u.onend = u.onerror = () => am.giamNhac(false); }
-        speechSynthesis.speak(u);
-      } catch (e) { /* máy không đọc được */ }
+    // Đọc câu nghe (dạng "nghe đọc chọn từ"): module chung chung/am_thanh.js (KC_09A: chống nuốt câu,
+    // chọn giọng, mượn loa trang ngoài khi trận chạy trong khung, câu bị chặn đọc lại ở lần chạm kế)
+    const coNghe = c => !!(c && window.KC_AM_THANH && KC_AM_THANH.coAmThanh(c));
+    function docTo(c) {
+      if (!coNghe(c)) return;
+      const am = san3d && san3d.am; // nhạc nền nhỏ lại khi máy đọc (TC_D05B3)
+      KC_AM_THANH.docCau(c, { goc: "../", khiBatDau: () => am && am.giamNhac(true), khiXong: () => am && am.giamNhac(false) });
     }
 
     // ---------- hộp chọn trận ----------
@@ -507,8 +505,8 @@
       const hinh = $("cHinh"); hinh.textContent = c.hinhChu || "";
       hinh.classList.toggle("an", !c.hinhChu);
       $("cNoiDung").textContent = c.noiDung;
-      $("nutNghe").classList.toggle("an", !c.amThanh);
-      docTo(c.amThanh);
+      $("nutNghe").classList.toggle("an", !coNghe(c));
+      docTo(c);
       $("cDapAn").innerHTML = "";
       c.dapAn.forEach((d, i) => { const b = document.createElement("button"); b.textContent = d; b.addEventListener("click", () => beBam(i)); $("cDapAn").appendChild(b); });
       $("cKetQua").innerHTML = "";
@@ -701,8 +699,8 @@
       else hinh.textContent = c.hinhChu || "";
       hinh.classList.toggle("an", !(c.hinh || c.hinhChu));
       $("cNoiDung").textContent = c.noiDung;
-      $("nutNghe").classList.toggle("an", !c.amThanh);
-      docTo(c.amThanh);
+      $("nutNghe").classList.toggle("an", !coNghe(c));
+      docTo(c);
       $("cDapAn").innerHTML = "";
       c.dapAn.forEach((d, i) => {
         const b = document.createElement("button");
@@ -992,7 +990,7 @@
       $("nutChonTran").addEventListener("click", () => moChon(true));
       // chạm khung câu hỏi lúc lật bài: sang lượt ngay
       document.querySelector(".cau").addEventListener("click", e => { if (e.target.closest("#cDapAn")) return; if (T && !T.dangLuot() && !T.ketThuc() && henTiep) { clearTimeout(henTiep); henTiep = 0; moLuotMoi(); } });
-      $("nutNghe").addEventListener("click", () => cauNay && docTo(cauNay.amThanh));
+      $("nutNghe").addEventListener("click", () => cauNay && docTo(cauNay));
       $("nutDauLai").addEventListener("click", vaoTran);
       $("nutDoiTran").addEventListener("click", () => { $("manKet").classList.add("an"); moChon(false); });
       $("nutBoNghi").addEventListener("click", boNghi);
@@ -1067,3 +1065,4 @@
 <!-- 07/11/2026 - BƯỚC: TC_D05D (kieu "do": phòng thủ đúng đỡ trọn; "Né được!" khi né) -->
 <!-- 11/11/2026 - BƯỚC: KC_06B2 (câu kho chung, máy chủ chấm qua bản đồ; pha tụ lực; số Quản trị; trang thật không nạp bộ sinh câu) -->
 <!-- 12/11/2026 - BƯỚC: KC_06B2 (sửa: tải sân 3D ngay từ đầu, không chờ câu kho; chấm nhanh trên máy, tụ chiêu cố định toiThieuGiay rồi phát) -->
+<!-- 21/11/2026 - BƯỚC: KC_09A (đọc câu nghe qua chung/am_thanh.js: chữa câu nghe im trong trận) -->
