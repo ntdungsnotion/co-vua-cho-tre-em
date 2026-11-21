@@ -1,0 +1,87 @@
+<!doctype html>
+<!--
+  FILE: kc/dt/thu_doc_cau.html
+  CHỨC NĂNG: Trang THỬ riêng để tìm vì sao một số câu nghe không phát tiếng trên điện thoại (người dùng báo 21/11/2026,
+             câu "Nghe và chọn từ đúng": news / safe / hop / top). Bấm nút -> máy đọc một từ; mọi sự kiện (bắt đầu, xong, lỗi)
+             và danh sách giọng hiện NGAY trên màn hình để chụp gửi. Không đụng dữ liệu nào, không cần đăng nhập.
+             Hai cách đọc: (1) module chung KC_AM_THANH.docCau (cách game đang dùng), (2) gọi thẳng speechSynthesis
+             (bỏ qua module) -> so sánh, biết lỗi ở máy hay ở code.
+  BƯỚC: KC_09B2 (việc phát sinh) - NGÀY: 21/11/2026
+-->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thử đọc câu nghe</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #14204f; color: #fff; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  p { margin: 6px 0; color: #cdd6ff; font-size: 14px; }
+  .hang { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  button { font-size: 18px; padding: 12px 16px; border-radius: 12px; border: 2px solid #ffc94d; background: #1f2f78; color: #fff; }
+  button.phu { border-color: #8fa0ff; }
+  input { font-size: 18px; padding: 10px; border-radius: 10px; border: 2px solid #8fa0ff; width: 9em; }
+  pre { background: #0b1233; border-radius: 10px; padding: 10px; font-size: 13px; white-space: pre-wrap; word-break: break-word; max-height: 55vh; overflow: auto; }
+</style>
+</head>
+<body>
+<h1>🔊 Thử đọc câu nghe</h1>
+<p>Bấm một từ. Nếu im lặng, chụp cả màn hình (có phần nhật ký bên dưới) gửi lại.</p>
+<div class="hang">
+  <button data-tu="news">news</button><button data-tu="safe">safe</button><button data-tu="hop">hop</button><button data-tu="top">top</button><button data-tu="hill">hill</button>
+</div>
+<div class="hang">
+  <input id="tu" value="news" aria-label="Từ cần đọc">
+  <button id="nutModule">▶ Đọc bằng module (như game)</button>
+  <button id="nutTrucTiep" class="phu">▶ Đọc thẳng (không qua module)</button>
+  <button id="nutGiong" class="phu">📋 Liệt kê giọng</button>
+</div>
+<pre id="nhatKy">Chưa bấm gì.</pre>
+<script src="../chung/am_thanh.js"></script>
+<script>
+(function () {
+  "use strict";
+  var log = document.getElementById("nhatKy"), dong = [];
+  function ghi(t) { dong.push(((performance.now() / 1000).toFixed(2)) + "s  " + t); if (dong.length > 60) dong.shift(); log.textContent = dong.join("\n"); }
+  function the() { return document.getElementById("tu").value.trim() || "news"; }
+  ghi("Trình duyệt: " + navigator.userAgent);
+  var ss = window.speechSynthesis;
+  ghi("speechSynthesis: " + (ss ? "có" : "KHÔNG CÓ") + " · module KC_AM_THANH: " + (window.KC_AM_THANH ? "có" : "KHÔNG CÓ"));
+  function giong() {
+    if (!ss) return;
+    var v = ss.getVoices();
+    ghi("Số giọng: " + v.length + " · tiếng Anh: " + v.filter(function (g) { return /^en/i.test(g.lang); }).length + " · tiếng Việt: " + v.filter(function (g) { return /^vi/i.test(g.lang); }).length);
+    return v;
+  }
+  if (ss) { giong(); ss.addEventListener && ss.addEventListener("voiceschanged", function () { ghi("(voiceschanged)"); giong(); }); }
+  document.getElementById("nutGiong").onclick = function () {
+    var v = giong() || [];
+    ghi(v.map(function (g) { return g.name + " [" + g.lang + "]" + (g.localService ? " máy" : " mạng") + (g.default ? " mặc định" : ""); }).join("\n") || "(không có giọng nào)");
+  };
+  document.getElementById("nutModule").onclick = function () {
+    var A = window.KC_AM_THANH; if (!A) { ghi("Module không nạp được"); return; }
+    var tu = the(), t0 = performance.now();
+    var s0 = JSON.stringify(A._thongKe);
+    ghi("MODULE: docCau doc:en:" + tu + " · tiếng chung " + (A.dangBat() ? "BẬT" : "TẮT (kc_am_thanh_bat = 0)"));
+    var ok = A.docCau({ amThanh: "doc:en:" + tu }, { khiBatDau: function () { ghi("  module: BẮT ĐẦU phát (" + Math.round(performance.now() - t0) + " ms)"); }, khiXong: function () { ghi("  module: XONG"); } });
+    ghi("  docCau trả " + ok);
+    setTimeout(function () { ghi("  sau 3,5 giây: thống kê " + JSON.stringify(A._thongKe) + " (trước: " + s0 + ")"); }, 3500);
+  };
+  document.getElementById("nutTrucTiep").onclick = function () {
+    if (!ss) { ghi("Không có speechSynthesis"); return; }
+    var tu = the(), t0 = performance.now();
+    var u = new SpeechSynthesisUtterance(tu); u.lang = "en-US";
+    u.onstart = function () { ghi("  thẳng: BẮT ĐẦU (" + Math.round(performance.now() - t0) + " ms)"); };
+    u.onend = function () { ghi("  thẳng: XONG (" + Math.round(performance.now() - t0) + " ms)"); };
+    u.onerror = function (e) { ghi("  thẳng: LỖI " + (e && e.error)); };
+    ghi("THẲNG: speak('" + tu + "', en-US)");
+    try { ss.cancel(); ss.speak(u); } catch (e) { ghi("  speak ném lỗi: " + e.message); }
+    setTimeout(function () { ghi("  sau 3,5 giây: speaking=" + ss.speaking + " pending=" + ss.pending); }, 3500);
+  };
+  Array.prototype.forEach.call(document.querySelectorAll("[data-tu]"), function (b) {
+    b.onclick = function () { document.getElementById("tu").value = b.getAttribute("data-tu"); document.getElementById("nutModule").click(); };
+  });
+})();
+</script>
+</body>
+</html>
