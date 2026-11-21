@@ -15,7 +15,9 @@
        BƯỚC: TC_D05B3 (người dùng 30/10/2026: "giao việc cho agy làm thư viện âm thanh để sau này
              mình gắn bối cảnh sân khấu, hiệu ứng trong cài đặt")
        NGÀY: 30/10/2026 06:30
-       PHỤ THUỘC: dt/3d/dt3d_am_thanh.js, dt/am_thanh/thu_vien.json
+       TC_D05F (21/11/2026): bảng gắn đọc từ cài đặt âm thanh (du_lieu/cau_hinh_am_thanh.json + phần Quản trị sửa);
+                  thêm hàng nút tiếng tên chiêu (mỗi chiêu một tiếng).
+       PHỤ THUỘC: dt/3d/dt3d_am_thanh.js, dt/am_thanh/thu_vien.json, dt/du_lieu/cau_hinh_am_thanh.json
        ================================================================ -->
   <style>
     :root {
@@ -60,7 +62,9 @@
   <div class="luoi" id="dsTieng"></div>
   <h2>🔗 Gắn vào sân khấu / hiệu ứng</h2>
   <div id="dsGan"></div>
-  <h2>🎛️ Tiếng của trận (đã áp bảng gắn)</h2>
+  <h2>✨ Tiếng tên chiêu (mỗi chiêu một tiếng)</h2>
+  <div class="hang" id="dsChieu"></div>
+  <h2>🎛️ Tiếng của trận (đã áp cài đặt)</h2>
   <div class="hang" id="dsTuTao"></div>
 
   <script type="module">
@@ -99,20 +103,25 @@
         tep.forEach((_, i) => h.append(nut("▶ " + (i + 1), () => { if (!am.mau(v.ma, 0, 1, i)) setTimeout(() => am.mau(v.ma, 0, 1, i), 400); })));
         d.append(h); $("dsTieng").append(d);
       }
-      const gan = Object.entries(tv.gan);
-      $("dsGan").innerHTML = gan.length
-        ? `<table><tr><th>Chỗ dùng</th><th>Âm thanh</th><th>Kiểu</th></tr>${gan.map(([k, g]) => `<tr><td>${thoat(k)}</td><td>${thoat(typeof g === "string" ? g : g.tieng)}</td><td>${thoat(typeof g === "string" ? "nhạc" : g.kieu === "thay" ? "thay tiếng tự tạo" : "chồng lên tiếng tự tạo")}</td></tr>`).join("")}</table>`
-        : '<div class="trong">Chưa gắn gì: trận dùng tiếng tự tạo.</div>';
+    });
+    // TC_D05F: bảng gắn nằm ở cài đặt âm thanh (du_lieu/cau_hinh_am_thanh.json + Quản trị › Đấu Trường › Thông số › 🔊 Âm thanh)
+    am.cauHinh().then(ch => {
+      const nhac = Object.entries(ch.nhac || {}).map(([k, v]) => ["nhạc " + k, v || "(trống)", "nhạc"]);
+      const tieng = Object.entries(ch.tieng || {}).filter(([, g]) => g.file || g.bat === false)
+        .map(([k, g]) => [g.ten || k, g.bat === false ? "(tắt)" : g.file, g.kieu === "thay" ? "thay tiếng tự tạo" : "chồng lên tiếng tự tạo"]);
+      $("dsGan").innerHTML = `<table><tr><th>Chỗ dùng</th><th>Âm thanh</th><th>Kiểu</th></tr>${nhac.concat(tieng).map(r => `<tr>${r.map(o => `<td>${thoat(o)}</td>`).join("")}</tr>`).join("")}</table>`
+        + '<p class="phu">Sửa ở Quản trị › Đấu Trường › Thông số › 🔊 Âm thanh. Dòng không ghi ở đây: chỉ tiếng tự tạo.</p>';
+      for (const [k, g] of Object.entries(ch.tieng || {})) if (k.indexOf("chieu_") === 0) $("dsChieu").append(nut(g.ten || k, () => am.thu(k)));
     });
 
     // tiếng tự tạo của trận: x = 0 (giữa), các tiếng chiêu dài cần thêm tham số
     const TU_TAO = [
       ["chem", "Chém"], ["trung", "Trúng đòn"], ["hut", "Hụt"], ["phep", "Phép"], ["keng", "Khiên keng"], ["dungTan", "Đứng tấn"],
-      ["ne", "Né"], ["nhay", "Quái vồ"], ["tia", "Tia đom đóm"], ["chuChieu", "Tên chiêu"], ["dichChuyen", "Dịch chuyển"],
+      ["ne", "Né"], ["nhay", "Quái vồ"], ["tia", "Tia đom đóm"], ["kenLenh", "Kèn lệnh"], ["dichChuyen", "Dịch chuyển"],
       ["thang", "Thắng"], ["thua", "Thua"], ["chayTron", "Quái chạy"], ["luaCham", "Lửa chạm đất"], ["thachNo", "Thiên thạch nổ"],
       ["damDat", "Dậm đất"], ["voKinh", "Kính vỡ"], ["tenCam", "Tên cắm"]
     ];
-    const THAM_SO = { chuChieu: [], thang: [], thua: [], muaLua: [0, 3.2], locXoay: [2, -2, 3.4], tenBan: [-3, 1.5], chuong: [-1, 1.3, 1.4], thachVut: [0, 1.4] };
+    const THAM_SO = { kenLenh: [], thang: [], thua: [], muaLua: [0, 3.2], locXoay: [2, -2, 3.4], tenBan: [-3, 1.5], chuong: [-1, 1.3, 1.4], thachVut: [0, 1.4] };
     for (const [ma, ten] of [...TU_TAO, ["muaLua", "Mưa lửa"], ["thachVut", "Thiên thạch rít"], ["locXoay", "Lốc xoáy"], ["tenBan", "Bắn tên"], ["chuong", "Chưởng"]]) {
       $("dsTuTao").append(nut(ten, () => am[ma](...(THAM_SO[ma] || [0]))));
     }
@@ -120,3 +129,4 @@
 </body>
 </html>
 <!-- 30/10/2026 - BƯỚC: TC_D05B3 -->
+<!-- 21/11/2026 - BƯỚC: TC_D05F (bảng gắn từ cài đặt âm thanh, nút tiếng tên chiêu) -->

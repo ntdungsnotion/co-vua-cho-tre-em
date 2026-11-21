@@ -11,41 +11,89 @@
 //              khi đã quá nhiều tiếng đang kêu, cuối đường có bộ nén âm lượng.
 //            THƯ VIỆN ÂM THANH (file thu thật, CC0) ở kc/dt/am_thanh/thu_vien.json (phụ tá điền, việc A7):
 //            - nhac[]: nhạc nền theo bối cảnh (tran / trum / lang / sanh / thang / thua...), lặp liền
-//              (tự cắt khoảng lặng đầu / cuối file mp3), chuyển bài êm. Nhạc do QUẢN TRỊ chọn (bảng gan,
-//              trang Cài đặt TC_D05D), bé không tắt / đổi được (người dùng 30/10/2026); nút 🔊 của bé chỉ
-//              tắt tiếng hiệu ứng. datNhac() để dành cho Quản trị / trang thử.
+//              (tự cắt khoảng lặng đầu / cuối file mp3), chuyển bài êm. Nhạc do QUẢN TRỊ chọn, bé không
+//              tắt / đổi được (người dùng 30/10/2026); nút 🔊 của bé chỉ tắt tiếng hiệu ứng.
 //            - tieng[]: tiếng thu thật, mỗi tiếng vài biến thể (chọn ngẫu nhiên cho đỡ nhàm).
-//            - gan{}: GẮN thư viện vào sân khấu / hiệu ứng (sau này trang Cài đặt sửa, TC_D05D):
-//                "nhac_<bối cảnh>": mã nhạc;  "<tên tiếng tự tạo>": { "tieng": mã, "kieu": "chong" | "thay" }
-//                (chong = phát cùng tiếng tự tạo, thay = chỉ phát tiếng thu thật).
-//            Thư viện trống / tải lỗi: vẫn chạy bằng tiếng tự tạo như cũ.
+//            CÀI ĐẶT ÂM THANH (TC_D05F): MỌI tiếng + nhạc + độ to nằm ở kc/dt/du_lieu/cau_hinh_am_thanh.json
+//            (mặc định) + phần Quản trị sửa (Supabase, Quản trị › Đấu Trường › Thông số › 🔊 Âm thanh), không
+//            khoá cứng trong mã. Mỗi tiếng / MỖI CHIÊU một dòng tieng[tên]: { bat, amLuong, file, amTep, kieu, tre }
+//            (file = tiếng thu thật trong thư viện; kieu chong = kêu cùng tiếng tự tạo, thay = chỉ file).
+//            Tiếng tên chiêu: chieu(ma) đọc dòng "chieu_<ma>" (mỗi chiêu một dòng, tiếng tự tạo mặc định
+//            mỗi chiêu một cao độ riêng). Đọc phần sửa: trang có Supabase (KC_DT_CAU_HINH) thì tự hỏi; trang
+//            trận trong khung thì nhờ bản đồ (postMessage "dt-kho-hoi" ham cauHinh, dt3d_thu.js); không được
+//            thì dùng mặc định. Mất cả file mặc định: mọi tiếng tự tạo, bật, độ to như cũ.
 // HÀM KHAI RA:
-//   taoAmThanh() -> am = { dangBat(), datBat(b), moKhoa(), thongKe() + các tiếng bên dưới,
+//   taoAmThanh({ cauHinh, batLuon }) -> am = { dangBat(), datBat(b), moKhoa(), thongKe() + các tiếng bên dưới,
+//        (cauHinh: dùng thẳng cài đặt này, không tải; batLuon: bỏ qua nút tắt tiếng của bé - trang Quản trị nghe thử)
 //        thuVien() -> Promise<json>, phatNhac({ ma | boiCanh, lap }), dungNhac(giay), nhacBat(), datNhac(b),
 //        giamNhac(b) (nhỏ nhạc khi máy đọc câu hỏi), mau(ma, x, amLuong, bienThe, tre) (phát một tiếng thư viện),
-//        doanKet(thang) (đoạn kết thắng / thua: bài quản trị gắn ở nhac_thang / nhac_thua, chưa gắn thì tiếng tự tạo) }
+//        doanKet(thang) (đoạn kết thắng / thua: bài quản trị gắn ở nhac.thang / nhac.thua, chưa gắn thì tiếng tự tạo),
+//        chieu(ma, tre) (tiếng tên chiêu riêng của từng chiêu, TC_D05F), cauHinh() -> Promise<cài đặt đang dùng>,
+//        datCauHinh(ch) (thay cài đặt ngay, Quản trị nghe thử ô chưa lưu), thu(ten) (kêu thử một dòng với tham số mẫu) }
 //   Trang nghe thử thư viện: kc/dt/thu_am_thanh.html
 //   Tham số chung: x = vị trí ngang trên sân (-3..3, trái / phải loa), tre = giây chờ trước khi kêu.
 // BƯỚC: TC_D05B3 (người dùng 29/10/2026: "bổ sung âm thanh cho chiến đấu"; 30/10/2026: "thiếu nhạc
 //        nền", "giao việc cho agy làm thư viện âm thanh để sau này mình gắn bối cảnh sân khấu, hiệu ứng
 //        trong cài đặt")
 //        TC_D06C2a: kenLenh() kèn lệnh khi quái hung dữ lao vào Thủ lĩnh (dùng trên bản đồ, dt3d_quai_ban_do.js)
-// NGÀY: 30/10/2026; 30/10/2026 06:30 (thư viện + nhạc nền); 04/11/2026 (kèn lệnh)
+//        TC_D05F: mọi tiếng / nhạc / độ to vào cài đặt (cau_hinh_am_thanh.json + Quản trị); mỗi chiêu một tiếng riêng chieu(ma)
+// NGÀY: 30/10/2026; 30/10/2026 06:30 (thư viện + nhạc nền); 04/11/2026 (kèn lệnh); 21/11/2026 (TC_D05F cài đặt âm thanh)
 // ================================================================
 const KHOA = "kc_dt_tieng", KHOA_NHAC = "kc_dt_nhac";
 const TOI_DA = 64; // không mở tiếng mới khi đã có ngần này nguồn đang kêu
-const AM_NHAC = 0.16; // nhạc nhỏ hơn tiếng hiệu ứng (người dùng 30/10/2026: giảm 50%, 0,32 -> 0,16)
 const URL_THU_VIEN = new URL("../am_thanh/thu_vien.json", import.meta.url).href;
+const TEN_CH = "cau_hinh_am_thanh", URL_CH = new URL("../du_lieu/" + TEN_CH + ".json", import.meta.url).href;
+// dùng khi không đọc được cả file mặc định: độ to như trước TC_D05F, mọi tiếng tự tạo
+const CH_DU_PHONG = { amLuong: { tieng: 0.85, nhac: 0.16, nhacKhiDoc: 0.35 }, nhac: {}, tieng: {} };
+const DONG_MAC_DINH = { bat: true, amLuong: 1, file: "", amTep: 1, kieu: "chong", tre: 0 };
+// tham số mẫu khi Quản trị bấm ▶ nghe thử (mặc định [x = 0])
+const THU_MAU = { thang: [], thua: [], kenLenh: [], trung: [0, true], phep: [0, true], muaLua: [0, 3], thachVut: [0, 1.2], thachNo: [0, 1],
+  locXoay: [2, -2, 3], damDat: [0, 5, 0.075], voKinh: [0, 0.5], tenBan: [-2, 1.5], chuong: [-1, 1.3, 1.4] };
 const ngau = (a, b) => a + Math.random() * (b - a);
 // tên tiếng tự tạo mà tham số đầu KHÔNG phải vị trí x
 const KHONG_X = { chuChieu: 1, thang: 1, thua: 1, kenLenh: 1 };
+const laObj = v => v !== null && typeof v === "object" && !Array.isArray(v);
+const tronCh = (a, b) => { if (b == null) return a; if (!laObj(a) || !laObj(b)) return b; const k = Object.assign({}, a); for (const t of Object.keys(b)) k[t] = tronCh(a[t], b[t]); return k; };
+const so = (v, md) => (typeof v === "number" && isFinite(v) ? v : md);
 
-export function taoAmThanh() {
+// mặc định (file) + phần Quản trị sửa. Trang có Supabase: KC_DT_CAU_HINH; trang trận trong khung: nhờ bản đồ.
+function taiCauHinh() {
+  const md = fetch(URL_CH, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+  const g = typeof window !== "undefined" ? window : {};
+  let sua;
+  if (g.KC_DT_CAU_HINH && (g.kcSupabaseClient || g.supabaseClient)) {
+    sua = g.KC_DT_CAU_HINH.layPhanSua().then(s => (s && s[TEN_CH]) || null).catch(() => null);
+  } else if (g.parent && g.parent !== g) {
+    sua = new Promise(xong => {
+      const ma = "am_" + Math.random().toString(36).slice(2);
+      const nghe = e => {
+        if (e.source !== g.parent || !e.data || e.data.loai !== "dt-kho-dap" || e.data.so !== ma) return;
+        g.removeEventListener("message", nghe); clearTimeout(hen);
+        const kq = e.data.kq; xong(kq && kq.ok && kq.ch ? { _du: kq.ch } : null); // bản đồ trả bản đã trộn
+      };
+      const hen = setTimeout(() => { g.removeEventListener("message", nghe); xong(null); }, 5000);
+      g.addEventListener("message", nghe);
+      try { g.parent.postMessage({ loai: "dt-kho-hoi", so: ma, ham: "cauHinh", ts: { ten: TEN_CH } }, location.origin); } catch (e) { xong(null); }
+    });
+  } else sua = Promise.resolve(null);
+  return Promise.all([md.catch(() => null), sua]).then(([m, s]) => {
+    if (s && s._du) return s._du;
+    return m ? tronCh(m, s) : CH_DU_PHONG;
+  });
+}
+
+export function taoAmThanh({ cauHinh: chDua, batLuon } = {}) {
   let ac = null, tong = null, guiVang = null, nhieu = null, dangKeu = 0, busNhac = null;
   let bat = true, batNhac = true;
-  try { bat = localStorage.getItem(KHOA) !== "tat"; batNhac = localStorage.getItem(KHOA_NHAC) !== "tat"; } catch (e) { /* bị chặn lưu: mặc định bật */ }
+  if (!batLuon) try { bat = localStorage.getItem(KHOA) !== "tat"; batNhac = localStorage.getItem(KHOA_NHAC) !== "tat"; } catch (e) { /* bị chặn lưu: mặc định bật */ }
+  let ch = chDua || CH_DU_PHONG; // cài đặt đang dùng (TC_D05F)
+  const hoaCh = chDua ? Promise.resolve(chDua) : taiCauHinh().catch(() => CH_DU_PHONG);
+  const mucTieng = () => (bat ? so(ch.amLuong && ch.amLuong.tieng, 0.85) : 0);
+  const dong = ten => Object.assign({}, DONG_MAC_DINH, (ch.tieng || {})[ten]);
+  let heSo = 1; // độ to của dòng đang kêu (ra() chèn thêm nút âm lượng)
   let moXong; const choMo = new Promise(r => { moXong = r; }); // xong khi bé chạm trang lần đầu
   const lanCuoi = {}, daKeu = {}; // daKeu: đếm số lần mỗi tiếng đã kêu (kịch bản thử Chrome đọc)
+  const daGoi = {}; // TC_D05F: đếm số lần mỗi DÒNG cài đặt được gọi mà đang bật (vd chieu_mua_lua)
 
   // ---------- mở bộ tiếng ở lần chạm đầu ----------
   function moKhoa() {
@@ -55,10 +103,10 @@ export function taoAmThanh() {
     try { ac = new AC(); } catch (e) { ac = null; return; }
     const nen = ac.createDynamicsCompressor();
     nen.threshold.value = -16; nen.knee.value = 10; nen.ratio.value = 8; nen.attack.value = 0.003; nen.release.value = 0.25;
-    tong = ac.createGain(); tong.gain.value = bat ? 0.85 : 0;
+    tong = ac.createGain(); tong.gain.value = mucTieng();
     tong.connect(nen); nen.connect(ac.destination);
     // nhạc đi chung bộ nén => tiếng nổ lớn tự đè nhạc xuống một chút
-    busNhac = ac.createGain(); busNhac.gain.value = batNhac ? AM_NHAC : 0; busNhac.connect(nen);
+    busNhac = ac.createGain(); busNhac.gain.value = mucNhac(); busNhac.connect(nen);
     // vang nhẹ cho tiếng nổ / keng nghe "có không gian"
     const vang = ac.createConvolver(); vang.buffer = taoVang(1.7);
     guiVang = ac.createGain(); guiVang.gain.value = 0.32;
@@ -94,6 +142,7 @@ export function taoAmThanh() {
   function ra(nut, x, vangK) {
     let cuoi = nut;
     if (x != null && ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = Math.max(-0.7, Math.min(0.7, x / 4)); nut.connect(p); cuoi = p; }
+    if (heSo !== 1) { const h = ac.createGain(); h.gain.value = Math.max(0, heSo); cuoi.connect(h); cuoi = h; }
     cuoi.connect(tong);
     if (vangK) { const g = ac.createGain(); g.gain.value = vangK; cuoi.connect(g); g.connect(guiVang); }
   }
@@ -129,13 +178,19 @@ export function taoAmThanh() {
     return { o, g, t0 };
   }
   const not = n => 440 * Math.pow(2, (n - 69) / 12);
+  // trống "thùng" + gió cuộn lên khi tên chiêu hiện chữ to; k = cao độ riêng của từng chiêu (TC_D05F)
+  function trongChieu(tre, k) {
+    if (!duoc("chuChieu", 0.3)) return;
+    ton({ tre, giay: 0.9, tu: 95 * k, den: 40 * k, am: 0.75, vang: 0.6 });
+    xen({ tre, giay: 0.6, loc: "lowpass", tu: 300 * k, den: 1600 * k, am: 0.25, len: 0.4, vang: 0.4 });
+  }
 
   // ---------- thư viện file thu thật ----------
   let hoaThuVien = null;
-  const rong = { nhac: [], tieng: [], gan: {} };
+  const rong = { nhac: [], tieng: [] };
   function thuVien() {
     return hoaThuVien || (hoaThuVien = fetch(URL_THU_VIEN).then(r => r.ok ? r.json() : rong)
-      .then(j => ({ nhac: j.nhac || [], tieng: j.tieng || [], gan: j.gan || {} }))
+      .then(j => ({ nhac: j.nhac || [], tieng: j.tieng || [] }))
       .catch(e => { console.warn("Không đọc được thư viện âm thanh, dùng tiếng tự tạo", e); return rong; }));
   }
   const boDem = {}; // tep -> Promise<AudioBuffer | null>
@@ -148,10 +203,18 @@ export function taoAmThanh() {
   const dsTep = t => Array.isArray(t.tep) ? t.tep : [t.tep];
   const daGiai = {}; // tep -> AudioBuffer đã sẵn (phát tức thì, không phải chờ)
   // tải trước mọi tiếng thư viện đang được gắn, ngay khi bé chạm trang
-  choMo.then(thuVien).then(tv => {
-    const can = new Set(Object.values(tv.gan).filter(g => g && g.tieng).map(g => g.tieng));
-    for (const t of tv.tieng) if (can.has(t.ma)) for (const tep of dsTep(t)) tai(tep).then(b => { if (b) daGiai[tep] = b; });
-    for (const k of ["nhac_thang", "nhac_thua"]) { const bai = tv.nhac.find(v => v.ma === tv.gan[k]); if (bai) tai(bai.tep); } // đoạn kết ngắn: tải sẵn để kêu ngay
+  function taiSan() {
+    return thuVien().then(tv => {
+      const can = new Set(Object.values(ch.tieng || {}).filter(g => g && g.file && g.bat !== false).map(g => g.file));
+      for (const t of tv.tieng) if (can.has(t.ma)) for (const tep of dsTep(t)) tai(tep).then(b => { if (b) daGiai[tep] = b; });
+      for (const k of ["thang", "thua"]) { const bai = tv.nhac.find(v => v.ma === (ch.nhac || {})[k]); if (bai) tai(bai.tep); } // đoạn kết ngắn: tải sẵn để kêu ngay
+    });
+  }
+  Promise.all([choMo, hoaCh]).then(taiSan);
+  hoaCh.then(c => { // cài đặt về sau lần chạm đầu: chỉnh lại độ to đang kêu
+    ch = c || CH_DU_PHONG;
+    if (ac && tong) tong.gain.setTargetAtTime(mucTieng(), ac.currentTime, 0.05);
+    if (ac && busNhac) busNhac.gain.setTargetAtTime(mucNhac(), ac.currentTime, 0.1);
   });
   let tvSan = null; thuVien().then(tv => { tvSan = tv; });
 
@@ -182,8 +245,11 @@ export function taoAmThanh() {
   async function phatNhac({ ma, boiCanh, lap, tu } = {}) {
     nhacMuon = { ma, boiCanh, lap };
     const yeuCau = nhacMuon;
-    const tv = await thuVien();
-    const maChon = ma || (boiCanh && tv.gan["nhac_" + boiCanh]);
+    const [tv] = await Promise.all([thuVien(), hoaCh]);
+    if (yeuCau !== nhacMuon) return false;
+    const nhacCh = ch.nhac || {};
+    if (!ma && boiCanh && boiCanh in nhacCh && !nhacCh[boiCanh]) { dungNhac(1.2); return false; } // Quản trị để trống: im
+    const maChon = ma || (boiCanh && nhacCh[boiCanh]);
     const bai = (maChon && tv.nhac.find(v => v.ma === maChon)) || (boiCanh && tv.nhac.find(v => (v.boiCanh || []).indexOf(boiCanh) >= 0));
     if (!bai) { dungNhac(1.2); return false; }
     if (nhacDang && nhacDang.ma === bai.ma && tu == null) return true;
@@ -209,7 +275,7 @@ export function taoAmThanh() {
     g.gain.cancelScheduledValues(t0); g.gain.setValueAtTime(g.gain.value, t0); g.gain.linearRampToValueAtTime(0.0001, t0 + giay);
     s.stop(t0 + giay + 0.05); nhacDang = null;
   }
-  const mucNhac = () => (batNhac ? AM_NHAC : 0) * (giam ? 0.35 : 1);
+  function mucNhac() { return (batNhac ? so(ch.amLuong && ch.amLuong.nhac, 0.16) : 0) * (giam ? so(ch.amLuong && ch.amLuong.nhacKhiDoc, 0.35) : 1); }
 
   // ---------- tiếng đòn đánh ----------
   const am = {
@@ -217,10 +283,10 @@ export function taoAmThanh() {
     datBat(b) {
       bat = !!b;
       try { localStorage.setItem(KHOA, bat ? "bat" : "tat"); } catch (e) { /* bỏ qua */ }
-      if (ac && tong) tong.gain.setTargetAtTime(bat ? 0.85 : 0, ac.currentTime, 0.03);
+      if (ac && tong) tong.gain.setTargetAtTime(mucTieng(), ac.currentTime, 0.03);
     },
     moKhoa,
-    thongKe: () => ({ trangThai: ac ? ac.state : "chua_mo", bat, batNhac, nhac: nhacDang ? nhacDang.ma : null, dangKeu, daKeu: { ...daKeu } }),
+    thongKe: () => ({ trangThai: ac ? ac.state : "chua_mo", bat, batNhac, nhac: nhacDang ? nhacDang.ma : null, dangKeu, daKeu: { ...daKeu }, daGoi: { ...daGoi } }),
     thuVien, phatNhac, dungNhac, mau,
     nhacBat: () => batNhac,
     datNhac(b) {
@@ -231,7 +297,7 @@ export function taoAmThanh() {
     // đoạn kết thắng / thua: quản trị đã gắn bài thì phát bài (dừng nhạc trận), chưa gắn thì kèn tự tạo
     doanKet(thang) {
       const k = thang ? "thang" : "thua";
-      if (tvSan && tvSan.gan["nhac_" + k]) phatNhac({ boiCanh: k, lap: false });
+      if ((ch.nhac || {})[k]) phatNhac({ boiCanh: k, lap: false });
       else { dungNhac(1.2); am[k](thang ? 0.1 : 0); }
     },
     giamNhac(b) {
@@ -299,11 +365,8 @@ export function taoAmThanh() {
       ton({ tre, giay: 0.3, tu: 1200, den: 2400, am: 0.1, x });
     },
     // tên chiêu hiện chữ to: tiếng trống lớn "thùng" + gió cuộn lên
-    chuChieu(tre = 0) {
-      if (!duoc("chuChieu", 0.3)) return;
-      ton({ tre, giay: 0.9, tu: 95, den: 40, am: 0.75, vang: 0.6 });
-      xen({ tre, giay: 0.6, loc: "lowpass", tu: 300, den: 1600, am: 0.25, len: 0.4, vang: 0.4 });
-    },
+    // (cũ, giữ cho trang khác còn gọi; trận dùng chieu(ma) - TC_D05F)
+    chuChieu(tre = 0) { trongChieu(tre, 1); },
     // dịch chuyển (về Lều): lấp lánh đi lên
     dichChuyen(x, tre = 0) {
       if (!duoc("dichChuyen", 0.3)) return;
@@ -370,7 +433,7 @@ export function taoAmThanh() {
       if (!duoc("locXoay", 0.5)) return;
       const t0 = ac.currentTime, tat = t0 + giay + 0.6;
       const p = ac.createStereoPanner ? ac.createStereoPanner() : null;
-      const out = ac.createGain(); out.gain.value = 1;
+      const out = ac.createGain(); out.gain.value = Math.max(0, heSo); // TC_D05F: độ to của dòng
       if (p) { p.pan.setValueAtTime(Math.max(-0.7, Math.min(0.7, xTu / 4)), t0); p.pan.linearRampToValueAtTime(Math.max(-0.7, Math.min(0.7, xDen / 4)), t0 + giay); out.connect(p); p.connect(tong); } else out.connect(tong);
       const g2 = ac.createGain(); g2.gain.value = 0.2; out.connect(g2); g2.connect(guiVang);
       [[500, 1.2, 0.5, 0.7], [1600, 7, 0.18, 1.9]].forEach(([fc, q, a, toc]) => {
@@ -436,21 +499,45 @@ export function taoAmThanh() {
       r.g.gain.setValueAtTime(0.35, r.t0 + ban - 0.1);
     }
   };
-  // gắn tiếng thu thật vào tiếng tự tạo theo bảng gan{} của thư viện (chong: phát cả hai, thay: chỉ file)
-  const KHONG_GAN = ["dangBat", "datBat", "moKhoa", "thongKe", "thuVien", "phatNhac", "dungNhac", "mau", "nhacBat", "datNhac", "giamNhac", "doanKet"];
+  // TC_D05F: mỗi tiếng kêu theo dòng cài đặt của nó: bật / tắt, độ to cả dòng (heSo), tiếng thu thật
+  // (chong: kêu cùng tiếng tự tạo, thay: chỉ file; file chưa tải xong thì tiếng tự tạo kêu thay)
+  function keu(ten, goc, a, x) {
+    const c = dong(ten);
+    if (c.bat === false) return;
+    daGoi[ten] = (daGoi[ten] || 0) + 1;
+    const cu = heSo; heSo = so(c.amLuong, 1);
+    try {
+      if (c.file) {
+        const da = duoc(ten + "_tep", 0.05) && mau(c.file, typeof x === "number" ? x : undefined, so(c.amTep, 1), undefined, so(c.tre, 0));
+        if (da && c.kieu === "thay") return;
+      }
+      goc(...a);
+    } finally { heSo = cu; }
+  }
+  const KHONG_GAN = ["dangBat", "datBat", "moKhoa", "thongKe", "thuVien", "phatNhac", "dungNhac", "mau", "nhacBat", "datNhac", "giamNhac", "doanKet", "chuChieu"];
   for (const ten of Object.keys(am)) {
     const goc = am[ten];
     if (typeof goc !== "function" || KHONG_GAN.indexOf(ten) >= 0) continue;
-    am[ten] = (...a) => {
-      const g = tvSan && tvSan.gan[ten];
-      if (g && g.tieng) {
-        const x = KHONG_X[ten] ? undefined : a[0];
-        const da = duoc(ten + "_tep", 0.05) && mau(g.tieng, typeof x === "number" ? x : undefined, g.amLuong == null ? 1 : g.amLuong, undefined, g.tre || 0);
-        if (da && g.kieu === "thay") return;
-      }
-      goc(...a);
-    };
+    am[ten] = (...a) => keu(ten, goc, a, KHONG_X[ten] ? undefined : a[0]);
   }
+  // tiếng tên chiêu: MỖI CHIÊU MỘT DÒNG "chieu_<ma>"; tiếng tự tạo mặc định = trống "thùng" với cao độ riêng của chiêu
+  const caoDo = ma => { let h = 0; for (const c of String(ma)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return 0.78 + (h % 1000) / 1000 * 0.5; };
+  am.chieu = (ma, tre = 0) => keu("chieu_" + ma, () => trongChieu(tre, caoDo(ma)), [], undefined);
+  am.cauHinh = () => hoaCh.then(() => ch);
+  // Quản trị nghe thử ô chưa lưu: thay cài đặt ngay (độ to chung, nhạc, từng dòng)
+  am.datCauHinh = c => {
+    ch = c || CH_DU_PHONG;
+    if (ac && tong) tong.gain.setTargetAtTime(mucTieng(), ac.currentTime, 0.03);
+    if (ac && busNhac) busNhac.gain.setTargetAtTime(mucNhac(), ac.currentTime, 0.1);
+    taiSan();
+  };
+  // kêu thử một dòng cài đặt với tham số mẫu (khoá chống dồn được bỏ để bấm liền tay vẫn kêu)
+  am.thu = ten => {
+    moKhoa();
+    for (const k of Object.keys(lanCuoi)) delete lanCuoi[k];
+    if (ten.indexOf("chieu_") === 0) return am.chieu(ten.slice(6));
+    if (typeof am[ten] === "function" && KHONG_GAN.indexOf(ten) < 0) am[ten](...(THU_MAU[ten] || [0]));
+  };
   return am;
 }
-// 30/10/2026 - BƯỚC: TC_D05B3; 04/11/2026 - TC_D06C2a (kèn lệnh)
+// 30/10/2026 - BƯỚC: TC_D05B3; 04/11/2026 - TC_D06C2a (kèn lệnh); 21/11/2026 - TC_D05F (cài đặt âm thanh, tiếng riêng mỗi chiêu)

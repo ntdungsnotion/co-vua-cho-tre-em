@@ -195,7 +195,7 @@ if (VUNG) {
 
 // ---------------- KC_06B2: trang trận (khung dt/thu_tran_dau.html) nhờ gọi máy chủ: câu kho + chấm + số Quản trị ----------------
 // { loai: "dt-kho-hoi", so, ham: "o" | "lo" | "cham" | "cauHinh", ts } -> { loai: "dt-kho-dap", so, kq }. Máy chủ thật / giả đều có kho().
-const SO_QT = ["cau_hinh_tran_dau", "cau_hinh_trinh_do"], boNhoCh = {};
+const SO_QT = ["cau_hinh_tran_dau", "cau_hinh_trinh_do", "cau_hinh_am_thanh"], boNhoCh = {}; // TC_D05F: + cài đặt âm thanh (dt3d_am_thanh.js hỏi)
 window.addEventListener("message", async e => {
   const d = e.data;
   if (e.origin !== location.origin || !d || d.loai !== "dt-kho-hoi" || !e.source) return;
@@ -230,7 +230,7 @@ setTimeout(async () => {
       ...["dt3d_tran.js", "dt3d_tuong.js", "dt3d_hieu_ung.js", "dt3d_chieu_vung.js", "dt3d_chieu_them.js", "dt3d_hat.js", "dt3d_quai.js", "dt3d_am_thanh.js"].map(f => duongDan("./" + f)),
       ...["postprocessing/EffectComposer.js", "postprocessing/OutputPass.js", "postprocessing/RenderPass.js", "postprocessing/UnrealBloomPass.js", "postprocessing/Pass.js",
         "postprocessing/ShaderPass.js", "postprocessing/MaskPass.js", "shaders/CopyShader.js", "shaders/LuminosityHighPassShader.js", "shaders/OutputShader.js"].map(f => duongDan(TV + f)),
-      ...["../thu_tran_dau.html", "../dt_tran_dau.js", "../dt_quai.js", "../dt_ve_quai.js", "../dt_nguon_kho.js", "../dt_chon_cau_td.js", "../../chung/trinh_do.js", "../du_lieu/cau_hinh_tran_dau.json"].map(duongDan)
+      ...["../thu_tran_dau.html", "../dt_tran_dau.js", "../dt_quai.js", "../dt_ve_quai.js", "../dt_nguon_kho.js", "../dt_chon_cau_td.js", "../../chung/trinh_do.js", "../du_lieu/cau_hinh_tran_dau.json", "../du_lieu/cau_hinh_am_thanh.json"].map(duongDan)
     ].filter(Boolean));
   } catch (e) { /* tải sẵn hỏng: vào trận sẽ tải */ }
   setTimeout(() => { dangTaiSan = false; }, 3000);
@@ -433,3 +433,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 12/11/2026 - BƯỚC: KC_06B2 (tải sẵn cảnh trận khi mở game: tướng của bé + động tác, lưu trong trình duyệt)
 // 20/11/2026 - BƯỚC: TC_D34B (ôn bắt buộc sau trận: dt3d_on_sau_tran.js + khối câu hỏi chung kc/tt_tri_thuc/)
 // 20/11/2026 - BƯỚC: KC_08D (tải sẵn dt_chon_cau_td.js + kc/chung/trinh_do.js cho trận theo trình độ máy chủ)
+// 21/11/2026 - BƯỚC: TC_D05F (trang trận hỏi được cài đặt âm thanh cau_hinh_am_thanh qua "cauHinh"; tải sẵn file mặc định)

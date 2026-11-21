@@ -22,6 +22,7 @@
 //        TC_D05B3 (âm thanh chiến đấu dt3d_am_thanh.js: mỗi động tác / chiêu một tiếng; nhạc nền bối cảnh tran / thang / thua)
 //        TC_D06C2g (đối thủ là trụ: tru_ten bắn tên từ sàn, không nhảy; thua thì sụp thành đống gạch, hòa thì đứng nguyên)
 //        KC_06B2 (11/11/2026: tuLuc(vai) pha tụ lực che lúc chờ máy chủ chấm, bung / tan)
+//        TC_D05F (21/11/2026: tiếng tên chiêu riêng từng chiêu am.chieu(ma), theo cài đặt âm thanh của Quản trị)
 //        TC_D05D (bé phòng thủ đúng: thế thủ giữ tới lúc đòn của quái được tính, kể cả tướng tải xong giữa lượt / KayKit dự phòng)
 // NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026; 30/10/2026 06:00; 05/11/2026; 07/11/2026
 // ================================================================
@@ -45,9 +46,9 @@ const X_BE = -1.55, X_QUAI = 1.55, TI_BE = 1.45, TI_QUAI = 1.25, CAO_TUONG = 1.8
 const HUONG_BE = Math.PI / 2 - 0.6, HUONG_QUAI = -Math.PI / 2 + 0.85;
 // phong cách chiêu theo tộc: Nhân tộc kiếm quang vàng, Quỷ tộc chém lửa, Tiên tộc bắn cầu phép (chí mạng = chiêu lớn)
 const KIEU_TOC = {
-  nhan: { mau: "#ffd36b", mau2: "#fff3c4", chieu: "KIẾM QUANG TRẢM" },
-  quy: { mau: "#ff6a2a", mau2: "#ffc27a", chieu: "HOẢ NGỤC BẠO" },
-  tien: { mau: "#7fd8ff", mau2: "#e2c8ff", chieu: "LÔI THẦN GIÁNG", phep: true }
+  nhan: { mau: "#ffd36b", mau2: "#fff3c4", chieu: "KIẾM QUANG TRẢM", ma: "kiem_quang_tram" },
+  quy: { mau: "#ff6a2a", mau2: "#ffc27a", chieu: "HOẢ NGỤC BẠO", ma: "hoa_nguc_bao" },
+  tien: { mau: "#7fd8ff", mau2: "#e2c8ff", chieu: "LÔI THẦN GIÁNG", ma: "loi_than_giang", phep: true }
 };
 // đòn của quái: dom_dom bắn tia sáng từ xa, còn lại lao tới
 const KIEU_QUAI = { slime_so: { mau: "#86ff6e" }, nam_chu_cai: { mau: "#c995ff" }, dom_dom: { mau: "#fff27a", xa: true },
@@ -376,7 +377,7 @@ async function tao(vungVe, { nhe } = {}) {
   }
   // chiêu lớn khi chí mạng, theo tộc
   function chieuLon(p) {
-    hu.chuChieu(kieu.chieu, V(0, 2.4, 0.4), kieu.mau); am.chuChieu();
+    hu.chuChieu(kieu.chieu, V(0, 2.4, 0.4), kieu.mau); am.chieu(kieu.ma); // TC_D05F: mỗi chiêu một tiếng (Quản trị › Âm thanh)
     if (kieu === KIEU_TOC.quy) { hu.cotLua(V(p.x, 0, 0), 0.9); am.thachNo(p.x, 0.7); }
     else if (kieu === KIEU_TOC.tien) { hu.set(V(p.x, 0, 0), "#bfe9ff"); am.thachNo(p.x, 0.5); }
     else {
@@ -510,7 +511,7 @@ async function tao(vungVe, { nhe } = {}) {
       const TEN = { mua_lua: "HOẢ VŨ THIÊN GIÁNG", thien_thach: "THIÊN THẠCH LẠC", loc_xoay: "CUỒNG PHONG", dam_dat: "CHẤN ĐỊA", vo_khong_gian: "PHÁ KHÔNG QUYỀN", mua_ten: "VẠN TIỄN TỀ PHÁT", chuong: "THIÊN QUANG CHƯỞNG" };
       if (!TEN[ma]) return 0;
       vong.be.visible = vong.quai.visible = bong.visible = false;
-      hu.chuChieu(TEN[ma], V(0, 2.4, 0.4), kieu.mau); am.chuChieu();
+      hu.chuChieu(TEN[ma], V(0, 2.4, 0.4), kieu.mau); am.chieu(ma);
       const runQuai = (giay, tre) => them(giay, p => { if (Math.random() < 0.06) quai.chop(0.12); qn.position.x = xq + Math.sin(p * 70) * 0.02; }, tre);
       // mưa lửa / thiên thạch: ít và chậm để mắt theo kịp (người dùng 30/10/2026: giảm còn 1/3, chậm hơn)
       if (ma === "mua_lua") { dien("phepLon"); runQuai(3.2, 1.9); return cv.muaLua({ tam: V(xq + 0.4, 0, -0.5), r: 2.3 }); } // chỉ phủ nửa sân phía quái, không trùm lên bé
@@ -557,7 +558,7 @@ async function tao(vungVe, { nhe } = {}) {
       const c = ct && ct.ds.find(x => x.ma === ma);
       if (!c || !quai) return 0;
       vong.be.visible = vong.quai.visible = bong.visible = false;
-      if (c.ten) { hu.chuChieu(c.ten, V(0, 2.4, 0.4), kieu.mau); am.chuChieu(); }
+      if (c.ten) { hu.chuChieu(c.ten, V(0, 2.4, 0.4), kieu.mau); am.chieu(ma); }
       const tran = {
         be: { tam: tamBe(), chan: V(dvBe.x, 0, dvBe.z), cao: caoBe },
         quai: { nhom: quai.nhom, tam: tamQuai(), chan: V(quai.nhom.position.x, 0, quai.nhom.position.z), cao: quai.cao * TI_QUAI, chop: s => quai.chop(s) },
@@ -583,3 +584,4 @@ window.dispatchEvent(new Event("dt-san3d"));
 // 08/11/2026 - BƯỚC: TC_D06C7b (đánh công trình thường: đối thủ là Thủ lĩnh của chủ (datTran doiThu), công trình đứng sau, thắng thì sụp)
 // 11/11/2026 - BƯỚC: KC_06B2 (pha tụ lực tuLuc: hút sáng vào vũ khí / tay, khiên tụ sáng; bung / tan)
 // 12/11/2026 - BƯỚC: KC_06B2 (sửa: tướng chưa tải xong thì Thủ lĩnh KayKit đứng tạm)
+// 21/11/2026 - BƯỚC: TC_D05F (mỗi chiêu một tiếng tên chiêu: am.chieu(ma))

@@ -5,18 +5,18 @@
 //            cùng một luật (SQL kc_dt_tron) nên máy bé và máy chủ thấy cùng số.
 //            Chưa có Supabase / mất mạng / chưa chạy SQL TC_D18A -> dùng số mặc định (game vẫn chạy).
 // HÀM KHAI RA (goc.KC_DT_CAU_HINH):
-//   tai(ten, url) -> Promise<json>   ten: "cau_hinh" | "cau_hinh_tran_dau" | "cau_hinh_trinh_do"; url: đường tới file mặc định
+//   tai(ten, url) -> Promise<json>   ten: "cau_hinh" | "cau_hinh_tran_dau" | "cau_hinh_trinh_do" | "cau_hinh_am_thanh" (TC_D05F); url: đường tới file mặc định
 //   layPhanSua() -> Promise<{ ten: phần sửa }>  (hỏi máy chủ MỘT lần mỗi trang, chờ tối đa 5 giây)
 //   tron(macDinh, sua) -> json        object trộn từng khoá (đệ quy); mảng / số / chữ: sua thay trọn
 //   khac(macDinh, hienTai) -> phần sửa (chỉ các ô khác mặc định; undefined = không khác)
-//   TEP: danh sách 3 file quản trị sửa được
+//   TEP: danh sách 4 file quản trị sửa được
 // Không đụng DOM: chạy được trong node (kiểm thử).
 // BƯỚC: TC_D18A - NGÀY: 10/11/2026
 // ================================================================
 (function (goc) {
   "use strict";
 
-  const TEP = ["cau_hinh", "cau_hinh_tran_dau", "cau_hinh_trinh_do"];
+  const TEP = ["cau_hinh", "cau_hinh_tran_dau", "cau_hinh_trinh_do", "cau_hinh_am_thanh"]; // TC_D05F: + cài đặt âm thanh
   const CHO_TOI_DA_MS = 5000;
   const laObj = v => v !== null && typeof v === "object" && !Array.isArray(v);
 
@@ -62,3 +62,4 @@
 
   goc.KC_DT_CAU_HINH = { TEP, tai, layPhanSua, tron, khac };
 })(typeof window !== "undefined" ? window : globalThis);
+// 21/11/2026 - BƯỚC: TC_D05F (thêm tệp cau_hinh_am_thanh)
