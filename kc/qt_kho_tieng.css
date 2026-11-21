@@ -1,0 +1,57 @@
+/* ================================================================
+   FILE: kc/qt_kho_tieng.css
+   CHỨC NĂNG: Giao diện mục "🎵 Kho tiếng" của trang Quản trị chung (qt_kho_tieng.js, KC_09B1).
+     - Điện thoại (< 900px): một cột: khung tải lên trên, danh sách file dưới (mỗi file một thẻ).
+     - Máy tính (>= 900px): 2 cột: trái khung tải lên (đứng yên khi cuộn), phải danh sách thẻ file nhiều cột.
+   BƯỚC: KC_09B1 - NGÀY: 21/11/2026
+   ================================================================ */
+
+#manhinh-khotieng .adminKhoi { max-width: 1400px; }
+.qktLuoi { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+.qktThe { border: 2px solid var(--mau-vien); border-radius: 14px; background: var(--mau-nen-trang); padding: 12px 14px; min-width: 0; }
+.qktThe h4 { margin: 0 0 8px; color: var(--mau-chinh-dam); }
+.qktDau { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.qktDau h4 { margin: 0; }
+
+/* ---- ô nhập ---- */
+.qktO { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; font-size: 0.88rem; font-weight: bold; min-width: 0; }
+.qktO input[type="text"], .qktO input[type="url"], .qktO input[type="number"], .qktO select {
+  width: 100%; box-sizing: border-box; padding: 8px 10px; border: 2px solid var(--mau-vien); border-radius: 10px;
+  font-family: inherit; font-size: 0.95rem; background: #fff; color: var(--mau-chu);
+}
+.qktO input[type="file"] { width: 100%; max-width: 100%; font-family: inherit; font-size: 0.9rem; }
+.qktChon { flex-direction: row; align-items: center; gap: 8px; font-weight: normal; }
+.qktChon input { width: 20px; height: 20px; }
+.qktHai { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 12px; align-items: end; }
+.qktXem { margin: 6px 0; font-size: 0.88rem; word-break: break-word; }
+.qktNut { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.qktNut .adminNut { flex: 1 1 auto; }
+.qktTin { margin: 8px 0 0; font-size: 0.9rem; min-height: 1.2em; word-break: break-word; }
+.qktTin.ok { color: var(--mau-thanh-cong); font-weight: bold; }
+.qktTin.loi, .qktDo { color: var(--mau-that-bai); font-weight: bold; }
+
+/* ---- danh sách ---- */
+.qktNhom { margin: 14px 0 8px; font-size: 1rem; color: var(--mau-chinh-dam); }
+.qktNhom small { font-weight: normal; opacity: 0.7; }
+.qktDsMuc { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.qktMuc { border: 2px solid var(--mau-vien); border-radius: 12px; background: var(--mau-nen-khoi, #fff); padding: 10px 12px; min-width: 0; }
+.qktMuc.mat { border-color: var(--mau-that-bai); }
+.qktMucDau { display: flex; align-items: center; gap: 10px; }
+.qktNghe { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--mau-chinh); color: #fff; font-size: 1.1rem; cursor: pointer; }
+.qktNghe:disabled { opacity: 0.4; cursor: default; }
+.qktMucTen { min-width: 0; display: flex; flex-direction: column; }
+.qktMucTen b { word-break: break-word; }
+.qktMucTen code { font-size: 0.78rem; opacity: 0.65; }
+.qktMeta, .qktDung { margin: 6px 0 0; font-size: 0.85rem; color: var(--mau-chu-nhat); word-break: break-word; }
+.qktDung { color: var(--mau-chu); }
+.qktMo { opacity: 0.6; }
+.qktSua { margin-top: 8px; border-top: 1px dashed var(--mau-vien); padding-top: 4px; }
+
+@media (min-width: 600px) {
+  .qktHai { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (min-width: 900px) {
+  .qktLuoi { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); }
+  .qktTai { position: sticky; top: 12px; }
+  .qktDsMuc { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+}

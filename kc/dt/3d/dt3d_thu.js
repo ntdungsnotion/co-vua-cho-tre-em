@@ -230,7 +230,7 @@ setTimeout(async () => {
       ...["dt3d_tran.js", "dt3d_tuong.js", "dt3d_hieu_ung.js", "dt3d_chieu_vung.js", "dt3d_chieu_them.js", "dt3d_hat.js", "dt3d_quai.js", "dt3d_am_thanh.js"].map(f => duongDan("./" + f)),
       ...["postprocessing/EffectComposer.js", "postprocessing/OutputPass.js", "postprocessing/RenderPass.js", "postprocessing/UnrealBloomPass.js", "postprocessing/Pass.js",
         "postprocessing/ShaderPass.js", "postprocessing/MaskPass.js", "shaders/CopyShader.js", "shaders/LuminosityHighPassShader.js", "shaders/OutputShader.js"].map(f => duongDan(TV + f)),
-      ...["../thu_tran_dau.html", "../dt_tran_dau.js", "../dt_quai.js", "../dt_ve_quai.js", "../dt_nguon_kho.js", "../dt_chon_cau_td.js", "../../chung/trinh_do.js", "../../chung/am_thanh.js", "../du_lieu/cau_hinh_tran_dau.json", "../du_lieu/cau_hinh_am_thanh.json"].map(duongDan)
+      ...["../thu_tran_dau.html", "../dt_tran_dau.js", "../dt_quai.js", "../dt_ve_quai.js", "../dt_nguon_kho.js", "../dt_chon_cau_td.js", "../../chung/trinh_do.js", "../../chung/am_thanh.js", "../../chung/kho_tieng.js", "../du_lieu/cau_hinh_tran_dau.json", "../du_lieu/cau_hinh_am_thanh.json"].map(duongDan)
     ].filter(Boolean));
   } catch (e) { /* tải sẵn hỏng: vào trận sẽ tải */ }
   setTimeout(() => { dangTaiSan = false; }, 3000);
