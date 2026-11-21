@@ -31,8 +31,9 @@
   // Tiếng đúng / sai / thưởng + đọc câu dùng chung toàn app; thiếu module (trang cũ chưa nạp) thì im lặng.
   const AM = () => goc.KC_AM_THANH || null;
   const tieng = {
-    ting() { const a = AM(); if (a) a.tieng.dung(); },
-    tram() { const a = AM(); if (a) a.tieng.sai(); },
+    // KC_09B2: tiếng đúng / sai mọi lớp + lời khen / động viên khi lớp bé <= cài đặt (Quản trị › Âm thanh chung)
+    ting(lop) { const a = AM(); if (a) a.phanHoi(true, lop); },
+    tram(lop) { const a = AM(); if (a) a.phanHoi(false, lop); },
     ruong() { const a = AM(); if (a) a.tieng.thuong(); },
     kc(i) { const a = AM(); if (a) a.tieng.kc(i); },
     keng() { const a = AM(); if (a) a.tieng.keng(); }
@@ -246,11 +247,11 @@
         if (dung) {
           ph.appendChild(tao("p", "ttDung", ["✓ Đúng rồi!", "⭐ Giỏi quá!", "✓ Chính xác!"][viTri % 3]));
           const b = goc0.querySelector('.ttDa[data-i="' + kq.dapAnDung + '"]'); if (b) phaoSao(b);
-          tieng.ting(); tuThe = "vay"; coCu("Tuyệt vời!");
+          tieng.ting(t.lop); tuThe = "vay"; coCu("Tuyệt vời!");
         } else {
           const p = tao("p", "ttSaiChu"); p.append("✗ Đáp án: ", tao("b", "", dap != null ? String(dap) : "…"));
           ph.appendChild(p);
-          tieng.tram(); coCu(kq.hoiLai ? "Lát nữa Cô Cú hỏi lại để con nhớ nhé" : "Không sao, mình nhớ lần sau nhé");
+          tieng.tram(t.lop); coCu(kq.hoiLai ? "Lát nữa Cô Cú hỏi lại để con nhớ nhé" : "Không sao, mình nhớ lần sau nhé");
         }
         veCham();
         setTimeout(tiep, dung ? 700 : 1300);

@@ -24,6 +24,10 @@
      dung()                                          dừng mọi tiếng đọc
      tieng.dung() / sai() / thuong() / kc(i) / keng()  tiếng ngắn tự tạo (WebAudio, không cần tệp)
      dangBat() / datBat(true|false)                  nút tắt tiếng chung (máy nhớ, khoá "kc_am_thanh_bat")
+     phanHoi(dung, lop)    KC_09B2: tiếng đúng / sai (MỌI lớp) + lời khen / động viên đọc thành tiếng khi lớp bé <= "tuLop"
+                           (cài đặt, mặc định 6; lớp chưa biết thì không nói). Lời + tiếng + giọng đọc theo cài đặt chung
+                           (kc/chung/du_lieu/cau_hinh_am_thanh_chung.json + phần sửa ở Quản trị › 🔊 Âm thanh chung).
+     taiCauHinh() / datCauHinh(c) / cauHinh()        nạp lại / đặt thẳng (Quản trị nghe thử) / xem cài đặt đang dùng
    NỀN: Web Speech API + Web Audio API (có sẵn trong trình duyệt, không thư viện ngoài).
    BƯỚC: KC_09A
    NGÀY: 21/11/2026
@@ -94,7 +98,8 @@
     dung();
     if (!bat || !loi || !coMayDoc) { if (o.khiXong) setTimeout(o.khiXong, 0); return false; }
     const ph = phien;
-    const ban = { chu: loi, lang: o.lang, toc: o.toc || (/^en/i.test(o.lang) ? 0.85 : 0.95), khiBatDau: o.khiBatDau, khiXong: o.khiXong, lanThu: 0, daBatDau: false };
+    const dc = ch.docCau || {};
+    const ban = { chu: loi, lang: o.lang, vol: Math.max(0, Math.min(1, Number(o.amLuong != null ? o.amLuong : dc.amLuong) || 1)), toc: o.toc || (/^en/i.test(o.lang) ? Number(dc.tocEn) || 0.85 : Number(dc.tocVi) || 0.95), khiBatDau: o.khiBatDau, khiXong: o.khiXong, lanThu: 0, daBatDau: false };
     dangNoi = ban; thongKe.doc++;
     try { if (ss.paused) ss.resume(); } catch (e) { /* bỏ qua */ }
     // chờ máy đọc dừng hẳn sau cancel() rồi mới đọc (Chrome nuốt câu nếu speak ngay)
@@ -126,7 +131,7 @@
     try {
       u = new LoiNoi(ban.chu);
       u.lang = giong ? giong.lang : ban.lang; if (giong) u.voice = giong;
-      u.rate = ban.toc; u.volume = 1;
+      u.rate = ban.toc; u.volume = ban.vol;
     } catch (e) { thongKe.hong++; xong(ban, ph); return; }
     ban.u = u;
     u.onstart = () => {
@@ -234,17 +239,111 @@
       if (a.state === "suspended") a.resume();
       const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + (luc || 0);
       o.type = kieu || "sine"; o.frequency.setValueAtTime(tan, t);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(to || 0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dai);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, (to || 0.18) * heSo), t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dai);
       o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dai + 0.05);
     } catch (e) { /* không phát được: im lặng */ }
   }
-  const tieng = {
+  // Tiếng tự tạo (mặc định khi chưa có file / chưa nạp được cài đặt)
+  const tuTao = {
     dung() { not(1318, 0, 0.25, "sine", 0.2); not(1760, 0.08, 0.35, "sine", 0.16); },          // trả lời đúng
     sai() { not(220, 0, 0.35, "triangle", 0.14); not(185, 0.12, 0.4, "triangle", 0.1); },       // trả lời sai (nhẹ, không doạ)
     thuong() { [523, 659, 784, 1047].forEach((f, i) => not(f, i * 0.11, 0.3, "triangle", 0.16)); }, // mở rương / nhận thưởng
     kc(i) { not(1568 + ((i || 0) % 4) * 120, 0, 0.12, "sine", 0.08); },                         // từng viên 💎 bay vào
     keng() { not(784, 0, 0.5, "square", 0.05); not(1175, 0.06, 0.6, "sine", 0.12); }            // làm giỏi (≥ 80 %)
   };
+
+  // ---------------- Cài đặt âm thanh chung (KC_09B2) ----------------
+  // Mặc định trong code (đủ chạy khi chưa nạp được) < file du_lieu/cau_hinh_am_thanh_chung.json < phần quản trị sửa (Supabase).
+  const DONG_MD = { bat: true, amLuong: 1, file: "", amTep: 1, kieu: "thay", tre: 0 };
+  const CH_MD = {
+    tieng: { dung: DONG_MD, sai: DONG_MD, thuong: DONG_MD, kc: DONG_MD, keng: DONG_MD },
+    loiKhen: { bat: true, tuLop: 6, xacSuat: 0.6, toc: 1, amLuong: 1, khen: [], dongVien: [] },
+    docCau: { tocEn: 0.85, tocVi: 0.95, amLuong: 1 }
+  };
+  const laObj = v => v !== null && typeof v === "object" && !Array.isArray(v);
+  function tron(a, b) {
+    if (b === undefined || b === null) return a;
+    if (!laObj(a) || !laObj(b)) return b;
+    const kq = Object.assign({}, a);
+    Object.keys(b).forEach(k => { kq[k] = tron(a[k], b[k]); });
+    return kq;
+  }
+  let ch = tron(CH_MD, {});
+  let heSo = 1;                 // độ to cả nội dung đang áp cho tiếng tự tạo
+  const khoUrl = new Map();     // "kho_<id>" -> địa chỉ file tải lên
+  let hoaCH = null;
+  const URL_CH = (() => { try { return new URL("du_lieu/cau_hinh_am_thanh_chung.json", taiLieu && taiLieu.currentScript && taiLieu.currentScript.src ? taiLieu.currentScript.src : undefined).href; } catch (e) { return null; } })();
+
+  function clientCua(w) { try { const c = w && (w.kcSupabaseClient || w.supabaseClient); return c && typeof c.rpc === "function" ? c : null; } catch (e) { return null; } }
+  function timClient() {
+    const c = clientCua(goc); if (c) return c;
+    for (const w of [goc.parent, goc.top]) { try { if (w && w !== goc) { const k = clientCua(w); if (k) return k; } } catch (e) { /* khung khác trang gốc */ } }
+    return null;
+  }
+  function datCauHinh(moi) { ch = tron(CH_MD, moi || {}); }
+  // nạp cài đặt (mặc định + phần quản trị sửa) và địa chỉ các file tải lên; lỗi / chậm thì giữ cài đặt đang có
+  function taiCauHinh(moi) {
+    if (hoaCH && !moi) return hoaCH;
+    const mdF = URL_CH ? fetch(URL_CH, { cache: "no-cache" }).then(r => r.ok ? r.json() : {}).catch(() => ({})) : Promise.resolve({});
+    const c = timClient();
+    const sua = c ? Promise.resolve(c.rpc("kc_dt_cau_hinh_qt")).then(k => { const d = k && !k.error ? k.data : null; return d && d.thanhCong && laObj(d.sua) ? d.sua.cau_hinh_am_thanh_chung || null : null; }).catch(() => null) : Promise.resolve(null);
+    const kho = c ? Promise.resolve(c.rpc("kc_am_thanh_kho_ds")).then(k => {
+      const d = k && !k.error ? k.data : null;
+      if (d && d.thanhCong && Array.isArray(d.ds)) d.ds.forEach(m => { try { const u = m.ma && m.tep && c.storage.from("kc-am-thanh").getPublicUrl(m.tep).data.publicUrl; if (u) khoUrl.set(m.ma, u); } catch (e) { /* bỏ qua */ } }); // kc_am_thanh_kho_ds công khai: { ma: "kho_<id>", tep: <đường dẫn trong bucket> }
+    }).catch(() => null) : Promise.resolve(null);
+    const hen = new Promise(xong => setTimeout(xong, 5000, "het"));
+    return (hoaCH = Promise.race([Promise.all([mdF, sua, kho]), hen]).then(kq => {
+      if (kq && kq !== "het") ch = tron(CH_MD, tron(kq[0] || {}, kq[1] || {}));
+      return ch;
+    }).catch(() => ch));
+  }
+
+  function urlFile(ma) { return ma ? (khoUrl.get(ma) || (/^(https?:|\/)/i.test(ma) ? ma : null)) : null; }
+  function phatFileTieng(url, d) {
+    const chay = () => {
+      if (!bat) return;
+      try { const a = new Audio(url); a.volume = Math.max(0, Math.min(1, (Number(d.amLuong) || 0) * (Number(d.amTep) || 0))); const h = a.play(); if (h && h.catch) h.catch(() => {}); } catch (e) { /* bỏ qua */ }
+    };
+    const tre = Number(d.tre) || 0;
+    if (tre > 0) setTimeout(chay, tre * 1000); else chay();
+  }
+  // một tiếng chung theo cài đặt: tắt / file tải lên / tiếng tự tạo (+ độ to)
+  function tiengCauHinh(k, ...doi) {
+    const d = Object.assign({}, DONG_MD, ch.tieng[k]);
+    if (d.bat === false || !bat) return;
+    const url = urlFile(d.file);
+    if (url) { phatFileTieng(url, d); if (d.kieu !== "chong") return; }
+    heSo = Math.max(0, Math.min(2, Number(d.amLuong))); if (!isFinite(heSo)) heSo = 1;
+    try { tuTao[k](...doi); } finally { heSo = 1; }
+  }
+  const tieng = {
+    dung: () => tiengCauHinh("dung"), sai: () => tiengCauHinh("sai"), thuong: () => tiengCauHinh("thuong"),
+    kc: i => tiengCauHinh("kc", i), keng: () => tiengCauHinh("keng")
+  };
+
+  // Lời khen / động viên đọc thành tiếng (người dùng 21/11/2026): bật / tắt + "từ lớp mấy trở xuống" ở Quản trị.
+  // Tiếng đúng / sai luôn phát cho mọi lớp; lời chỉ khi lớp bé <= tuLop (lớp chưa biết thì không nói).
+  let loiCuoi = "";
+  function chonLoi(dung, lop) {
+    const lk = ch.loiKhen || {};
+    if (lk.bat === false || !Number.isFinite(lop) || lop > (Number(lk.tuLop) || 0)) return null;
+    const ds = (dung ? lk.khen : lk.dongVien) || [];
+    const ok = ds.map(s => String(s || "").trim()).filter(Boolean);
+    if (!ok.length) return null;
+    if (Math.random() >= (lk.xacSuat == null ? 1 : Number(lk.xacSuat))) return null;
+    let c = ok[Math.floor(Math.random() * ok.length)];
+    if (ok.length > 1 && c === loiCuoi) c = ok[(ok.indexOf(c) + 1) % ok.length]; // không nói lại câu vừa rồi
+    return (loiCuoi = c);
+  }
+  function phanHoi(dung, lop, tuyChon) {
+    (dung ? tieng.dung : tieng.sai)();
+    const chu = chonLoi(dung, lop == null || lop === "" ? NaN : Number(lop));
+    if (!chu || !bat || !coMayDoc) return false;
+    const lk = ch.loiKhen || {};
+    setTimeout(() => doc(chu, Object.assign({ lang: "vi-VN", toc: Number(lk.toc) || 1, amLuong: lk.amLuong }, tuyChon || {})), 350);
+    return true;
+  }
+  taiCauHinh();
 
   // ---------------- Mở loa ở lần chạm đầu + đọc lại câu bị chặn ----------------
   let daMo = false;
@@ -283,6 +382,7 @@
 
   goc.KC_AM_THANH = {
     docCau, coDoc, coAmThanh, phanTich, doc, dung, tieng, phatTep,
+    phanHoi, taiCauHinh, datCauHinh, cauHinh: () => ch, _chonLoi: chonLoi, _khoUrl: khoUrl,
     dangBat: () => bat, datBat,
     dangDoc: () => !!dangNoi,
     _thongKe: thongKe, _muonTrangNgoai: cs !== goc
