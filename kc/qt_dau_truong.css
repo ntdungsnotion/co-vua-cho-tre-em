@@ -5,7 +5,7 @@
      - Máy tính (>= 900px): lưới thẻ nhiều cột (rộng tới 1600px), ô một dòng (tên | ô nhập | mặc định).
      - Máy rộng (>= 1280px): bảng Supabase là bảng nhiều cột như Excel (cuộn ngang, cột tên đứng yên).
      - Ô khác mặc định: nền vàng nhạt; ô chưa lưu: viền xanh; ô sai dạng: viền đỏ. Thanh lưu dính đáy màn hình.
-   BƯỚC: TC_D18A - NGÀY: 10/11/2026
+   BƯỚC: TC_D18A - NGÀY: 10/11/2026; TC_D05F 21/11/2026 (nút ▶ nghe thử + khối âm thanh)
    ================================================================ */
 
 .qdKhoi { max-width: 1600px !important; }
@@ -98,8 +98,23 @@
 .qdThanhLuu strong { color: var(--mau-chinh-dam); }
 .qdThanhLuu input { flex: 1 1 180px; min-width: 0; padding: 8px 10px; border: 1px solid var(--mau-vien); border-radius: 8px; font-family: inherit; }
 
+/* ----- TC_D05F: nhóm 🔊 Âm thanh ----- */
+.qdNghe { min-width: 44px; min-height: 36px; padding: 4px 10px; margin-left: 6px; border: 1px solid var(--mau-vien); border-radius: 18px;
+  background: #fff; color: var(--mau-chinh-dam); font: inherit; font-size: 0.95rem; cursor: pointer; vertical-align: middle; }
+.qdNghe:hover, .qdNghe:focus-visible { background: #f1ecff; }
+.qdNghe:active { transform: scale(0.95); }
+.qdDongAm { padding-bottom: 6px; }
+.qdDongAm + .qdDongAm { border-top: 1px solid #eee8fb; padding-top: 6px; }
+.qdDongAm .qdO_nhap .qdNhap { width: 100%; box-sizing: border-box; }
+.qdDongAm .qdTen code { display: none; } /* mã ô đã có ở tiêu đề khối + chú thích khi rê chuột */
+/* tên tiếng thu trong thư viện dài: "mặc định ..." nằm dưới ô nhập, xuống dòng được */
+.qdDongAm .qdO { grid-template-columns: minmax(0, 1fr); grid-template-areas: "ten" "nhap" "md"; }
+.qdDongAm .qdMd { min-width: 0; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.qdDongAm .qdMd b { max-width: none; display: inline; }
+
 /* ----- MÁY TÍNH ----- */
 @media (min-width: 900px) {
+  .qdDongAm .qdO { grid-template-columns: 130px minmax(0, 1fr); grid-template-areas: "ten nhap" "ten md"; }
   .qdLuoi { grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); }
   .qdO { grid-template-columns: minmax(0, 1fr) 150px minmax(120px, auto); grid-template-areas: "ten nhap md"; }
   .qdO_nhap .qdMang { min-width: 150px; }

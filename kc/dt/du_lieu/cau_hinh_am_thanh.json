@@ -1,0 +1,48 @@
+{
+  "_ghiChu": "CÀI ĐẶT ÂM THANH Đấu Trường Tri Thức (TC_D05F, 21/11/2026; người dùng: 'Chuyển mọi âm thanh trong đấu trường vào cài đặt, bao gồm âm thanh tướng phát chiêu. Mỗi kỹ năng đều có âm thanh riêng'). File này chỉ là MẶC ĐỊNH; Quản trị › Đấu Trường › Thông số › 🔊 Âm thanh sửa, lưu phần khác mặc định lên Supabase (kc_dt_admin_luu_thong_so, tên 'cau_hinh_am_thanh'), dt3d_am_thanh.js trộn mặc định + phần sửa. Bé chỉ có nút 🔊 tắt / bật tiếng hiệu ứng.",
+  "_ghiChuAmLuong": "amLuong: độ to chung. tieng = mọi tiếng hiệu ứng (0..1, cũ 0,85); nhac = nhạc nền (cũ 0,16, người dùng 30/10/2026 giảm 50%); nhacKhiDoc = nhạc còn bấy nhiêu phần khi máy đọc câu hỏi (cũ 0,35).",
+  "_ghiChuNhac": "nhac: mã bài (thư viện kc/dt/am_thanh/thu_vien.json, mục nhac[]) cho từng bối cảnh. Để trống: tran / trum = im lặng; thang / thua = kèn ngắn tự tạo.",
+  "_ghiChuTieng": "tieng: mỗi tiếng / mỗi chiêu một dòng. ten = tên hiện trong Quản trị, nhom = chieu (tiếng tên chiêu của tướng, MỖI CHIÊU MỘT DÒNG, mã chieu_<mã chiêu>) | don (đòn đánh, di chuyển) | vung (tiếng bên trong chiêu phủ vùng) | ket (thắng, thua, báo động). bat = có kêu không; amLuong = độ to cả dòng (0..2); file = mã tiếng thu thật trong thư viện (tieng[]), trống = chỉ tiếng tự tạo; amTep = độ to riêng của file; kieu = chong (file kêu cùng tiếng tự tạo) | thay (chỉ file); tre = giây chờ trước khi file kêu. Chiêu mới chưa có dòng ở đây vẫn kêu tiếng tự tạo mặc định.",
+  "phienBan": 1,
+  "amLuong": { "tieng": 0.85, "nhac": 0.16, "nhacKhiDoc": 0.35 },
+  "nhac": { "tran": "tran_rung_xanh", "trum": "trum_quyet_chien", "thang": "", "thua": "" },
+  "tieng": {
+    "chieu_kiem_quang_tram": { "ten": "⚔️ Kiếm Quang Trảm (Nhân tộc, đòn chí mạng)", "nhom": "chieu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chieu_hoa_nguc_bao": { "ten": "🔥 Hoả Ngục Bạo (Quỷ tộc, đòn chí mạng)", "nhom": "chieu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chieu_loi_than_giang": { "ten": "⚡ Lôi Thần Giáng (Tiên tộc, đòn chí mạng)", "nhom": "chieu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chieu_mua_lua": { "ten": "☄️ Hoả Vũ Thiên Giáng (mưa lửa)", "nhom": "chieu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chieu_thien_thach": { "ten": "🌑 Thiên Thạch Lạc", "nhom": "chieu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chieu_loc_xoay": { "ten": "🌪️ Cuồng Phong (lốc xoáy)", "nhom": "chieu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chieu_dam_dat": { "ten": "🪨 Chấn Địa (dậm đất)", "nhom": "chieu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chieu_vo_khong_gian": { "ten": "💥 Phá Không Quyền (vỡ không gian)", "nhom": "chieu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chieu_mua_ten": { "ten": "🏹 Vạn Tiễn Tề Phát (mưa tên)", "nhom": "chieu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chieu_chuong": { "ten": "🌟 Thiên Quang Chưởng", "nhom": "chieu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+
+    "chem": { "ten": "Vung kiếm \"vút\"", "nhom": "don", "bat": true, "amLuong": 1, "file": "kiem_chem", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "trung": { "ten": "Trúng đòn \"bộp\"", "nhom": "don", "bat": true, "amLuong": 1, "file": "dam_trung", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "hut": { "ten": "Đánh hụt, bụi tung", "nhom": "don", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "phep": { "ten": "Tung phép (Tiên tộc)", "nhom": "don", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "keng": { "ten": "Khiên đỡ đòn \"keng\"", "nhom": "don", "bat": true, "amLuong": 1, "file": "khien_keng", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "dungTan": { "ten": "Quỷ tộc đứng tấn chịu đòn", "nhom": "don", "bat": true, "amLuong": 1, "file": "dat_tham", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "ne": { "ten": "Né \"vụt\"", "nhom": "don", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "nhay": { "ten": "Quái nhảy vồ", "nhom": "don", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "tia": { "ten": "Đom đóm / trụ bắn tia", "nhom": "don", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "dichChuyen": { "ten": "Dịch chuyển về Lều", "nhom": "don", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chayTron": { "ten": "Quái bỏ chạy", "nhom": "don", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+
+    "muaLua": { "ten": "Mưa lửa cháy rì rào", "nhom": "vung", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "luaCham": { "ten": "Giọt lửa chạm đất \"xèo\"", "nhom": "vung", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "thachVut": { "ten": "Thiên thạch lao xuống (rít)", "nhom": "vung", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "thachNo": { "ten": "Thiên thạch nổ \"ẦM\"", "nhom": "vung", "bat": true, "amLuong": 1, "file": "da_vo", "amTep": 0.7, "kieu": "chong", "tre": 0 },
+    "locXoay": { "ten": "Lốc xoáy gió hú", "nhom": "vung", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "damDat": { "ten": "Dậm đất \"THỊCH\"", "nhom": "vung", "bat": true, "amLuong": 1, "file": "da_vo", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "voKinh": { "ten": "Không gian vỡ như kính", "nhom": "vung", "bat": true, "amLuong": 1, "file": "kinh_vo", "amTep": 1, "kieu": "chong", "tre": 0.5 },
+    "tenBan": { "ten": "Bắn loạt tên (dây cung)", "nhom": "vung", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "tenCam": { "ten": "Mũi tên cắm đất \"phập\"", "nhom": "vung", "bat": true, "amLuong": 1, "file": "ten_cam", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "chuong": { "ten": "Chưởng gồng rồi bắn", "nhom": "vung", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+
+    "thang": { "ten": "Thắng (kèn, khi chưa gắn nhạc thắng)", "nhom": "ket", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "thua": { "ten": "Thua (3 nốt nhẹ, khi chưa gắn nhạc thua)", "nhom": "ket", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "kenLenh": { "ten": "Kèn lệnh (quái / trụ khai chiến trên bản đồ)", "nhom": "ket", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 }
+  }
+}
