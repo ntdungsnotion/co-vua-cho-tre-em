@@ -13,7 +13,7 @@
 //   - TC_D05F (21/11/2026): nhóm 🔊 Âm thanh = file thứ 4 dt/du_lieu/cau_hinh_am_thanh.json (độ to chung, nhạc theo bối cảnh,
 //     mỗi tiếng / MỖI CHIÊU một khối: có kêu, độ to, file thu thật, chồng / thay, ▶ nghe thử bằng dt/3d/dt3d_am_thanh.js).
 // BƯỚC: TC_D18A - NGÀY: 10/11/2026; KC_06B2 11/11/2026 (nhãn Tụ lực lúc chờ chấm); TC_D05F 21/11/2026 (nhóm Âm thanh);
-//   KC_09B1 21/11/2026 13:3x (ô File thu thật / Bài nhạc có thêm file tải lên ở 🎵 Kho tiếng, chung/kho_tieng.js)
+//   KC_09B1 21/11/2026 (nhóm 🔊 Âm thanh thay bằng khung CÂY NỘI DUNG dùng chung với 🎵 Kho tiếng, qt_kho_tieng.js)
 // PHỤ THUỘC: qt_dt_khung.js (QDT: mục này gắn vào khung, vỏ màn hình dựng ở QDT.dangKyMuc bên dưới), ../admin_NC.js, quantri_NC.js,
 //   dt/dt_cau_hinh.js (KC_DT_CAU_HINH: tron, khac), qt_dau_truong.css; SQL repo_rieng SQL/supabase_tc_d18a_thong_so.sql.
 // ================================================================
@@ -23,7 +23,6 @@ var QD = {
   URL: { cau_hinh: "dt/du_lieu/cau_hinh.json", cau_hinh_tran_dau: "dt/du_lieu/cau_hinh_tran_dau.json", cau_hinh_trinh_do: "dt/du_lieu/cau_hinh_trinh_do.json",
     cau_hinh_am_thanh: "dt/du_lieu/cau_hinh_am_thanh.json" }, // TC_D05F
   TEN_TEP: { cau_hinh: "Số làng / bản đồ", cau_hinh_tran_dau: "Số trận đấu", cau_hinh_trinh_do: "Độ khó câu hỏi", cau_hinh_am_thanh: "Âm thanh" },
-  URL_THU_VIEN_AM: "dt/am_thanh/thu_vien.json", tvAm: { nhac: [], tieng: [] }, am: null, // TC_D05F: thư viện âm thanh + bộ tiếng nghe thử
   daTai: false, coMayChu: false, dangLuu: false,
   md: {}, daLuu: {}, ht: {},        // mặc định (file repo) / đã lưu (mặc định + phần sửa trên máy chủ) / đang sửa trên trang
   bang: {}, bangSua: {},            // hàng 3 bảng; bangSua[bảng][khoá hàng] = { cột: giá trị mới }
@@ -41,7 +40,7 @@ QD.NHOM = [
   { ma: "tran", ten: "⚔️ Trận đấu", the: [["cau_hinh_tran_dau", "*"]] },
   { ma: "trinhdo", ten: "🎓 Độ khó câu hỏi", the: [["cau_hinh_trinh_do", "*"]] },
   { ma: "khac", ten: "🧩 Số khác", the: [["cau_hinh", "*"]] },
-  { ma: "amthanh", ten: "🔊 Âm thanh", the: [["cau_hinh_am_thanh", "*"]], tuVe: qdVeAmThanh }, // TC_D05F: trang vẽ riêng (chọn tiếng, ▶ nghe thử)
+  { ma: "amthanh", ten: "🔊 Âm thanh", the: [["cau_hinh_am_thanh", "*"]], tuVe: qdVeAmThanh, sauVe: qdSauVeAmThanh }, // TC_D05F; KC_09B1: khung cây (qt_kho_tieng.js)
   { ma: "lichsu", ten: "🕘 Lịch sử sửa" }
 ];
 
@@ -207,27 +206,19 @@ function qdNhan(duong) {
 // ================================================================
 // TẢI
 // ================================================================
-// TC_D05F: thư viện âm thanh (để chọn tiếng thu thật / nhạc); lỗi thì chỉ còn tiếng tự tạo, không chặn trang.
-// KC_09B1: + file quản trị tải lên ở 🎵 Kho tiếng (chung/kho_tieng.js); kho đổi thì tải lại danh sách chọn.
-function qdTaiThuVienAm(moi) {
-  var KT = window.KC_KHO_TIENG;
-  var san = fetch(QD.URL_THU_VIEN_AM, { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
-  var kho = KT ? KT.ds({ moi: moi }).catch(function () { return null; }) : Promise.resolve(null);
-  return Promise.all([san, kho]).then(function (kq) {
-    var j = kq[0] || {}, tv = { nhac: j.nhac || [], tieng: j.tieng || [] };
-    if (kq[1] && KT) tv = KT.tron(tv, kq[1]);
-    QD.tvAm = tv;
-    if (QD.nhom === "amthanh" && QD.ht.cau_hinh_am_thanh) qdVe();
-  });
-}
-window.addEventListener("kcKhoTiengDoi", function () { if (QD.daTai) qdTaiThuVienAm(true); });
+// KC_09B1: nhóm 🔊 Âm thanh do khung cây qt_kho_tieng.js tự tải + tự lưu (lịch sử chung với Thông số). Cây lưu xong thì
+// chép bản đã lưu vào đây, để Thông số không giữ bản cũ của cài đặt âm thanh.
+window.addEventListener("kcAmThanhDaLuu", function (su) {
+  var ch = su.detail && su.detail.ch;
+  if (!ch || !QD.daTai || !QD.md.cau_hinh_am_thanh) return;
+  QD.daLuu.cau_hinh_am_thanh = qdChep(ch); QD.ht.cau_hinh_am_thanh = qdChep(ch);
+});
 
 function qdTai() {
   qdBaoTrangThai("Đang tải số mặc định và phần đã sửa…", "");
   var md = Object.keys(QD.URL).map(function (t) {
     return fetch(QD.URL[t], { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error(t + ": HTTP " + r.status); return r.json(); });
   });
-  qdTaiThuVienAm(false);
   return Promise.all([Promise.all(md), adminGoiRpc("kc_dt_admin_thong_so", {})]).then(function (kq) {
     var dsMd = kq[0], may = kq[1] || {};
     QD.coMayChu = !!may.thanhCong;
@@ -279,6 +270,8 @@ function qdVe() {
     if (!html) html = '<p class="adminGhiChu">Không có số nào ở nhóm này.</p>';
   }
   qdEl("qdNoiDung").innerHTML = html;
+  if (nhom.sauVe) nhom.sauVe(); // KC_09B1: gắn khung cây âm thanh
+  else if (window.QKT_CAY) window.QKT_CAY.dungNghe();
   qdLoc();
   qdCapNhatDem();
 }
@@ -472,15 +465,9 @@ function qdGanSuKien() {
     if (t.closest("[data-ve]")) { qdVeMacDinh(t.closest("[data-o]")); return; }
     var ht = t.closest("[data-hoan-tac]");
     if (ht) { qdHoanTac(Number(ht.getAttribute("data-hoan-tac"))); return; }
-    var ng = t.closest("[data-nghe]"); // TC_D05F: ▶ nghe thử một tiếng / một bài nhạc, ⏹ dừng nhạc
-    if (ng) { qdNgheThu(ng.getAttribute("data-nghe"), ng.getAttribute("data-loai")); return; }
   });
   man.addEventListener("change", function (su) {
-    if (su.target.classList.contains("qdNhap")) {
-      qdNhan_O(su.target);
-      // TC_D05F: gắn / bỏ file thu thì vẽ lại để hiện / ẩn 3 ô của file
-      if (su.target.getAttribute("data-tep") === "cau_hinh_am_thanh" && /"file"\]$/.test(su.target.getAttribute("data-duong"))) qdVe();
-    }
+    if (su.target.classList.contains("qdNhap")) qdNhan_O(su.target);
     if (su.target.classList.contains("qdNhapBang")) qdNhan_Bang(su.target);
   });
   man.addEventListener("input", function (su) {
@@ -691,62 +678,15 @@ function qdChonHtml(tep, duong, nhan, luaChon) {
     + '<div class="qdMd">mặc định <b>' + qdHtml(tenMd || "(trống)") + '</b> <button type="button" class="qdVe" data-ve title="Về mặc định">↺</button></div></div>';
 }
 
+// KC_09B1 (người dùng 21/11/2026: "kho âm thanh trong đấu trường tri thức cũng nên chỉnh lại theo hình thức này"):
+// nhóm 🔊 Âm thanh = khung CÂY NỘI DUNG dùng chung với Quản trị › 🎵 Kho tiếng (qt_kho_tieng.js, chỉ nhánh Đấu Trường).
+// Khung tự tải, tự lưu (kc_dt_admin_luu_thong_so 'cau_hinh_am_thanh', vẫn vào lịch sử + hoàn tác ở đây).
 function qdVeAmThanh() {
-  var tep = "cau_hinh_am_thanh", ht = QD.ht[tep], md = QD.md[tep];
-  if (!ht) return '<p class="adminGhiChu">Chưa tải được cài đặt âm thanh.</p>';
-  var tv = QD.tvAm;
-  // KC_09B1: file tải lên ở 🎵 Kho tiếng có dấu 📁
-  var dsTieng = [["", "— chỉ tiếng tự tạo —"]].concat(tv.tieng.map(function (t) { return [t.ma, (t.kho ? "📁 " : "") + (t.ten || t.ma) + " (" + t.ma + ")"]; }));
-  var dsNhac = [["", "— để trống —"]].concat(tv.nhac.map(function (n) {
-    return [n.ma, n.kho ? "📁 " + (n.ten || n.ma) + " · kho tải lên" : (n.ten || n.ma) + " · " + (n.boiCanh || []).join(", ")]; }));
-  var dsKieu = [["chong", "Chồng (file + tự tạo)"], ["thay", "Thay (chỉ file)"]];
-  var ghiChu = Object.keys(md).filter(function (k) { return k.indexOf("_ghiChu") === 0; }).map(function (k) { return md[k]; });
-  var giai = '<details class="qdGiaiThich"><summary>ℹ️ Giải thích</summary>' + ghiChu.map(function (g) { return "<p>" + qdHtml(g) + "</p>"; }).join("")
-    + "<p>Bấm ▶ để nghe thử ngay cả ô chưa lưu. Tiếng có file thu thật: lần bấm đầu máy còn tải file, bấm lại lần nữa để nghe đủ. "
-    + 'Xem cả thư viện: <a href="dt/thu_am_thanh.html" target="_blank" rel="noopener">trang nghe thử âm thanh</a>.</p></details>';
-  var html = qdTheBoc(tep, "🔊 Độ to chung", giai, ["tieng", "nhac", "nhacKhiDoc"].map(function (k) { return qdDongHtml(tep, ["amLuong", k]); }).join(""));
-  html += qdTheBoc(tep, "🎵 Nhạc nền theo bối cảnh", '<p class="adminGhiChu">Bé không tắt / đổi được nhạc. Để trống: trận im lặng; thắng / thua kêu kèn ngắn tự tạo. '
-    + '<button type="button" class="adminNut adminNutPhu qdNghe" data-nghe="" data-loai="dung">⏹ Dừng nhạc</button></p>',
-    Object.keys(ht.nhac || {}).map(function (bc) {
-      return '<div class="qdCon qdDongAm"><div class="qdTenCon">' + qdHtml(QD.TEN_NHAC[bc] || bc)
-        + ' <button type="button" class="qdNghe" data-nghe="' + qdHtml(bc) + '" data-loai="nhac" title="Nghe thử">▶</button></div>'
-        + qdChonHtml(tep, ["nhac", bc], "Bài nhạc", dsNhac) + "</div>";
-    }).join(""));
-  var tieng = ht.tieng || {};
-  QD.NHOM_AM.forEach(function (n) {
-    var ruot = Object.keys(tieng).filter(function (k) { return (tieng[k].nhom || "don") === n.ma; }).map(function (k) {
-      var p = ["tieng", k];
-      // 3 ô của file thu chỉ hiện khi dòng đã gắn file (hoặc ô đó đang khác mặc định), cho gọn
-      var hienFile = !!tieng[k].file || ["amTep", "kieu", "tre"].some(function (o) { return !qdGiong(qdLay(ht, p.concat([o])), qdLay(md, p.concat([o]))); });
-      return '<div class="qdCon qdDongAm"><div class="qdTenCon">' + qdHtml(tieng[k].ten || k) + " <code>" + qdHtml(k) + "</code>"
-        + ' <button type="button" class="qdNghe" data-nghe="' + qdHtml(k) + '" data-loai="tieng" title="Nghe thử" aria-label="Nghe thử">▶</button></div>'
-        + qdDongHtml(tep, p.concat(["bat"])) + qdDongHtml(tep, p.concat(["amLuong"]))
-        + qdChonHtml(tep, p.concat(["file"]), "File thu thật", dsTieng)
-        + "<div" + (hienFile ? "" : " hidden") + ">" + qdDongHtml(tep, p.concat(["amTep"])) + qdChonHtml(tep, p.concat(["kieu"]), "Kiểu", dsKieu)
-        + qdDongHtml(tep, p.concat(["tre"])) + "</div></div>";
-    }).join("");
-    if (ruot) html += qdTheBoc(tep, n.ten, n.ghiChu ? '<p class="adminGhiChu">' + qdHtml(n.ghiChu) + "</p>" : "", ruot);
-  });
-  return html;
+  return window.QKT_CAY ? '<div class="qdAmCayCho" id="qdAmCayCho"></div>' : '<p class="adminGhiChu">Chưa nạp được khung âm thanh (qt_kho_tieng.js).</p>';
 }
-
-// ▶ nghe thử bằng chính bộ tiếng của trận (dt3d_am_thanh.js), với cài đặt đang sửa trên trang (cả ô chưa lưu)
-function qdNgheThu(ten, loai) {
-  var ch = QD.ht.cau_hinh_am_thanh;
-  if (!ch) return;
-  var hoa = QD.am || (QD.am = import("./dt/3d/dt3d_am_thanh.js").then(function (m) {
-    return m.taoAmThanh({ cauHinh: qdChep(ch), batLuon: true });
-  }));
-  hoa.then(function (am) {
-    am.moKhoa();
-    am.datCauHinh(qdChep(QD.ht.cau_hinh_am_thanh));
-    if (loai === "dung") am.dungNhac(0.5);
-    else if (loai === "nhac") {
-      if (ch.nhac && ch.nhac[ten]) am.phatNhac({ ma: ch.nhac[ten], tu: 0 });
-      else if (ten === "thang" || ten === "thua") am.doanKet(ten === "thang");
-      else { am.dungNhac(0.5); adminBaoTin("Bối cảnh này đang để trống: trận im lặng.", true); }
-    } else am.thu(ten);
-  }).catch(function (e) { adminBaoTin("❌ Không mở được bộ tiếng: " + e.message, false); });
+function qdSauVeAmThanh() {
+  var o = qdEl("qdAmCayCho");
+  if (o && window.QKT_CAY) window.QKT_CAY.gan(o, { nhanh: "dt" });
 }
 
 function qdHoanTac(id) {
@@ -756,5 +696,6 @@ function qdHoanTac(id) {
     if (kq && kq.thanhCong) adminBaoTin("✅ Đã hoàn tác lần sửa #" + id + ".", true);
     else adminBaoTin("❌ " + ((kq && kq.thongBao) || "Không hoàn tác được"), false);
     qdTai();
+    if (window.QKT_CAY) window.QKT_CAY.taiLai(); // KC_09B1: khung cây âm thanh đọc lại bản sau hoàn tác
   });
 }
