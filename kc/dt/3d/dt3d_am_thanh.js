@@ -37,8 +37,12 @@
 //        trong cài đặt")
 //        TC_D06C2a: kenLenh() kèn lệnh khi quái hung dữ lao vào Thủ lĩnh (dùng trên bản đồ, dt3d_quai_ban_do.js)
 //        TC_D05F: mọi tiếng / nhạc / độ to vào cài đặt (cau_hinh_am_thanh.json + Quản trị); mỗi chiêu một tiếng riêng chieu(ma)
-// NGÀY: 30/10/2026; 30/10/2026 06:30 (thư viện + nhạc nền); 04/11/2026 (kèn lệnh); 21/11/2026 (TC_D05F cài đặt âm thanh)
+//        KC_09B1: thư viện = file sẵn trong repo + KHO TIẾNG CHUNG quản trị tải lên (chung/kho_tieng.js, mã "kho_<id>");
+//                 kho đổi trên trang Quản trị (sự kiện kcKhoTiengDoi) thì đọc lại thư viện
+// NGÀY: 30/10/2026; 30/10/2026 06:30 (thư viện + nhạc nền); 04/11/2026 (kèn lệnh); 21/11/2026 (TC_D05F cài đặt âm thanh);
+//       21/11/2026 13:3x (KC_09B1 kho tiếng tải lên)
 // ================================================================
+import "../../chung/kho_tieng.js"; // KC_09B1: window.KC_KHO_TIENG
 const KHOA = "kc_dt_tieng", KHOA_NHAC = "kc_dt_nhac";
 const TOI_DA = 64; // không mở tiếng mới khi đã có ngần này nguồn đang kêu
 const URL_THU_VIEN = new URL("../am_thanh/thu_vien.json", import.meta.url).href;
@@ -189,10 +193,16 @@ export function taoAmThanh({ cauHinh: chDua, batLuon } = {}) {
   let hoaThuVien = null;
   const rong = { nhac: [], tieng: [] };
   function thuVien() {
-    return hoaThuVien || (hoaThuVien = fetch(URL_THU_VIEN).then(r => r.ok ? r.json() : rong)
+    if (hoaThuVien) return hoaThuVien;
+    const sanCo = fetch(URL_THU_VIEN).then(r => r.ok ? r.json() : rong)
       .then(j => ({ nhac: j.nhac || [], tieng: j.tieng || [] }))
-      .catch(e => { console.warn("Không đọc được thư viện âm thanh, dùng tiếng tự tạo", e); return rong; }));
+      .catch(e => { console.warn("Không đọc được thư viện âm thanh, dùng tiếng tự tạo", e); return rong; });
+    const KT = globalThis.KC_KHO_TIENG; // KC_09B1: + file quản trị tải lên (lỗi / không có Supabase: chỉ thư viện sẵn)
+    const kho = KT ? KT.ds().catch(() => null) : Promise.resolve(null);
+    return (hoaThuVien = Promise.all([sanCo, kho]).then(([tv, k]) => (k && KT ? KT.tron(tv, k) : tv)));
   }
+  // KC_09B1: Quản trị vừa tải / sửa / xoá file trong kho -> đọc lại thư viện (trang Quản trị nghe thử ngay file mới)
+  if (typeof window !== "undefined") window.addEventListener("kcKhoTiengDoi", () => { hoaThuVien = null; thuVien().then(tv => { tvSan = tv; }); });
   const boDem = {}; // tep -> Promise<AudioBuffer | null>
   function tai(tep) {
     return boDem[tep] || (boDem[tep] = choMo.then(() => fetch(new URL(tep, URL_THU_VIEN).href))

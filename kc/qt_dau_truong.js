@@ -12,7 +12,8 @@
 //   Ô tìm + "chỉ ô đã sửa". Máy tính: lưới nhiều cột + bảng như Excel; điện thoại: một cột, bảng thành thẻ.
 //   - TC_D05F (21/11/2026): nhóm 🔊 Âm thanh = file thứ 4 dt/du_lieu/cau_hinh_am_thanh.json (độ to chung, nhạc theo bối cảnh,
 //     mỗi tiếng / MỖI CHIÊU một khối: có kêu, độ to, file thu thật, chồng / thay, ▶ nghe thử bằng dt/3d/dt3d_am_thanh.js).
-// BƯỚC: TC_D18A - NGÀY: 10/11/2026; KC_06B2 11/11/2026 (nhãn Tụ lực lúc chờ chấm); TC_D05F 21/11/2026 (nhóm Âm thanh)
+// BƯỚC: TC_D18A - NGÀY: 10/11/2026; KC_06B2 11/11/2026 (nhãn Tụ lực lúc chờ chấm); TC_D05F 21/11/2026 (nhóm Âm thanh);
+//   KC_09B1 21/11/2026 13:3x (ô File thu thật / Bài nhạc có thêm file tải lên ở 🎵 Kho tiếng, chung/kho_tieng.js)
 // PHỤ THUỘC: qt_dt_khung.js (QDT: mục này gắn vào khung, vỏ màn hình dựng ở QDT.dangKyMuc bên dưới), ../admin_NC.js, quantri_NC.js,
 //   dt/dt_cau_hinh.js (KC_DT_CAU_HINH: tron, khac), qt_dau_truong.css; SQL repo_rieng SQL/supabase_tc_d18a_thong_so.sql.
 // ================================================================
@@ -206,15 +207,27 @@ function qdNhan(duong) {
 // ================================================================
 // TẢI
 // ================================================================
+// TC_D05F: thư viện âm thanh (để chọn tiếng thu thật / nhạc); lỗi thì chỉ còn tiếng tự tạo, không chặn trang.
+// KC_09B1: + file quản trị tải lên ở 🎵 Kho tiếng (chung/kho_tieng.js); kho đổi thì tải lại danh sách chọn.
+function qdTaiThuVienAm(moi) {
+  var KT = window.KC_KHO_TIENG;
+  var san = fetch(QD.URL_THU_VIEN_AM, { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+  var kho = KT ? KT.ds({ moi: moi }).catch(function () { return null; }) : Promise.resolve(null);
+  return Promise.all([san, kho]).then(function (kq) {
+    var j = kq[0] || {}, tv = { nhac: j.nhac || [], tieng: j.tieng || [] };
+    if (kq[1] && KT) tv = KT.tron(tv, kq[1]);
+    QD.tvAm = tv;
+    if (QD.nhom === "amthanh" && QD.ht.cau_hinh_am_thanh) qdVe();
+  });
+}
+window.addEventListener("kcKhoTiengDoi", function () { if (QD.daTai) qdTaiThuVienAm(true); });
+
 function qdTai() {
   qdBaoTrangThai("Đang tải số mặc định và phần đã sửa…", "");
   var md = Object.keys(QD.URL).map(function (t) {
     return fetch(QD.URL[t], { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error(t + ": HTTP " + r.status); return r.json(); });
   });
-  // TC_D05F: thư viện âm thanh (để chọn tiếng thu thật / nhạc); lỗi thì chỉ còn tiếng tự tạo, không chặn trang
-  fetch(QD.URL_THU_VIEN_AM, { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
-    if (j) { QD.tvAm = { nhac: j.nhac || [], tieng: j.tieng || [] }; if (QD.nhom === "amthanh" && QD.ht.cau_hinh_am_thanh) qdVe(); }
-  }).catch(function () { /* không có thư viện */ });
+  qdTaiThuVienAm(false);
   return Promise.all([Promise.all(md), adminGoiRpc("kc_dt_admin_thong_so", {})]).then(function (kq) {
     var dsMd = kq[0], may = kq[1] || {};
     QD.coMayChu = !!may.thanhCong;
@@ -682,8 +695,10 @@ function qdVeAmThanh() {
   var tep = "cau_hinh_am_thanh", ht = QD.ht[tep], md = QD.md[tep];
   if (!ht) return '<p class="adminGhiChu">Chưa tải được cài đặt âm thanh.</p>';
   var tv = QD.tvAm;
-  var dsTieng = [["", "— chỉ tiếng tự tạo —"]].concat(tv.tieng.map(function (t) { return [t.ma, (t.ten || t.ma) + " (" + t.ma + ")"]; }));
-  var dsNhac = [["", "— để trống —"]].concat(tv.nhac.map(function (n) { return [n.ma, (n.ten || n.ma) + " · " + (n.boiCanh || []).join(", ")]; }));
+  // KC_09B1: file tải lên ở 🎵 Kho tiếng có dấu 📁
+  var dsTieng = [["", "— chỉ tiếng tự tạo —"]].concat(tv.tieng.map(function (t) { return [t.ma, (t.kho ? "📁 " : "") + (t.ten || t.ma) + " (" + t.ma + ")"]; }));
+  var dsNhac = [["", "— để trống —"]].concat(tv.nhac.map(function (n) {
+    return [n.ma, n.kho ? "📁 " + (n.ten || n.ma) + " · kho tải lên" : (n.ten || n.ma) + " · " + (n.boiCanh || []).join(", ")]; }));
   var dsKieu = [["chong", "Chồng (file + tự tạo)"], ["thay", "Thay (chỉ file)"]];
   var ghiChu = Object.keys(md).filter(function (k) { return k.indexOf("_ghiChu") === 0; }).map(function (k) { return md[k]; });
   var giai = '<details class="qdGiaiThich"><summary>ℹ️ Giải thích</summary>' + ghiChu.map(function (g) { return "<p>" + qdHtml(g) + "</p>"; }).join("")

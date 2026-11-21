@@ -37,6 +37,8 @@
        CẬP NHẬT: 10/11/2026 - TC_D18A: nhóm "⚔️ Đấu Trường Tri Thức" trong Trò Chơi, mục "🎛️ Thông số" (qt_dau_truong.js/.css,
                  dt/dt_cau_hinh.js): sửa mọi số cân bằng + 3 bảng Supabase, lịch sử + hoàn tác (SQL TC_D18A).
                  Cùng bước: KHUNG gắn mục (qt_dt_khung.js, chỗ gắn #qdtMenu + #qdtManHinh) + mục "👤 Tài khoản" (qt_dt_tai_khoan.js).
+       CẬP NHẬT: 21/11/2026 13:4x - KC_09B1: mục "🎵 Kho tiếng" (Quản trị chung): tải file âm thanh lên Supabase Storage (bucket kc-am-thanh),
+                 nghe, sửa, xoá; file hiện ở ô chọn tiếng của Đấu Trường (qt_kho_tieng.js/.css, chung/kho_tieng.js, SQL KC_09B1).
        CẬP NHẬT: 18/11/2026 - KC_03B3: tiểu mục "🎓 Học & thẻ nhớ" trong 👦 Hồ sơ các bé (kc_hoc_cua_be.js/.css dùng chung với khu phụ huynh):
                  lớp / vùng / nhánh, thẻ riêng, bật nhạy cảm, giao thêm / bỏ thẻ (RPC kc_hs_..., SQL KC_03B3).
        CẬP NHẬT: 11/11/2026 - KC_03A: tiểu mục "📒 Sổ ghi nhớ" trong 👦 Hồ sơ các bé (qt_ghi_nho.js, RPC kc_ghi_nho_admin_xem);
@@ -64,6 +66,7 @@
   <link rel="stylesheet" href="qt_dau_truong.css"> <!-- TC_D18A -->
   <link rel="stylesheet" href="qt_kho_cau.css"> <!-- KC_06C -->
   <link rel="stylesheet" href="qt_don_du_lieu.css"> <!-- KC_07 -->
+  <link rel="stylesheet" href="qt_kho_tieng.css"> <!-- KC_09B1 -->
   <link rel="stylesheet" href="qt_kho_tri_thuc.css"> <!-- KC_03B1 -->
   <link rel="stylesheet" href="kc_hoc_cua_be.css"> <!-- KC_03B3 -->
 
@@ -467,6 +470,7 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="khocau" type="button">❓ Kho câu hỏi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotrithuc" type="button">📚 Kho tri thức</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="giongdoc" type="button">🔊 Giọng đọc</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="khotieng" type="button">🎵 Kho tiếng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="donkho" type="button">🧹 Dọn kho ảnh</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="dungluong" type="button">🗄️ Dung lượng dữ liệu</button>
       </div>
@@ -1541,6 +1545,18 @@
       </div>
     </section>
 
+    <!-- KC_09B1 - MÀN HÌNH: KHO TIẾNG CHUNG (qt_kho_tieng.js dựng nội dung trong #qktGoc) -->
+    <section class="adminManHinh" id="manhinh-khotieng">
+      <div class="adminKhoi">
+        <h3>🎵 Kho tiếng</h3>
+        <p class="adminGhiChu">
+          Tải nhạc nền và tiếng hiệu ứng lên cho cả app. File tải lên hiện ngay trong ô <strong>File thu thật</strong> / <strong>Bài nhạc</strong>
+          ở ⚔️ Đấu Trường › 🎛️ Thông số › 🔊 Âm thanh (có dấu 📁). Bé không thấy trang này.
+        </p>
+        <div id="qktGoc"></div>
+      </div>
+    </section>
+
     <!-- KC_07 - MÀN HÌNH: DUNG LƯỢNG DỮ LIỆU + DỌN DỮ LIỆU CŨ (qt_don_du_lieu.js dựng nội dung trong #qddGoc) -->
     <section class="adminManHinh" id="manhinh-dungluong">
       <div class="adminKhoi">
@@ -1615,6 +1631,8 @@
   <script src="qt_kho_tu.js"></script>
   <script src="qt_kho_cau.js"></script>       <!-- KC_06C: ❓ Kho câu hỏi -->
   <script src="qt_don_du_lieu.js"></script>   <!-- KC_07: 🗄️ Dung lượng dữ liệu -->
+  <script src="chung/kho_tieng.js"></script>  <!-- KC_09B1: kho tiếng chung (KC_KHO_TIENG) -->
+  <script src="qt_kho_tieng.js"></script>     <!-- KC_09B1: 🎵 Kho tiếng -->
   <script src="kc_the_nho_khuon.js"></script> <!-- KC_03B1: khuôn 9 hình dạng thẻ nhớ -->
   <script src="qt_kho_tri_thuc.js"></script>  <!-- KC_03B1: 📚 Kho tri thức -->
   <script src="qt_the_nho_soan.js"></script>  <!-- KC_03B2: ➕ thêm / sửa / nhập thẻ + kiểm trùng -->
