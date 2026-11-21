@@ -13,8 +13,10 @@
 //     ⬆️ Tải file khác lên (tự tích làm mặc định), 📚 Chọn từ thư viện; CÀI ĐẶT của nội dung (có kêu, độ to, độ to file,
 //     chồng / thay, trễ); 💾 Lưu, ↺ Mặc định.
 //   - Điện thoại: cây là trang đầu, bấm nội dung mở trang chi tiết có ← Quay lại. Máy tính: 2 cột.
-//   Dùng ở 2 chỗ, CHUNG một bộ dữ liệu: Quản trị › 🎵 Kho tiếng (cả cây, #qktGoc) và ⚔️ Đấu Trường › 🎛️ Thông số ›
-//   🔊 Âm thanh (chỉ nhánh Đấu Trường, qt_dau_truong.js gọi QKT_CAY.gan(o, { nhanh: "dt" })).
+//   Dùng ở 2 chỗ, CHUNG một bộ dữ liệu (người dùng 21/11/2026: âm thanh Đấu Trường KHÔNG để ở Quản trị chung):
+//   - ⚔️ Đấu Trường › 🎛️ Thông số › 🔊 Âm thanh: nhánh Đấu Trường (qt_dau_truong.js gọi QKT_CAY.gan(o, { nhanh: "dt" }));
+//   - Quản trị chung › 🎵 Kho tiếng (#qktGoc, nhanh "chung"): chỉ âm thanh dùng chung toàn app (📚 Âm thanh chung, KC_09B2)
+//     + 🗂️ File chưa thuộc nội dung nào. Game khác (Mèo Con, cờ...) sau này thêm nhánh riêng ở mục của game đó.
 //   Dữ liệu: mặc định dt/du_lieu/cau_hinh_am_thanh.json + phần sửa (kc_dt_admin_thong_so / kc_dt_admin_luu_thong_so, giữ
 //   lịch sử + hoàn tác ở Thông số); file tải lên + danh sách file từng nội dung (kc_am_thanh_admin_ds, _gan_them, _go,
 //   _xin_tai, _luu, _xin_xoa, _xoa_xong); thư viện file sẵn dt/am_thanh/thu_vien.json + kho (chung/kho_tieng.js).
@@ -144,7 +146,7 @@
     var g = v.goc;
     if (!S.daTai) { g.innerHTML = '<div class="qktCay"><p class="adminDangTai">' + (S.loi ? T(S.loi) : "Đang tải...") + "</p></div>"; return; }
     if (v.chon && !hopLe(v, v.chon)) v.chon = null;
-    var so = soChuaLuu();
+    var so = v.nhanh === "dt" ? soChuaLuu() : 0; // thanh lưu chỉ ở nơi sửa được (Đấu Trường)
     g.innerHTML = '<div class="qktCay' + (v.moChiTiet ? " moChiTiet" : "") + '">'
       + (S.loi ? '<p class="qktLoi">' + T(S.loi) + "</p>" : "")
       + '<nav class="qktTrai" aria-label="Cây nội dung âm thanh">'
@@ -156,7 +158,7 @@
       + '<button type="button" class="adminNut adminNutThanhCong" data-kt="luu">💾 Lưu</button>'
       + '<button type="button" class="adminNut adminNutPhu" data-kt="bo">Bỏ thay đổi</button></div>';
   }
-  function hopLe(v, khoa) { return khoa === "mocoi" || dsND(v.nhanh).indexOf(khoa) >= 0; }
+  function hopLe(v, khoa) { return v.nhanh === "chung" ? khoa === "mocoi" : dsND(v.nhanh).indexOf(khoa) >= 0; }
   function dauND(khoa) {
     var c = chia(khoa), f = fileCua(S.ht, khoa), d = c.loai === "tieng" ? dong(S.ht, c.k) : null;
     return (chuaLuu(khoa) ? '<i class="qktCham" title="Chưa lưu">●</i>' : "") + (/^kho_/.test(f) ? '<span title="Đang dùng file tải lên">📁</span>' : "")
@@ -177,9 +179,11 @@
       dt += nhanh(n.ten, Object.keys(tieng).filter(function (k) { return (tieng[k].nhom || "don") === n.ma; }).map(function (k) {
         return khop(tieng[k].ten || k, "dt:tieng:" + k) ? nutND(v, "dt:tieng:" + k, tieng[k].ten || k) : ""; }).join(""), n.ma === "chieu");
     });
-    var html = nhanh("⚔️ Đấu Trường Tri Thức", dt, true);
-    if (v.nhanh === "all") {
-      html += '<details class="qktNhanh"><summary>📚 Âm thanh chung</summary><p class="qktSau">Đọc câu hỏi, tiếng đúng / sai / thưởng: làm ở bước KC_09B2.</p></details>';
+    // người dùng 21/11/2026: âm thanh Đấu Trường chỉ nằm ở mục Đấu Trường; Quản trị chung chỉ giữ âm thanh dùng chung
+    var html = v.nhanh === "dt" ? nhanh("⚔️ Đấu Trường Tri Thức", dt, true) : "";
+    if (v.nhanh === "chung") {
+      html += '<details class="qktNhanh" open><summary>📚 Âm thanh chung</summary><p class="qktSau">Đọc câu hỏi, tiếng đúng / sai / thưởng của mọi màn hỏi: làm ở bước KC_09B2.</p></details>'
+        + '<p class="qktSau">Âm thanh riêng của từng game nằm trong mục của game đó, ví dụ ⚔️ Đấu Trường › 🎛️ Thông số › 🔊 Âm thanh.</p>';
       var mc = khoMoCoi();
       if (mc.length) html += '<button type="button" class="qktNut' + (v.chon === "mocoi" ? " dangChon" : "") + '" data-kt="chon" data-khoa="mocoi"><span class="qktNutTen">🗂️ File chưa thuộc nội dung nào</span><b class="qktSo">' + mc.length + "</b></button>";
     }
@@ -457,7 +461,7 @@
   function capNhatThanh() {
     var so = soChuaLuu();
     views.forEach(function (v) {
-      var th = v.goc.querySelector(".qktThanh"); if (!th) return;
+      var th = v.goc.querySelector(".qktThanh"); if (!th || v.nhanh !== "dt") return;
       th.classList.toggle("hien", so > 0); th.querySelector("b").textContent = so + " nội dung chưa lưu";
       var nl = v.goc.querySelector('.qktPhai [data-kt="luu"]'); if (nl && v.chon) nl.disabled = !chuaLuu(v.chon);
     });
@@ -519,8 +523,8 @@
 
   // ---------------- gắn vào trang ----------------
   window.QKT_CAY = {
-    gan: function (o, tuyChon) { // gắn (hoặc gắn lại) một khung cây vào phần tử o; nhanh: "dt" | "all"
-      var nhanh = (tuyChon && tuyChon.nhanh) || "all";
+    gan: function (o, tuyChon) { // gắn (hoặc gắn lại) một khung cây vào phần tử o; nhanh: "dt" (Đấu Trường) | "chung" (Quản trị chung)
+      var nhanh = (tuyChon && tuyChon.nhanh) || "chung";
       var v = views.find(function (x) { return x.nhanh === nhanh; });
       if (!v) {
         var goc = document.createElement("div"); goc.className = "qktGocCay";
@@ -541,8 +545,11 @@
   document.addEventListener("adminDaChuyenManHinh", function (su) {
     var ten = su.detail && su.detail.ten;
     dungNghe();
-    if (ten === "khotieng" && gocKho) window.QKT_CAY.gan(gocKho, { nhanh: "all" });
+    if (ten === "khotieng" && gocKho) {
+      window.QKT_CAY.gan(gocKho, { nhanh: "chung" });
+      if (S.daTai) taiLaiKho().then(veTatCa); // mỗi lần mở: đọc lại danh sách file (tải / xoá ở nơi khác)
+    }
   });
-  if (gocKho && document.getElementById("manhinh-khotieng") && document.getElementById("manhinh-khotieng").classList.contains("dangHien")) window.QKT_CAY.gan(gocKho, { nhanh: "all" });
+  if (gocKho && document.getElementById("manhinh-khotieng") && document.getElementById("manhinh-khotieng").classList.contains("dangHien")) window.QKT_CAY.gan(gocKho, { nhanh: "chung" });
 })();
 // 21/11/2026 - BƯỚC: KC_09B1
