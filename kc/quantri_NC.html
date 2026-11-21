@@ -37,6 +37,7 @@
        CẬP NHẬT: 10/11/2026 - TC_D18A: nhóm "⚔️ Đấu Trường Tri Thức" trong Trò Chơi, mục "🎛️ Thông số" (qt_dau_truong.js/.css,
                  dt/dt_cau_hinh.js): sửa mọi số cân bằng + 3 bảng Supabase, lịch sử + hoàn tác (SQL TC_D18A).
                  Cùng bước: KHUNG gắn mục (qt_dt_khung.js, chỗ gắn #qdtMenu + #qdtManHinh) + mục "👤 Tài khoản" (qt_dt_tai_khoan.js).
+       CẬP NHẬT: 21/11/2026 18:xx - KC_09B2: mục "🎵 Kho tiếng" đổi tên "🎵 Âm thanh chung" (cây: tiếng đúng / sai / thưởng / kim cương / làm giỏi có tải file, lời khen + động viên theo lớp, giọng đọc câu nghe; qt_kho_tieng.js nhánh "chung", chung/am_thanh.js, SQL KC_09B2).
        CẬP NHẬT: 21/11/2026 13:4x - KC_09B1: mục "🎵 Kho tiếng" (Quản trị chung) dạng CÂY NỘI DUNG: bấm nội dung -> nghe, tải file thay (Supabase
                  Storage, bucket kc-am-thanh), tích file mặc định, cài đặt; Đấu Trường › Thông số › 🔊 Âm thanh dùng chung khung này
                  (qt_kho_tieng.js/.css, chung/kho_tieng.js, SQL KC_09B1 + KC_09B1b).
@@ -471,7 +472,7 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="khocau" type="button">❓ Kho câu hỏi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotrithuc" type="button">📚 Kho tri thức</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="giongdoc" type="button">🔊 Giọng đọc</button>
-        <button class="adminNutManHinh qtMuc" data-manhinh="khotieng" type="button">🎵 Kho tiếng</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="khotieng" type="button">🎵 Âm thanh chung</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="donkho" type="button">🧹 Dọn kho ảnh</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="dungluong" type="button">🗄️ Dung lượng dữ liệu</button>
       </div>
@@ -1549,9 +1550,9 @@
     <!-- KC_09B1 - MÀN HÌNH: KHO TIẾNG CHUNG (qt_kho_tieng.js dựng nội dung trong #qktGoc) -->
     <section class="adminManHinh" id="manhinh-khotieng">
       <div class="adminKhoi">
-        <h3>🎵 Kho tiếng</h3>
+        <h3>🎵 Âm thanh chung</h3>
         <p class="adminGhiChu">
-          Âm thanh dùng chung của cả app (đọc câu hỏi, tiếng đúng / sai / thưởng của mọi màn hỏi) và file đã tải lên chưa dùng ở đâu.
+          Âm thanh dùng chung của cả app: tiếng đúng / sai / thưởng / kim cương (tải file thay được), lời khen và động viên cho bé nhỏ, giọng đọc câu nghe; cùng các file đã tải lên chưa dùng ở đâu.
           Âm thanh riêng của từng game nằm trong mục của game đó (⚔️ Đấu Trường › 🎛️ Thông số › 🔊 Âm thanh). Bé không thấy trang này.
         </p>
         <div id="qktGoc"></div>
@@ -1632,6 +1633,7 @@
   <script src="qt_kho_tu.js"></script>
   <script src="qt_kho_cau.js"></script>       <!-- KC_06C: ❓ Kho câu hỏi -->
   <script src="qt_don_du_lieu.js"></script>   <!-- KC_07: 🗄️ Dung lượng dữ liệu -->
+  <script src="chung/am_thanh.js"></script>   <!-- KC_09B2: module âm thanh chung (nghe thử Âm thanh chung) -->
   <script src="chung/kho_tieng.js"></script>  <!-- KC_09B1: kho tiếng chung (KC_KHO_TIENG) -->
   <script src="qt_kho_tieng.js"></script>     <!-- KC_09B1: 🎵 Kho tiếng -->
   <script src="kc_the_nho_khuon.js"></script> <!-- KC_03B1: khuôn 9 hình dạng thẻ nhớ -->

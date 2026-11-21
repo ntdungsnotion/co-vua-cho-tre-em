@@ -1,0 +1,35 @@
+{
+  "_ghiChu": "CÀI ĐẶT ÂM THANH CHUNG toàn app (KC_09B2, 21/11/2026). Chỉ phần dùng chung mọi màn hỏi / ôn tập / Thử Thách: tiếng đúng / sai / thưởng / kim cương / làm giỏi, lời khen + động viên đọc thành tiếng, giọng đọc câu nghe. Âm thanh riêng của từng game (Đấu Trường...) nằm ở cài đặt game đó. Đây là MẶC ĐỊNH; phần quản trị sửa lưu ở Supabase (kc_dt_qt_cau_hinh, tên 'cau_hinh_am_thanh_chung'), trộn từng khoá lên file này. Sửa ở Quản trị chung › 🔊 Âm thanh chung.",
+  "_ghiChuTieng": "tieng: mỗi tiếng một dòng. bat = có kêu; amLuong = độ to cả nội dung (0-2, trên 1 chỉ tăng được tiếng tự tạo); file = mã file tải lên 'kho_<số>' ('' = tiếng tự tạo bằng máy); amTep = độ to riêng của file (0-2, tối đa 1 khi phát); kieu = 'thay' (có file thì chỉ phát file) | 'chong' (file + tiếng tự tạo); tre = chờ bao nhiêu giây rồi file mới kêu.",
+  "_ghiChuLoi": "loiKhen: bật = có lời nói; tuLop = bé từ lớp này TRỞ XUỐNG mới nghe lời (mặc định 6; lớp 7-12 chỉ nghe tiếng đúng / sai); xacSuat = bao nhiêu phần số lần trả lời có lời (0-1, để bé khỏi chán); toc = tốc độ đọc; amLuong = độ to. khen[] đọc khi đúng, dongVien[] đọc khi sai.",
+  "phienBan": 1,
+  "tieng": {
+    "dung":   { "ten": "✅ Trả lời đúng", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "sai":    { "ten": "❌ Trả lời sai (nhẹ, không doạ)", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "thuong": { "ten": "🎁 Mở rương / nhận thưởng", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "kc":     { "ten": "💎 Từng viên kim cương bay vào", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "keng":   { "ten": "🎉 Làm giỏi (từ 80%)", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 }
+  },
+  "loiKhen": {
+    "bat": true,
+    "tuLop": 6,
+    "xacSuat": 0.6,
+    "toc": 1,
+    "amLuong": 1,
+    "khen": [
+      "Giỏi lắm!", "Tuyệt vời!", "Đúng rồi, con giỏi quá!", "Chính xác!", "Hay quá!",
+      "Con làm tốt lắm!", "Quá đỉnh luôn!", "Xuất sắc!", "Đúng rồi đó, tiếp tục nào!", "Con thật là thông minh!",
+      "Làm tốt lắm, cố lên!", "Cô Cú khen con đó!", "Giỏi ghê!", "Tiếp tục phát huy nhé!", "Một câu rất chuẩn!"
+    ],
+    "dongVien": [
+      "Không sao đâu con!", "Cố lên nào!", "Sai là để nhớ lâu hơn mà!", "Lần sau con sẽ làm được!", "Đừng nản nhé!",
+      "Mình thử lại nào!", "Con đã cố gắng rồi!", "Từng chút một, con sẽ giỏi lên!", "Không sao, mình nhớ lần sau nhé!", "Cô Cú tin con!",
+      "Bình tĩnh, con làm được!", "Câu này hơi khó, cố lên!", "Ai cũng có lúc sai mà!", "Cùng ôn lại nhé!", "Con làm tốt lắm, thử tiếp nào!"
+    ]
+  },
+  "docCau": {
+    "tocEn": 0.85,
+    "tocVi": 0.95,
+    "amLuong": 1
+  }
+}
