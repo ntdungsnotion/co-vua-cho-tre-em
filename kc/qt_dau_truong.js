@@ -212,6 +212,7 @@ window.addEventListener("kcAmThanhDaLuu", function (su) {
   var ch = su.detail && su.detail.ch;
   if (!ch || !QD.daTai || !QD.md.cau_hinh_am_thanh) return;
   QD.daLuu.cau_hinh_am_thanh = qdChep(ch); QD.ht.cau_hinh_am_thanh = qdChep(ch);
+  if (!QD.dangLuu && qdSoChuaLuu() === 0) qdTai(); // không có ô khác đang sửa: đọc lại để 🕘 Lịch sử có lần lưu này
 });
 
 function qdTai() {
