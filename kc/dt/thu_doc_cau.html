@@ -35,6 +35,8 @@
   <button id="nutModule">▶ Đọc bằng module (như game)</button>
   <button id="nutTrucTiep" class="phu">▶ Đọc thẳng (không qua module)</button>
   <button id="nutGiong" class="phu">📋 Liệt kê giọng</button>
+  <button id="nutTung" class="phu">🧪 Thử TỪNG giọng tiếng Anh</button>
+  <button id="nutXoaNho" class="phu">🧹 Xoá giọng máy đã nhớ</button>
 </div>
 <pre id="nhatKy">Chưa bấm gì.</pre>
 <script src="../chung/am_thanh.js"></script>
@@ -45,6 +47,7 @@
   function ghi(t) { dong.push(((performance.now() / 1000).toFixed(2)) + "s  " + t); if (dong.length > 60) dong.shift(); log.textContent = dong.join("\n"); }
   function the() { return document.getElementById("tu").value.trim() || "news"; }
   ghi("Trình duyệt: " + navigator.userAgent);
+  try { var nho = []; for (var q = 0; q < localStorage.length; q++) { var kn = localStorage.key(q); if (/^kc_giong_tot_/.test(kn)) nho.push(kn.replace("kc_giong_tot_", "") + "=" + localStorage.getItem(kn)); } ghi("Giọng máy đã nhớ: " + (nho.join("; ") || "(chưa)")); } catch (e) { /* bỏ qua */ }
   var ss = window.speechSynthesis;
   ghi("speechSynthesis: " + (ss ? "có" : "KHÔNG CÓ") + " · module KC_AM_THANH: " + (window.KC_AM_THANH ? "có" : "KHÔNG CÓ"));
   function giong() {
@@ -77,6 +80,26 @@
     ghi("THẲNG: speak('" + tu + "', en-US)");
     try { ss.cancel(); ss.speak(u); } catch (e) { ghi("  speak ném lỗi: " + e.message); }
     setTimeout(function () { ghi("  sau 3,5 giây: speaking=" + ss.speaking + " pending=" + ss.pending); }, 3500);
+  };
+  // thử lần lượt từng giọng tiếng Anh: giọng nào bắt đầu đọc được thì ghi OK, lỗi thì ghi mã lỗi
+  document.getElementById("nutTung").onclick = function () {
+    if (!ss) { ghi("Không có speechSynthesis"); return; }
+    var ds = ss.getVoices().filter(function (g) { return /^en/i.test(g.lang); }), tu = the(), i = 0;
+    if (!ds.length) { ghi("Không có giọng tiếng Anh nào để thử"); return; }
+    ghi("THỬ TỪNG GIỌNG (" + ds.length + " giọng) với từ '" + tu + "':");
+    (function tiep() {
+      if (i >= ds.length) { ghi("Xong. Giọng ghi OK là giọng đọc được trên máy này."); return; }
+      var g = ds[i++], xong = false, t0 = performance.now(), u = new SpeechSynthesisUtterance(tu);
+      u.voice = g; u.lang = g.lang;
+      function ketThuc(kq) { if (xong) return; xong = true; ghi("  " + g.name + " [" + g.lang + "] → " + kq); try { ss.cancel(); } catch (e) { /* bỏ qua */ } setTimeout(tiep, 700); }
+      u.onstart = function () { ghi("  (" + g.name + " bắt đầu sau " + Math.round(performance.now() - t0) + " ms)"); setTimeout(function () { ketThuc("OK"); }, 900); };
+      u.onerror = function (e) { ketThuc("LỖI " + (e && e.error)); };
+      setTimeout(function () { ketThuc("KHÔNG phản hồi sau 3 giây"); }, 3000);
+      try { ss.cancel(); setTimeout(function () { ss.speak(u); }, 150); } catch (e) { ketThuc("speak ném lỗi " + e.message); }
+    })();
+  };
+  document.getElementById("nutXoaNho").onclick = function () {
+    try { var k = []; for (var j = 0; j < localStorage.length; j++) { var n = localStorage.key(j); if (/^kc_giong_tot_/.test(n)) k.push(n); } k.forEach(function (n) { ghi("Xoá " + n + " = " + localStorage.getItem(n)); localStorage.removeItem(n); }); if (!k.length) ghi("Máy chưa nhớ giọng nào."); } catch (e) { ghi("Không đọc được bộ nhớ: " + e.message); }
   };
   Array.prototype.forEach.call(document.querySelectorAll("[data-tu]"), function (b) {
     b.onclick = function () { document.getElementById("tu").value = b.getAttribute("data-tu"); document.getElementById("nutModule").click(); };
