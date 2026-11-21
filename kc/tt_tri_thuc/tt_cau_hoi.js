@@ -32,8 +32,8 @@
   const AM = () => goc.KC_AM_THANH || null;
   const tieng = {
     // KC_09B2: tiếng đúng / sai mọi lớp + lời khen / động viên khi lớp bé <= cài đặt (Quản trị › Âm thanh chung)
-    ting(lop) { const a = AM(); if (a) a.phanHoi(true, lop); },
-    tram(lop) { const a = AM(); if (a) a.phanHoi(false, lop); },
+    ting(lop, keNghe) { const a = AM(); if (a) a.phanHoi(true, lop, { khongLoi: !!keNghe }); },
+    tram(lop, keNghe) { const a = AM(); if (a) a.phanHoi(false, lop, { khongLoi: !!keNghe }); },
     ruong() { const a = AM(); if (a) a.tieng.thuong(); },
     kc(i) { const a = AM(); if (a) a.tieng.kc(i); },
     keng() { const a = AM(); if (a) a.tieng.keng(); }
@@ -228,6 +228,7 @@
       function nhanCham(kq) {
         dangGui = false;
         const dung = !!kq.dung;
+        const keNghe = !!(kq.cau && coAmThanh(kq.cau)); // câu kế là câu nghe: không nói lời khen / động viên (câu nghe tự đọc ngay, lời sẽ đè lên) (người dùng 21/11/2026)
         daTraLoi[viTri] = { dung, hoiLai: !!(cau && cau.hoiLai) };
         veDongHo();
         daCham = kq;
@@ -247,11 +248,11 @@
         if (dung) {
           ph.appendChild(tao("p", "ttDung", ["✓ Đúng rồi!", "⭐ Giỏi quá!", "✓ Chính xác!"][viTri % 3]));
           const b = goc0.querySelector('.ttDa[data-i="' + kq.dapAnDung + '"]'); if (b) phaoSao(b);
-          tieng.ting(t.lop); tuThe = "vay"; coCu("Tuyệt vời!");
+          tieng.ting(t.lop, keNghe); tuThe = "vay"; coCu("Tuyệt vời!");
         } else {
           const p = tao("p", "ttSaiChu"); p.append("✗ Đáp án: ", tao("b", "", dap != null ? String(dap) : "…"));
           ph.appendChild(p);
-          tieng.tram(t.lop); coCu(kq.hoiLai ? "Lát nữa Cô Cú hỏi lại để con nhớ nhé" : "Không sao, mình nhớ lần sau nhé");
+          tieng.tram(t.lop, keNghe); coCu(kq.hoiLai ? "Lát nữa Cô Cú hỏi lại để con nhớ nhé" : "Không sao, mình nhớ lần sau nhé");
         }
         veCham();
         setTimeout(tiep, dung ? 700 : 1300);

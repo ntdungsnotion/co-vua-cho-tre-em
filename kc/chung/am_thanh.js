@@ -24,7 +24,7 @@
      dung()                                          dừng mọi tiếng đọc
      tieng.dung() / sai() / thuong() / kc(i) / keng()  tiếng ngắn tự tạo (WebAudio, không cần tệp)
      dangBat() / datBat(true|false)                  nút tắt tiếng chung (máy nhớ, khoá "kc_am_thanh_bat")
-     phanHoi(dung, lop)    KC_09B2: tiếng đúng / sai (MỌI lớp) + lời khen / động viên đọc thành tiếng khi lớp bé <= "tuLop"
+     phanHoi(dung, lop, { khongLoi })    KC_09B2: tiếng đúng / sai (MỌI lớp) + lời khen / động viên đọc thành tiếng khi lớp bé <= "tuLop"
                            (cài đặt, mặc định 6; lớp chưa biết thì không nói). Lời + tiếng + giọng đọc theo cài đặt chung
                            (kc/chung/du_lieu/cau_hinh_am_thanh_chung.json + phần sửa ở Quản trị › 🔊 Âm thanh chung).
      taiCauHinh() / datCauHinh(c) / cauHinh()        nạp lại / đặt thẳng (Quản trị nghe thử) / xem cài đặt đang dùng
@@ -337,10 +337,11 @@
   }
   function phanHoi(dung, lop, tuyChon) {
     (dung ? tieng.dung : tieng.sai)();
-    const chu = chonLoi(dung, lop == null || lop === "" ? NaN : Number(lop));
+    const khongLoi = !!(tuyChon && tuyChon.khongLoi); // nơi gọi báo không nói lời (vd câu kế là câu nghe)
+    const chu = khongLoi ? null : chonLoi(dung, lop == null || lop === "" ? NaN : Number(lop));
     if (!chu || !bat || !coMayDoc) return false;
     const lk = ch.loiKhen || {};
-    setTimeout(() => doc(chu, Object.assign({ lang: "vi-VN", toc: Number(lk.toc) || 1, amLuong: lk.amLuong }, tuyChon || {})), 350);
+    setTimeout(() => doc(chu, { lang: "vi-VN", toc: Number(lk.toc) || 1, amLuong: lk.amLuong }), 350);
     return true;
   }
   taiCauHinh();
