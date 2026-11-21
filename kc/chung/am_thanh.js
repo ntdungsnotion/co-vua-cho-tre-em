@@ -64,10 +64,15 @@
     const ds = dsGiong.filter(g => (g.lang || "").replace("_", "-").toLowerCase().indexOf(ma) === 0 ||
       (ma === "vi" && /viet|việt/i.test(g.name || "")));
     const vung = ma === "en" ? /en[-_](US|GB)/i : /vi[-_]VN/i;
-    const diem = g => (g.localService ? 40 : 0) + (/natural|neural|online/i.test(g.name) ? 15 : 0) + (/google/i.test(g.name) ? 10 : 0) +
+    const tot = nhoGiong(ma);
+    const diem = g => (tot && g.name === tot ? 200 : 0) + (g.localService ? 40 : 0) + (/natural|neural|online/i.test(g.name) ? 15 : 0) + (/google/i.test(g.name) ? 10 : 0) +
       (/samantha|ava|allison|aria|jenny|emma|zira|libby|sonia|hoaimy|an\b|linh/i.test(g.name) ? 8 : 0) + (vung.test(g.lang || "") ? 5 : 0);
     return ds.slice().sort((a, b) => diem(b) - diem(a));
   }
+  // giọng ĐÃ ĐỌC ĐƯỢC trên máy này (máy nhớ): lần sau thử trước (điện thoại Samsung: giọng mặc định có thể là tiếng Assam, vài giọng liệt kê mà chưa cài dữ liệu -> synthesis-failed)
+  const nhoGiong = ma => { try { return localStorage.getItem("kc_giong_tot_" + ma) || ""; } catch (e) { return ""; } };
+  const ghiNhoGiong = (ma, ten) => { try { localStorage.setItem("kc_giong_tot_" + ma, ten); } catch (e) { /* bỏ qua */ } };
+  const SO_LAN_THU = 6; // thử lần lượt tối đa chừng này giọng của ngôn ngữ, rồi mới để máy tự chọn
   // giọng đã thử mà không cất tiếng trong phiên này: lần sau bỏ qua
   const giongHong = new Set();
 
@@ -124,8 +129,8 @@
   function noi(ban, ph) {
     if (ph !== phien) return;
     if (!ban.daThu) ban.daThu = new Set();
-    // lần 0, 1: giọng tốt nhất chưa thử / chưa hỏng; lần 2: chỉ đặt ngôn ngữ (máy tự chọn)
-    const giong = ban.lanThu < 2 ? giongCho(ban.lang).find(g => !giongHong.has(g.name) && !ban.daThu.has(g.name)) || null : null;
+    // các lần đầu: giọng tốt nhất chưa thử / chưa hỏng (lần lượt hết giọng của ngôn ngữ); hết lượt: chỉ đặt ngôn ngữ (máy tự chọn)
+    const giong = ban.lanThu < SO_LAN_THU ? giongCho(ban.lang).find(g => !giongHong.has(g.name) && !ban.daThu.has(g.name)) || null : null;
     if (giong) ban.daThu.add(giong.name);
     let u;
     try {
@@ -138,6 +143,7 @@
       if (ph !== phien) return;
       clearTimeout(henKiem);
       thongKe.batDau++;
+      if (giong && !ban.daBatDau) ghiNhoGiong(String(ban.lang || "vi").slice(0, 2).toLowerCase(), giong.name);
       if (!ban.daBatDau) { ban.daBatDau = true; if (ban.khiBatDau) try { ban.khiBatDau(); } catch (e) { /* bỏ qua */ } }
     };
     u.onend = () => xong(ban, ph);
@@ -165,7 +171,7 @@
   function thuLai(ban, ph, giong) {
     if (ph !== phien) return;
     if (giong && !ban.daBatDau) giongHong.add(giong.name);
-    if (ban.daBatDau || ban.lanThu >= 2) { thongKe.hong++; xong(ban, ph); return; }
+    if (ban.daBatDau || ban.lanThu >= SO_LAN_THU) { thongKe.hong++; xong(ban, ph); return; }
     ban.lanThu++; thongKe.thuLai++;
     try { ss.cancel(); } catch (e) { /* bỏ qua */ }
     clearTimeout(henKiem);
