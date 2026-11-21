@@ -9,7 +9,8 @@
               Mã "kho_<id>" là thứ cài đặt lưu (ô "file" / "nhac.<bối cảnh>").
    DÙNG (window.KC_KHO_TIENG, nạp bằng <script> hoặc import "…/chung/kho_tieng.js" trong ES module):
      ds({ moi })          Promise<{ nhac, tieng }> kho tải lên (nhớ trong trang; moi: hỏi lại máy chủ). Không có
-                          Supabase / lỗi mạng / quá 5 giây -> kho rỗng (game vẫn chạy bằng thư viện sẵn + tiếng tự tạo).
+                          Supabase / lỗi mạng / quá 5 giây -> kho rỗng (game vẫn chạy bằng thư viện sẵn + tiếng tự tạo);
+                          máy chủ trả muộn thì nhớ lại + phát "kcKhoTiengDoi" (game đọc lại thư viện).
      tron(tv, kho)        thư viện sẵn + kho -> { nhac, tieng } (mục kho nối sau, trùng mã thì bỏ)
      urlTep(duongDan)     đường dẫn công khai của một file trong bucket
      baoDoi()             kho vừa đổi (Quản trị tải / sửa / xoá): xoá bộ nhớ, phát sự kiện "kcKhoTiengDoi" trên window
@@ -69,8 +70,14 @@
     });
     const hen = new Promise(xong => setTimeout(() => xong(null), HEN_GIAY * 1000));
     const lan = hoa = Promise.race([hoi, hen]).then(k => {
-      if (!k) { if (hoa === lan) hoa = null; return rong(); } // quá giờ: lần sau hỏi lại
-      return k;
+      if (k) return k;
+      // quá giờ (mạng chậm): tạm trả kho rỗng; máy chủ trả muộn thì nhớ lại + báo kho đổi để game đọc lại thư viện
+      hoi.then(kMuon => {
+        if (hoa !== lan || !kMuon || !(kMuon.nhac.length || kMuon.tieng.length)) return;
+        hoa = Promise.resolve(kMuon);
+        try { g.dispatchEvent(new g.CustomEvent("kcKhoTiengDoi")); } catch (e) { /* không có window */ }
+      }).catch(() => { if (hoa === lan) hoa = null; });
+      return rong();
     }).catch(() => { if (hoa === lan) hoa = null; return rong(); });
     return lan;
   }
