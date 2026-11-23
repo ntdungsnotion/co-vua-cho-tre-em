@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Thử Thách tri thức - Kids Challenge</title>
+  <!-- ================================================================
+       FILE: thu_thach_tri_thuc.html
+       CHỨC NĂNG: Trang chơi THỬ THÁCH TRI THỨC (đặc tả Thiet_Ke_On_The.md mục 5): 4 chế độ
+                  📚 Theo môn · 🌈 Tổng hợp · ⚡ Tốc độ · 🏆 Chinh phục 30 câu, chọn bằng #chế-độ trên địa chỉ.
+                  KC_03C6: mở 🏆 Chinh phục 30 câu (tt_tri_thuc/tt_chinh_phuc.js); 3 chế độ kia hiện "Sắp mở"
+                  (KC_03C4, KC_03C5).
+                  Điện thoại: dải 4 chế độ cuộn ngang + 1 cột. Máy tính: 4 chế độ một hàng, nội dung 2 cột.
+       BƯỚC: KC_03C6
+       NGÀY: 24/11/2026
+       PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js, chung/am_thanh.js, chung/nv_ve.js,
+                  chung/nv_ho_so.js, tt_tri_thuc/tt_chinh_phuc.js + .css; SQL repo_rieng supabase_kc03c6_chinh_phuc.sql.
+       ================================================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kc_style.css">
+  <link rel="stylesheet" href="tt_tri_thuc/tt_chinh_phuc.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* dải chọn chế độ (riêng trang này) */
+    .tttCheDo { max-width: 1100px; margin: 14px auto 0; padding: 0 14px; display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 10px;
+      overflow-x: auto; scrollbar-width: none; }
+    .tttCheDo::-webkit-scrollbar { display: none; }
+    .tttO { position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; border: 2px solid var(--mau-vien);
+      background: #fff; color: var(--mau-chu); text-decoration: none; min-height: 60px; }
+    .tttO .tttBt { font-size: 1.8rem; }
+    .tttO b { display: block; font-family: "Baloo 2", sans-serif; font-size: 1.05rem; line-height: 1.1; }
+    .tttO small { color: var(--mau-chu-nhat); font-size: .78rem; }
+    .tttO.dang { border-color: var(--mau-chinh); background: var(--mau-chinh-nhat); box-shadow: 0 4px 0 var(--mau-chinh); }
+    .tttO.sapMo { opacity: .6; }
+    .tttO.sapMo::after { content: "Sắp mở"; position: absolute; top: -8px; right: 8px; background: var(--mau-phu); color: #fff; font-size: .7rem; font-weight: 700;
+      padding: 1px 8px; border-radius: 999px; }
+    .tttO.mau1 { background: #eef6ff; } .tttO.mau2 { background: #fff2fb; } .tttO.mau3 { background: #fff8e6; }
+    .tttSapMo { max-width: 640px; margin: 30px auto; padding: 24px; text-align: center; background: #fff; border: 2px solid var(--mau-vien); border-radius: 20px; }
+    .tttSapMo .tttBt { font-size: 3rem; }
+    @media (max-width: 640px) { .tttCheDo { grid-template-columns: repeat(4, 160px); } }
+  </style>
+</head>
+<body>
+  <header id="headerChinh">
+    <h1>🎯 Thử Thách</h1>
+    <div id="trangThaiDangNhap">
+      <span id="kcTenNguoiChoi"></span>
+      <a class="kcNutLienKet" href="quantri_NC.html" data-chi-admin style="display:none;">🛠️ Quản trị</a>
+      <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
+    </div>
+  </header>
+  <nav class="kcThanhTab" aria-label="Chuyển mảng">
+    <a class="kcTab" href="../index.html"><span class="kcTabIcon">🏠</span> Trang chủ</a>
+    <a class="kcTab" href="hoctap_NC.html"><span class="kcTabIcon">📚</span> Học Tập</a>
+    <a class="kcTab" href="khampha_NC.html"><span class="kcTabIcon">🧭</span> Khám Phá</a>
+    <a class="kcTab" href="trochoi_NC.html"><span class="kcTabIcon">🎮</span> Trò Chơi</a>
+    <a class="kcTab" href="thuthach_NC.html" aria-current="page"><span class="kcTabIcon">🎯</span> Thử Thách</a>
+  </nav>
+
+  <div id="kcChuaDangNhap" style="display:none;">
+    <h2>Con đăng nhập nhé!</h2>
+    <p>Một tài khoản dùng chung cho cả Cờ Vua và Thử Thách - Học Tập - Khám Phá.</p>
+    <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+    <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+    <button id="kcNutDangNhap" type="button">Đăng nhập</button>
+    <div id="kcThongBaoDangNhap"></div>
+  </div>
+
+  <div id="kcNoiDungCanDangNhap" style="display:none;">
+    <nav class="tttCheDo" aria-label="Chế độ thử thách tri thức">
+      <a class="tttO mau1 sapMo" href="#theo_mon" data-che-do="theo_mon"><span class="tttBt">📚</span><span><b>Theo môn</b><small>Chọn môn, ôn cho nhớ</small></span></a>
+      <a class="tttO mau2 sapMo" href="#tong_hop" data-che-do="tong_hop"><span class="tttBt">🌈</span><span><b>Tổng hợp</b><small>Trộn môn, thưởng × 1,5</small></span></a>
+      <a class="tttO mau3 sapMo" href="#toc_do" data-che-do="toc_do"><span class="tttBt">⚡</span><span><b>Tốc độ</b><small>60 giây, 10 câu</small></span></a>
+      <a class="tttO" href="#chinh_phuc" data-che-do="chinh_phuc"><span class="tttBt">🏆</span><span><b>Chinh phục 30 câu</b><small>Tới 1.500 💎</small></span></a>
+    </nav>
+    <div id="tttNoiDung"></div>
+  </div>
+
+  <script src="kc_config.js"></script>
+  <script src="kc_api.js"></script>
+  <script src="kc_auth.js"></script>
+  <script src="chung/am_thanh.js"></script>
+  <script src="chung/nv_ve.js"></script>
+  <script src="chung/nv_ho_so.js"></script>
+  <script src="tt_tri_thuc/tt_chinh_phuc.js"></script>
+  <script>
+    // 24/11/2026 - KC_03C6: chọn chế độ theo #địa chỉ (mặc định Chinh phục, chế độ duy nhất đã mở)
+    (function () {
+      "use strict";
+      var MO = { chinh_phuc: true };
+      var TEN = { theo_mon: ["📚", "Theo môn"], tong_hop: ["🌈", "Tổng hợp"], toc_do: ["⚡", "Tốc độ"] };
+      var daGan = null;
+      function cheDo() { var h = (location.hash || "").replace("#", ""); return TEN[h] || MO[h] ? h : "chinh_phuc"; }
+      function ve() {
+        var cd = cheDo(), o = document.getElementById("tttNoiDung");
+        document.querySelectorAll(".tttO").forEach(function (a) { a.classList.toggle("dang", a.getAttribute("data-che-do") === cd); });
+        if (cd === "chinh_phuc") {
+          var tk = window.kcTaiKhoanHienTai;
+          if (!tk) return;
+          o.innerHTML = "";
+          daGan = KC_CP.gan(o, { ten: tk.tenDangNhap, maPhien: tk.maPhien, goiRpc: kcGoiRpc });
+          return;
+        }
+        daGan = null;
+        o.innerHTML = "";
+        var k = document.createElement("div"); k.className = "tttSapMo";
+        var bt = document.createElement("div"); bt.className = "tttBt"; bt.textContent = TEN[cd][0];
+        var h = document.createElement("h2"); h.textContent = TEN[cd][1] + " sắp mở!";
+        var p = document.createElement("p"); p.textContent = "Cô Cú đang chuẩn bị chế độ này. Con thử 🏆 Chinh phục 30 câu trước nhé!";
+        var a = document.createElement("a"); a.href = "#chinh_phuc"; a.className = "cpNut chinh"; a.style.display = "inline-block"; a.style.textDecoration = "none"; a.textContent = "🏆 Chinh phục 30 câu";
+        k.append(bt, h, p, a); o.appendChild(k);
+      }
+      document.addEventListener("kcSanSang", function (e) { if (e.detail && e.detail.daDangNhap) ve(); });
+      window.addEventListener("hashchange", function () { if (window.kcTaiKhoanHienTai) ve(); });
+    })();
+  </script>
+  <script src="kc_luot_truy_cap.js"></script>
+</body>
+</html>
+<!-- 24/11/2026 - BƯỚC: KC_03C6 (tạo mới) -->
