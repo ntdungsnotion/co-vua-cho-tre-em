@@ -56,6 +56,7 @@
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
        CẬP NHẬT: 24/11/2026 - KC_03C6: Thử Thách › 🏆 Chinh phục 30 câu (qt_chinh_phuc.js: thưởng, độ khó chặng, thống kê 7 ngày).
+       CẬP NHẬT: 24/11/2026 - KC_03C5: Thử Thách › ⚡ Tốc độ (qt_toc_do.js: giây, số câu, thưởng, trừ vàng, thống kê 7 ngày).
        BẢO MẬT: đọc phiên chung sessionStorage "coVuaTaiKhoanDangNhap". Kiểm tra
                 vai trò ở trình duyệt chỉ để hiện giao diện; mọi RPC tự kiểm tra
                 admin ở máy chủ (kiem_tra_admin).
@@ -445,6 +446,12 @@
       .qcpHai { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
       .qcpToi { grid-template-columns: repeat(6, 1fr); }
     }
+    /* ----- KC_03C5: ⚡ Tốc độ (dùng chung khung .qcp*) ----- */
+    .qtdMuc { gap: 14px; }
+    .qtdChon { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; cursor: pointer; }
+    .qtdChon input { width: 18px; height: 18px; }
+    .qtdThuong { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+    .qtdPhanBo { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)) !important; }
   </style>
 </head>
 <body class="qtTrang">
@@ -536,6 +543,7 @@
       <div class="qtNhom" data-ten-nhom="Thử Thách">
         <div class="qtTenNhom">🎯 Thử Thách</div>
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinh-thuthach" type="button">⚙️ Cấu hình</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="tocdo-thuthach" type="button">⚡ Tốc độ</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="chinhphuc-thuthach" type="button">🏆 Chinh phục 30 câu</button>
       </div>
 
@@ -1099,6 +1107,14 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <section class="adminManHinh" id="manhinh-tocdo-thuthach">
+      <div class="adminKhoi">
+        <h3>⚡ Tốc Độ</h3>
+        <p class="adminGhiChu">Số giây, số câu, kim cương thưởng theo số câu đúng, xu vàng trừ mỗi câu sai, và số liệu 7 ngày gần nhất. Ô viền cam là số đã khác mặc định.</p>
+        <div id="qtdGoc"></div>
       </div>
     </section>
 
@@ -1685,6 +1701,7 @@
   <script src="qt_dt_tai_khoan.js"></script> <!-- 👤 Tài khoản -->
   <script src="kc_hoc_cua_be.js"></script>   <!-- KC_03B3: khối Học của con dùng chung -->
   <script src="qt_chinh_phuc.js"></script>  <!-- KC_03C6: 🏆 Chinh phục 30 câu -->
+  <script src="qt_toc_do.js"></script>      <!-- KC_03C5: ⚡ Tốc độ -->
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
 </body>

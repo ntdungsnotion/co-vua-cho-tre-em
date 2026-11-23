@@ -8,19 +8,22 @@
        FILE: thu_thach_tri_thuc.html
        CHỨC NĂNG: Trang chơi THỬ THÁCH TRI THỨC (đặc tả Thiet_Ke_On_The.md mục 5): 4 chế độ
                   📚 Theo môn · 🌈 Tổng hợp · ⚡ Tốc độ · 🏆 Chinh phục 30 câu, chọn bằng #chế-độ trên địa chỉ.
-                  KC_03C6: mở 🏆 Chinh phục 30 câu (tt_tri_thuc/tt_chinh_phuc.js); 3 chế độ kia hiện "Sắp mở"
-                  (KC_03C4, KC_03C5).
+                  KC_03C6: mở 🏆 Chinh phục 30 câu (tt_tri_thuc/tt_chinh_phuc.js).
+                  KC_03C5: mở ⚡ Tốc độ (tt_tri_thuc/tt_toc_do.js). Theo môn / Tổng hợp hiện "Sắp mở" (KC_03C4).
                   Điện thoại: dải 4 chế độ cuộn ngang + 1 cột. Máy tính: 4 chế độ một hàng, nội dung 2 cột.
        BƯỚC: KC_03C6
        NGÀY: 24/11/2026
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js, chung/am_thanh.js, chung/nv_ve.js,
-                  chung/nv_ho_so.js, tt_tri_thuc/tt_chinh_phuc.js + .css; SQL repo_rieng supabase_kc03c6_chinh_phuc.sql.
+                  chung/nv_ho_so.js, tt_tri_thuc/tt_chinh_phuc.js + .css, tt_tri_thuc/tt_toc_do.js + .css;
+                  SQL repo_rieng supabase_kc03c6_chinh_phuc.sql, supabase_kc03c5_toc_do.sql.
+       CẬP NHẬT: 24/11/2026 - KC_03C5: mở ⚡ Tốc độ.
        ================================================================ -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kc_style.css">
   <link rel="stylesheet" href="tt_tri_thuc/tt_chinh_phuc.css">
+  <link rel="stylesheet" href="tt_tri_thuc/tt_toc_do.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* dải chọn chế độ (riêng trang này) */
@@ -72,7 +75,7 @@
     <nav class="tttCheDo" aria-label="Chế độ thử thách tri thức">
       <a class="tttO mau1 sapMo" href="#theo_mon" data-che-do="theo_mon"><span class="tttBt">📚</span><span><b>Theo môn</b><small>Chọn môn, ôn cho nhớ</small></span></a>
       <a class="tttO mau2 sapMo" href="#tong_hop" data-che-do="tong_hop"><span class="tttBt">🌈</span><span><b>Tổng hợp</b><small>Trộn môn, thưởng × 1,5</small></span></a>
-      <a class="tttO mau3 sapMo" href="#toc_do" data-che-do="toc_do"><span class="tttBt">⚡</span><span><b>Tốc độ</b><small>60 giây, 10 câu</small></span></a>
+      <a class="tttO mau3" href="#toc_do" data-che-do="toc_do"><span class="tttBt">⚡</span><span><b>Tốc độ</b><small>60 giây, 10 câu</small></span></a>
       <a class="tttO" href="#chinh_phuc" data-che-do="chinh_phuc"><span class="tttBt">🏆</span><span><b>Chinh phục 30 câu</b><small>Tới 1.500 💎</small></span></a>
     </nav>
     <div id="tttNoiDung"></div>
@@ -85,22 +88,23 @@
   <script src="chung/nv_ve.js"></script>
   <script src="chung/nv_ho_so.js"></script>
   <script src="tt_tri_thuc/tt_chinh_phuc.js"></script>
+  <script src="tt_tri_thuc/tt_toc_do.js"></script>
   <script>
-    // 24/11/2026 - KC_03C6: chọn chế độ theo #địa chỉ (mặc định Chinh phục, chế độ duy nhất đã mở)
+    // 24/11/2026 - KC_03C6: chọn chế độ theo #địa chỉ (mặc định Chinh phục). KC_03C5: thêm ⚡ Tốc độ
     (function () {
       "use strict";
-      var MO = { chinh_phuc: true };
-      var TEN = { theo_mon: ["📚", "Theo môn"], tong_hop: ["🌈", "Tổng hợp"], toc_do: ["⚡", "Tốc độ"] };
+      var MO = { chinh_phuc: true, toc_do: true };
+      var TEN = { theo_mon: ["📚", "Theo môn"], tong_hop: ["🌈", "Tổng hợp"] };
       var daGan = null;
       function cheDo() { var h = (location.hash || "").replace("#", ""); return TEN[h] || MO[h] ? h : "chinh_phuc"; }
       function ve() {
         var cd = cheDo(), o = document.getElementById("tttNoiDung");
         document.querySelectorAll(".tttO").forEach(function (a) { a.classList.toggle("dang", a.getAttribute("data-che-do") === cd); });
-        if (cd === "chinh_phuc") {
+        if (MO[cd]) {
           var tk = window.kcTaiKhoanHienTai;
           if (!tk) return;
           o.innerHTML = "";
-          daGan = KC_CP.gan(o, { ten: tk.tenDangNhap, maPhien: tk.maPhien, goiRpc: kcGoiRpc });
+          daGan = (cd === "toc_do" ? KC_TDO : KC_CP).gan(o, { ten: tk.tenDangNhap, maPhien: tk.maPhien, goiRpc: kcGoiRpc });
           return;
         }
         daGan = null;
@@ -108,7 +112,7 @@
         var k = document.createElement("div"); k.className = "tttSapMo";
         var bt = document.createElement("div"); bt.className = "tttBt"; bt.textContent = TEN[cd][0];
         var h = document.createElement("h2"); h.textContent = TEN[cd][1] + " sắp mở!";
-        var p = document.createElement("p"); p.textContent = "Cô Cú đang chuẩn bị chế độ này. Con thử 🏆 Chinh phục 30 câu trước nhé!";
+        var p = document.createElement("p"); p.textContent = "Cô Cú đang chuẩn bị chế độ này. Con thử ⚡ Tốc độ hoặc 🏆 Chinh phục 30 câu trước nhé!";
         var a = document.createElement("a"); a.href = "#chinh_phuc"; a.className = "cpNut chinh"; a.style.display = "inline-block"; a.style.textDecoration = "none"; a.textContent = "🏆 Chinh phục 30 câu";
         k.append(bt, h, p, a); o.appendChild(k);
       }
@@ -119,4 +123,4 @@
   <script src="kc_luot_truy_cap.js"></script>
 </body>
 </html>
-<!-- 24/11/2026 - BƯỚC: KC_03C6 (tạo mới) -->
+<!-- 24/11/2026 - BƯỚC: KC_03C6 (tạo mới); KC_03C5 (mở ⚡ Tốc độ) -->
