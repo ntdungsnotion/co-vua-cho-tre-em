@@ -81,6 +81,16 @@
 .tdGiua { position: relative; width: 100%; max-width: 640px; display: flex; flex-direction: column; min-height: 100dvh; padding: 0 12px; box-sizing: border-box; }
 .tdDau { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 10px 0 6px; background: linear-gradient(#fff1d6 70%, rgba(255,241,214,0)); }
 .tdDong { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--td-vien); background: #fff; font-size: 1.05rem; cursor: pointer; }
+/* KC_03C5b: nút loa + chữ combo */
+.tdLoa { flex: 0 0 auto; width: 40px; height: 40px; margin-left: auto; border-radius: 50%; border: 2px solid var(--td-vien); background: #fff; font-size: 1.05rem; cursor: pointer; }
+.tdLoa.tat { background: #f1ecf7; }
+.tdCombo { position: fixed; left: 50%; top: 30%; z-index: 6; transform: translate(-50%, 0); pointer-events: none; white-space: nowrap;
+  font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.6rem; color: #fff; padding: 6px 18px; border-radius: 999px;
+  background: linear-gradient(90deg, #ff8a3d, #ff4f6d); box-shadow: 0 6px 18px rgba(255,90,60,.4); animation: tdCombo .9s ease-out forwards; }
+.tdCombo.lon { font-size: 2rem; background: linear-gradient(90deg, #ffb020, #ff3d3d, #b84dff); }
+@keyframes tdCombo { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.6); } 20% { opacity: 1; transform: translate(-50%, 0) scale(1.12); }
+  35% { transform: translate(-50%, 0) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .tdCombo { animation-duration: .01s; animation-iteration-count: 1; opacity: 0; } }
 .tdVien { display: flex; align-items: center; gap: 6px; padding: 4px 14px 4px 10px; border-radius: 999px; background: #fff; border: 3px solid var(--td-xanh);
   box-shadow: 0 3px 0 var(--td-xanh-dam); transition: border-color .3s, box-shadow .3s; }
 .tdVien .tdGio { font-family: "Baloo 2", sans-serif; font-size: 1.7rem; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -234,6 +244,7 @@
   .tdDau { position: static; background: none; padding-top: 0; }
   .tdDau .tdVien, .tdDau .tdDemCau, .tdDau .tdDemDung { display: none; }
   .tdDau .tdDong { margin-left: auto; }
+  .tdDau .tdLoa { margin-left: 0; }
   .tdCham { display: none; }
   .tdThanh { margin-top: 4px; }
   .tdCau { gap: 14px; padding-top: 12px; }
@@ -275,3 +286,4 @@
   .tdSet, .tdMan.do .tdVien, .tdMan.do .tdVong, .tdHetGio span { animation: none; }
 }
 /* 24/11/2026 - BƯỚC: KC_03C5 (tạo mới) */
+/* 24/11/2026 - BƯỚC: KC_03C5b (nút loa 🔊/🔇, chữ combo 🔥) */

@@ -12,6 +12,7 @@
               Máy tính (≥ 900 px): 3 cột: vòng đồng hồ lớn bên trái | câu + đáp án | 10 ô kết quả; phím 1-4 chọn, Space bỏ qua.
    DÙNG:      KC_TDO.gan(phanTu, { ten, maPhien, goiRpc(ten, thamSo) -> Promise<json> })
    RPC:       kc_tdo_trang_chu, kc_tdo_bat_dau, kc_tdo_ket_thuc (SQL repo_rieng supabase_kc03c5_toc_do.sql).
+   ÂM THANH:  tt_toc_do_am.js (KC_TDO_AM, KC_03C5b): nhạc nền dồn dập dần theo giờ còn, combo đúng liền, trống cuộn, kèn kết quả; nút 🔊/🔇.
    PHỤ THUỘC: chung/am_thanh.js (KC_AM_THANH: tiếng đúng / sai / thưởng, đọc luật). Dùng lại nút .cpNut của tt_chinh_phuc.css.
    BƯỚC: KC_03C5
    NGÀY: 24/11/2026
@@ -24,6 +25,8 @@
   const nut = (lop, chu) => { const b = tao("button", lop, chu); b.type = "button"; return b; };
   const so = n => Number(n || 0).toLocaleString("vi-VN");
   const AM = () => goc.KC_AM_THANH || null;
+  // âm thanh hồi hộp riêng của Tốc độ (tt_toc_do_am.js); thiếu file thì mọi lệnh thành rỗng
+  const AMT = new Proxy({}, { get: (_, k) => { const a = goc.KC_TDO_AM; return a && typeof a[k] === "function" ? a[k] : () => true; } });
   const tieng = {
     dung() { const a = AM(); if (a) a.tieng.dung(); },
     sai() { const a = AM(); if (a) a.tieng.sai(); },
@@ -207,6 +210,7 @@
 
     // ================= BẮT ĐẦU =================
     async function batDau(tiep) {
+      AMT.mo(); // ngay trong cú chạm: điện thoại mới cho phát tiếng
       const n0 = goc0.querySelector(".tdNutBatDau"); if (n0) n0.disabled = true;
       const kq = await rpcBen("kc_tdo_bat_dau", tiep ? {} : { p_mon: S.mon || null });
       if (!kq.thanhCong) {
@@ -250,7 +254,8 @@
         '  <main class="tdGiua">' +
         '    <header class="tdDau"><button class="tdDong" type="button" aria-label="Dừng lượt">✕</button>' +
         '      <div class="tdVien"><span class="tdVienBt">⏱️</span><b class="tdGio">00:60</b></div>' +
-        '      <span class="tdDemCau">Câu 1 / 10</span><span class="tdDemDung">✔ 0</span></header>' +
+        '      <span class="tdDemCau">Câu 1 / 10</span><span class="tdDemDung">✔ 0</span>' +
+        '      <button class="tdLoa" type="button"></button></header>' +
         '    <div class="tdThanh" aria-hidden="true"><i></i></div>' +
         '    <div class="tdCham" aria-hidden="true"></div>' +
         '    <section class="tdCau" aria-live="polite"></section>' +
@@ -262,6 +267,11 @@
       S.m = m;
       m.querySelector(".tdDong").addEventListener("click", hoiDung);
       m.querySelector(".tdBoQua").addEventListener("click", () => traLoi(null));
+      const loa = m.querySelector(".tdLoa");
+      const veLoa = () => { const b = AMT.bat(); loa.textContent = b ? "🔊" : "🔇"; loa.setAttribute("aria-label", b ? "Tắt tiếng" : "Bật tiếng"); loa.classList.toggle("tat", !b); };
+      loa.addEventListener("click", () => { AMT.doiBat(); veLoa(); });
+      veLoa();
+      S.combo = 0;
       doc.addEventListener("keydown", phim, true);
       const n = S.luot.soCau, ch = m.querySelector(".tdCham"), ds = m.querySelector(".tdDs");
       for (let i = 0; i < n; i++) {
@@ -277,7 +287,7 @@
       for (const x of ["3", "2", "1", "Bắt đầu!"]) {
         if (S.dong) return;
         c.innerHTML = ""; const b = tao("div", "tdSo3", x); c.appendChild(b);
-        if (x.length === 1) tieng.kc(3 - Number(x)); else tieng.keng();
+        AMT.dem(x.length === 1 ? Number(x) : 0);
         await ngu(x.length === 1 ? 650 : 450);
       }
       S.m.querySelector(".tdDay").hidden = false;
@@ -297,11 +307,13 @@
         thanh.style.transform = "scaleX(" + ty + ")";
         S.m.classList.toggle("cam", con <= 10 && con > 5); S.m.classList.toggle("do", con <= 5);
         const giay = Math.ceil(con);
-        if (giay <= 5 && giay > 0 && giay !== S.tich) { S.tich = giay; tieng.kc(giay); }
+        AMT.muc(con);
+        if (giay <= 10 && giay > 0 && giay !== S.tich) { S.tich = giay; AMT.tich(giay); }
         if (con <= 0) { hetGio(); return; }
         S.raf = goc.requestAnimationFrame(buoc);
       };
       S.tich = 0;
+      AMT.batNhac();
       buoc();
     }
 
@@ -361,16 +373,24 @@
         const b = s.querySelector('.tdDa[data-i="' + i + '"]');
         if (b) b.classList.add(ok === true ? "dung" : ok === false ? "sai" : "da");
         if (ok === false && dsDung.length) { const bd = s.querySelector('.tdDa[data-i="' + dsDung[0] + '"]'); if (bd) bd.classList.add("laDung"); }
-        if (ok === true) tieng.dung(); else if (ok === false) tieng.sai();
-      } else s.classList.add("boQua");
+        if (ok === true) { S.combo++; AMT.dung(S.combo); if (S.combo >= 3) veCombo(S.combo); }
+        else { S.combo = 0; if (ok === false) AMT.sai(); else tieng.kc(0); }
+      } else { s.classList.add("boQua"); S.combo = 0; AMT.boQua(); }
       veDem();
       setTimeout(() => { if (S.dong || S.xong) return; if (l.tl.length >= l.soCau) ketThuc(false); else veCau(); }, ok === false ? 380 : 250);
+    }
+
+    function veCombo(n) {
+      if (!S.m) return;
+      const cu = S.m.querySelector(".tdCombo"); if (cu) cu.remove();
+      const c = tao("div", "tdCombo" + (n >= 5 ? " lon" : ""), "🔥 " + n + " câu liền!");
+      S.m.appendChild(c); setTimeout(() => c.remove(), 900);
     }
 
     function hetGio() {
       if (S.xong) return;
       S.xong = true;
-      tieng.keng();
+      AMT.hetGio();
       const h = tao("div", "tdHetGio"); h.append(tao("span", "", "⏰"), tao("b", "", "Hết giờ!"));
       S.m.appendChild(h);
       setTimeout(() => { h.remove(); ketThuc(false); }, 1100);
@@ -402,7 +422,10 @@
       const s = S.m.querySelector(".tdCau"); s.innerHTML = ""; s.className = "tdCau tdCho";
       s.appendChild(tao("p", "tdTai", bo ? "Đang dừng lượt…" : "Cô Cú đang chấm lại… 🦉"));
       S.m.querySelector(".tdDay").hidden = true;
-      const kq = await rpcBen("kc_tdo_ket_thuc", { p_luot: l.id, p_tra_loi: ds, p_bo: !!bo }, 3);
+      AMT.dungNhac(false);
+      if (!bo) AMT.trongCuon();
+      // chờ chấm ít nhất ~1,2 giây cho trống cuộn hồi hộp, rồi mới mở kết quả
+      const [kq] = await Promise.all([rpcBen("kc_tdo_ket_thuc", { p_luot: l.id, p_tra_loi: ds, p_bo: !!bo }, 3), ngu(bo ? 0 : 1200)]);
       ghiLS(KHOA_DANG, null);
       if (!kq.thanhCong && kq.ma === "mang") {
         const cho = docLS(KHOA_CHO) || []; cho.push({ luot: l.id, ds, bo: !!bo, luc: Date.now() }); ghiLS(KHOA_CHO, cho);
@@ -479,7 +502,7 @@
         xl.forEach(x => { const e = li[x.viTri]; if (e && x.kieu === "sai") { e.className = "sai"; e.querySelector(".tdDsChu").textContent = "✘ sai"; } });
       }
       // hiệu ứng: 💎 đếm lên
-      tieng.thuong();
+      AMT.ketQua(kq.soDung || 0, l.soCau);
       const dem0 = performance.now(), dai = Math.min(1600, 500 + kc * 120);
       const iv = setInterval(() => {
         const t = Math.min(1, (performance.now() - dem0) / dai);
@@ -489,8 +512,8 @@
       for (let i = 0; i < Math.min(8, kc); i++) setTimeout(() => {
         if (!S.m) return;
         const v = tao("span", "tdKcBay", "💎"); v.style.setProperty("--x", (Math.random() * 140 - 70) + "px"); okc.appendChild(v); setTimeout(() => v.remove(), 900); tieng.kc(i);
-      }, 300 + i * 120);
-      if (kq.soDung >= l.soCau) { phaoGiay(50); setTimeout(() => tieng.keng(), 500); }
+      }, 1100 + i * 120);
+      if (kq.soDung >= l.soCau) phaoGiay(50);
       else if (kq.kyLucMoi) phaoGiay(26);
       if (goc.matchMedia && goc.matchMedia("(pointer: fine)").matches) setTimeout(() => lai.focus({ preventScroll: true }), 500);
     }
@@ -520,6 +543,7 @@
 
     function dongMan(veLaiSanh) {
       if (S.raf) goc.cancelAnimationFrame(S.raf);
+      AMT.dungNhac(false);
       S.dong = true; S.daGui = false;
       doc.removeEventListener("keydown", phim, true);
       const m = S.m; S.m = null;
@@ -536,3 +560,4 @@
   goc.KC_TDO = { gan };
 })(typeof window !== "undefined" ? window : globalThis);
 // 24/11/2026 - BƯỚC: KC_03C5 (tạo mới: màn Tốc độ, 2 khổ)
+// 24/11/2026 - BƯỚC: KC_03C5b (âm thanh hồi hộp: nhạc nền dồn dập, combo, trống cuộn, kèn, nút tắt tiếng)
