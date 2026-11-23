@@ -117,6 +117,10 @@
 .ttTienBo { margin: 0; font-size: 1.1rem; color: #c8f7d9; }
 .ttTui { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 2.2rem; padding: 4px 26px; border-radius: 999px; background: rgba(127,181,255,.18); border: 2px solid rgba(127,181,255,.5); }
 .ttTui.nay { animation: ttTui .18s; }
+/* KC_03C2 (23/11/2026): xu vàng 🪙 mỗi câu đúng */
+.ttTui.vang { font-size: 1.6rem; margin-top: 6px; background: rgba(255,207,64,.16); border-color: rgba(255,207,64,.6); }
+.ttTui.vang small { font-size: .55em; font-weight: 700; opacity: .85; margin-left: 6px; }
+.ttVangCau { font-family: "Baloo 2", sans-serif; font-weight: 800; color: #ffd75e; margin-left: 10px; font-size: .9em; }
 @keyframes ttTui { 50% { transform: scale(1.12); } }
 .ttKhoan { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 360px; }
 .ttKhoan li { display: flex; justify-content: space-between; padding: 6px 12px; border-bottom: 1px dashed rgba(185,195,236,.3); font-size: 1.05rem; }

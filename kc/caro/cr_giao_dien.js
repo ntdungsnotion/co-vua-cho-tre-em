@@ -524,6 +524,12 @@
      bị trần cắt bớt thì nói rõ được bao nhiêu trên bao nhiêu. */
   function loiKimCuong(k) {
     const kho = typeof k.diemSoMoi === "number" ? " Kho của con giờ có " + k.diemSoMoi + " 💎." : "";
+    // KC_03C2 (23/11/2026): đã nhận đủ kim cương hôm nay -> ván thưởng xu vàng 🪙 (ví chung toàn app)
+    if (k.soVang > 0) {
+      if (typeof kcCapNhatTui === "function" && typeof k.viVang === "number") kcCapNhatTui({ viVang: k.viVang });
+      return "🪙 Hôm nay con đã nhận đủ kim cương, ván này đổi thành " + k.soVang + " xu vàng!" +
+        (typeof k.viVang === "number" ? " Ví của con giờ có " + k.viVang + " 🪙." : "");
+    }
     if (k.soCong > 0 && k.soCong >= k.soXin) return "💎 Con nhận được " + k.soCong + " kim cương!" + kho;
     if (k.soCong > 0) return "💎 Con nhận được " + k.soCong + " kim cương (ván này thưởng " + k.soXin +
       " nhưng hôm nay chỉ còn nhận thêm được " + k.soCong + ")." + kho;
@@ -556,6 +562,7 @@
     }
     const o = $("crKimCuongBe");
     if (o) o.textContent = "💎 " + so;
+    if (typeof kcCapNhatTui === "function") kcCapNhatTui({ diemSo: so }); // KC_03C2: túi trên thanh trên
   }
 
   function dongKetQua() { $("crKetQua").classList.remove("vcHien"); }

@@ -73,7 +73,7 @@ const BD = window.KC_DT_BAN_DO, MC = window.KC_DT_MAY_CHU, NV = window.KC_NV, KC
 const VIEC_DAU = ["cay", "cay", "bui_trai_cay"]; // nông dân vừa ra: 2 người chặt cây, 1 người hái trái cây
 // Menu "🔨 Xây" (TC_D02C): thứ tự nút, biểu tượng. TC_D03B1: 4 kho riêng + Nhà ở
 const MENU_XAY = [["tuong", "🧱"], ["cong", "🚪"], ["thap_canh", "🗼"], ["tru_ten", "🏹"], ["nha_o", "🏠"], ["ruong", "🌾"], // TC_D06C2g: + Trụ tên
-  ["kho_go", "📦🪵"], ["kho_da", "📦🪨"], ["kho_vang", "📦🪙"], ["vua_luong_thuc", "📦🍖"],
+  ["kho_go", "📦🪵"], ["kho_da", "📦🪨"], ["kho_vang", "📦🟡"], ["vua_luong_thuc", "📦🍖"],
   ["choi_hai_luom", "🧺"], ["choi_mo", "⛏️"]]; // TC_D03B2: + Ruộng; TC_D03C: + 2 chòi
 const LA_KHO = { kho_go: "go", kho_da: "da", kho_vang: "vang", vua_luong_thuc: "luong_thuc" }; // kho -> loại tài nguyên chứa
 const LA_CHOI = { choi_hai_luom: "🧺", choi_mo: "⛏️" }; // TC_D03C: chòi = chỗ cất (congTrinh.*.cat), không thêm sức chứa

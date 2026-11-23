@@ -75,7 +75,7 @@ QD.NHAN = {
   soLoai: "Số loại cây", ganRungO: "Gần rừng (ô)", cachLeuO: "Cách Lều (ô)", tiLeCoMoi: "Tỉ lệ cỡ cây mới", sauGiay: "Sau (giây)",
   tinhLaiGiay: "Tính lại mỗi (giây)", heSoDuong: "Hệ số đường đi", di: "Đi", chay: "Chạy", chayKhiXaHon: "Chạy khi xa hơn (ô)",
   cay: "Cây", mo_da: "Mỏ đá", mo_vang: "Mỏ vàng", mo_sat: "Mỏ sắt", bai_ca: "Bãi cá", bui_trai_cay: "Bụi trái cây", ruong: "Ruộng",
-  go: "Gỗ", da: "Đá", vang: "Vàng", sat: "Sắt", luong_thuc: "Lương thực", nho: "Nhỏ", vua: "Vừa", to: "To",
+  go: "Gỗ", da: "Đá", vang: "Vàng mỏ", sat: "Sắt", luong_thuc: "Lương thực", nho: "Nhỏ", vua: "Vừa", to: "To",
   nhan: "Nhân tộc", quy: "Quỷ tộc", tien: "Tiên tộc",
   heSoNguoi: "Hệ số người cùng xây", heSoCap: "Hệ số theo cấp [cấp 1, 2, 3]", treGiay: "Cho trễ (giây)", heSoChungLoai: "Hệ số theo chủng loại",
   tinh: "Loại tính vào dân số", tamNhin: "Tầm nhìn (ô)", themTien: "Tiên tộc nhìn thêm (ô)", banKinhCong: "Sáng sẵn quanh cổng (ô)",
@@ -134,7 +134,7 @@ QD.BANG = {
     ghiChu: "Máu công trình = số câu x máu mỗi câu. Mỗi câu bé đánh đúng, công trình mất max(1, công người đánh - thủ). Công = công trình đánh trúng thì người đánh mất bấy nhiêu máu. Tầm có số = trụ (tự bắn); trống = công trình thường. Cấp 2, 3 của trụ là số nâng cấp (bước sau).",
     tieuDe: function (r) { return (r.ten || r.loai) + " · cấp " + r.cap + (r.mo ? "" : " (chưa mở)"); },
     cot: [["ten", "Tên", "chu"], ["mo", "Cho bé xây", "bool"], ["rong", "Rộng (ô)", "so"], ["sau", "Sâu (ô)", "so"], ["giay_xay", "Giây xây", "so"],
-      ["gia_go", "Giá 🪵", "so"], ["gia_da", "Giá 🪨", "so"], ["gia_vang", "Giá 🪙", "so"], ["gia_sat", "Giá ⛓️", "so"],
+      ["gia_go", "Giá 🪵", "so"], ["gia_da", "Giá 🪨", "so"], ["gia_vang", "Giá 🟡", "so"], ["gia_sat", "Giá ⛓️", "so"],
       ["gioi_han", "Tối đa mỗi bé", "soTrong"], ["mau_moi_cau", "Máu mỗi câu", "soTrong"], ["thu", "Thủ", "soTrong"], ["cong", "Công", "soTrong"],
       ["tam", "Tầm (ô)", "soTrong"], ["so_cau", "Số câu", "soTrong"], ["ti_le_dung", "Tỉ lệ đúng (0-1)", "soTrong"]]
   },

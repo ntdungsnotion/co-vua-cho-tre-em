@@ -531,7 +531,7 @@ export function taoTruBanDo(the) {
     let kq;
     try { kq = await mayChu.muaCau(ten, ct.id, so || 1, cau); } catch (e) { kq = { ok: false, lyDo: "Không kết nối được máy chủ, con thử lại nhé." }; }
     dangMua = false;
-    if (!kq.ok) { baoGoiY((kq.ma === "thieu" ? "🪙 " : "❌ ") + kq.lyDo); return false; }
+    if (!kq.ok) { baoGoiY((kq.ma === "thieu" ? "📦 " : "❌ ") + kq.lyDo); return false; }
     const n0 = TT.soCt(cauHinh, ct).soCau;
     ct.cau = TT.ganCauMua(ct.cau, n0, cau); // máy chủ gắn y hệt (chủ nhận lại ở lần hỏi sau)
     ct.soCau = kq.soCau; ct.mau = Number.isFinite(kq.mau) ? kq.mau : null; soMua++;

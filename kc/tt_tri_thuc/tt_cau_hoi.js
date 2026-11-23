@@ -246,7 +246,10 @@
         // người dùng 20/11/2026: chỉ báo đúng / sai ngắn ở cuối màn rồi tự sang câu; lời giải xem lại ở màn nhận thưởng
         lichSu.push({ viTri, noiDung: cau.noiDung || "", hinhChu: cau.hinhChu || "", hoiLai: !!cau.hoiLai, dapAn: (cau.dapAn || []).map(String), chon, dapAnDung: kq.dapAnDung, dung, loiGiai: kq.loiGiai || "" });
         if (dung) {
-          ph.appendChild(tao("p", "ttDung", ["✓ Đúng rồi!", "⭐ Giỏi quá!", "✓ Chính xác!"][viTri % 3]));
+          const pDung = tao("p", "ttDung", ["✓ Đúng rồi!", "⭐ Giỏi quá!", "✓ Chính xác!"][viTri % 3]);
+          // KC_03C2 (người dùng 20/11/2026): mỗi câu đúng +vangMoiCau 🪙 xu vàng, không phụ thuộc đồng hồ / trần 💎
+          if (luot && luot.vangMoiCau > 0) pDung.appendChild(tao("span", "ttVangCau", "+" + luot.vangMoiCau + " 🪙"));
+          ph.appendChild(pDung);
           const b = goc0.querySelector('.ttDa[data-i="' + kq.dapAnDung + '"]'); if (b) phaoSao(b);
           tieng.ting(t.lop, keNghe); tuThe = "vay"; coCu("Tuyệt vời!");
         } else {
@@ -310,6 +313,14 @@
         if (tb.length) kq.appendChild(tao("p", "ttTienBo", tb.join(" · ")));
         const tui = tao("div", "ttTui"); const so = tao("b", "", "0");
         tui.append("💎 +", so); kq.appendChild(tui);
+        // KC_03C2: xu vàng 🪙 = mỗi câu đúng (vangCau) + 💎 đổi xu vàng khi đã đủ trần (vang)
+        const vangTong = k.khongPhaiBe ? 0 : Math.max(0, (k.vangCau || 0) + (k.vang || 0));
+        if (vangTong > 0) {
+          const tv = tao("div", "ttTui vang"); tv.append("🪙 +" + vangTong + " xu vàng");
+          if (k.vangCau > 0 && k.vangMoiCau > 0) tv.appendChild(tao("small", "", k.soCauDung + " câu đúng × " + k.vangMoiCau));
+          kq.appendChild(tv);
+          if (typeof goc.kcCapNhatTui === "function" && typeof k.viVang === "number") goc.kcCapNhatTui({ viVang: k.viVang });
+        }
         const ds = tao("ul", "ttKhoan");
         (k.khoan || []).forEach(x => {
           if (!x || (x.ma !== "hoan_thanh" && x.ma !== "toi_da" && x.ma !== "thoi_gian" && !x.kc)) return;

@@ -51,6 +51,8 @@
     .tcChip { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 999px;
       background: var(--mau-nen-khoi); border: 3px solid var(--mau-vien); font-weight: 700; font-size: 1.05rem;
       color: var(--mau-chu); font-family: inherit; box-shadow: var(--do-bong); }
+    .tcChip[hidden] { display: none; } /* 23/11/2026 KC_03C2: ô 🪙 ẩn tới khi có số */
+    #tcOVang { border-color: #e0b100; }
     .tcChip .tcChipHinh { font-size: 1.4rem; line-height: 1; }
     #tcOKimCuong { border-color: var(--mau-phu); }
     #tcOKimCuong.tcNay { animation: tcNay 0.35s ease-in-out 3; }
@@ -246,6 +248,8 @@
     <div id="tcKhuBe">
       <div class="tcHangChung">
         <div class="tcChip" id="tcOKimCuong" title="Kim cương của con"><span class="tcChipHinh">💎</span><span id="tcSoKimCuong">0</span></div>
+        <!-- 23/11/2026 KC_03C2: 🪙 xu vàng (ví chung toàn app), số do kc/kc_auth.js kcVeVang điền -->
+        <div class="tcChip" id="tcOVang" title="Xu vàng của con (dùng chung cả app)" hidden><span class="tcChipHinh">🪙</span><span id="tcSoVang">0</span></div>
         <button class="tcChip" id="tcOQua" type="button" disabled><span class="tcChipHinh">🎁</span><span id="tcSoQua">Chưa có quà</span></button>
       </div>
       <div class="tcKhuQua" id="tcKhuQua" style="display:none;">

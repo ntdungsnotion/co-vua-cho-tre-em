@@ -14,7 +14,7 @@
     "taiNguyen": {
       "go":         { "ten": "Gỗ",         "bieuTuong": "🪵" },
       "da":         { "ten": "Đá",         "bieuTuong": "🪨" },
-      "vang":       { "ten": "Vàng",       "bieuTuong": "🪙" },
+      "vang":       { "ten": "Vàng mỏ",    "bieuTuong": "🟡" },
       "sat":        { "ten": "Sắt",        "bieuTuong": "⛓️" },
       "luong_thuc": { "ten": "Lương thực", "bieuTuong": "🍖" }
     },
