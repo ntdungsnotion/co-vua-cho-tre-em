@@ -9,6 +9,7 @@
 // BƯỚC: KC_03A - NGÀY: 11/11/2026
 // CẬP NHẬT: 11/11/2026 - KC_03A (người dùng thử): chuyển từ ⚔️ Đấu Trường › 👤 Tài khoản sang 👦 Hồ sơ các bé, dạng bảng.
 // CẬP NHẬT: 18/11/2026 - KC_03B3: mở hồ sơ bé thì nạp luôn khối 🎓 Học & thẻ nhớ (kc_hoc_cua_be.js) vào #htHocThe.
+// CẬP NHẬT: 24/11/2026 18:00 - KC_03C2: hàm gọi của khối Học chuyển tên người gọi sang p_ten cho kc_vi_vang_xem (🪙 của bé).
 // PHỤ THUỘC: ../admin_NC.js nạp TRƯỚC (adminMoHoSoTre, adminGoiRpc, adminThoat, adminDinhDangGio); quantri_NC.html có
 //   nút tiểu mục data-tieumuc="ghinho" + khung #htGhiNho.
 // ================================================================
@@ -73,7 +74,8 @@
     if (oHoc && window.KcHocCuaBe) {
       oHoc.innerHTML = "";
       KcHocCuaBe.mo(oHoc, { be: ten, goi: function (ham, ts) {
-        ts.p_nguoi = adminTaiKhoan.tenDangNhap; ts.p_ma_phien = adminTaiKhoan.maPhien;
+        // KC_03C2: ví xu vàng kc_vi_vang_xem nhận người gọi ở p_ten (các RPC kc_hs_* ở p_nguoi)
+        ts[ham === "kc_vi_vang_xem" ? "p_ten" : "p_nguoi"] = adminTaiKhoan.tenDangNhap; ts.p_ma_phien = adminTaiKhoan.maPhien;
         return apiGoiRpc(ham, ts);
       } });
     }

@@ -93,6 +93,19 @@ button, input, textarea { font-family: inherit; }
 }
 #kcTenNguoiChoi { font-weight: bold; }
 
+/* KC_03C2 (23/11/2026): túi 💎 + 🪙 xu vàng trên thanh trên (kc_auth.js kcVeTui) */
+.kcTui { display: inline-flex; gap: 6px; align-items: center; }
+.kcTuiO {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(255, 255, 255, 0.18); border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px; padding: 4px 12px; font-weight: bold; font-size: 0.95rem; white-space: nowrap;
+}
+.kcTuiO[hidden] { display: none; }
+.kcTuiO.kcTuiNay { animation: kcTuiNay 0.35s ease-in-out 3; }
+@keyframes kcTuiNay { 50% { transform: scale(1.18); } }
+@media (prefers-reduced-motion: reduce) { .kcTuiO.kcTuiNay { animation: none; } }
+@media (min-width: 1024px) { .kcTuiO { font-size: 1.05rem; padding: 6px 14px; } }
+
 .kcNutLienKet, .kcNutDangXuat {
   display: inline-block;
   text-decoration: none;

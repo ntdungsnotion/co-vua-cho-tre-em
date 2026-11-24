@@ -4,7 +4,7 @@
     "luong_thuc": { "ten": "Lương thực (thịt)", "bieuTuong": "🍖", "nhom": "tai_nguyen", "soTu": 8, "soDen": 12, "themMoiLv": 2, "giayMat": 300 },
     "go":         { "ten": "Gỗ",                "bieuTuong": "🪵", "nhom": "tai_nguyen", "soTu": 4, "soDen": 6,  "themMoiLv": 1, "giayMat": 300 },
     "da":         { "ten": "Đá",                "bieuTuong": "🪨", "nhom": "tai_nguyen", "soTu": 4, "soDen": 6,  "themMoiLv": 1, "giayMat": 300 },
-    "vang":       { "ten": "Vàng",              "bieuTuong": "🪙", "nhom": "tai_nguyen", "soTu": 2, "soDen": 4,  "themMoiLv": 1, "giayMat": 300 },
+    "vang":       { "ten": "Vàng mỏ",           "bieuTuong": "🟡", "nhom": "tai_nguyen", "soTu": 2, "soDen": 4,  "themMoiLv": 1, "giayMat": 300 },
     "sat":        { "ten": "Sắt",               "bieuTuong": "⛓️", "nhom": "tai_nguyen", "soTu": 2, "soDen": 4,  "themMoiLv": 1, "giayMat": 300 }
   },
   "macDinh": [["luong_thuc", 100], ["go", 25], ["da", 25], ["vang", 25], ["sat", 25]],

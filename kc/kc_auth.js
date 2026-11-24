@@ -10,6 +10,7 @@
 // BƯỚC: KC_00B (hợp nhất đăng nhập với Cờ Vua) - NGÀY: 14/10/2026 21:57
 // CẬP NHẬT: KC_00C-2 (15/10/2026) - giữ kcThongTinCaNhan cho Trang chủ.
 // CẬP NHẬT: KC_00D-1 (17/10/2026) - thuộc tính data-chi-admin (nút "Quản trị").
+// CẬP NHẬT: KC_03C2 (23/11/2026 23:xx) - túi 💎 + 🪙 xu vàng trên thanh trên (kcVeTui, kcCapNhatTui).
 // LỊCH SỬ: KC_00 (17/07/2026) - bản đầu, dùng khóa phiên RIÊNG.
 // PHỤ THUỘC: kc_config.js, kc_api.js phải nạp TRƯỚC file này.
 //
@@ -225,6 +226,9 @@ function kcDangXuat() {
 // ================================================================
 
 function kcHienChuaDangNhap() {
+  var tui = document.getElementById("kcTui");
+  if (tui) tui.remove();
+  kcTuiDaLayVang = false;
   var khoiChua = document.getElementById("kcChuaDangNhap");
   var khoiCan = document.getElementById("kcNoiDungCanDangNhap");
   if (khoiChua) khoiChua.style.display = "block";
@@ -250,7 +254,64 @@ function kcHienDaDangNhap(taiKhoan) {
   if (oNutDangXuat) oNutDangXuat.style.display = "inline-block";
 
   kcApDungHienThiTheoVaiTro(taiKhoan.vaiTro);
+  kcVeTui(taiKhoan);
 }
+
+// ================================================================
+// KC_03C2 (23/11/2026): TÚI 💎 + 🪙 XU VÀNG TRÊN THANH TRÊN mọi trang /kc/
+//   💎 = tai_khoan.diem_so (phiên), 🪙 = ví xu vàng chung toàn app (RPC kc_vi_vang_xem).
+//   Xu vàng KHÁC vàng mỏ của Đấu Trường. Phụ huynh không có túi.
+//   Trang / game vừa nhận thưởng gọi kcCapNhatTui({ diemSo, viVang }) để số trên thanh đổi ngay.
+// ================================================================
+var kcTuiDaLayVang = false;
+
+function kcVeTui(taiKhoan) {
+  var cha = document.getElementById("trangThaiDangNhap");
+  var tui = document.getElementById("kcTui");
+  if (!cha || !taiKhoan || taiKhoan.vaiTro === "phu_huynh") { if (tui) tui.remove(); return; }
+  // Trang chủ (index.html) đã có hàng 💎 🪙 🎁 to giữa trang: không vẽ túi thứ hai trên thanh trên
+  if (document.getElementById("tcOKimCuong")) {
+    if (!kcTuiDaLayVang) { kcTuiDaLayVang = true; kcCapNhatTui({}); }
+    return;
+  }
+  if (!tui) {
+    tui = document.createElement("span");
+    tui.id = "kcTui";
+    tui.className = "kcTui";
+    tui.innerHTML = '<span class="kcTuiO" title="Kim cương của con">💎 <b id="kcTuiKc">0</b></span>' +
+      '<span class="kcTuiO" id="kcTuiVangO" title="Xu vàng của con (dùng chung cả app)" hidden>🪙 <b id="kcTuiVang">0</b></span>';
+    cha.insertBefore(tui, cha.firstChild);
+  }
+  document.getElementById("kcTuiKc").textContent = Number(taiKhoan.diemSo) || 0;
+  if (!kcTuiDaLayVang) { kcTuiDaLayVang = true; kcCapNhatTui({}); }
+}
+
+/** Đổi số trên túi. tham số: { diemSo?, viVang? }; không có viVang thì hỏi máy chủ. */
+function kcCapNhatTui(so) {
+  so = so || {};
+  var tk = kcTaiKhoanHienTai;
+  if (typeof so.diemSo === "number" && tk) { tk.diemSo = so.diemSo; kcLuuPhien(tk); }
+  var oKc = document.getElementById("kcTuiKc");
+  if (oKc && tk) oKc.textContent = Number(tk.diemSo) || 0;
+  if (typeof so.viVang === "number") { kcVeVang(so.viVang); return; }
+  if (!tk || !tk.tenDangNhap || tk.vaiTro === "phu_huynh") return;
+  kcGoiRpc("kc_vi_vang_xem", { p_ten: tk.tenDangNhap, p_ma_phien: tk.maPhien || "" }).then(function (kq) {
+    if (kq && kq.thanhCong) kcVeVang(Number(kq.soDu) || 0);
+  });
+}
+
+function kcVeVang(so) {
+  // Trang chủ: ô 🪙 cạnh ô 💎 (index.html, #tcOVang)
+  var oTc = document.getElementById("tcOVang"), bTc = document.getElementById("tcSoVang");
+  if (oTc && bTc) { bTc.textContent = so; oTc.hidden = false; }
+  var o = document.getElementById("kcTuiVangO"), b = document.getElementById("kcTuiVang");
+  if (!o || !b) return;
+  var cu = Number(b.textContent) || 0, daHien = !o.hidden;
+  b.textContent = so;
+  o.hidden = false;
+  if (daHien && so > cu) { o.classList.remove("kcTuiNay"); void o.offsetWidth; o.classList.add("kcTuiNay"); }
+}
+window.kcCapNhatTui = kcCapNhatTui;
 
 /** Ẩn data-an-voi-phu-huynh với phụ huynh; chỉ hiện data-chi-admin với admin (KC_00D-1) */
 function kcApDungHienThiTheoVaiTro(vaiTro) {

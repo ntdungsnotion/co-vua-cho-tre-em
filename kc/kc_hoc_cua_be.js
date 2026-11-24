@@ -12,6 +12,7 @@
 // BƯỚC: KC_03B3 - NGÀY: 18/11/2026
 // CẬP NHẬT: 18/11/2026 - KC_03B3 (người dùng thử): thêm nhánh bằng TÊN tiếng Việt (tự đặt mã bỏ dấu, RPC kc_hs_them_nhanh,
 //   tên lưu ở kc_nhanh_hoc, SQL supabase_kc03b3b_nhanh.sql); đổi lớp thì dòng gợi ý đổi theo ngay.
+// CẬP NHẬT: 24/11/2026 18:00 - KC_03C2: ô "🪙 xu vàng" của bé ở đầu khối (RPC kc_vi_vang_xem, SQL supabase_kc03c2_vi_vang.sql).
 // ================================================================
 (function () {
   "use strict";
@@ -84,7 +85,26 @@
         return;
       }
       self.d = kq; self.ve();
+      self.taiVang(so);
     });
+  };
+
+  // KC_03C2: 🪙 xu vàng của bé (ví chung toàn app, RPC kc_vi_vang_xem; admin hoặc phụ huynh đã liên kết)
+  KhoiHoc.prototype.taiVang = function (so) {
+    var self = this;
+    this.goiRpc("kc_vi_vang_xem").then(function (kq) {
+      if (so !== self.lanTai || !kq || !kq.thanhCong) return;
+      self.vang = { soDu: Number(kq.soDu) || 0, homNay: Number(kq.homNay) || 0 };
+      var o = self.k.querySelector(".hcbChipVang");
+      if (o) o.outerHTML = self.veVang();
+    });
+  };
+
+  KhoiHoc.prototype.veVang = function () {
+    if (!this.vang) return '<span class="hcbChip hcbChipVang" hidden></span>';
+    return '<span class="hcbChip hcbChipVang" title="Xu vàng dùng chung cả app (khác Vàng mỏ của Đấu Trường)">🪙 '
+      + this.vang.soDu.toLocaleString("vi-VN") + " xu vàng"
+      + (this.vang.homNay > 0 ? " · hôm nay +" + this.vang.homNay.toLocaleString("vi-VN") : "") + "</span>";
   };
 
   // ---------------- VẼ ----------------
@@ -93,7 +113,7 @@
     this.k.innerHTML = '<div class="hcbDau"><div class="hcbDauTen">🎓 Việc học của <strong>' + thoat(d.be) + "</strong></div>"
       + '<div class="hcbDauSo"><span class="hcbChip">' + (d.lop === null || d.lop === undefined ? "Chưa biết lớp" : tenLop(d.lop))
       + "</span><span class=\"hcbChip\">Năm học " + d.namHoc + "-" + (d.namHoc + 1) + "</span>"
-      + '<span class="hcbChip hcbChipNhan">🃏 Đang phải nhớ ' + (d.soThe | 0) + " thẻ · " + (d.soManh | 0) + " mảnh</span></div></div>"
+      + '<span class="hcbChip hcbChipNhan">🃏 Đang phải nhớ ' + (d.soThe | 0) + " thẻ · " + (d.soManh | 0) + " mảnh</span>" + this.veVang() + "</div></div>"
       + '<div class="hcbTin"></div>'
       + '<div class="hcbLuoi"><div class="hcbCot">' + this.veHoSo() + this.veNhayCam() + "</div>"
       + '<div class="hcbCot">' + this.veTheRieng() + this.veGiao() + "</div></div>";

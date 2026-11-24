@@ -240,7 +240,7 @@ setTimeout(async () => {
 // Ô "đang xem": thứ vừa chạm (nhà, Lều, ruộng, cây / mỏ, quái); chạm đất / chọn người thì về người đang chọn.
 const TEN_CL = { nhan: "Nhân tộc", quy: "Quỷ tộc", tien: "Tiên tộc" };
 const bieuTuongCt = { leu: "🏕️", tuong: "🧱", cong: "🚪", thap_canh: "🗼", tru_ten: "🏹", nha_o: "🏠", ruong: "🌾", kho_go: "📦", kho_da: "📦", kho_vang: "📦", vua_luong_thuc: "🍖", choi_hai_luom: "🧺", choi_mo: "⛏️" };
-const BT_NGUON = { cay: "🌳", mo_da: "🪨", mo_vang: "🪙", mo_sat: "⛓️", bai_ca: "🐟", bui_trai_cay: "🍓", ruong: "🌾" };
+const BT_NGUON = { cay: "🌳", mo_da: "🪨", mo_vang: "🟡", mo_sat: "⛓️", bai_ca: "🐟", bui_trai_cay: "🍓", ruong: "🌾" }; // 23/11/2026 KC_03C2: mỏ vàng 🟡 (🪙 là xu vàng ví chung)
 const LAM = { cay: "🪓 Đang chặt cây", mo_da: "⛏️ Đang đào đá", mo_vang: "⛏️ Đang đào vàng", mo_sat: "⛏️ Đang đào sắt", bai_ca: "🎣 Đang bắt cá", bui_trai_cay: "🍓 Đang hái trái cây", ruong: "🌾 Đang gặt lúa" };
 const TRANG_DV = { di: "🚶 Đang đi", dung: "Đứng chờ", toi_viec: "🚶 Đang tới chỗ làm", toi_xay: "🚶 Đang tới chỗ xây", ve_kho: "🎒 Đang mang đồ về kho" };
 const pt = so => Math.round((so || 0) * 100) + "%";

@@ -347,9 +347,14 @@
     switch (cm.tt) {
       case "dangCat": chu = `💎 Đang cất ${so} kim cương vào kho của con...`; break;
       case "xong":
-        if (kq.soCong > 0) {
+        if (kq.soVang > 0) {
+          // KC_03C2 (23/11/2026): đã nhận đủ kim cương hôm nay -> màn này đổi thành xu vàng 🪙 (ví chung toàn app)
+          chu = `🪙 Hôm nay con đã nhận đủ kim cương, ${so} kim cương màn này đổi thành ${kq.soVang} xu vàng!` +
+            (typeof kq.viVang === "number" ? ` Ví của con có ${kq.viVang} 🪙` : "");
+          kieu = "tot";
+        } else if (kq.soCong > 0) {
           chu = `💎 +${kq.soCong} kim cương đã vào kho của con!` + (typeof kq.diemSoMoi === "number" ? ` Trong kho có ${kq.diemSoMoi} 💎` : "");
-          if (kq.daDuTran) chu += ` Hôm nay con đã nhận đủ ${kq.tranNgay} kim cương rồi, mai chơi tiếp nhé! 🌙`;
+          if (kq.daDuTran) chu += ` Hôm nay con đã nhận đủ ${kq.tranNgay} kim cương, các màn sau sẽ thưởng xu vàng 🪙!`;
           kieu = "tot";
         } else chu = `🌙 Hôm nay con đã nhận đủ ${kq.tranNgay} kim cương rồi. Mai chơi tiếp để cất thêm nhé!`;
         break;
