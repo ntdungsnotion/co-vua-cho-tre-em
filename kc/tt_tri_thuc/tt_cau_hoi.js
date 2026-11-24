@@ -12,11 +12,13 @@
                 goi: { traLoi(luotId, viTri, chon, giay), ketThuc(luotId) },   // trả { ok, ... } như dt_may_chu_sb.js
                 tieuDe, phuDe, batBuoc (true: không có nút ✕), nutKet ("Về thung lũng"),
                 goc (tiền tố đường dẫn hình câu, vd "" ở kc/, "../" ở kc/dt/), lop (lớp bé: ≤ 3 có 🔊 đọc câu),
-                hoSo (ngoại hình bé, chung/nv_ve.js: có thì vẽ bé cổ vũ ở cột trái máy tính)
-              }) -> Promise<{ ketQua | null, dong: "xong" | "bo" | "loi" }>
+                hoSo (ngoại hình bé, chung/nv_ve.js: có thì vẽ bé cổ vũ ở cột trái máy tính),
+                nutThem ([{ chu, ma }]: nút thêm ở màn kết quả, bấm thì đóng màn với dong = ma; KC_03C4 "▶ Chơi tiếp N câu"),
+                loiMoDau (Cô Cú nói ở câu đầu, mặc định "Mình cùng ôn lại nhé!")
+              }) -> Promise<{ ketQua | null, dong: "xong" | "bo" | "loi" | ma của nutThem }>
    CẦN NẠP TRƯỚC: chung/gio_bai.js (KC_GIO_BAI: trừ 💎 theo giờ, module chung toàn app).
-   BƯỚC: TC_D34B (phần 2: dùng module giờ chung)
-   NGÀY: 20/11/2026
+   BƯỚC: TC_D34B (phần 2: dùng module giờ chung); KC_03C4 (nutThem, loiMoDau, 🪙 xu vàng mỗi câu đúng)
+   NGÀY: 20/11/2026 · sửa 24/11/2026
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -47,7 +49,7 @@
 
   // ---------------- Màn ----------------
   function moLuot(tc) {
-    const t = Object.assign({ tieuDe: "Ôn lại", phuDe: "", batBuoc: false, nutKet: "Xong", goc: "", lop: null, hoSo: null }, tc || {});
+    const t = Object.assign({ tieuDe: "Ôn lại", phuDe: "", batBuoc: false, nutKet: "Xong", goc: "", lop: null, hoSo: null, nutThem: [], loiMoDau: "Mình cùng ôn lại nhé!" }, tc || {});
     const goi = t.goi;
     let luot = t.luot;
     return new Promise(xong => {
@@ -171,7 +173,7 @@
         luc0 = performance.now();
         chayDh(true);
         if (coAmThanh(cau)) setTimeout(() => { if (!dong) docTo(cau, t.lop, t.goc); }, 250); // câu nghe: tự đọc
-        coCu(viTri === 0 ? "Mình cùng ôn lại nhé!" : ["Con làm được mà!", "Cố lên nào!", "Đọc kỹ rồi chọn nhé!"][viTri % 3]);
+        coCu(viTri === 0 ? t.loiMoDau : ["Con làm được mà!", "Cố lên nào!", "Đọc kỹ rồi chọn nhé!"][viTri % 3]);
         tuThe = "dung";
       }
 
@@ -246,7 +248,10 @@
         // người dùng 20/11/2026: chỉ báo đúng / sai ngắn ở cuối màn rồi tự sang câu; lời giải xem lại ở màn nhận thưởng
         lichSu.push({ viTri, noiDung: cau.noiDung || "", hinhChu: cau.hinhChu || "", hoiLai: !!cau.hoiLai, dapAn: (cau.dapAn || []).map(String), chon, dapAnDung: kq.dapAnDung, dung, loiGiai: kq.loiGiai || "" });
         if (dung) {
-          ph.appendChild(tao("p", "ttDung", ["✓ Đúng rồi!", "⭐ Giỏi quá!", "✓ Chính xác!"][viTri % 3]));
+          const pDung = tao("p", "ttDung", ["✓ Đúng rồi!", "⭐ Giỏi quá!", "✓ Chính xác!"][viTri % 3]);
+          // KC_03C2 (người dùng 20/11/2026): mỗi câu đúng +vangMoiCau 🪙 xu vàng, không phụ thuộc đồng hồ / trần 💎
+          if (luot && luot.vangMoiCau > 0) pDung.appendChild(tao("span", "ttVangCau", "+" + luot.vangMoiCau + " 🪙"));
+          ph.appendChild(pDung);
           const b = goc0.querySelector('.ttDa[data-i="' + kq.dapAnDung + '"]'); if (b) phaoSao(b);
           tieng.ting(t.lop, keNghe); tuThe = "vay"; coCu("Tuyệt vời!");
         } else {
@@ -310,6 +315,14 @@
         if (tb.length) kq.appendChild(tao("p", "ttTienBo", tb.join(" · ")));
         const tui = tao("div", "ttTui"); const so = tao("b", "", "0");
         tui.append("💎 +", so); kq.appendChild(tui);
+        // KC_03C2: xu vàng 🪙 = mỗi câu đúng (vangCau) + 💎 đổi xu vàng khi đã đủ trần (vang)
+        const vangTong = k.khongPhaiBe ? 0 : Math.max(0, (k.vangCau || 0) + (k.vang || 0));
+        if (vangTong > 0) {
+          const tv = tao("div", "ttTui vang"); tv.append("🪙 +" + vangTong + " xu vàng");
+          if (k.vangCau > 0 && k.vangMoiCau > 0) tv.appendChild(tao("small", "", k.soCauDung + " câu đúng × " + k.vangMoiCau));
+          kq.appendChild(tv);
+          if (typeof goc.kcCapNhatTui === "function" && typeof k.viVang === "number") goc.kcCapNhatTui({ viVang: k.viVang });
+        }
         const ds = tao("ul", "ttKhoan");
         (k.khoan || []).forEach(x => {
           if (!x || (x.ma !== "hoan_thanh" && x.ma !== "toi_da" && x.ma !== "thoi_gian" && !x.kc)) return;
@@ -330,12 +343,15 @@
         const hang = tao("div", "ttHangNut");
         const nut = tao("button", "ttNut tiep", t.nutKet); nut.type = "button";
         nut.addEventListener("click", () => dongMan("xong", k));
+        // KC_03C4: nút thêm (vd "▶ Chơi tiếp 10 câu") đứng trước nút kết
+        const nutPhu = (t.nutThem || []).map(x => { const b = tao("button", "ttNut tiep", x.chu); b.type = "button"; b.addEventListener("click", () => dongMan(x.ma, k)); return b; });
+        if (nutPhu.length) nut.className = "ttNut ttNutPhu";
         if (lichSu.length) {
           const xem = tao("button", "ttNut ttNutPhu", "📖 Xem lại đáp án"); xem.type = "button"; xem.setAttribute("aria-expanded", "false");
           const bang = veXemLai(); bang.hidden = true;
           xem.addEventListener("click", () => { bang.hidden = !bang.hidden; xem.setAttribute("aria-expanded", String(!bang.hidden)); xem.textContent = bang.hidden ? "📖 Xem lại đáp án" : "📖 Ẩn đáp án"; if (!bang.hidden) bang.scrollIntoView({ block: "start", behavior: "smooth" }); });
-          hang.appendChild(xem); hang.appendChild(nut); kq.appendChild(hang); kq.appendChild(bang);
-        } else { hang.appendChild(nut); kq.appendChild(hang); }
+          hang.appendChild(xem); nutPhu.forEach(b => hang.appendChild(b)); hang.appendChild(nut); kq.appendChild(hang); kq.appendChild(bang);
+        } else { nutPhu.forEach(b => hang.appendChild(b)); hang.appendChild(nut); kq.appendChild(hang); }
         s.appendChild(kq);
         coCu(ty >= 0.8 ? "Xuất sắc! Con nhớ bài rất tốt!" : ty >= 0.5 ? "Giỏi lắm! Ôn thêm là nhớ hết!" : "Cô Cú tin con sẽ nhớ hơn!");
         tuThe = "vay";
@@ -354,7 +370,7 @@
           if (!kc) so.textContent = "0";
         }, 650);
         if (ty >= 0.8) setTimeout(() => { phaoGiay(); tieng.keng(); }, 900);
-        if (goc.matchMedia && goc.matchMedia("(pointer: fine)").matches) setTimeout(() => nut.focus({ preventScroll: true }), 700);
+        if (goc.matchMedia && goc.matchMedia("(pointer: fine)").matches) setTimeout(() => (nutPhu[0] || nut).focus({ preventScroll: true }), 700);
       }
 
       function veXemLai() {
@@ -415,3 +431,4 @@
 // 20/11/2026 12:xx - BƯỚC: TC_D34B sửa (người dùng): đồng hồ đếm ngược + 💎 còn nhận giảm dần, khoản Tối đa / Sai / Thời gian
 // 20/11/2026 12:4x - BƯỚC: TC_D34B sửa (người dùng): chạm đáp án là chấm, báo đúng / sai ngắn rồi tự sang câu; 📖 Xem lại đáp án ở màn nhận
 // 21/11/2026 - BƯỚC: KC_09A: tiếng + đọc câu chuyển sang chung/am_thanh.js (chống nuốt câu, chọn giọng, câu đọc tệp / doc:vi)
+// 24/11/2026 - BƯỚC: KC_03C4: nutThem ("▶ Chơi tiếp N câu" của Theo môn), loiMoDau; 🪙 xu vàng mỗi câu đúng (chép đúng phần KC_03C2 chưa merge)
