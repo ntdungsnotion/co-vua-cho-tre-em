@@ -55,6 +55,7 @@
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
+       CẬP NHẬT: 24/11/2026 - KC_GB1: Quản trị chung › ⏱️ Tính giờ trả lời (qt_gio_bai.js: mọi thông số công thức giờ bài + xem thử + đối chiếu máy chủ).
        CẬP NHẬT: 24/11/2026 - KC_03C4b: 📚 Theo môn thêm khối 🔊 Âm thanh Theo môn (#qtmAmGoc, qt_kho_tieng.js nhánh "tm", tt_tri_thuc/tt_theo_mon_am.js).
       CẬP NHẬT: 24/11/2026 - KC_03C4: Thử Thách › 📚 Theo môn (qt_theo_mon.js: thưởng, luật chọn câu chung, thống kê 7 ngày, xem thử bộ câu của một bé, nút sang 🎵 Âm thanh chung).
       CẬP NHẬT: 24/11/2026 - KC_03C6: Thử Thách › 🏆 Chinh phục 30 câu (qt_chinh_phuc.js: thưởng, độ khó chặng, thống kê 7 ngày).
@@ -460,6 +461,28 @@
     .qtmXtHang { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
     .qtmXtHang select, .qtmXtHang input { min-height: 40px; }
     .qtmXt { overflow-x: auto; }
+    /* KC_GB1: ⏱️ Tính giờ trả lời */
+    .qtgLuoi { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .qtgCuon { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .qtgBang { border-collapse: collapse; font-size: .85rem; }
+    .qtgBang th, .qtgBang td { padding: 3px 4px; text-align: center; white-space: nowrap; }
+    .qtgBang th.qtgTen { text-align: left; white-space: normal; min-width: 130px; font-size: .78rem; }
+    .qtgBang .qcpO { width: 62px; }
+    .qtgBang .qcpO input { padding: 4px 2px 4px 4px; text-align: center; }
+    .qtgBang .qcpVe { display: none; }
+    .qtgKetQua th.chon, .qtgKetQua td.chon { background: #fff3cd; font-weight: 700; }
+    .qtgForm { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .qtgF { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .qtgF small { font-size: .72rem; color: #666; }
+    .qtgF input, .qtgF select, .qtgF textarea { width: 100%; box-sizing: border-box; padding: 6px; border: 2px solid #ddd6f3; border-radius: 8px; font: inherit; font-size: .9rem; }
+    .qtgF input[type=checkbox] { width: 22px; height: 22px; }
+    .qtgF:nth-last-child(-n+2) { grid-column: 1 / -1; }
+    .qtgKq { margin-top: 10px; }
+    @media (min-width: 1024px) {
+      .qtgHai { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+      .qtgPhai { position: sticky; top: 12px; }
+    }
+    @media (max-width: 480px) { .qtgForm { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body class="qtTrang">
@@ -510,6 +533,7 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="doithuong" type="button">📦 Đổi thưởng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="ytuong" type="button">💡 Ý tưởng các bé gửi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinhchung" type="button">⚙️ Cấu hình chung</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="giobai-chung" type="button">⏱️ Tính giờ trả lời</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotu" type="button">📖 Kho từ vựng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khocau" type="button">❓ Kho câu hỏi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotrithuc" type="button">📚 Kho tri thức</button>
@@ -832,6 +856,14 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <section class="adminManHinh" id="manhinh-giobai-chung"> <!-- KC_GB1 -->
+      <div class="adminKhoi">
+        <h3>⏱️ Tính Giờ Trả Lời (dùng chung cả app)</h3>
+        <p class="adminGhiChu">Mọi số của công thức giờ bài: bé đọc nhanh chậm, nghĩ bao lâu, độ khó câu, mục tiêu bé giỏi / khá / trung bình. Dùng cho Ôn sau trận, 📚 Theo môn và các thử thách có đồng hồ cả bài. Ô viền cam là số đã khác mặc định; đổi xong xem ngay giờ ở khối 🔬 Xem thử trước khi 💾 Lưu. Hệ số k riêng của từng game nằm ở mục của game đó.</p>
+        <div id="qtgGoc"></div>
       </div>
     </section>
 
@@ -1732,6 +1764,8 @@
   <script src="tt_tri_thuc/tt_theo_mon_am.js"></script> <!-- KC_03C4b: âm thanh Theo môn (nghe thử ở 🔊 Âm thanh Theo môn) --> <!-- KC_03C5c: âm thanh Tốc độ (nghe thử ở 🔊 Âm thanh Tốc độ) -->
   <script src="qt_toc_do.js"></script>      <!-- KC_03C5: ⚡ Tốc độ -->
   <script src="qt_theo_mon.js"></script>    <!-- KC_03C4: 📚 Theo môn -->
+  <script src="chung/gio_bai.js"></script>  <!-- KC_GB1: module giờ bài chung (xem thử) -->
+  <script src="qt_gio_bai.js"></script>     <!-- KC_GB1: ⏱️ Tính giờ trả lời -->
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
 </body>
