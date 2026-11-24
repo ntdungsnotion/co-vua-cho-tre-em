@@ -31,7 +31,7 @@
     ["mo", "🎓 Mở lớp mới", "Mở lớp M + 1 khi tin cậy cao + θ đủ ngưỡng + làm thử một đợt câu lớp mới đạt tỉ lệ đúng."],
     ["noi", "🎯 Mục tiêu đúng theo nơi hỏi", "Xác suất đúng nhắm tới ở từng hoạt động. Chinh phục 30 câu: 6 chặng khó dần."],
     ["chon", "🧩 Chọn câu và độ khó câu", "Chống nản: sai liền vài câu thì câu sau dễ hơn. Độ khó câu ban đầu = lớp + cộng thêm theo mức Dễ / Vừa / Khó."],
-    ["dh", "🏅 Danh hiệu của bé", "Mốc bậc k = hệ số × k^mũ điểm. Thưởng tiến bộ mỗi khi θ cao nhất tăng thêm một bước. (Tên + biểu tượng sửa ở KC_08F2.)"]
+    ["dh", "🏅 Danh hiệu của bé", "Mốc bậc k = hệ số × k^mũ điểm. Thưởng tiến bộ mỗi khi θ cao nhất tăng thêm một bước. Tên + biểu tượng 12 danh hiệu sửa ở bảng dưới (bé thấy ở Trang chủ + màn chúc mừng; không dùng chữ \"lớp\")."]
   ];
   var NHAN = {
     "doDoc": ["cong", "Độ dốc đường cong", 0.05], "mucTieu": ["cong", "Mục tiêu (θ = b thì đúng)", 0.01],
@@ -425,6 +425,8 @@
         var p = x.duong.join("."), nh = NHAN[p] || ["chon", p, 0.01];
         nhom[nh[0]].luoi.appendChild(oSo(x.duong, nh[1], x.thap, x.cao, nh[2], lay(r.cauHinh, x.duong), lay(r.macDinh, x.duong)));
       });
+      // KC_08F2: tên + biểu tượng 12 danh hiệu (danhHieu.ds)
+      nhom.dh.k.appendChild(veDsDanhHieu(r));
       NHOM.forEach(function (n, i) { (i < 5 ? trai : phai).appendChild(nhom[n[0]].k); });
       phai.appendChild(veNutSo());
       phai.appendChild(veLichSu(r));
@@ -441,6 +443,35 @@
     nut.addEventListener("click", function () { i.value = md; to(); });
     w.append(tao("small", "", ten), i, nut); to();
     return w;
+  }
+  // KC_08F2: bảng tên + biểu tượng danh hiệu (mỗi dòng: thứ tự, ô biểu tượng, ô tên, mốc điểm sao đầu, ↺ về mặc định)
+  function veDsDanhHieu(r) {
+    var dh = r.cauHinh.danhHieu, md = r.macDinh.danhHieu.ds, ds = dh.ds;
+    var w = tao("div", "qtrDhDs");
+    w.appendChild(tao("h5", "", "Tên + biểu tượng danh hiệu (thấp → cao)"));
+    var bang = tao("ol", "qtrDhBang");
+    ds.forEach(function (x, i) {
+      var li = tao("li", "qtrDhDong");
+      var bt = tao("input", "qtrDhBt"); bt.value = x[1]; bt.maxLength = 12; bt.setAttribute("aria-label", "Biểu tượng danh hiệu " + (i + 1)); bt.dataset.dh = i; bt.dataset.phan = "1";
+      var ten = tao("input", "qtrDhTen"); ten.value = x[0]; ten.maxLength = 24; ten.setAttribute("aria-label", "Tên danh hiệu " + (i + 1)); ten.dataset.dh = i; ten.dataset.phan = "0";
+      var moc = Math.round(dh.heSo * Math.pow(i * dh.soSao, dh.mu));
+      var nut = tao("button", "qcpVe", "↺"); nut.type = "button"; nut.title = "Về mặc định (" + md[i][1] + " " + md[i][0] + ")";
+      function to() { var khac = bt.value !== md[i][1] || ten.value !== md[i][0]; li.classList.toggle("khac", khac); nut.hidden = !khac; }
+      bt.addEventListener("input", to); ten.addEventListener("input", to);
+      nut.addEventListener("click", function () { bt.value = md[i][1]; ten.value = md[i][0]; to(); });
+      li.append(tao("span", "qtrDhSo", String(i + 1)), bt, ten, tao("small", "qtrDhMoc", "từ " + moc.toLocaleString("vi-VN") + " điểm"), nut);
+      bang.appendChild(li); to();
+    });
+    w.appendChild(bang);
+    w.appendChild(tao("p", "adminGhiChu", "Mỗi danh hiệu có " + dh.soSao + " sao. Tên 1-24 ký tự, không trùng nhau; biểu tượng là 1 emoji. Bấm 💾 Lưu thông số để áp dụng."));
+    return w;
+  }
+  function docDsDanhHieu() {
+    var o = document.querySelectorAll("#qtrThan input[data-dh]");
+    if (!o.length) return null;
+    var ds = [];
+    Array.prototype.forEach.call(o, function (i) { var k = Number(i.dataset.dh); ds[k] = ds[k] || ["", ""]; ds[k][Number(i.dataset.phan)] = i.value.trim(); });
+    return ds;
   }
   function veNutSo() {
     var k = tao("div", "qcpKhoi");
@@ -467,6 +498,14 @@
         if (i.value === "" || !(v >= Number(i.min) && v <= Number(i.max))) loi = loi || (i.getAttribute("aria-label") + ": số từ " + soVi(i.min) + " đến " + soVi(i.max));
         dat(gv, duong, v);
       });
+      // KC_08F2: tên + biểu tượng danh hiệu
+      var dsDh = docDsDanhHieu();
+      if (dsDh) {
+        dsDh.forEach(function (x, i) { if (!loi && (!x[0] || !x[1])) loi = "Danh hiệu " + (i + 1) + ": cần cả tên và biểu tượng"; });
+        var trung = dsDh.map(function (x) { return x[0].toLowerCase(); }).filter(function (t, i, a) { return t && a.indexOf(t) !== i; });
+        if (!loi && trung.length) loi = "Tên danh hiệu bị trùng: " + trung[0];
+        gv.danhHieu.ds = dsDh;
+      }
       if (loi) { tb.className = "qcpTb xau"; tb.textContent = "⚠️ " + loi; return; }
       gui(gv, false);
     });
@@ -478,7 +517,8 @@
     kq = kq || {};
     Object.keys(o || {}).forEach(function (k) {
       var v = o[k], ten = tien ? tien + "." + k : k;
-      if (v && typeof v === "object" && !Array.isArray(v)) phang(v, ten, kq);
+      if (ten === "danhHieu.ds" && Array.isArray(v)) v.forEach(function (x, i) { kq["danhHieu.ds." + i] = Array.isArray(x) ? x[1] + " " + x[0] : JSON.stringify(x); }); // KC_08F2
+      else if (v && typeof v === "object" && !Array.isArray(v)) phang(v, ten, kq);
       else if (Array.isArray(v) && v.every(function (x) { return typeof x === "number"; })) v.forEach(function (x, i) { kq[ten + "." + i] = x; });
       else kq[ten] = JSON.stringify(v);
     });
@@ -498,7 +538,11 @@
     var ul = tao("ul", "qtrLs");
     r.lichSu.forEach(function (x) {
       var a = phang(tron(r.macDinh, x.truoc)), b = phang(tron(r.macDinh, x.sau)), doi = [];
-      Object.keys(b).forEach(function (p) { if (a[p] !== b[p]) doi.push(((NHAN[p] || [])[1] || p) + ": " + soVi(a[p]) + " → " + soVi(b[p])); });
+      Object.keys(b).forEach(function (p) {
+        if (a[p] === b[p]) return;
+        var nhan = (NHAN[p] || [])[1] || (/^danhHieu\.ds\.\d+$/.test(p) ? "Danh hiệu " + (Number(p.split(".")[2]) + 1) : p); // KC_08F2
+        doi.push(nhan + ": " + soVi(a[p]) + " → " + soVi(b[p]));
+      });
       var li = tao("li");
       li.appendChild(tao("span", "", ngay(x.luc) + " · bản " + x.phienBan + " · " + (x.nguoi || "") + (x.ghiChu ? " · " + x.ghiChu : "")
         + (doi.length ? " — " + doi.slice(0, 6).join("; ") + (doi.length > 6 ? "; … (+" + (doi.length - 6) + ")" : "") : "")));
@@ -554,3 +598,4 @@
   }
 })();
 // 24/11/2026 - BƯỚC: KC_08F1
+// 25/11/2026 - BƯỚC: KC_08F2 (🎛️ Thông số: bảng sửa tên + biểu tượng 12 danh hiệu danhHieu.ds, lịch sử ghi "Danh hiệu N")

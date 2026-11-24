@@ -55,6 +55,8 @@ function tcVeTrangChu(tk) {
     tcVeKimCuong(tk.diemSo, false);
     tcVeHangCoVua(kcThongTinCaNhan);
     tcTaiQua(tk);
+    // KC_08F2: 🏅 danh hiệu mỗi môn (+ màn chúc mừng nếu vừa lên sao mà chưa xem)
+    if (window.KC_DANH_HIEU) KC_DANH_HIEU.veKhoi(tcLay("tcDanhHieu"));
   }
 }
 
@@ -299,3 +301,4 @@ document.addEventListener("kcSanSang", function (su) {
 });
 
 // 15/10/2026 - BƯỚC: KC_00C-2
+// 25/11/2026 - BƯỚC: KC_08F2 (khối 🏅 Danh hiệu của con: KC_DANH_HIEU.veKhoi)

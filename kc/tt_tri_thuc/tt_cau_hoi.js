@@ -476,6 +476,8 @@
           const iv = setInterval(() => { dem = Math.min(kc, dem + buoc); so.textContent = String(dem); tui.classList.remove("nay"); void tui.offsetWidth; tui.classList.add("nay"); if (dem >= kc) clearInterval(iv); }, 90);
           if (!kc) so.textContent = "0";
         }, 650);
+        // KC_08F2: vừa lên sao / danh hiệu thì màn chúc mừng (sau rương + kim cương bay); trang truyền goi.danhHieu = rpc
+        if (goi && typeof goi.danhHieu === "function" && goc.KC_DANH_HIEU) goc.KC_DANH_HIEU.xet(goi.danhHieu, { tre: 2600 });
         if (ty >= 0.8) setTimeout(() => { phaoGiay(); tieng.keng(); }, 900);
         if (goc.matchMedia && goc.matchMedia("(pointer: fine)").matches) setTimeout(() => (nutPhu[0] || nut).focus({ preventScroll: true }), 700);
       }
@@ -575,3 +577,4 @@
 // 21/11/2026 - BƯỚC: KC_09A: tiếng + đọc câu chuyển sang chung/am_thanh.js (chống nuốt câu, chọn giọng, câu đọc tệp / doc:vi)
 // 24/11/2026 - BƯỚC: KC_03C4b: sanKhau (Theo môn): đọc câu xong mới hiện 4 đáp án, nhạc lúc đọc, tích tắc lúc chờ, bình luận + nút bỏ qua
 // 24/11/2026 - BƯỚC: KC_03C4: nutThem ("▶ Chơi tiếp N câu" của Theo môn), loiMoDau; 🪙 xu vàng mỗi câu đúng (chép đúng phần KC_03C2 chưa merge)
+// 25/11/2026 - BƯỚC: KC_08F2 (goi.danhHieu = rpc: màn kết quả gọi KC_DANH_HIEU.xet, chúc mừng lên sao / danh hiệu)

@@ -479,6 +479,8 @@
       }
       // KC_03C7b: 🔥 chuỗi ngày (chỉ khi máy chủ đã chấm lượt)
       if (k && !choMang && !maLoi && goc.KC_TT && typeof goc.KC_TT.veChuoi === "function") goc.KC_TT.veChuoi(s, rpc("kc_tt_chuoi_luot", { p_luot: l.id }));
+      // KC_08F2: vừa lên sao / danh hiệu thì màn chúc mừng
+      if (k && !choMang && !maLoi && goc.KC_DANH_HIEU) goc.KC_DANH_HIEU.xet(rpc, { tre: 2600 });
       // xem lại câu sai
       const xl = (kq.xemLai || []);
       let hopXl = null;
@@ -576,3 +578,4 @@
 // 24/11/2026 - BƯỚC: KC_03C5b (âm thanh hồi hộp: nhạc nền dồn dập, combo, trống cuộn, kèn, nút tắt tiếng)
 // 24/11/2026 - BƯỚC: KC_03C5c (đúng / sai dùng âm thanh chung; tiếng riêng theo cài đặt Quản trị; bé nghĩ lâu; gần hết giờ theo số giây cài đặt)
 // 24/11/2026 - BƯỚC: KC_03C7b (dòng 🔥 chuỗi ngày ở màn kết quả, RPC kc_tt_chuoi_luot)
+// 25/11/2026 - BƯỚC: KC_08F2 (màn kết quả gọi KC_DANH_HIEU.xet: chúc mừng lên sao / danh hiệu)

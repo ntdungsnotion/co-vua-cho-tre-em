@@ -252,6 +252,8 @@
         <div class="tcChip" id="tcOVang" title="Xu vàng của con (dùng chung cả app)" hidden><span class="tcChipHinh">🪙</span><span id="tcSoVang">0</span></div>
         <button class="tcChip" id="tcOQua" type="button" disabled><span class="tcChipHinh">🎁</span><span id="tcSoQua">Chưa có quà</span></button>
       </div>
+      <!-- 25/11/2026 KC_08F2: 🏅 Danh hiệu của con (mỗi môn Gà Con → Thần), kc/chung/danh_hieu.js vẽ -->
+      <div id="tcDanhHieu" hidden></div>
       <div class="tcKhuQua" id="tcKhuQua" style="display:none;">
         <h3>🎁 Quà tặng của con</h3>
         <div id="tcDanhSachQua"></div>
@@ -290,6 +292,8 @@
   <script src="kc/kc_config.js"></script>
   <script src="kc/kc_api.js"></script>
   <script src="kc/kc_auth.js"></script>
+  <script src="kc/chung/am_thanh.js"></script> <!-- KC_08F2: tiếng màn chúc mừng danh hiệu -->
+  <script src="kc/chung/danh_hieu.js"></script> <!-- KC_08F2: 🏅 danh hiệu của con -->
   <script src="kc/kc_trangchu.js"></script>
   <script>
     // KC_00C-1: chuyển qua lại giữa Đăng nhập và Tạo tài khoản
@@ -338,3 +342,4 @@
 </body>
 </html>
 <!-- 15/10/2026 - BƯỚC: KC_00E -->
+<!-- 25/11/2026 - BƯỚC: KC_08F2 (khối 🏅 Danh hiệu của con + màn chúc mừng: kc/chung/danh_hieu.js, kc/chung/am_thanh.js) -->
