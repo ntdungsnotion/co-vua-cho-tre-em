@@ -8,7 +8,9 @@
 //     Ô khác mặc định tô cam; ↺ từng ô / "Về mặc định" cả nhóm. Máy chủ kiểm lại, chỉ lưu phần khác mặc định.
 //   - 📊 Thống kê 7 ngày: lượt / bé / tỉ lệ đúng / 💎 / 🪙 / bỏ dở; mỗi môn; số câu bé chọn; kiến thức mỗi môn của cả kho (sáng / Sắp có).
 //   - 🎯 Xem thử bộ câu: gõ tên bé + môn + số câu -> máy chủ chọn thử đúng như khi bé bấm Bắt đầu (CHỈ XEM, không ghi gì).
-//   - 🔊 Âm thanh: Theo môn chỉ dùng âm thanh chung (đúng / sai / thưởng / lời khen / đọc câu) -> nút mở 🎵 Âm thanh chung.
+//   - 🔊 Âm thanh: đúng / sai / thưởng / giọng đọc dùng âm thanh chung -> nút mở 🎵 Âm thanh chung.
+//     KC_03C4b: âm thanh + nhịp RIÊNG của Theo môn (nhạc lúc đọc câu, tích tắc, bình luận, mốc giây) ở khối dưới
+//     "🔊 Âm thanh Theo môn" (#qtmAmGoc, qt_kho_tieng.js nhánh "tm").
 //   Điện thoại: 1 cột. Máy tính: cấu hình + thống kê 2 cột (khung .qcp* của Chinh phục).
 // RPC: kc_tt_admin_cau_hinh_doc, kc_tt_admin_cau_hinh_luu (nhóm theo_mon, chung), kc_tm_admin_thong_ke, kc_tm_admin_xem_thu
 //      (SQL repo_rieng supabase_kc03c4_theo_mon.sql).
@@ -34,6 +36,8 @@
 
   document.addEventListener("adminDaChuyenManHinh", function (e) {
     if (e.detail && e.detail.ten === MAN && !S.daTai) { S.daTai = true; tai(); }
+    var am = document.getElementById("qtmAmGoc"); // KC_03C4b: cây âm thanh riêng Theo môn
+    if (e.detail && e.detail.ten === MAN && am && window.QKT_CAY) window.QKT_CAY.gan(am, { nhanh: "tm" });
   });
 
   function tai() {
@@ -242,8 +246,8 @@
   // ---------------- 🔊 ÂM THANH ----------------
   function veAmThanh() {
     var k = tao("div", "qcpKhoi");
-    k.appendChild(tao("h4", "", "🔊 Âm thanh Theo môn"));
-    k.appendChild(tao("p", "adminGhiChu", "Theo môn dùng âm thanh chung của cả app: tiếng đúng / sai, rương thưởng, kim cương bay, kèn làm giỏi, lời khen + động viên đọc thành tiếng (bé nhỏ), giọng đọc câu nghe. Chỉnh ở 🎵 Âm thanh chung: đổi ở đó thì Theo môn, Ôn sau trận và mọi màn hỏi cùng đổi."));
+    k.appendChild(tao("h4", "", "🔊 Âm thanh dùng chung"));
+    k.appendChild(tao("p", "adminGhiChu", "Tiếng đúng / sai, rương thưởng, kim cương bay, kèn làm giỏi và giọng đọc (câu hỏi, bình luận) dùng chung cả app: chỉnh ở 🎵 Âm thanh chung. Nhạc lúc đọc câu, tích tắc, bình luận và các mốc giây của Theo môn chỉnh ở khối 🔊 Âm thanh Theo môn bên dưới."));
     var n = tao("button", "adminNut adminNutPhu", "🎵 Mở Âm thanh chung"); n.type = "button";
     n.addEventListener("click", function () { var b = document.querySelector('.adminNutManHinh[data-manhinh="khotieng"]'); if (b) b.click(); });
     k.appendChild(n);
@@ -251,3 +255,4 @@
   }
 })();
 // 24/11/2026 - BƯỚC: KC_03C4 (tạo mới)
+// 24/11/2026 - BƯỚC: KC_03C4b (gắn cây âm thanh riêng Theo môn #qtmAmGoc)

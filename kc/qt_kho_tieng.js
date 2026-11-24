@@ -34,6 +34,9 @@
   // KC_03C5c: âm thanh RIÊNG của ⚡ Tốc độ (nhánh "tdo", file cài đặt riêng, mở ở Quản trị › ⚡ Tốc độ › 🔊 Âm thanh)
   var URL_MD_T = "tt_tri_thuc/du_lieu/cau_hinh_am_thanh_toc_do.json", TEN_TEP_T = "cau_hinh_am_thanh_toc_do";
   var NHOM_T = [{ ma: "vao", ten: "🚦 Vào trận" }, { ma: "choi", ten: "⚡ Trong lúc chơi" }, { ma: "ket", ten: "🏁 Kết thúc lượt" }];
+  // KC_03C4b: âm thanh + nhịp RIÊNG của 📚 Theo môn (nhánh "tm", mở ở Quản trị › 📚 Theo môn › 🔊 Âm thanh)
+  var URL_MD_TM = "tt_tri_thuc/du_lieu/cau_hinh_am_thanh_theo_mon.json", TEN_TEP_TM = "cau_hinh_am_thanh_theo_mon";
+  var NHOM_TM = [{ ma: "doc", ten: "📖 Lúc đọc câu" }, { ma: "cho", ten: "⏱️ Lúc chờ trả lời" }, { ma: "binh", ten: "💬 Bình luận" }];
   var URL_MD = "dt/du_lieu/cau_hinh_am_thanh.json", URL_TV = "dt/am_thanh/thu_vien.json", TEN_TEP = "cau_hinh_am_thanh";
   var NHOM = [
     { ma: "chieu", ten: "✨ Chiêu tướng" }, { ma: "don", ten: "⚔️ Đòn đánh, đỡ, né" },
@@ -51,9 +54,11 @@
   function chep(o) { return JSON.parse(JSON.stringify(o)); }
   // KC_09B2: cài đặt Âm thanh chung nằm ở S.md.chung / S.ht.chung / S.daLuu.chung (cùng cây, khác file lưu)
   // KC_03C5c: nhánh "tdo" (⚡ Tốc độ) nằm ở S.*.tdo, cùng kiểu
-  function gocCH(ch, khoa) { return /^chung:/.test(khoa) ? (ch.chung || (ch.chung = {})) : /^tdo:/.test(khoa) ? (ch.tdo || (ch.tdo = {})) : ch; }
-  function laRieng(nhanh) { return nhanh === "chung" || nhanh === "tdo"; } // nhánh có file cài đặt riêng, tiếng tự tạo nằm ở module của nhánh
-  function boChung(o) { var c = chep(o); delete c.chung; delete c.tdo; return c; }
+  // KC_03C4b: nhánh "tm" (📚 Theo môn) nằm ở S.*.tm, cùng kiểu
+  function gocCH(ch, khoa) { return /^chung:/.test(khoa) ? (ch.chung || (ch.chung = {})) : /^tdo:/.test(khoa) ? (ch.tdo || (ch.tdo = {})) : /^tm:/.test(khoa) ? (ch.tm || (ch.tm = {})) : ch; }
+  function laRieng(nhanh) { return nhanh === "chung" || nhanh === "tdo" || nhanh === "tm"; } // nhánh có file cài đặt riêng, tiếng tự tạo nằm ở module của nhánh
+  function laGame(nhanh) { return nhanh === "tdo" || nhanh === "tm"; } // nhánh âm thanh riêng của một chế độ Thử Thách
+  function boChung(o) { var c = chep(o); delete c.chung; delete c.tdo; delete c.tm; return c; }
   function giong(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
   function kb(byte) { return byte >= 1048576 ? (byte / 1048576).toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + " MB" : Math.max(1, Math.round(byte / 1024)) + " KB"; }
   function giay(g) { if (g == null || !isFinite(g)) return ""; g = Number(g); return g >= 60 ? Math.floor(g / 60) + " phút " + Math.round(g % 60) + " giây" : g.toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + " giây"; }
@@ -72,7 +77,8 @@
     var tvSan = fetch(URL_TV, { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; });
     var mdC = fetch(URL_MD_C, { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
     var mdT = fetch(URL_MD_T, { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
-    S.dangTai = Promise.all([md, goi("kc_dt_admin_thong_so"), goi("kc_am_thanh_admin_ds"), tvSan, KT.ds({ moi: true }), mdC, mdT]).then(function (kq) {
+    var mdTM = fetch(URL_MD_TM, { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+    S.dangTai = Promise.all([md, goi("kc_dt_admin_thong_so"), goi("kc_am_thanh_admin_ds"), tvSan, KT.ds({ moi: true }), mdC, mdT, mdTM]).then(function (kq) {
       var may = kq[1], kd = kq[2], tv = kq[3] || {};
       S.md = kq[0];
       S.coMayChu = !!(may && may.thanhCong);
@@ -84,6 +90,9 @@
       var suaT = (S.coMayChu && may.sua && may.sua[TEN_TEP_T]) || null;
       S.md.tdo = kq[6];
       S.daLuu.tdo = window.KC_DT_CAU_HINH ? KC_DT_CAU_HINH.tron(kq[6], suaT) : chep(kq[6]);
+      var suaTM = (S.coMayChu && may.sua && may.sua[TEN_TEP_TM]) || null;
+      S.md.tm = kq[7];
+      S.daLuu.tm = window.KC_DT_CAU_HINH ? KC_DT_CAU_HINH.tron(kq[7], suaTM) : chep(kq[7]);
       S.ht = chep(S.daLuu);
       S.kho = kd && kd.thanhCong ? kd.ds || [] : [];
       S.gan = {};
@@ -104,6 +113,8 @@
     if (c.loai === "chung") return "🔊 Độ to chung";
     if (c.nhanh === "tdo" && c.loai === "nhac") return "🎵 Nhạc nền";
     if (c.nhanh === "tdo" && c.loai === "gio") return "⏱️ Lúc nào kêu (nghĩ lâu, gần hết giờ)";
+    if (c.nhanh === "tm" && c.loai === "nhac") return "🎵 Nhạc lúc đọc câu";
+    if (c.nhanh === "tm" && c.loai === "gio") return "⏱️ Nhịp: đọc câu, bình luận";
     if (c.loai === "nhac") return "🎵 " + (TEN_NHAC[c.k] || c.k);
     if (c.nhanh === "chung" && c.loai === "loi") return "💬 Lời khen và động viên";
     if (c.nhanh === "chung" && c.loai === "doc") return "🗣️ Giọng đọc câu nghe";
@@ -129,6 +140,8 @@
     if (c.nhanh === "chung" && c.loai === "doc") return gocCH(ch, khoa).docCau;
     if (c.nhanh === "tdo" && c.loai === "gio") return gocCH(ch, khoa).hoiHop;
     if (c.nhanh === "tdo" && c.loai === "nhac") return [(gocCH(ch, khoa).nhac || {})[c.k] || "", gocCH(ch, khoa).nhacNen];
+    if (c.nhanh === "tm" && c.loai === "gio") return gocCH(ch, khoa).nhip;
+    if (c.nhanh === "tm" && c.loai === "nhac") return [(gocCH(ch, khoa).nhac || {})[c.k] || "", gocCH(ch, khoa).nhacNen];
     if (laRieng(c.nhanh)) return dong(gocCH(ch, khoa), c.k);
     if (c.loai === "nhac") return (ch.nhac || {})[c.k] || "";
     return dong(ch, c.k);
@@ -146,6 +159,10 @@
     if (nhanh === "tdo" || nhanh === "all") {
       ds.push("tdo:chung", "tdo:nhac:nen", "tdo:gio");
       Object.keys((S.md.tdo || {}).tieng || {}).forEach(function (k) { ds.push("tdo:tieng:" + k); });
+    }
+    if (nhanh === "tm" || nhanh === "all") {
+      ds.push("tm:chung", "tm:nhac:doc", "tm:gio");
+      Object.keys((S.md.tm || {}).tieng || {}).forEach(function (k) { ds.push("tm:tieng:" + k); });
     }
     if (nhanh === "chung" || nhanh === "all") {
       Object.keys((S.md.chung || {}).tieng || {}).forEach(function (k) { ds.push("chung:tieng:" + k); });
@@ -230,6 +247,18 @@
       html += nhanh("⚡ Âm thanh riêng của Tốc độ", ndt, true)
         + '<p class="qktSau">✅ Đúng, ❌ Sai, 💎 kim cương dùng chung cả app: chỉnh ở Quản trị chung › 🎵 Âm thanh chung.</p>';
     }
+    if (v.nhanh === "tm") {
+      var tm = (S.md.tm || {}).tieng || {}, ndm = "";
+      if (khop("Độ to chung", "tm:chung")) ndm += nutND(v, "tm:chung", "🔊 Độ to chung");
+      if (khop("Nhạc lúc đọc câu", "tm:nhac:doc")) ndm += nutND(v, "tm:nhac:doc", "🎵 Nhạc lúc đọc câu");
+      if (khop("Nhịp đọc câu bình luận", "tm:gio")) ndm += nutND(v, "tm:gio", "⏱️ Nhịp: đọc câu, bình luận");
+      NHOM_TM.forEach(function (n) {
+        ndm += nhanh(n.ten, Object.keys(tm).filter(function (k) { return (tm[k].nhom || "cho") === n.ma; }).map(function (k) {
+          return khop(tm[k].ten || k, "tm:tieng:" + k) ? nutND(v, "tm:tieng:" + k, tm[k].ten || k) : ""; }).join(""), true);
+      });
+      html += nhanh("📚 Âm thanh riêng của Theo môn", ndm, true)
+        + '<p class="qktSau">✅ Đúng, ❌ Sai, 💎 kim cương và giọng đọc dùng chung cả app: chỉnh ở Quản trị chung › 🎵 Âm thanh chung.</p>';
+    }
     if (v.nhanh === "chung") {
 var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (k) { return khop(tc[k].ten || k, "chung:tieng:" + k); }).map(function (k) { return nutND(v, "chung:tieng:" + k, tc[k].ten || k); }).join("");
       if (khop("Lời khen động viên", "chung:loi")) ndc += nutND(v, "chung:loi", "💬 Lời khen và động viên");
@@ -247,21 +276,21 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
     if (!v.chon) return '<div class="qktTrong"><p>👈 Bấm một nội dung bên trái để nghe âm thanh hiện tại, thay file hoặc chỉnh cài đặt.</p>'
       + '<p class="adminGhiChu">Chỉ dùng file được phép dùng miễn phí (CC0: opengameart.org, freesound.org mục CC0, kenney.nl). Nhạc nền tối đa <b>2,5 MB</b>, tiếng ngắn tối đa <b>150 KB</b>; nhận .mp3, .ogg, .wav, .m4a.</p></div>';
     if (v.chon === "mocoi") return lui + veMoCoi();
-    if (/^chung:(loi|doc)$/.test(v.chon) || v.chon === "tdo:gio") return lui + veCaiDatChung(v.chon);
+    if (/^chung:(loi|doc)$/.test(v.chon) || v.chon === "tdo:gio" || v.chon === "tm:gio") return lui + veCaiDatChung(v.chon);
     var khoa = v.chon, c = chia(khoa), h = lui + '<h4 class="qktTieuDe">' + T(tenND(khoa)) + ' <code>' + T(c.k || "amLuong") + "</code></h4>";
     if (c.loai === "chung") {
-      var a = gocCH(S.ht, khoa).amLuong || {}, m = gocCH(S.md, khoa).amLuong || {}, pa = c.nhanh === "tdo" ? "tdo.amLuong." : "amLuong.";
-      return h + '<div class="qktKhoi"><p class="adminGhiChu">Độ to chung của cả ' + (c.nhanh === "tdo" ? "⚡ Tốc độ" : "Đấu Trường") + '. Từng tiếng còn có độ to riêng ở nội dung của nó.</p>'
-        + soO(pa + "tieng", "Độ to mọi tiếng hiệu ứng", a.tieng, m.tieng, 0, c.nhanh === "tdo" ? 2 : 1, 0.05)
-        + soO(pa + "nhac", "Độ to nhạc nền", a.nhac, m.nhac, 0, 1, 0.01)
-        + (c.nhanh === "tdo" ? "" : soO("amLuong.nhacKhiDoc", "Nhạc còn bấy nhiêu phần khi máy đọc câu hỏi", a.nhacKhiDoc, m.nhacKhiDoc, 0, 1, 0.05))
+      var a = gocCH(S.ht, khoa).amLuong || {}, m = gocCH(S.md, khoa).amLuong || {}, pa = laGame(c.nhanh) ? c.nhanh + ".amLuong." : "amLuong.";
+      return h + '<div class="qktKhoi"><p class="adminGhiChu">Độ to chung của cả ' + (c.nhanh === "tdo" ? "⚡ Tốc độ" : c.nhanh === "tm" ? "📚 Theo môn" : "Đấu Trường") + '. Từng tiếng còn có độ to riêng ở nội dung của nó.</p>'
+        + soO(pa + "tieng", "Độ to mọi tiếng hiệu ứng", a.tieng, m.tieng, 0, laGame(c.nhanh) ? 2 : 1, 0.05)
+        + soO(pa + "nhac", c.nhanh === "tm" ? "Độ to nhạc lúc đọc câu" : "Độ to nhạc nền", a.nhac, m.nhac, 0, 1, 0.01)
+        + (c.nhanh === "tdo" ? "" : soO(pa + "nhacKhiDoc", "Nhạc còn bấy nhiêu phần khi máy đọc câu hỏi", a.nhacKhiDoc, m.nhacKhiDoc, 0, 1, 0.05))
         + nutLuu(khoa) + "</div>";
     }
     var dang = fileCua(S.ht, khoa), muc = timMuc(dang, c.loai), mdF = fileCua(S.md, khoa);
-    var tenTrong = c.nhanh === "tdo" && c.loai === "nhac" ? ((gocCH(S.ht, khoa).nhacNen || {}).tuTao === false ? "🔇 Để trống (im lặng)" : "🥁 Nhạc trống tự tạo")
+    var tenTrong = laGame(c.nhanh) && c.loai === "nhac" ? ((gocCH(S.ht, khoa).nhacNen || {}).tuTao === false ? "🔇 Để trống (im lặng)" : c.nhanh === "tm" ? "🎶 Nhạc vui tự tạo" : "🥁 Nhạc trống tự tạo")
       : c.loai === "nhac" ? TRONG_NHAC[c.k] || "🔇 Để trống" : "🎛️ Tiếng tự tạo (không file)";
     h += '<div class="qktKhoi qktDang"><span>Đang dùng: <b>' + T(muc ? (muc.kho ? "📁 " : "") + muc.ten : tenTrong) + "</b></span>"
-      + '<button type="button" class="adminNut adminNutThanhCong" data-kt="nghe-nd">' + (c.nhanh === "chung" ? "▶ Nghe thử" : c.nhanh === "tdo" && c.loai === "nhac" ? "▶ Nghe thử (giả lập 24 giây cuối)" : "▶ Nghe như trong trận") + '</button>'
+      + '<button type="button" class="adminNut adminNutThanhCong" data-kt="nghe-nd">' + (c.nhanh === "chung" || c.nhanh === "tm" ? "▶ Nghe thử" : c.nhanh === "tdo" && c.loai === "nhac" ? "▶ Nghe thử (giả lập 24 giây cuối)" : "▶ Nghe như trong trận") + '</button>'
       + (c.loai === "nhac" ? '<button type="button" class="adminNut adminNutPhu" data-kt="dung">⏹ Dừng</button>' : "") + "</div>";
     // các file
     var ds = ungVien(khoa);
@@ -288,18 +317,38 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
         + '<label class="qktO qktChon"><input type="checkbox" data-kt-o="tdo.nhacNen.nhanhDan"' + (nn.nhanhDan !== false ? " checked" : "") + "> <span>Nhanh dần khi gần hết giờ (3 nấc, mốc ở ⏱️ Lúc nào kêu)</span></label>"
         + '<label class="qktO qktChon"><input type="checkbox" data-kt-o="tdo.nhacNen.tuTao"' + (nn.tuTao !== false ? " checked" : "") + "> <span>Không có file thì phát nhạc trống tự tạo</span></label>"
         + "</div>" + nutLuu(khoa) + "</div>";
+    } else if (c.nhanh === "tm") {
+      var nm = gocCH(S.ht, khoa).nhacNen || {};
+      h += '<div class="qktKhoi"><h5>Cài đặt</h5><p class="adminGhiChu">Nhạc phát lúc bé đọc câu hỏi, tắt khi hiện 4 đáp án. Độ to chỉnh ở 🔊 Độ to chung. File tải lên luôn phát lặp lại.</p><div class="qktLuoiO">'
+        + '<label class="qktO qktChon"><input type="checkbox" data-kt-o="tm.nhacNen.tuTao"' + (nm.tuTao !== false ? " checked" : "") + "> <span>Không có file thì phát nhạc vui tự tạo</span></label>"
+        + "</div>" + nutLuu(khoa) + "</div>";
     } else h += '<div class="qktKhoi">' + '<p class="adminGhiChu">Độ to nhạc nền chỉnh ở 🔊 Độ to chung; lặp lại / độ to riêng của file tải lên: bấm ✏️ ở file.</p>' + nutLuu(khoa) + "</div>";
     return h;
   }
   function veCaiDatChung(khoa) {
     var c = chia(khoa), h = '<h4 class="qktTieuDe">' + T(tenND(khoa)) + " <code>" + T(c.loai) + "</code></h4>";
-    if (c.loai === "gio") {
+    if (c.loai === "gio" && c.nhanh === "tdo") {
       var g = gocCH(S.ht, khoa).hoiHop || {}, gm = gocCH(S.md, khoa).hoiHop || {};
       return h + '<div class="qktKhoi"><p class="adminGhiChu">Các mốc giây làm trận thêm hồi hộp. Tiếng của từng lúc (🤔 nghĩ lâu, ⏳ gần hết giờ, 🌪️ nhạc lên nhịp) chỉnh ở nội dung của nó trong cây.</p><div class="qktLuoiO">'
         + soO("tdo.hoiHop.nghiLauGiay", "🤔 Bé chưa chọn sau bấy nhiêu giây thì nhắc (0 = tắt)", g.nghiLauGiay, gm.nghiLauGiay, 0, 60, 1)
         + soO("tdo.hoiHop.nhacLaiGiay", "🤔 Vẫn nghĩ tiếp: nhắc lại sau bấy nhiêu giây (0 = một lần)", g.nhacLaiGiay, gm.nhacLaiGiay, 0, 60, 1)
         + soO("tdo.hoiHop.nhanhDanGiay", "🌪️ Còn bấy nhiêu giây: nhạc lên nhịp lần 1", g.nhanhDanGiay, gm.nhanhDanGiay, 0, 120, 1)
         + soO("tdo.hoiHop.ganHetGioGiay", "⏳ Còn bấy nhiêu giây: tích tắc + nhạc lên nhịp lần 2 (nửa số này: lần 3)", g.ganHetGioGiay, gm.ganHetGioGiay, 0, 60, 1)
+        + "</div>" + nutLuu(khoa) + "</div>";
+    }
+    if (c.nhanh === "tm" && c.loai === "gio") {
+      var n = gocCH(S.ht, khoa).nhip || {}, nm = gocCH(S.md, khoa).nhip || {};
+      var hop = function (k, nhan) { return '<label class="qktO qktChon"><input type="checkbox" data-kt-o="tm.nhip.' + k + '"' + (n[k] !== false ? " checked" : "") + "> <span>" + T(nhan) + "</span></label>"; };
+      return h + '<div class="qktKhoi"><p class="adminGhiChu">Mỗi câu: bé đọc câu hỏi (nhạc vui) → hiện 4 đáp án, đồng hồ chạy, tích tắc → bé chạm → bình luận đúng / sai + lời giải → tự sang câu hoặc bé bấm ⏭ Bỏ qua. Đồng hồ bài KHÔNG tính lúc đọc câu và lúc bình luận. Giọng đọc (tốc độ, độ to) chỉnh ở 🎵 Âm thanh chung.</p><div class="qktLuoiO">'
+        + hop("docThanhTieng", "🗣️ Máy đọc câu hỏi thành tiếng")
+        + soO("tm.nhip.docDenLop", "🗣️ Chỉ đọc cho bé từ lớp này trở xuống (12 = mọi bé)", n.docDenLop, nm.docDenLop, 0, 12, 1)
+        + soO("tm.nhip.docGiayToiThieu", "📖 Đọc câu ít nhất (giây)", n.docGiayToiThieu, nm.docGiayToiThieu, 0, 30, 0.5)
+        + soO("tm.nhip.docGiayToiDa", "📖 Đọc câu nhiều nhất (giây)", n.docGiayToiDa, nm.docGiayToiDa, 1, 60, 0.5)
+        + soO("tm.nhip.docChuMoiGiay", "📖 Bé tự đọc bấy nhiêu chữ mỗi giây (khi máy không đọc)", n.docChuMoiGiay, nm.docChuMoiGiay, 0.5, 10, 0.5)
+        + soO("tm.nhip.ticTacSau", "⏱️ Hiện đáp án bấy nhiêu giây rồi mới tích tắc", n.ticTacSau, nm.ticTacSau, 0, 30, 0.5)
+        + hop("binhLuanThanhTieng", "💬 Máy đọc lời bình luận thành tiếng (đọc xong 1,5 giây thì tự sang câu)")
+        + soO("tm.nhip.binhLuanGiayDung", "💬 Trả lời đúng: bình luận đứng bấy nhiêu giây (0 = chờ bé bấm)", n.binhLuanGiayDung, nm.binhLuanGiayDung, 0, 60, 0.5)
+        + soO("tm.nhip.binhLuanGiaySai", "💬 Trả lời sai: bình luận đứng bấy nhiêu giây (0 = chờ bé bấm)", n.binhLuanGiaySai, nm.binhLuanGiaySai, 0, 60, 0.5)
         + "</div>" + nutLuu(khoa) + "</div>";
     }
     if (c.loai === "doc") {
@@ -369,6 +418,7 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
     if (nghe) { try { nghe.audio.pause(); } catch (e) { /* bỏ qua */ } nghe = null; }
     if (am) am.then(function (a) { a.dungNhac(0.3); }).catch(function () {});
     if (window.KC_TDO_AM) KC_TDO_AM.dungThu();
+    if (window.KC_TM_AM) KC_TM_AM.dungThu();
   }
   function ngheFile(khoaNghe, url, amLuong) {
     var dang = nghe && nghe.khoa === khoaNghe;
@@ -402,6 +452,17 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
     var c = chia(khoa), A = window.KC_TDO_AM;
     dungNghe();
     if (!A) { adminBaoTin("Trang chưa nạp âm thanh Tốc độ (tt_tri_thuc/tt_toc_do_am.js)", false); return; }
+    if (window.KC_AM_THANH) KC_AM_THANH.datBat(true);
+    var h = chep(gocCH(S.ht, khoa));
+    if (c.loai === "tieng") { h.tieng = h.tieng || {}; h.tieng[c.k] = Object.assign(dong(h, c.k), { bat: true }); }
+    A.datCauHinh(h, function (ma) { var m = timMuc(ma, c.loai === "nhac" ? "nhac" : "tieng"); return m && m.url; });
+    if (c.loai === "nhac") { A.thuNhac(); veTatCa(); return; }
+    if (c.loai === "tieng") A.thu(c.k);
+  }
+  function ngheTm(khoa) { // KC_03C4b: nghe thử âm thanh 📚 Theo môn bằng cài đặt đang sửa (cả ô chưa lưu)
+    var c = chia(khoa), A = window.KC_TM_AM;
+    dungNghe();
+    if (!A) { adminBaoTin("Trang chưa nạp âm thanh Theo môn (tt_tri_thuc/tt_theo_mon_am.js)", false); return; }
     if (window.KC_AM_THANH) KC_AM_THANH.datBat(true);
     var h = chep(gocCH(S.ht, khoa));
     if (c.loai === "tieng") { h.tieng = h.tieng || {}; h.tieng[c.k] = Object.assign(dong(h, c.k), { bat: true }); }
@@ -443,6 +504,14 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
         return k2;
       });
     }).then(function (kq) {
+      if (!kq || !kq.thanhCong) return kq;
+      // KC_03C4b: file âm thanh 📚 Theo môn, chỉ gọi khi phần Theo môn có đổi (cần SQL KC_03C4b)
+      var suaTM = KC_DT_CAU_HINH.khac(S.md.tm || {}, S.ht.tm || {}) || {};
+      return giong(S.ht.tm, S.daLuu.tm) ? kq : goi("kc_dt_admin_luu_thong_so", { p_ten: TEN_TEP_TM, p_sua: suaTM, p_ghi_chu: "📚 Âm thanh Theo môn" }).then(function (k2) {
+        if (k2 && !k2.thanhCong && k2.ma === "ten") k2.thongBao = "Máy chủ chưa nhận cài đặt âm thanh Theo môn (cần chạy SQL KC_03C4b)";
+        return k2;
+      });
+    }).then(function (kq) {
       if (!kq) return;
       if (!kq.thanhCong) { adminBaoTin("❌ " + kq.thongBao, false); return; }
       return Promise.all(Object.keys(cu).map(function (n) {
@@ -454,6 +523,7 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
         try { window.dispatchEvent(new CustomEvent("kcAmThanhDaLuu", { detail: { ch: boChung(S.daLuu) } })); } catch (e) { /* bỏ qua */ }
         if (window.KC_AM_THANH) { KC_AM_THANH.datCauHinh(chep(S.daLuu.chung)); KC_AM_THANH.taiCauHinh(true); }
         if (window.KC_TDO_AM) KC_TDO_AM.taiCauHinh(true);
+        if (window.KC_TM_AM) KC_TM_AM.taiCauHinh(true);
         adminBaoTin("✅ Đã lưu. Game dùng âm thanh mới từ lần bé mở trang kế tiếp.", true);
         veTatCa();
       });
@@ -547,12 +617,12 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
       else if (viec === "luu") luu();
       else if (viec === "bo") { if (confirm("Bỏ mọi thay đổi chưa lưu?")) { S.ht = chep(S.daLuu); veTatCa(); } }
       else if (viec === "macdinh") ganMacDinh(v.chon);
-      else if (viec === "nghe-nd") { if (/^chung:/.test(v.chon)) ngheChung(v.chon); else if (/^tdo:/.test(v.chon)) ngheTdo(v.chon); else ngheNoiDung(v.chon); }
+      else if (viec === "nghe-nd") { if (/^chung:/.test(v.chon)) ngheChung(v.chon); else if (/^tdo:/.test(v.chon)) ngheTdo(v.chon); else if (/^tm:/.test(v.chon)) ngheTm(v.chon); else ngheNoiDung(v.chon); }
       else if (viec === "nghe-nd2") ngheChung(v.chon, true);
       else if (viec === "dung") { dungNghe(); veTatCa(); }
       else if (viec === "nghe-f") {
         if (v.chon === "mocoi") { var k = S.kho.find(function (x) { return x.ma === ma; }); ngheFile("mocoi|" + ma, k && KT.urlTep(k.duongDan, client()), k && k.amLuong); return; }
-        if (!ma) { if (/^chung:/.test(v.chon)) { ngheChung(v.chon); return; } if (/^tdo:/.test(v.chon)) { var cu0 = gocCH(S.ht, v.chon), cn = chia(v.chon); if (cn.loai === "nhac") { cu0.nhac = cu0.nhac || {}; var f0 = cu0.nhac[cn.k]; cu0.nhac[cn.k] = ""; ngheTdo(v.chon); cu0.nhac[cn.k] = f0; } else { var t0 = dong(cu0, cn.k); cu0.tieng[cn.k] = Object.assign({}, t0, { file: "" }); ngheTdo(v.chon); cu0.tieng[cn.k] = t0; } return; } ngheTuTao(v.chon); return; }
+        if (!ma) { if (/^chung:/.test(v.chon)) { ngheChung(v.chon); return; } if (/^(tdo|tm):/.test(v.chon)) { var nf = /^tm:/.test(v.chon) ? ngheTm : ngheTdo, cu0 = gocCH(S.ht, v.chon), cn = chia(v.chon); if (cn.loai === "nhac") { cu0.nhac = cu0.nhac || {}; var f0 = cu0.nhac[cn.k]; cu0.nhac[cn.k] = ""; nf(v.chon); cu0.nhac[cn.k] = f0; } else { cu0.tieng = cu0.tieng || {}; var t0 = dong(cu0, cn.k); cu0.tieng[cn.k] = Object.assign({}, t0, { file: "" }); nf(v.chon); cu0.tieng[cn.k] = t0; } return; } ngheTuTao(v.chon); return; }
         var f = timMuc(ma, chia(v.chon).loai); ngheFile(v.chon + "|" + ma, f && f.url, f && f.amLuong);
       }
       else if (viec === "moTv") { var tv = v.goc.querySelector("[data-kt-tv]"); if (tv) tv.hidden = !tv.hidden; }
@@ -591,7 +661,7 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
       if (sai) return;
     } else gt = t.value;
     var o = S.ht;
-    if (duong[0] === "chung" || duong[0] === "tdo") { o = gocCH(S.ht, duong[0] + ":x"); duong = duong.slice(1); }
+    if (duong[0] === "chung" || duong[0] === "tdo" || duong[0] === "tm") { o = gocCH(S.ht, duong[0] + ":x"); duong = duong.slice(1); }
     if (duong[0] === "tieng") { o.tieng = o.tieng || {}; o.tieng[duong[1]] = Object.assign(dong(o, duong[1]), o.tieng[duong[1]] || {}); }
     for (var i = 0; i < duong.length - 1; i++) { o[duong[i]] = o[duong[i]] || {}; o = o[duong[i]]; }
     o[duong[duong.length - 1]] = gt;
@@ -609,9 +679,10 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
   }
   function ganMacDinh(khoa) {
     var c = chia(khoa);
-    if (c.nhanh === "tdo") {
+    if (laGame(c.nhanh)) {
       var ht = gocCH(S.ht, khoa), mt = gocCH(S.md, khoa);
       if (c.loai === "chung") ht.amLuong = chep(mt.amLuong || {});
+      else if (c.loai === "gio" && c.nhanh === "tm") ht.nhip = chep(mt.nhip || {});
       else if (c.loai === "gio") ht.hoiHop = chep(mt.hoiHop || {});
       else if (c.loai === "nhac") { ht.nhac = ht.nhac || {}; ht.nhac[c.k] = (mt.nhac || {})[c.k] || ""; ht.nhacNen = chep(mt.nhacNen || {}); }
       else { ht.tieng = ht.tieng || {}; ht.tieng[c.k] = chep((mt.tieng || {})[c.k] || {}); }
@@ -675,7 +746,7 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
 
   // ---------------- gắn vào trang ----------------
   window.QKT_CAY = {
-    gan: function (o, tuyChon) { // gắn (hoặc gắn lại) một khung cây vào phần tử o; nhanh: "dt" (Đấu Trường) | "chung" (Quản trị chung) | "tdo" (⚡ Tốc độ, KC_03C5c)
+    gan: function (o, tuyChon) { // gắn (hoặc gắn lại) một khung cây vào phần tử o; nhanh: "dt" (Đấu Trường) | "chung" (Quản trị chung) | "tdo" (⚡ Tốc độ, KC_03C5c) | "tm" (📚 Theo môn, KC_03C4b)
       var nhanh = (tuyChon && tuyChon.nhanh) || "chung";
       var v = views.find(function (x) { return x.nhanh === nhanh; });
       if (!v) {
@@ -706,3 +777,4 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
 })();
 // 21/11/2026 - BƯỚC: KC_09B1
 // 24/11/2026 - BƯỚC: KC_03C5c (nhánh "tdo": âm thanh riêng ⚡ Tốc độ, file cài đặt cau_hinh_am_thanh_toc_do)
+// 24/11/2026 - BƯỚC: KC_03C4b (nhánh "tm": âm thanh + nhịp riêng 📚 Theo môn, file cài đặt cau_hinh_am_thanh_theo_mon)

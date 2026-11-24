@@ -55,7 +55,8 @@
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
-       CẬP NHẬT: 24/11/2026 - KC_03C4: Thử Thách › 📚 Theo môn (qt_theo_mon.js: thưởng, luật chọn câu chung, thống kê 7 ngày, xem thử bộ câu của một bé, nút sang 🎵 Âm thanh chung).
+       CẬP NHẬT: 24/11/2026 - KC_03C4b: 📚 Theo môn thêm khối 🔊 Âm thanh Theo môn (#qtmAmGoc, qt_kho_tieng.js nhánh "tm", tt_tri_thuc/tt_theo_mon_am.js).
+      CẬP NHẬT: 24/11/2026 - KC_03C4: Thử Thách › 📚 Theo môn (qt_theo_mon.js: thưởng, luật chọn câu chung, thống kê 7 ngày, xem thử bộ câu của một bé, nút sang 🎵 Âm thanh chung).
       CẬP NHẬT: 24/11/2026 - KC_03C6: Thử Thách › 🏆 Chinh phục 30 câu (qt_chinh_phuc.js: thưởng, độ khó chặng, thống kê 7 ngày).
        CẬP NHẬT: 24/11/2026 - KC_03C5: Thử Thách › ⚡ Tốc độ (qt_toc_do.js: giây, số câu, thưởng, trừ vàng, thống kê 7 ngày).
        CẬP NHẬT: 24/11/2026 - KC_03C5c: ⚡ Tốc độ thêm khối 🔊 Âm thanh Tốc độ (#qtdAmGoc, qt_kho_tieng.js nhánh "tdo", tt_tri_thuc/tt_toc_do_am.js).
@@ -1137,6 +1138,11 @@
         <p class="adminGhiChu">Kim cương tối đa mỗi 10 câu, xu vàng mỗi câu đúng, luật chọn câu (kiến thức mới / đến hạn ôn), số liệu 7 ngày và xem thử bộ câu một bé sẽ gặp. Ô viền cam là số đã khác mặc định.</p>
         <div id="qtmGoc"></div>
       </div>
+      <div class="adminKhoi"> <!-- KC_03C4b: âm thanh + nhịp riêng Theo môn (qt_kho_tieng.js nhánh "tm") -->
+        <h3>🔊 Âm thanh Theo môn</h3>
+        <p class="adminGhiChu">Nhạc sôi động lúc bé đọc câu, chuông tích tắc lúc chờ trả lời, tiếng hiện đáp án / bình luận / sang câu, và các mốc giây (đọc câu bao lâu, bình luận bao lâu). Bấm một nội dung để nghe, tải file khác lên hoặc chỉnh.</p>
+        <div id="qtmAmGoc"></div>
+      </div>
     </section>
 
     <section class="adminManHinh" id="manhinh-chinhphuc-thuthach">
@@ -1722,7 +1728,8 @@
   <script src="qt_dt_tai_khoan.js"></script> <!-- 👤 Tài khoản -->
   <script src="kc_hoc_cua_be.js"></script>   <!-- KC_03B3: khối Học của con dùng chung -->
   <script src="qt_chinh_phuc.js"></script>  <!-- KC_03C6: 🏆 Chinh phục 30 câu -->
-  <script src="tt_tri_thuc/tt_toc_do_am.js"></script> <!-- KC_03C5c: âm thanh Tốc độ (nghe thử ở 🔊 Âm thanh Tốc độ) -->
+  <script src="tt_tri_thuc/tt_toc_do_am.js"></script>
+  <script src="tt_tri_thuc/tt_theo_mon_am.js"></script> <!-- KC_03C4b: âm thanh Theo môn (nghe thử ở 🔊 Âm thanh Theo môn) --> <!-- KC_03C5c: âm thanh Tốc độ (nghe thử ở 🔊 Âm thanh Tốc độ) -->
   <script src="qt_toc_do.js"></script>      <!-- KC_03C5: ⚡ Tốc độ -->
   <script src="qt_theo_mon.js"></script>    <!-- KC_03C4: 📚 Theo môn -->
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
