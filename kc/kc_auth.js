@@ -11,6 +11,7 @@
 // CẬP NHẬT: KC_00C-2 (15/10/2026) - giữ kcThongTinCaNhan cho Trang chủ.
 // CẬP NHẬT: KC_00D-1 (17/10/2026) - thuộc tính data-chi-admin (nút "Quản trị").
 // CẬP NHẬT: KC_03C2 (23/11/2026 23:xx) - túi 💎 + 🪙 xu vàng trên thanh trên (kcVeTui, kcCapNhatTui).
+// CẬP NHẬT: KC_05 (25/11/2026 06:xx) - ô 💎 trên túi là link tới Cửa Hàng Quà chung (KC_DUONG_CUA_HANG).
 // LỊCH SỬ: KC_00 (17/07/2026) - bản đầu, dùng khóa phiên RIÊNG.
 // PHỤ THUỘC: kc_config.js, kc_api.js phải nạp TRƯỚC file này.
 //
@@ -264,6 +265,15 @@ function kcHienDaDangNhap(taiKhoan) {
 //   Trang / game vừa nhận thưởng gọi kcCapNhatTui({ diemSo, viVang }) để số trên thanh đổi ngay.
 // ================================================================
 var kcTuiDaLayVang = false;
+// KC_05: đường tới kc/cuahang_NC.html tính từ chỗ đặt chính file này (kc/kc_auth.js),
+// đúng cho mọi trang dù nằm ở gốc hay trong kc/.
+var KC_DUONG_CUA_HANG = (function () {
+  try {
+    var s = document.currentScript && document.currentScript.src;
+    if (s) return s.replace(/kc_auth\.js(\?.*)?$/, "cuahang_NC.html");
+  } catch (e) { /* bỏ qua */ }
+  return "cuahang_NC.html";
+})();
 
 function kcVeTui(taiKhoan) {
   var cha = document.getElementById("trangThaiDangNhap");
@@ -278,7 +288,8 @@ function kcVeTui(taiKhoan) {
     tui = document.createElement("span");
     tui.id = "kcTui";
     tui.className = "kcTui";
-    tui.innerHTML = '<span class="kcTuiO" title="Kim cương của con">💎 <b id="kcTuiKc">0</b></span>' +
+    // KC_05 (25/11/2026): bấm 💎 là tới CỬA HÀNG QUÀ CHUNG (nơi duy nhất tiêu 💎 lấy quà thật)
+    tui.innerHTML = '<a class="kcTuiO kcTuiLink" href="' + KC_DUONG_CUA_HANG + '" title="Kim cương của con: bấm để đổi quà">💎 <b id="kcTuiKc">0</b> 🛍️</a>' +
       '<span class="kcTuiO" id="kcTuiVangO" title="Xu vàng của con (dùng chung cả app)" hidden>🪙 <b id="kcTuiVang">0</b></span>';
     cha.insertBefore(tui, cha.firstChild);
   }

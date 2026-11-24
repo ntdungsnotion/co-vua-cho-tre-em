@@ -2,6 +2,9 @@
 // FILE: cuahang_NC.js
 // CHỨC NĂNG: Cửa hàng đổi vật phẩm bằng kim cương cho trẻ (NC_06B)
 // NGÀY: 11/07/2026 - BƯỚC: NC_06B
+// CẬP NHẬT: 25/11/2026 06:xx - BƯỚC: KC_05: KHÔNG còn bán quà thật (loai 'qua'): quà thật
+//   chỉ ở Cửa Hàng Quà CHUNG toàn app kc/cuahang_NC.html (HƯỚNG DẪN KC 3.13). Khối
+//   "Quà Con Đã Đổi" thay bằng lối sang cửa hàng chung (vẫn liệt kê quà đã đổi).
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "ch" (cua-hang) để tránh xung đột
 //
 // PHỤ THUỘC:
@@ -121,7 +124,9 @@ function chTaiDuLieu() {
 
     // --- Danh mục cửa hàng ---
     if (kqDanhSach.thanhCong) {
-      chDanhSachVatPham = kqDanhSach.danhSachVatPham || [];
+      // KC_05 (25/11/2026): quà THẬT (loai 'qua') chỉ bán ở Cửa Hàng Quà CHUNG toàn app
+      // (kc/cuahang_NC.html). Cửa hàng Cờ Vua chỉ còn đồ SỐ trong game.
+      chDanhSachVatPham = (kqDanhSach.danhSachVatPham || []).filter(function (vp) { return vp.loai !== "qua"; });
     } else {
       chDanhSachVatPham = [];
       chHienThongBao(kqDanhSach.thongBao || "Không tải được cửa hàng, con thử lại nhé.", "xau");
@@ -424,13 +429,12 @@ function chVeQuaChoTrao() {
   // Chỉ hiển thị các dòng là 'qua' trong lịch sử đổi
   var quaList = chLichSuDoiQua.filter(function (ls) { return ls.loai === "qua"; });
 
-  if (!quaList.length) {
-    khoi.classList.remove("hien");
-    ds.innerHTML = "";
-    return;
-  }
-
-  ds.innerHTML = "";
+  // KC_05: khối luôn hiện, mời bé sang Cửa Hàng Quà chung (nơi duy nhất đổi quà thật)
+  ds.innerHTML = '<p style="margin:0 0 8px;">Muốn đổi 💎 lấy <strong>quà thật</strong> (đồ chơi, đi chơi...)? ' +
+    'Quà thật nằm ở <strong>Cửa Hàng Quà</strong> chung của cả app.</p>' +
+    '<a class="chNutLienKet" href="kc/cuahang_NC.html">🛍️ Đến Cửa Hàng Quà</a>';
+  khoi.classList.add("hien");
+  if (!quaList.length) return;
   quaList.forEach(function (ls) {
     var dong = document.createElement("div");
     dong.className = "chChoTraoDong";
