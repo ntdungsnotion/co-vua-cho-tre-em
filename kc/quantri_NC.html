@@ -55,7 +55,8 @@
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
-       CẬP NHẬT: 24/11/2026 - KC_03C6: Thử Thách › 🏆 Chinh phục 30 câu (qt_chinh_phuc.js: thưởng, độ khó chặng, thống kê 7 ngày).
+       CẬP NHẬT: 24/11/2026 - KC_03C4: Thử Thách › 📚 Theo môn (qt_theo_mon.js: thưởng, luật chọn câu chung, thống kê 7 ngày, xem thử bộ câu của một bé, nút sang 🎵 Âm thanh chung).
+      CẬP NHẬT: 24/11/2026 - KC_03C6: Thử Thách › 🏆 Chinh phục 30 câu (qt_chinh_phuc.js: thưởng, độ khó chặng, thống kê 7 ngày).
        CẬP NHẬT: 24/11/2026 - KC_03C5: Thử Thách › ⚡ Tốc độ (qt_toc_do.js: giây, số câu, thưởng, trừ vàng, thống kê 7 ngày).
        CẬP NHẬT: 24/11/2026 - KC_03C5c: ⚡ Tốc độ thêm khối 🔊 Âm thanh Tốc độ (#qtdAmGoc, qt_kho_tieng.js nhánh "tdo", tt_tri_thuc/tt_toc_do_am.js).
        BẢO MẬT: đọc phiên chung sessionStorage "coVuaTaiKhoanDangNhap". Kiểm tra
@@ -453,6 +454,11 @@
     .qtdChon input { width: 18px; height: 18px; }
     .qtdThuong { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
     .qtdPhanBo { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)) !important; }
+    /* KC_03C4: 📚 Theo môn */
+    .qtmCot { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .qtmXtHang { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .qtmXtHang select, .qtmXtHang input { min-height: 40px; }
+    .qtmXt { overflow-x: auto; }
   </style>
 </head>
 <body class="qtTrang">
@@ -545,6 +551,7 @@
         <div class="qtTenNhom">🎯 Thử Thách</div>
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinh-thuthach" type="button">⚙️ Cấu hình</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="tocdo-thuthach" type="button">⚡ Tốc độ</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="theomon-thuthach" type="button">📚 Theo môn</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="chinhphuc-thuthach" type="button">🏆 Chinh phục 30 câu</button>
       </div>
 
@@ -1121,6 +1128,14 @@
         <h3>🔊 Âm thanh Tốc độ</h3>
         <p class="adminGhiChu">Nhạc nền, đếm ngược, bé nghĩ lâu, gần hết giờ, đúng liên tiếp, hết giờ, kèn kết quả... Bấm một nội dung để nghe, tải file khác lên hoặc chỉnh độ to, số giây. Tiếng đúng / sai / kim cương dùng chung cả app ở 🎵 Âm thanh chung.</p>
         <div id="qtdAmGoc"></div>
+      </div>
+    </section>
+
+    <section class="adminManHinh" id="manhinh-theomon-thuthach"> <!-- KC_03C4 -->
+      <div class="adminKhoi">
+        <h3>📚 Theo Môn</h3>
+        <p class="adminGhiChu">Kim cương tối đa mỗi 10 câu, xu vàng mỗi câu đúng, luật chọn câu (kiến thức mới / đến hạn ôn), số liệu 7 ngày và xem thử bộ câu một bé sẽ gặp. Ô viền cam là số đã khác mặc định.</p>
+        <div id="qtmGoc"></div>
       </div>
     </section>
 
@@ -1709,6 +1724,7 @@
   <script src="qt_chinh_phuc.js"></script>  <!-- KC_03C6: 🏆 Chinh phục 30 câu -->
   <script src="tt_tri_thuc/tt_toc_do_am.js"></script> <!-- KC_03C5c: âm thanh Tốc độ (nghe thử ở 🔊 Âm thanh Tốc độ) -->
   <script src="qt_toc_do.js"></script>      <!-- KC_03C5: ⚡ Tốc độ -->
+  <script src="qt_theo_mon.js"></script>    <!-- KC_03C4: 📚 Theo môn -->
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
 </body>
