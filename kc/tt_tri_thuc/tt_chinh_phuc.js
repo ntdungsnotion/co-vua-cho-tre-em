@@ -440,6 +440,8 @@
       if (vang > 0) s.appendChild(tao("p", "cpGhiChu", "Hôm nay con đã nhận đủ 💎, phần thưởng đổi thành 🪙 " + so(vang) + " xu vàng."));
       // KC_03C7b: 🔥 chuỗi ngày (lượt đã kết thúc trên máy chủ)
       if (S.luot && S.luot.id && goc.KC_TT && typeof goc.KC_TT.veChuoi === "function") goc.KC_TT.veChuoi(s, rpc("kc_tt_chuoi_luot", { p_luot: S.luot.id }));
+      // KC_08F2: vừa lên sao / danh hiệu thì màn chúc mừng (sau hiệu ứng rương)
+      if (goc.KC_DANH_HIEU) goc.KC_DANH_HIEU.xet(rpc, { tre: 2600 });
       const hang = tao("div", "cpHangNut");
       const lai = tao("button", "cpNut chinh", "🚩 Chinh phục lượt mới"); lai.type = "button";
       lai.addEventListener("click", async () => { dongMan(false); await veSanh(); batDau(); });
@@ -523,3 +525,4 @@
 })(typeof window !== "undefined" ? window : globalThis);
 // 24/11/2026 - BƯỚC: KC_03C6 (tạo mới: màn Chinh phục 30 câu, 2 khổ)
 // 24/11/2026 - BƯỚC: KC_03C7b (dòng 🔥 chuỗi ngày ở màn kết quả, RPC kc_tt_chuoi_luot)
+// 25/11/2026 - BƯỚC: KC_08F2 (màn kết quả gọi KC_DANH_HIEU.xet: chúc mừng lên sao / danh hiệu)

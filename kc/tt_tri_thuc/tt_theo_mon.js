@@ -266,7 +266,8 @@
       const goi = {
         traLoi: (id, viTri, chon, giay) => rpc("kc_tt_tra_loi", { p_luot: id, p_vi_tri: viTri, p_chon: chon, p_giay: giay }).then(r => Object.assign({ ok: !!r.thanhCong }, r)),
         ketThuc: id => rpc("kc_tt_ket_thuc", { p_luot: id }).then(r => Object.assign({ ok: !!r.thanhCong }, r)),
-        chuoi: id => rpc("kc_tt_chuoi_luot", { p_luot: id })   // KC_03C7b: 🔥 chuỗi ngày ở màn kết quả
+        chuoi: id => rpc("kc_tt_chuoi_luot", { p_luot: id }),  // KC_03C7b: 🔥 chuỗi ngày ở màn kết quả
+        danhHieu: rpc                                            // KC_08F2: màn chúc mừng lên sao / danh hiệu
       };
       const kqMan = await goc.KC_TT.moLuot({
         luot: l, goi, tieuDe: "📚 " + ten, phuDe: n + " câu" + (kq.tiep ? " · chơi tiếp" : ""), nutKet: "🎯 Về Thử Thách",
@@ -287,3 +288,4 @@
 // 24/11/2026 - BƯỚC: KC_03C4 (tạo mới: 📚 Theo môn)
 // 24/11/2026 - BƯỚC: KC_03C4b (luật mới: đọc câu xong mới hiện đáp án, nhạc + tích tắc + bình luận qua KC_TM_AM)
 // 24/11/2026 - BƯỚC: KC_03C7b (goi.chuoi: dòng 🔥 chuỗi ngày ở màn kết quả)
+// 25/11/2026 - BƯỚC: KC_08F2 (goi.danhHieu: màn chúc mừng lên sao / danh hiệu, chung/danh_hieu.js)

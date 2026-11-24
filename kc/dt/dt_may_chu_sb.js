@@ -265,6 +265,11 @@
       async ttKetThuc(luot) { return goiTt("kc_tt_ket_thuc", { p_luot: luot }); },
       // KC_03C7b: chuỗi ngày sau lượt -> { ok, thanhCong, chuoi, ngayMoi, thuong } (màn kết quả, KC_TT.veChuoi)
       async ttChuoi(luot) { return goiTt("kc_tt_chuoi_luot", { p_luot: luot }); },
+      // KC_08F2: danh hiệu của bé (chung/danh_hieu.js gọi rpc(tenHam, thamSo)); chỉ cho 2 hàm danh hiệu
+      async goiDanhHieu(ham, thamSo) {
+        if (ham !== "kc_td_danh_hieu_be" && ham !== "kc_td_danh_hieu_da_xem") return { ok: false, thanhCong: false };
+        return goiTt(ham, thamSo || {});
+      },
       async monChuDe() {
         let kq; try { kq = await opt.goiRpc("kc_mon_chu_de", {}); } catch (e) { kq = null; }
         return kq && kq.thanhCong === true ? Object.assign({ ok: true }, kq) : { ok: false, ma: "mang" };
@@ -296,3 +301,4 @@
 // 20/11/2026 - BƯỚC: TC_D34B (ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc: ôn sau trận; SQL TC_D34A đã chạy)
 // 20/11/2026 - BƯỚC: KC_08D (kho("hoSo"): RPC kc_td_ho_so, trình độ máy chủ cho trận; SQL kc08d)
 // 24/11/2026 - BƯỚC: KC_03C7b (ttChuoi: RPC kc_tt_chuoi_luot)
+// 25/11/2026 - BƯỚC: KC_08F2 (goiDanhHieu: RPC kc_td_danh_hieu_be / kc_td_danh_hieu_da_xem cho màn chúc mừng)
