@@ -8,20 +8,22 @@
                 đọc ngay không phải chờ mạng; mất mạng vẫn chơi được.
               - HÀNG CHỜ: mỗi lượt ghi vào hàng chờ (kc_ghi_nho_cho_<tên>) TRƯỚC khi gửi; mất mạng thì giữ, lần
                 sau gửi bù. Mã lượt (uuid) giúp gửi lại không bị tính 2 lần.
-              - LUẬT ÔN (giống máy chủ, để bản trên máy đúng ngay khi chưa gửi được): đúng lên 1 hộp (tối đa
-                5), sai về hộp 1; 3 lần đúng liên tiếp = đã thuộc. Máy chủ tính lại và là bản chính.
+              - LUẬT ÔN (giống máy chủ, để bản trên máy đúng ngay khi chưa gửi được; KC_03C7b luật mới):
+                đúng lúc tới hạn lên 1 hộp (tối đa 5), đúng khi chưa tới hạn giữ hộp, sai về hộp 1;
+                đã thuộc = 3 lần đúng liên tiếp VÀ hộp >= 4. Máy chủ tính lại và là bản chính.
               Chưa đăng nhập / không có máy chủ: chỉ giữ bản trên máy (không gửi).
    CÁCH DÙNG:
      const so = new KC_GHI_NHO.So(tenDangNhap, kcGoiRpc, layPhien, { loai: "tu", gapO: "san_tu" });
      so.lay("cat")            -> { soDung, soSai, chuoi, hop, daThuoc, henOn, lanCuoi } hoặc null
      so.ghi("cat", true, { giay: 2.5 })   // chiều mặc định nhan_ra; { manh, chieu } nếu cần
      so.dongBo()              -> Promise: gửi hàng chờ rồi đọc lại sổ từ máy chủ
-   BƯỚC: KC_03A
-   NGÀY: 11/11/2026
+   BƯỚC: KC_03A · KC_03C7b (luật "đã thuộc" mới, giống máy chủ)
+   NGÀY: 11/11/2026 · sửa 24/11/2026
    ================================================================ */
 (function (goc) {
   "use strict";
   const SO_DUNG_DE_THUOC = 3;
+  const HOP_THUOC = 4;              // KC_03C7b: phải tới hộp 4 (đúng ở lần ôn cách 7 ngày) mới thuộc
   const KHOANG_ON = [0, 1, 3, 7, 16, 35];
   const LO_TOI_DA = 200;           // máy chủ nhận tối đa 200 lượt / lần
   const CHO_TOI_DA = 2000;          // hàng chờ dài nhất (bỏ lượt cũ nhất)
@@ -48,12 +50,25 @@
   function tuMang(a) {
     return a ? { soDung: a[0] | 0, soSai: a[1] | 0, chuoi: a[2] | 0, hop: a[3] | 0, daThuoc: !!a[4], henOn: a[5] || null, lanCuoi: a[6] || 0 } : null;
   }
-  function apLuot(a, dung, luc) {
+  /* KC_03C7b: luật "đã thuộc" mới, giống hệt máy chủ (kc_ghi_nho_cap_nhat, Thiet_Ke_On_The.md mục 3.1-3.2):
+     - đúng khi ĐÃ TỚI HẠN (hộp 0, chưa có hẹn, hoặc hẹn <= hôm nay): lên 1 hộp, hẹn theo hộp mới;
+     - đúng khi CHƯA tới hạn: giữ hộp + giữ ngày hẹn, chỉ cộng chuỗi đúng;
+     - sai: về hộp 1, hẹn ngày mai, chuỗi về 0;
+     - tinCay = false (câu 2 lựa chọn / bấm vội): không nâng hộp, không cộng chuỗi;
+     - đã thuộc = chuỗi đúng >= 3 VÀ hộp >= 4 (hộp chỉ lên khi đúng lúc tới hạn -> thuộc qua nhiều ngày). */
+  function apLuot(a, dung, luc, tinCay) {
     a = a ? a.slice() : [0, 0, 0, 0, false, null, 0];
-    if (dung) { a[0]++; a[2] = Math.min(a[2] + 1, 32000); a[3] = Math.min(5, a[3] + 1); }
-    else { a[1]++; a[2] = 0; a[3] = 1; }
-    a[4] = a[2] >= SO_DUNG_DE_THUOC;
-    a[5] = ngayVN(luc, KHOANG_ON[a[3]]);
+    const nay = ngayVN(luc);
+    const toiHan = (a[3] | 0) === 0 || !a[5] || a[5] <= nay;
+    if (dung) {
+      a[0]++;
+      if (tinCay !== false) {
+        a[2] = Math.min((a[2] | 0) + 1, 32000);
+        if (toiHan) { a[3] = Math.min(5, (a[3] | 0) + 1); a[5] = ngayVN(luc, KHOANG_ON[a[3]]); }
+      }
+      if (!a[5]) a[5] = nay;
+    } else { a[1]++; a[2] = 0; a[3] = 1; a[5] = ngayVN(luc, KHOANG_ON[1]); }
+    a[4] = a[2] >= SO_DUNG_DE_THUOC && a[3] >= HOP_THUOC;
     a[6] = Math.max(a[6] || 0, luc);
     return a;
   }
@@ -183,5 +198,5 @@
     }
   }
 
-  goc.KC_GHI_NHO = { So, SO_DUNG_DE_THUOC, KHOANG_ON, taoUuid, ngayVN, _apLuot: apLuot };
+  goc.KC_GHI_NHO = { So, SO_DUNG_DE_THUOC, HOP_THUOC, KHOANG_ON, taoUuid, ngayVN, _apLuot: apLuot };
 })(typeof window !== "undefined" ? window : globalThis);

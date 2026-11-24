@@ -9,7 +9,8 @@
               khung câu giữa ≤ 760 px, đáp án lưới 2 × 2, phím 1-6 trả lời ngay (chạm là chấm, tự sang câu).
    DÙNG:      KC_TT.moLuot({
                 luot,                    // kc_tt_luot_json của máy chủ: { id, tong, viTri, daTraLoi, cau, ketQua }
-                goi: { traLoi(luotId, viTri, chon, giay), ketThuc(luotId) },   // trả { ok, ... } như dt_may_chu_sb.js
+                goi: { traLoi(luotId, viTri, chon, giay), ketThuc(luotId),     // trả { ok, ... } như dt_may_chu_sb.js
+                       chuoi(luotId) },  // KC_03C7b, tuỳ chọn: RPC kc_tt_chuoi_luot -> dòng 🔥 ở màn kết quả
                 tieuDe, phuDe, batBuoc (true: không có nút ✕), nutKet ("Về thung lũng"),
                 goc (tiền tố đường dẫn hình câu, vd "" ở kc/, "../" ở kc/dt/), lop (lớp bé: ≤ 3 có 🔊 đọc câu),
                 hoSo (ngoại hình bé, chung/nv_ve.js: có thì vẽ bé cổ vũ ở cột trái máy tính),
@@ -20,7 +21,8 @@
               }) -> Promise<{ ketQua | null, dong: "xong" | "bo" | "loi" | ma của nutThem }>
    CẦN NẠP TRƯỚC: chung/gio_bai.js (KC_GIO_BAI: trừ 💎 theo giờ, module chung toàn app).
    BƯỚC: TC_D34B (phần 2: dùng module giờ chung); KC_03C4 (nutThem, loiMoDau, 🪙 xu vàng mỗi câu đúng); KC_03C4b (sanKhau);
-              KC_03C7 (Tổng hợp: 💎 đang chạy × heSo của lượt, khoản "🌈 Thưởng Tổng hợp × 1,5")
+              KC_03C7 (Tổng hợp: 💎 đang chạy × heSo của lượt, khoản "🌈 Thưởng Tổng hợp × 1,5");
+              KC_03C7b (dòng 🔥 chuỗi ngày ở màn kết quả: goi.chuoi + KC_TT.veChuoi dùng chung cho Tốc độ / Chinh phục)
    NGÀY: 20/11/2026 · sửa 24/11/2026
    ================================================================ */
 (function (goc) {
@@ -442,6 +444,8 @@
         else if (k.vang > 0) kq.appendChild(tao("p", "ttGhiChu", "Hôm nay con đã nhận đủ 💎, phần thưởng đổi thành 🪙 " + k.vang + " xu vàng."));
         else if (k.catTran || (k.tongKc > 0 && k.kc < k.tongKc)) kq.appendChild(tao("p", "ttGhiChu", "Hôm nay con đã nhận đủ 💎 rồi. Mai mình nhận tiếp nhé!"));
         if (ty < 0.5) kq.appendChild(tao("p", "ttDongVien", DONG_VIEN[Math.floor(Math.random() * DONG_VIEN.length)]));
+        // KC_03C7b: 🔥 chuỗi ngày (trang có goi.chuoi)
+        if (goi && typeof goi.chuoi === "function") { try { veChuoi(kq, Promise.resolve(goi.chuoi(luot.id))); } catch (e) { /* bỏ qua */ } }
         // người dùng 20/11/2026: nút 📖 Xem lại đáp án (muốn thì xem) + nút nhận
         const hang = tao("div", "ttHangNut");
         const nut = tao("button", "ttNut tiep", t.nutKet); nut.type = "button";
@@ -533,7 +537,37 @@
     });
   }
 
-  goc.KC_TT = { moLuot, _tieng: tieng };
+  /* KC_03C7b: dòng 🔥 CHUỖI NGÀY ở màn kết quả (dùng chung: Theo môn, Tổng hợp, ôn sau trận, Tốc độ, Chinh phục).
+     hua: Promise của RPC kc_tt_chuoi_luot -> { thanhCong, chuoi: {soNgay, mocToi, kcMocToi, conNgay}, ngayMoi, thuong: {moc, kc, vang} | null }.
+     Vẽ vào khung (trước phần tử truoc nếu có). Máy chủ chưa có hàm / mất mạng: không vẽ gì. */
+  function veChuoi(khung, hua, truoc) {
+    if (!khung || !hua || typeof hua.then !== "function") return;
+    const o = tao("div", "ttChuoiKq"); o.hidden = true;
+    if (truoc && truoc.parentNode === khung) khung.insertBefore(o, truoc); else khung.appendChild(o);
+    hua.then(r => {
+      const c = r && r.thanhCong === true && r.chuoi;
+      if (!c || !(c.soNgay > 0)) { o.remove(); return; }
+      const so = x => Number(x || 0).toLocaleString("vi-VN");
+      const th = r.thuong;
+      o.appendChild(tao("span", "ttChuoiBt", "🔥"));
+      const chu = tao("div", "ttChuoiChu");
+      if (th && (th.kc > 0 || th.vang > 0)) {
+        o.classList.add("thuong");
+        chu.appendChild(tao("b", "", (th.soNgay || c.soNgay) + " ngày liền! " + (th.kc > 0 ? "+" + so(th.kc) + " 💎" : "+" + so(th.vang) + " 🪙")));
+        if (!(th.kc > 0)) chu.appendChild(tao("small", "", "Hôm nay con đã đủ 💎 nên quà mốc đổi thành xu vàng"));
+        const am = AM(); if (am && am.tieng && typeof am.tieng.thuong === "function") setTimeout(() => { try { am.tieng.thuong(); } catch (e) { /* bỏ qua */ } }, 900);
+      } else if (r.ngayMoi) {
+        chu.appendChild(tao("b", "", c.soNgay >= 2 ? c.soNgay + " ngày liền! Lửa cháy tiếp rồi!" : "Con đã nhóm lửa hôm nay!"));
+      } else {
+        chu.appendChild(tao("b", "", c.soNgay + " ngày liền"));
+      }
+      if (c.mocToi && c.kcMocToi > 0) chu.appendChild(tao("small", "", "Còn " + c.conNgay + " ngày nữa: 🎁 +" + so(c.kcMocToi) + " 💎"));
+      o.appendChild(chu);
+      o.hidden = false;
+    }).catch(() => o.remove());
+  }
+
+  goc.KC_TT = { moLuot, veChuoi, _tieng: tieng };
 })(typeof window !== "undefined" ? window : globalThis);
 // 20/11/2026 - BƯỚC: TC_D34B (khối câu hỏi + màn kết quả dùng chung, màn ôn sau trận Đấu Trường)
 // 20/11/2026 12:xx - BƯỚC: TC_D34B sửa (người dùng): đồng hồ đếm ngược + 💎 còn nhận giảm dần, khoản Tối đa / Sai / Thời gian

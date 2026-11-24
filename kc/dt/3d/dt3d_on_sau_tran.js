@@ -40,7 +40,8 @@ export function ganOnSauTran({ mayChu, be, baoGoiY, goc = "" }) {
       kq = await window.KC_TT.moLuot({
         luot, tieuDe: "📚 Ôn lại trận vừa rồi", phuDe: "Trả lời xong mới về thung lũng nhé", batBuoc: true, nutKet: "🎁 Nhận thưởng",
         goc, lop: Number.isFinite(+be.lop) ? +be.lop : null, hoSo: be.hoSo || null,
-        goi: { traLoi: (id, viTri, chon, giay) => mayChu.ttTraLoi(id, viTri, chon, giay), ketThuc: id => mayChu.ttKetThuc(id) }
+        goi: { traLoi: (id, viTri, chon, giay) => mayChu.ttTraLoi(id, viTri, chon, giay), ketThuc: id => mayChu.ttKetThuc(id),
+               chuoi: id => (typeof mayChu.ttChuoi === "function" ? mayChu.ttChuoi(id) : null) } // KC_03C7b: 🔥 chuỗi ngày
       });
     } catch (e) { console.warn("Màn ôn lỗi", e); }
     dangOn = false;
@@ -70,3 +71,4 @@ export function ganOnSauTran({ mayChu, be, baoGoiY, goc = "" }) {
   return { moOn, sauTran, mayChu, get dangOn() { return dangOn; } }; // mayChu: kịch bản thử (máy chủ giả _ttThu)
 }
 // 20/11/2026 - BƯỚC: TC_D34B
+// 24/11/2026 - BƯỚC: KC_03C7b (goi.chuoi: dòng 🔥 chuỗi ngày sau màn ôn)

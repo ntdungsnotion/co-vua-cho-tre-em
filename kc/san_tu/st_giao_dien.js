@@ -45,6 +45,7 @@
    CẬP NHẬT: 11/11/2026 - KC_03A: sổ ghi nhớ từ lưu ở Sổ Ghi Nhớ chung trên máy chủ (kc/kc_ghi_nho.js):
              mở game thì chuyển sổ cũ trong trình duyệt lên (một lần) rồi đọc sổ từ máy chủ; mỗi từ trả lời
              xong gửi lên (gom 4 giây, mất mạng thì gửi bù); ẩn trang thì gửi ngay. Xem thử / khách: như cũ.
+   CẬP NHẬT: 24/11/2026 - KC_03C7b: khen "thuộc thêm" theo luật mới (soTay.vuaThuoc), không so chuỗi = 3.
    ================================================================ */
 (function () {
   "use strict";
@@ -624,8 +625,8 @@
       }
       case "ketQuaTu": {
         // Vừa chạm đúng ngưỡng thuộc ở lượt này thì khen ở màn kết quả
-        const t = soTay.lay(d.tu.en);
-        if (d.thuoc && t && t.lien === ST.SoTayTu.SO_DUNG_DE_THUOC) tuMoiThuoc.push(d.tu.en);
+        // KC_03C7b: luật thuộc mới (3 đúng liền VÀ hộp >= 4) -> hỏi sổ tay "vừa thuộc" thay vì so chuỗi = 3
+        if (d.thuoc && soTay.vuaThuoc === d.tu.en) tuMoiThuoc.push(d.tu.en);
         break;
       }
       case "hetHanThuThach":

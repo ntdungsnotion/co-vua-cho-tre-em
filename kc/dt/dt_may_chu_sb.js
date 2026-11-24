@@ -263,6 +263,8 @@
         return goiTt("kc_tt_tra_loi", { p_luot: luot, p_vi_tri: viTri, p_chon: chon, p_giay: Number.isFinite(giay) ? Math.round(giay * 100) / 100 : null });
       },
       async ttKetThuc(luot) { return goiTt("kc_tt_ket_thuc", { p_luot: luot }); },
+      // KC_03C7b: chuỗi ngày sau lượt -> { ok, thanhCong, chuoi, ngayMoi, thuong } (màn kết quả, KC_TT.veChuoi)
+      async ttChuoi(luot) { return goiTt("kc_tt_chuoi_luot", { p_luot: luot }); },
       async monChuDe() {
         let kq; try { kq = await opt.goiRpc("kc_mon_chu_de", {}); } catch (e) { kq = null; }
         return kq && kq.thanhCong === true ? Object.assign({ ok: true }, kq) : { ok: false, ma: "mang" };
@@ -293,3 +295,4 @@
 // 17/11/2026 - BƯỚC: KC_06F2 (dsThongBao: danh sách 💡 bóng điện; cần SQL KC_06F2)
 // 20/11/2026 - BƯỚC: TC_D34B (ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc: ôn sau trận; SQL TC_D34A đã chạy)
 // 20/11/2026 - BƯỚC: KC_08D (kho("hoSo"): RPC kc_td_ho_so, trình độ máy chủ cho trận; SQL kc08d)
+// 24/11/2026 - BƯỚC: KC_03C7b (ttChuoi: RPC kc_tt_chuoi_luot)

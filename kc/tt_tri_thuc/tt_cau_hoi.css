@@ -226,4 +226,19 @@
 }
 @media (prefers-reduced-motion: reduce) { .ttMan *, .ttMan { animation-duration: .01s !important; transition-duration: .01s !important; } }
 /* 20/11/2026 - BƯỚC: TC_D34B */
+/* KC_03C7b: dòng 🔥 chuỗi ngày ở màn kết quả (KC_TT.veChuoi; dùng cả ở Tốc độ / Chinh phục nên tự đủ màu, không dựa nền màn) */
+.ttChuoiKq { display: flex; align-items: center; gap: 10px; margin: 6px auto 0; padding: 8px 14px; max-width: 420px; border-radius: 16px;
+  background: linear-gradient(135deg, #fff4e0, #ffe3d1); border: 2px solid #ffc89a; color: #7a3410; text-align: left; box-sizing: border-box; }
+.ttChuoiKq[hidden] { display: none; }
+.ttChuoiBt { font-size: 2rem; line-height: 1; animation: ttChuoiChay 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+.ttChuoiChu { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ttChuoiChu b { font-size: 1.05rem; color: #7a3410; }
+.ttChuoiChu small { font-size: .85rem; color: #8a5a2b; }
+.ttChuoiKq.thuong { border-color: #ff922b; box-shadow: 0 0 0 4px rgba(255,146,43,.25); animation: ttChuoiNo .7s cubic-bezier(.2,1.6,.4,1) both; }
+.ttChuoiKq.thuong .ttChuoiChu b { font-size: 1.2rem; color: #d9480f; }
+@keyframes ttChuoiChay { 0%, 100% { transform: scale(1) rotate(-3deg); } 50% { transform: scale(1.12) rotate(3deg); } }
+@keyframes ttChuoiNo { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@media (min-width: 900px) { .ttChuoiKq { max-width: 480px; } .ttChuoiBt { font-size: 2.4rem; } }
+@media (prefers-reduced-motion: reduce) { .ttChuoiBt, .ttChuoiKq.thuong { animation: none; } }
 /* 24/11/2026 - BƯỚC: KC_03C4b (pha đọc câu, hiện 4 đáp án, bình luận + nút bỏ qua) */
+/* 24/11/2026 - BƯỚC: KC_03C7b (dòng 🔥 chuỗi ngày ở màn kết quả) */
