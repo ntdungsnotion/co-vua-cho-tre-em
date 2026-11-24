@@ -2,11 +2,12 @@
 // FILE: kc/qt_gio_bai.js
 // CHỨC NĂNG: Quản trị chung › ⏱️ Tính giờ trả lời (KC_GB1, đặc tả Thiet_Ke_On_The.md 4.0): MỌI thông số của công thức giờ bài
 //   dùng chung toàn app (module kc_gio_bai / KC_GIO_BAI), không còn số nào cứng trong code:
-//   - ⚙️ Số chung: hệ số k, giây xem hình, đơn vị ký hiệu, độ lệch từng câu / cả bài, z (mốc 90 %), mục tiêu bé khá / trung bình.
+//   - ⚙️ Số chung: giây xem hình, đơn vị ký hiệu, độ lệch từng câu / cả bài, z (mốc 90 %), mục tiêu bé khá / trung bình.
 //   - 🧒 Bé khá / giỏi so với bé trung bình (tốc độ đọc, thời gian nghĩ) + độ khó dễ / vừa / khó.
 //   - 📏 Bảng theo lớp 0-12: tốc độ đọc (tiếng / phút) và thời gian nghĩ + chọn (giây / câu) của bé trung bình.
 //   - 🔬 Xem thử: gõ một câu mẫu + lớp + số câu -> thấy ngay tổng giờ a, mốc t₀ (trước khi lưu, tính bằng cùng thuật toán
 //     chung/gio_bai.js), bảng theo lớp, nút "Đối chiếu máy chủ" gọi SQL kc_gio_bai_admin_xem_thu (phải ra đúng số).
+//   Hệ số k của TỪNG GAME (Theo môn, Ôn sau trận...) KHÔNG ở đây: nằm ở cài đặt riêng của game (người dùng 24/11/2026).
 //   Ô khác mặc định tô cam; ↺ từng ô / "Về mặc định" cả bảng. Máy chủ kiểm khoảng từng số, chỉ lưu phần khác mặc định.
 //   Điện thoại: 1 cột, bảng theo lớp cuộn ngang. Máy tính: cấu hình trái, xem thử phải (dính khi cuộn).
 // RPC: kc_gio_bai_admin_doc, kc_gio_bai_admin_luu, kc_gio_bai_admin_xem_thu (SQL repo_rieng supabase_kc_gb1_quan_tri_gio_bai.sql);
@@ -23,7 +24,7 @@
 
   // khoá -> [nhãn, thấp, cao, bước]. Khoảng khớp SQL kc_gio_bai_kiem_tra.
   var CHUNG = [
-    ["he_so_k", "Hệ số giờ chung k", 0.3, 3, 0.05], ["giay_hinh", "Giây xem hình / câu", 0, 60, 0.5], ["chu_dau", "Ký hiệu (+ = ?) tính bằng số chữ", 0, 1, 0.1],
+    ["giay_hinh", "Giây xem hình / câu", 0, 60, 0.5], ["chu_dau", "Ký hiệu (+ = ?) tính bằng số chữ", 0, 1, 0.1],
     ["cv_cau", "Độ lệch từng câu (0,3 = 30 %)", 0, 1.5, 0.05], ["cv_bai", "Độ lệch cả bài", 0, 1.5, 0.05], ["z", "z (1,2816 = mốc 90 %)", 0, 4, 0.01],
     ["muc_kha", "Mục tiêu bé khá (% 💎 nhận)", 1, 99, 1], ["muc_tb", "Mục tiêu bé TB (% 💎 nhận)", 1, 99, 1]];
   var HESO = [
@@ -54,7 +55,7 @@
       S.md = r.macDinh; S.dang = r.cauHinh;
       var hai = tao("div", "qcpHai qtgHai");
       var trai = tao("div", "qtmCot"), phai = tao("div", "qtmCot qtgPhai");
-      trai.appendChild(veLuoi("⚙️ Số chung", CHUNG, "Hệ số giờ k nhân vào cả mốc t₀ lẫn tổng giờ a (mỗi game còn có k riêng: Theo môn, Ôn sau trận… nhân thêm). Mục tiêu: bé giỏi (90 %) được đủ 💎, bé khá (90 %) được ≥ mục tiêu khá, bé trung bình (90 %) được ≥ mục tiêu TB."));
+      trai.appendChild(veLuoi("⚙️ Số chung", CHUNG, "Hệ số k của từng game (nhân vào mốc t₀ và tổng giờ a) nằm ở cài đặt riêng của game đó, không đặt ở đây. Mục tiêu: bé giỏi (90 %) được đủ 💎, bé khá (90 %) được ≥ mục tiêu khá, bé trung bình (90 %) được ≥ mục tiêu TB."));
       trai.appendChild(veLuoi("🧒 Bé khá, bé giỏi và độ khó câu", HESO, "Bé khá / giỏi đọc nhanh hơn và nghĩ nhanh hơn bé trung bình bao nhiêu lần; câu Vừa / Khó cần nghĩ lâu hơn câu Dễ. Câu Dễ = 1 là mốc."));
       trai.appendChild(veBang());
       trai.appendChild(veNut());
@@ -122,6 +123,7 @@
         gv[x[0]].push(v);
       }
     });
+    gv.he_so_k = Number(S.dang.he_so_k) || 1; // k chung giữ nguyên, không sửa ở màn này
     kq.loi = loi; return kq;
   }
 
@@ -161,7 +163,7 @@
     var hinh = tao("input"); hinh.type = "checkbox"; hinh.id = "qtgHinh";
     var nd = tao("textarea"); nd.rows = 2; nd.value = MAU.nd; nd.id = "qtgNd";
     var da = tao("textarea"); da.rows = 4; da.value = MAU.da.join("\n"); da.id = "qtgDa";
-    f.append(o("Lớp của bé", lop), o("Số câu giống câu mẫu", n), o("Độ khó", muc), o("k riêng của game (Theo môn = 1)", kr),
+    f.append(o("Lớp của bé", lop), o("Số câu giống câu mẫu", n), o("Độ khó", muc), o("k của game (chỉ để xem thử; đặt ở game)", kr),
       o("Câu có hình", hinh), o("Nội dung câu mẫu", nd), o("4 đáp án (mỗi dòng một đáp án)", da));
     f.addEventListener("input", capNhat); f.addEventListener("change", capNhat);
     k.appendChild(f);
