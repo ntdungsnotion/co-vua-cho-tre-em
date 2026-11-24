@@ -477,6 +477,8 @@
         const tu = ((S.tc && S.tc.thuong) || []).findIndex(x => x > 0);
         if (tu > 0) s.appendChild(tao("p", "tdGhiChu", "Đúng từ " + tu + " câu là có 💎. Con thử lại nhé! 🦉"));
       }
+      // KC_03C7b: 🔥 chuỗi ngày (chỉ khi máy chủ đã chấm lượt)
+      if (k && !choMang && !maLoi && goc.KC_TT && typeof goc.KC_TT.veChuoi === "function") goc.KC_TT.veChuoi(s, rpc("kc_tt_chuoi_luot", { p_luot: l.id }));
       // xem lại câu sai
       const xl = (kq.xemLai || []);
       let hopXl = null;
@@ -573,3 +575,4 @@
 // 24/11/2026 - BƯỚC: KC_03C5 (tạo mới: màn Tốc độ, 2 khổ)
 // 24/11/2026 - BƯỚC: KC_03C5b (âm thanh hồi hộp: nhạc nền dồn dập, combo, trống cuộn, kèn, nút tắt tiếng)
 // 24/11/2026 - BƯỚC: KC_03C5c (đúng / sai dùng âm thanh chung; tiếng riêng theo cài đặt Quản trị; bé nghĩ lâu; gần hết giờ theo số giây cài đặt)
+// 24/11/2026 - BƯỚC: KC_03C7b (dòng 🔥 chuỗi ngày ở màn kết quả, RPC kc_tt_chuoi_luot)

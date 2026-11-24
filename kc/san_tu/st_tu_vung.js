@@ -11,6 +11,8 @@
    CẬP NHẬT: 20/10/2026 - TC_T03A: mỗi từ có thêm hinh (file hình riêng, trống = dùng emoji).
    CẬP NHẬT: 11/11/2026 - KC_03A: SoTayTu ghi vào Sổ Ghi Nhớ chung (kc/kc_ghi_nho.js, máy chủ) khi bé
              đã đăng nhập; chuyển sổ cũ trong trình duyệt lên một lần (chuyenSoCu).
+   CẬP NHẬT: 24/11/2026 - KC_03C7b: "đã thuộc" lấy từ Sổ Ghi Nhớ chung (luật mới: 3 đúng liền VÀ hộp >= 4);
+             sổ cũ chuyển lên: hộp tối đa 3, chưa thuộc (giống máy chủ).
    ================================================================ */
 (function (goc) {
   "use strict";
@@ -53,10 +55,16 @@
     lay(en) {
       if (!this.so) return this.du[en] || null;
       const t = this.so.lay(en);
-      return t ? { d: t.soDung, s: t.soSai, lien: t.chuoi, luc: t.lanCuoi } : null;
+      return t ? { d: t.soDung, s: t.soSai, lien: t.chuoi, luc: t.lanCuoi, thuoc: t.daThuoc } : null;
     }
     // thuoc = true khi bé chọn đúng ngay lần bấm đầu tiên
     ghi(en, thuoc) {
+      // KC_03C7b: nhớ từ VỪA thành "đã thuộc" ở lần ghi này (màn kết quả khen), không còn dựa vào "chuỗi = 3"
+      const truoc = this.daThuoc(en);
+      this._ghi(en, thuoc);
+      this.vuaThuoc = !truoc && this.daThuoc(en) ? en : null;
+    }
+    _ghi(en, thuoc) {
       if (this.so) { this.so.ghi(en, !!thuoc); return; }
       const t = this.du[en] || { d: 0, s: 0, lien: 0 };
       if (thuoc) { t.d++; t.lien++; } else { t.s++; t.lien = 0; }
@@ -77,8 +85,10 @@
       if (ds.length) {
         ds.forEach(t => {
           if (this.so.lay(t.ma)) return;   // đã có trong sổ chung: máy chủ gộp
-          const hop = t.chuoi > 0 ? Math.min(5, t.chuoi) : 1;
-          this.so.du[t.ma + "||nhan_ra"] = [t.soDung, t.soSai, t.chuoi, hop, t.chuoi >= SO_DUNG_DE_THUOC, null, t.luc];
+          // KC_03C7b: giống máy chủ (kc_ghi_nho_chuyen_cu): sổ cũ không biết ngày -> hộp tối đa 3, chưa thuộc
+          const hopThuoc = (goc.KC_GHI_NHO && goc.KC_GHI_NHO.HOP_THUOC) || 4;
+          const hop = t.chuoi > 0 ? Math.min(hopThuoc - 1, t.chuoi) : 1;
+          this.so.du[t.ma + "||nhan_ra"] = [t.soDung, t.soSai, t.chuoi, hop, t.chuoi >= SO_DUNG_DE_THUOC && hop >= hopThuoc, null, t.luc];
         });
         this.so.luuSo();
       }
@@ -86,13 +96,15 @@
         : Promise.resolve(true);
       return gui.then(() => this.so.dongBo());
     }
-    daThuoc(en) { const t = this.lay(en); return !!t && t.lien >= SO_DUNG_DE_THUOC; }
+    // KC_03C7b: có Sổ Ghi Nhớ chung thì "đã thuộc" theo sổ chung (luật mới: 3 lần đúng liền VÀ hộp >= 4,
+    // tức đã nhớ qua nhiều ngày); khách / không có sổ chung: luật cũ 3 lần đúng liền.
+    daThuoc(en) { const t = this.lay(en); return !!t && (this.so ? !!t.thuoc : t.lien >= SO_DUNG_DE_THUOC); }
     demThuoc(cap) { return (KHO[cap] || []).filter(([en]) => this.daThuoc(en)).length; }
     // Trọng số được chọn: từ bé càng hay đúng thì càng ít xuất hiện
     trongSo(en) {
       const t = this.lay(en);
       if (!t) return 1.2;                                // từ mới: ưu tiên cho bé học
-      if (t.lien >= SO_DUNG_DE_THUOC) return 0.05;       // đã thuộc: rất hiếm khi gặp lại (để ôn)
+      if (this.daThuoc(en)) return 0.05;                 // đã thuộc: rất hiếm khi gặp lại (để ôn)
       let w = 1 / (1 + 1.2 * t.lien + 0.25 * Math.min(t.d, 8));
       if (t.lien === 0 && t.s > 0) w *= 1.5;             // vừa sai / không kịp: cho gặp lại để học
       return w;

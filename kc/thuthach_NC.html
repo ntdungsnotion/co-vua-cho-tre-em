@@ -28,6 +28,7 @@
        CẬP NHẬT: 24/11/2026 - KC_03C5: mở ô ⚡ Tốc độ.
        CẬP NHẬT: 24/11/2026 - KC_03C4: mở ô 📚 Theo môn.
        CẬP NHẬT: 24/11/2026 - KC_03C7: mở ô 🌈 Tổng hợp; chữ mới dưới ô 📚 / 🌈 (người dùng chọn).
+       CẬP NHẬT: 24/11/2026 21:xx - KC_03C7b: 🔥 chuỗi ngày + "Hôm nay x / 200 💎" + huy hiệu 🔔 N ở ô Theo môn (RPC kc_tt_loi_vao).
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
                   kc_ytuong.js, tt_phuhuynh.js (đặt CÙNG THƯ MỤC /kc/).
        GHI CHÚ: định dạng RIÊNG của trang này (khối quy trình 5 bước, khối
@@ -243,11 +244,38 @@
       font-weight: 700; padding: 1px 8px; border-radius: 999px; }
     .ttttO.moi::after { content: "Mới!"; position: absolute; top: 6px; right: 6px; background: var(--mau-thanh-cong); color: #fff; font-size: .7rem;
       font-weight: 700; padding: 1px 8px; border-radius: 999px; }
+    /* KC_03C7b: huy hiệu 🔔 N ở ô Theo môn + khối 🔥 chuỗi ngày (điện thoại: dưới 4 ô; máy tính: bên phải 4 ô) */
+    .ttttChuong { position: absolute; top: 6px; left: 6px; background: #ff7a1a; color: #fff; font-size: .78rem; font-weight: 800;
+      padding: 1px 8px; border-radius: 999px; box-shadow: 0 2px 6px rgba(255,122,26,.4); animation: ttttLac 2.4s ease-in-out infinite; }
+    @keyframes ttttLac { 0%, 86%, 100% { transform: rotate(0); } 90% { transform: rotate(-12deg); } 95% { transform: rotate(10deg); } }
+    .ttttChuoi { display: flex; align-items: center; gap: 14px; margin-top: 12px; padding: 12px 14px; border-radius: 16px;
+      background: linear-gradient(135deg, #fff4e0, #ffe3d1); border: 2px solid #ffc89a; }
+    .ttttChuoi[hidden] { display: none; }
+    .ttttLua { display: flex; flex-direction: column; align-items: center; min-width: 76px; line-height: 1; }
+    .ttttLuaBt { font-size: 2.6rem; animation: ttttChay 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+    @keyframes ttttChay { 0%, 100% { transform: scale(1) rotate(-2deg); } 50% { transform: scale(1.1) rotate(2deg); } }
+    .ttttLuaSo { font-family: "Baloo 2", sans-serif; font-size: 1.9rem; color: #e8590c; margin-top: 2px; }
+    .ttttLua small { color: #b4541a; font-weight: 700; font-size: .78rem; }
+    .ttttChuoi.tat .ttttLuaBt { filter: grayscale(1); opacity: .5; animation: none; }
+    .ttttChuoi.tat .ttttLuaSo { color: #9a8f86; }
+    .ttttChuoiChu { flex: 1; min-width: 0; }
+    .ttttChuoiChu p { margin: 0 0 4px; }
+    .ttttChuoiLoi { font-weight: 800; color: #7a3410; }
+    .ttttChuoi.nguy .ttttChuoiLoi { color: #c92a2a; }
+    .ttttChuoiMoc { font-size: .86rem; color: #8a5a2b; }
+    .ttttHomNay { display: flex; align-items: center; gap: 8px; font-size: .84rem; color: var(--mau-chu-nhat); }
+    .ttttHomNayChu { white-space: nowrap; }
+    .ttttThanh { flex: 1; height: 8px; border-radius: 999px; background: rgba(0,0,0,.08); overflow: hidden; display: block; }
+    .ttttThanh i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #4dabf7, #7950f2); border-radius: 999px; transition: width .6s; }
     @media (min-width: 1024px) {
       #ttTriThuc { max-width: 1000px; }
+      #ttTriThuc.coChuoi { max-width: 1160px; display: grid; grid-template-columns: 1fr 230px; column-gap: 14px; }
+      #ttTriThuc.coChuoi h2 { grid-column: 1 / -1; }
+      #ttTriThuc .ttttChuoi { margin-top: 0; flex-direction: column; text-align: center; gap: 8px; justify-content: center; }
       .ttttLuoi { grid-template-columns: repeat(4, 1fr); gap: 14px; }
       .ttttO { min-height: 150px; }
       .ttttO .ttttBt { font-size: 3rem; }
+      .ttttLuaBt { font-size: 3.2rem; }
     }
     /* KC_00E: GIAO DIỆN MÁY TÍNH (>= 1024px) - các khối rộng hơn, chữ to hơn */
     @media (min-width: 1024px) {
@@ -313,10 +341,19 @@
     <section id="ttTriThuc" aria-label="Thử thách tri thức">
       <h2>🧠 Thử thách tri thức</h2>
       <div class="ttttLuoi">
-        <a class="ttttO m1 moi" href="thu_thach_tri_thuc.html#theo_mon"><span class="ttttBt">📚</span><b>Theo môn</b><small>Môn nào con mê? Vào chiến!</small></a>
+        <a class="ttttO m1 moi" href="thu_thach_tri_thuc.html#theo_mon"><span class="ttttChuong" id="ttttChuong" hidden></span><span class="ttttBt">📚</span><b>Theo môn</b><small>Môn nào con mê? Vào chiến!</small></a>
         <a class="ttttO m2 moi" href="thu_thach_tri_thuc.html#tong_hop"><span class="ttttBt">🌈</span><b>Tổng hợp</b><small>Dám thử môn bất ngờ? Thưởng to!</small></a>
         <a class="ttttO m3 moi" href="thu_thach_tri_thuc.html#toc_do"><span class="ttttBt">⚡</span><b>Tốc độ</b><small>60 giây, 10 câu</small></a>
         <a class="ttttO m4 moi" href="thu_thach_tri_thuc.html#chinh_phuc"><span class="ttttBt">🏆</span><b>Chinh phục 30 câu</b><small>6 chặng, tới 1.500 💎</small></a>
+      </div>
+      <!-- KC_03C7b: 🔥 chuỗi ngày + hôm nay x / 200 💎 (RPC kc_tt_loi_vao) -->
+      <div class="ttttChuoi" id="ttttChuoi" hidden>
+        <div class="ttttLua"><span class="ttttLuaBt" aria-hidden="true">🔥</span><b class="ttttLuaSo">0</b><small>ngày liền</small></div>
+        <div class="ttttChuoiChu">
+          <p class="ttttChuoiLoi"></p>
+          <p class="ttttChuoiMoc"></p>
+          <div class="ttttHomNay"><span class="ttttHomNayChu"></span><i class="ttttThanh"><i></i></i></div>
+        </div>
       </div>
     </section>
 
@@ -415,7 +452,6 @@
       Sau này còn có thể có:
       <span>📅 Thử thách hằng ngày</span>
       <span>🗓️ Thử thách theo tuần</span>
-      <span>🔥 Chuỗi ngày liên tiếp</span>
       <span>🎖️ Huy hiệu</span>
       <span>🌟 Thành tựu</span>
     </div>
@@ -428,6 +464,51 @@
   <script src="kc_ytuong.js"></script>
   <script src="kc_hoc_cua_be.js"></script> <!-- KC_03B3 -->
   <script src="tt_phuhuynh.js"></script>
+  <script>
+    // 24/11/2026 - KC_03C7b: 🔥 chuỗi ngày + hôm nay x / 200 💎 + 🔔 N ở ô Theo môn. Máy chủ chưa có hàm / mất mạng: ẩn, trang vẫn chạy.
+    (function () {
+      "use strict";
+      var so = function (x) { return Number(x || 0).toLocaleString("vi-VN"); };
+      function ve(kq) {
+        if (!kq || kq.thanhCong !== true || !kq.chuoi) return;
+        var c = kq.chuoi, k = document.getElementById("ttttChuoi"), n = c.soNgay | 0;
+        var chuong = document.getElementById("ttttChuong");
+        if (chuong) {
+          var th = kq.toiHan | 0;
+          chuong.hidden = th <= 0;
+          chuong.textContent = "🔔 " + (th > 99 ? "99+" : th);
+          chuong.title = th + " điều đến lúc ôn lại";
+          chuong.parentNode.setAttribute("aria-label", "Theo môn" + (th > 0 ? ", " + th + " điều cần ôn" : ""));
+        }
+        k.querySelector(".ttttLuaSo").textContent = n;
+        k.classList.toggle("tat", n === 0);
+        k.classList.toggle("nguy", !!c.nguy);
+        k.querySelector(".ttttChuoiLoi").textContent =
+          c.homNay ? (n >= 2 ? "Lửa đang cháy! Hôm nay con giữ lửa rồi 🎉" : "Con đã nhóm lửa hôm nay! Mai chơi tiếp nhé 🎉")
+          : c.nguy ? "Hôm qua con nghỉ rồi, hôm nay chơi 1 lượt để giữ lửa nhé!"
+          : n > 0 ? "Chơi 1 lượt hôm nay để lửa cháy tiếp!"
+          : "Chơi 1 lượt bất kỳ để nhóm lửa 🔥";
+        var moc = k.querySelector(".ttttChuoiMoc");
+        if (c.mocToi && c.kcMocToi > 0) moc.textContent = "Còn " + c.conNgay + " ngày nữa tới mốc " + c.mocToi + " ngày: 🎁 +" + so(c.kcMocToi) + " 💎";
+        else moc.textContent = "";
+        if (!c.homNay && c.nghiTuanNay === false && n > 0) moc.textContent += (moc.textContent ? " · " : "") + "Mỗi tuần được nghỉ 1 ngày";
+        var tran = kq.tranNgay | 0, da = kq.daNhanHomNay | 0;
+        k.querySelector(".ttttHomNayChu").textContent = "Hôm nay: " + so(da) + " / " + so(tran) + " 💎";
+        k.querySelector(".ttttThanh i").style.width = (tran > 0 ? Math.min(100, Math.round(100 * da / tran)) : 0) + "%";
+        k.hidden = false;
+        document.getElementById("ttTriThuc").classList.add("coChuoi");
+      }
+      function tai() {
+        var tk = window.kcTaiKhoanHienTai;
+        if (!tk || typeof kcGoiRpc !== "function") return;
+        kcGoiRpc("kc_tt_loi_vao", { p_ten: tk.tenDangNhap, p_ma_phien: tk.maPhien }).then(ve).catch(function () { /* ẩn */ });
+      }
+      document.addEventListener("kcSanSang", function (e) { if (e.detail && e.detail.daDangNhap) tai(); });
+      // quay lại trang (nút Back / đổi tab) thì cập nhật số mới
+      window.addEventListener("pageshow", function (e) { if (e.persisted) tai(); });
+      document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") tai(); });
+    })();
+  </script>
 
 <!-- KC_00F 17/10/2026: số lượt truy cập ở chân trang (GoatCounter) -->
 <script src="kc_luot_truy_cap.js"></script>
