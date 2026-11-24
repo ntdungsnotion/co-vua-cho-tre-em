@@ -16,6 +16,7 @@
 //      (SQL repo_rieng supabase_kc03c4_theo_mon.sql).
 // PHỤ THUỘC: ../admin_NC.js (adminGoiRpc, adminBaoTin), sự kiện "adminDaChuyenManHinh".
 // BƯỚC: KC_03C4 - NGÀY: 24/11/2026
+// CẬP NHẬT: 24/11/2026 - KC_03C7: khối "🌈 Tổng hợp: hệ số thưởng" (nhóm tong_hop, 1-5) + tóm tắt thống kê 7 ngày (kc_th_admin_thong_ke).
 // ================================================================
 (function () {
   "use strict";
@@ -43,8 +44,9 @@
   function tai() {
     var g = document.getElementById("qtmGoc");
     g.innerHTML = '<p class="adminDangTai">Đang tải...</p>';
-    Promise.all([goi("kc_tt_admin_cau_hinh_doc"), goi("kc_tm_admin_thong_ke", { p_ngay: 7 })]).then(function (r) {
+    Promise.all([goi("kc_tt_admin_cau_hinh_doc"), goi("kc_tm_admin_thong_ke", { p_ngay: 7 }), goi("kc_th_admin_thong_ke", { p_ngay: 7 })]).then(function (r) {
       var ch = r[0], tk = r[1];
+      S.tkTh = r[2];
       g.innerHTML = "";
       if (!ch.thanhCong) { g.appendChild(tao("p", "qcpLoi", "⚠️ " + (ch.thongBao || "Không tải được cấu hình"))); return; }
       if (!ch.macDinh || !ch.macDinh.theo_mon || ch.macDinh.theo_mon.kc_toi_da_10 == null) {
@@ -56,6 +58,7 @@
       var trai = tao("div", "qtmCot");
       trai.appendChild(veThuong());
       trai.appendChild(veHeSoK());
+      trai.appendChild(veTongHop());
       trai.appendChild(veChung());
       hai.appendChild(trai);
       var phai = tao("div", "qtmCot");
@@ -157,6 +160,37 @@
       gv.he_so_k = v;
       return { loi: v >= 0.3 && v <= 3 ? null : "K_thoigian: từ 0,3 đến 3", gv: gv };
     }, function () { var gv = JSON.parse(JSON.stringify(S.dang.theo_mon)); gv.he_so_k = md.he_so_k; return gv; });
+    return k;
+  }
+
+  // ---------------- 🌈 TỔNG HỢP (KC_03C7): hệ số thưởng so với Theo môn + thống kê 7 ngày ----------------
+  function veTongHop() {
+    var k = tao("div", "qcpKhoi");
+    k.appendChild(tao("h4", "", "🌈 Tổng hợp: hệ số thưởng"));
+    var md = (S.md.tong_hop || { he_so: 1.5 }), d = (S.dang.tong_hop || md);
+    var luoi = tao("div", "qcpKho");
+    luoi.appendChild(oSo(d.he_so, md.he_so, "× so với Theo môn (1-5)", "he_so", "0.1"));
+    k.appendChild(luoi);
+    var vd = tao("p", "adminGhiChu");
+    function capVd() {
+      var h = Number(luoi.querySelector("input").value) || 1, t = Number(S.dang.theo_mon.kc_toi_da_10) || 0;
+      vd.textContent = "Tổng hợp chơi như Theo môn (cùng 💎 tối đa, trừ sai, đồng hồ, 🪙 mỗi câu đúng ở trên), máy chủ bốc môn ngẫu nhiên "
+        + "(môn nhiều điều tới hạn dễ trúng hơn, môn vừa chơi khó trúng hơn), rồi nhân hệ số SAU CÙNG, làm tròn xuống. "
+        + "Ví dụ 10 câu đúng hết, xong sớm: " + t + " × " + soVi(h) + " = " + Math.floor(t * h) + " 💎.";
+    }
+    luoi.addEventListener("input", capVd); capVd();
+    k.appendChild(vd);
+    hangLuu(k, "tong_hop", "hệ số Tổng hợp", function () {
+      var v = Number(luoi.querySelector("input").value);
+      return { loi: v >= 1 && v <= 5 ? null : "Hệ số: từ 1 đến 5", gv: { he_so: v } };
+    });
+    var tk = S.tkTh;
+    if (tk && tk.thanhCong) {
+      var ng = tk.theoNgay || [], tong = ng.reduce(function (a, x) { return a + (x.soLuot || 0); }, 0);
+      k.appendChild(tao("p", "adminGhiChu", "📊 7 ngày: " + so(tong) + " lượt xong · " + so(ng.reduce(function (a, x) { return a + (x.kc || 0); }, 0)) + " 💎 · "
+        + so(ng.reduce(function (a, x) { return a + (x.bo || 0); }, 0)) + " lượt bỏ dở"
+        + ((tk.theoMon || []).length ? " · môn trúng: " + tk.theoMon.map(function (m) { return (m.bieuTuong || "") + " " + m.ten + " " + m.soLuot; }).join(", ") : "")));
+    }
     return k;
   }
 
