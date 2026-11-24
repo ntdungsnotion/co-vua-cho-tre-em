@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trang chủ</title>
+  <!-- 25/11/2026 - BƯỚC: KC_05: nút "🛍️ Cửa Hàng Quà" (cửa hàng quà thật chung toàn app, kc/cuahang_NC.html) ở hàng 💎 🪙 🎁 -->
   <!-- 17/10/2026 - BƯỚC: KC_00D-1: nút "🛠️ Quản trị" trên đầu trang, chỉ admin thấy (data-chi-admin, kc_auth.js) -> trang quản trị chung -->
 
   <!-- ================================================================
@@ -56,6 +57,8 @@
     .tcChip .tcChipHinh { font-size: 1.4rem; line-height: 1; }
     #tcOKimCuong { border-color: var(--mau-phu); }
     #tcOKimCuong.tcNay { animation: tcNay 0.35s ease-in-out 3; }
+    #tcOCuaHang { text-decoration: none; color: #fff; background: var(--mau-chinh); border-color: var(--mau-chinh); }
+    #tcOCuaHang:active { transform: translateY(2px); }
     #tcOQua { cursor: pointer; color: var(--mau-chu-nhat); }
     #tcOQua:disabled { cursor: default; }
     #tcOQua.tcCoQua { color: #fff; background: var(--mau-thanh-cong); border-color: var(--mau-thanh-cong); animation: tcLacQua 1.6s ease-in-out infinite; }
@@ -251,6 +254,8 @@
         <!-- 23/11/2026 KC_03C2: 🪙 xu vàng (ví chung toàn app), số do kc/kc_auth.js kcVeVang điền -->
         <div class="tcChip" id="tcOVang" title="Xu vàng của con (dùng chung cả app)" hidden><span class="tcChipHinh">🪙</span><span id="tcSoVang">0</span></div>
         <button class="tcChip" id="tcOQua" type="button" disabled><span class="tcChipHinh">🎁</span><span id="tcSoQua">Chưa có quà</span></button>
+        <!-- 25/11/2026 KC_05: cửa vào CỬA HÀNG QUÀ CHUNG toàn app (đổi 💎 lấy quà thật) -->
+        <a class="tcChip" id="tcOCuaHang" href="kc/cuahang_NC.html" title="Đổi kim cương lấy quà thật"><span class="tcChipHinh">🛍️</span><span>Cửa Hàng Quà</span></a>
       </div>
       <!-- 25/11/2026 KC_08F2: 🏅 Danh hiệu của con (mỗi môn Gà Con → Thần), kc/chung/danh_hieu.js vẽ -->
       <div id="tcDanhHieu" hidden></div>

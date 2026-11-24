@@ -4,6 +4,8 @@
 //   9 man hinh: Vat Pham | Doi Thuong | Y Tuong | Cau Hinh Chung |
 //               Cap Do May | Loi Dong Vien | Giong Doc | Ho So Tre | Don Kho Anh
 // BUOC: NC_06A-2 (nang cap tu NC_09B) - NGAY: 12/07/2026 21:00
+// CAP NHAT: 25/11/2026 06:xx - BUOC: KC_05: man hinh vat pham chia 2 che do (adminApCheDoVatPham):
+//   "quachung" = Cua Hang Qua CHUNG toan app (chi loai 'qua'), "vatpham" = do trong game Co Vua.
 // CAP NHAT: 22/10/2026 - BUOC: TC_03A: khoa kc_co_tuong_ ve nhom "cotuong" (Co Tuong, trang quan tri chung).
 // CAP NHAT: 17/10/2026 - BUOC: KC_00D-1B (nguoi dung thu KC_00D-1 - chung / rieng ro rang):
 //   (1) HO SO CAC BE chia tieu muc Thong tin chung / Co Vua / Giai Cuu Meo Con / sap co;
@@ -328,15 +330,21 @@ function adminChuyenManHinh(ten, nutBam) {
   for (var i = 0; i < cacNut.length; i++) cacNut[i].classList.remove("dangChon");
   nutBam.classList.add("dangChon");
 
+  // KC_05 (25/11/2026): "quachung" (Cua Hang Qua CHUNG toan app) va "vatpham" (do trong
+  // game Co Vua) dung CHUNG 1 man hinh manhinh-vatpham, chi khac bo loc loai.
+  var tenManHinh = (ten === "quachung") ? "vatpham" : ten;
+
   var cacManHinh = document.querySelectorAll(".adminManHinh");
   for (var j = 0; j < cacManHinh.length; j++) cacManHinh[j].classList.remove("dangHien");
-  adminEl("manhinh-" + ten).classList.add("dangHien");
+  adminEl("manhinh-" + tenManHinh).classList.add("dangHien");
+  if (tenManHinh === "vatpham") adminApCheDoVatPham(ten === "quachung" ? "qua" : "so");
 
   // KC_00D-1: bao cho kc/quantri_NC.js (dong menu, ghi dia chi, tai Tong quan)
   document.dispatchEvent(new CustomEvent("adminDaChuyenManHinh", { detail: { ten: ten } }));
 
   // KC_00D-1: cac man hinh cau hinh dung chung 1 lan tai (ve vao moi bang)
   if (ten.indexOf("cauhinh") === 0) ten = "cauhinh";
+  if (ten === "quachung") ten = "vatpham";   // KC_05: chung 1 lan tai
 
   if (adminDaTai[ten]) return;
   adminDaTai[ten] = true;
@@ -539,15 +547,64 @@ function adminTaiVatPham() {
   });
 }
 
+// ----------------------------------------------------------------
+// KC_05 (25/11/2026): CUA HANG QUA CHUNG TOAN APP
+//   Luat (HUONG DAN 3.13): qua THAT (loai 'qua') chi co MOT cua hang chung toan app
+//   (kc/cuahang_NC.html); cua hang cua tung game chi ban do SO trong game.
+//   Quan tri: muc "🛍️ Cửa hàng quà" (Quan tri chung) chi hien + tao loai 'qua';
+//   muc "Cờ Vua › Đồ trong game" chi hien + tao cac loai SO. Cung 1 bang vat_pham,
+//   cung RPC admin_* cu (vung cam Co Vua: KHONG sua SQL).
+// ----------------------------------------------------------------
+var adminLocVatPham = "so";   // "so" = do trong game Co Vua | "qua" = qua that (chung)
+
+function adminApCheDoVatPham(cheDo) {
+  var doiCheDo = (adminLocVatPham !== cheDo);
+  adminLocVatPham = cheDo;
+  var laQua = (cheDo === "qua");
+  var chon = adminEl("vpLoai");
+  for (var i = 0; i < chon.options.length; i++) {
+    var opt = chon.options[i];
+    var an = laQua ? (opt.value !== "qua") : (opt.value === "qua");
+    opt.hidden = an;
+    opt.disabled = an;
+  }
+  if (laQua) chon.value = "qua";
+  else if (chon.value === "qua") chon.value = "avatar";
+  var oGhiChu = adminEl("vpGhiChuCheDo");
+  if (oGhiChu) {
+    oGhiChu.innerHTML = laQua
+      ? "🛍️ <strong>Cửa Hàng Quà CHUNG toàn app</strong>: quà THẬT (đồ chơi, đi chơi, xem phim...). " +
+        "Bé đổi bằng 💎 kim cương ở trang <strong>Cửa Hàng Quà</strong> (mọi game, mọi mảng dùng chung), " +
+        "rồi quà hiện ở mục <strong>📦 Đổi thưởng</strong> chờ trao tận tay. Mốc level không dùng cho quà."
+      : "♟️ <strong>Đồ trong game Cờ Vua</strong> (vật phẩm SỐ: avatar, bộ quân cờ, bàn cờ, hiệu ứng): " +
+        "bé nhận ngay, tự trang bị. Quà THẬT không tạo ở đây mà ở <strong>Quản trị chung › 🛍️ Cửa hàng quà</strong>.";
+  }
+  var oTieuDeBang = adminEl("vpTieuDeBang");
+  if (oTieuDeBang) oTieuDeBang.textContent = laQua ? "📋 Quà Trong Cửa Hàng Quà" : "📋 Đồ Trong Game Cờ Vua";
+  if (doiCheDo) {
+    // Form dang sua vat pham cua che do kia -> lam trong de khong luu nham
+    if (adminEl("vpId").value) adminXoaFormVatPham();
+    adminCapNhatTroLyTheoLoai();
+    var khoiSoHuu = adminEl("khoiNguoiSoHuu");
+    if (khoiSoHuu) khoiSoHuu.style.display = "none";
+    if (adminDaTai["vatpham"]) adminVeBangVatPham();
+  }
+}
+
 function adminVeBangVatPham() {
   var than = adminEl("bangVatPham");
-  if (adminDsVatPham.length === 0) {
-    than.innerHTML = '<tr><td colspan="12" class="adminRong">Chưa có vật phẩm nào. Hãy thêm ở khối bên trên.</td></tr>';
+  var dsLoc = adminDsVatPham.filter(function (vp) {
+    return adminLocVatPham === "qua" ? vp.loai === "qua" : vp.loai !== "qua";
+  });
+  if (dsLoc.length === 0) {
+    than.innerHTML = '<tr><td colspan="12" class="adminRong">' +
+      (adminLocVatPham === "qua" ? "Cửa Hàng Quà chưa có quà nào. Hãy thêm quà ở khối bên trên." :
+        "Chưa có đồ trong game nào. Hãy thêm ở khối bên trên.") + '</td></tr>';
     return;
   }
 
   var html = "";
-  adminDsVatPham.forEach(function (vp) {
+  dsLoc.forEach(function (vp) {
     var hinh = vp.urlHinh
       ? '<img class="adminAnhXemTruoc" src="' + adminThoat(vp.urlHinh) + '" alt="">'
       : "—";
@@ -792,7 +849,10 @@ function adminXoaFormVatPham() {
       adminVeXemTruocQuan(id);
     });
   });
-  adminEl("tieuDeFormVatPham").textContent = "➕ Thêm Vật Phẩm Mới";
+  // KC_05: form trong mang loai dung che do dang mo (qua that / do trong game)
+  adminEl("vpLoai").value = (adminLocVatPham === "qua") ? "qua" : "avatar";
+  adminCapNhatTroLyTheoLoai();
+  adminEl("tieuDeFormVatPham").textContent = (adminLocVatPham === "qua") ? "➕ Thêm Quà Mới" : "➕ Thêm Vật Phẩm Mới";
   adminCapNhatBangCheDo(null, "");
   adminVeXemTruocHinhChinh();
 }

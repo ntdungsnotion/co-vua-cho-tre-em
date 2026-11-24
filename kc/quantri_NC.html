@@ -18,6 +18,8 @@
                   Máy tính (>= 1024px): thanh bên cố định bên trái. Điện thoại: nút ☰
                   mở menu trượt.
        BƯỚC: KC_00D-1 - NGÀY: 17/10/2026
+       CẬP NHẬT: 25/11/2026 06:xx - KC_05: mục "🛍️ Cửa hàng quà" (Quản trị chung) = cửa hàng quà THẬT
+                 duy nhất toàn app (kc/cuahang_NC.html); Cờ Vua chỉ còn "🎨 Đồ trong game" (vật phẩm số).
        CẬP NHẬT: 17/10/2026 - KC_00D-1B (người dùng thử KC_00D-1): Hồ sơ các bé chia tiểu mục
                  Thông tin chung / Cờ Vua / Giải Cứu Mèo Con / sắp có; danh sách chỉ thông tin chung.
                  Cấu hình: mỗi khóa về đúng lĩnh vực, khối "Khóa chưa xếp lĩnh vực", giọng đọc
@@ -532,6 +534,8 @@
         <button class="adminNutManHinh qtMuc dangChon" data-manhinh="tongquan" type="button">📊 Tổng quan</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="taikhoan" type="button">👥 Tài khoản <span class="qtSapCo">sắp có</span></button>
         <button class="adminNutManHinh qtMuc" data-manhinh="hosotre" type="button">👦 Hồ sơ các bé</button>
+        <!-- KC_05 25/11/2026: MỘT cửa hàng quà thật chung toàn app (HƯỚNG DẪN 3.13); dùng chung màn hình vật phẩm, lọc loại 'qua' -->
+        <button class="adminNutManHinh qtMuc" data-manhinh="quachung" type="button">🛍️ Cửa hàng quà</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="doithuong" type="button">📦 Đổi thưởng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="ytuong" type="button">💡 Ý tưởng các bé gửi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinhchung" type="button">⚙️ Cấu hình chung</button>
@@ -550,7 +554,7 @@
         <div class="qtTenNhom">🎮 Trò Chơi</div>
         <div class="qtNhomCon" data-ten-nhom="Trò Chơi › Cờ Vua">
           <div class="qtTenNhomCon">♟️ Cờ Vua</div>
-          <button class="adminNutManHinh qtMuc" data-manhinh="vatpham" type="button">🎁 Cửa hàng</button>
+          <button class="adminNutManHinh qtMuc" data-manhinh="vatpham" type="button">🎨 Đồ trong game</button>
           <button class="adminNutManHinh qtMuc" data-manhinh="capdo" type="button">🎚️ Cấp độ máy</button>
           <button class="adminNutManHinh qtMuc" data-manhinh="loidongvien" type="button">💬 Lời động viên</button>
           <button class="adminNutManHinh qtMuc" data-manhinh="cauhinh-covua" type="button">⚙️ Cấu hình</button>
@@ -635,11 +639,13 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- MÀN HÌNH: CỬA HÀNG CỜ VUA (vật phẩm) -->
+    <!-- MÀN HÌNH: VẬT PHẨM - dùng cho 2 mục (KC_05, admin_NC.js adminApCheDoVatPham):
+         "🛍️ Cửa hàng quà" (Quản trị chung, chỉ loại qua) và "Cờ Vua › 🎨 Đồ trong game" (loại số) -->
     <!-- ============================================================ -->
     <section class="adminManHinh" id="manhinh-vatpham">
 
       <div class="adminKhoi">
+        <p class="adminGhiChu" id="vpGhiChuCheDo" style="font-size:1rem;"></p>
         <h3 id="tieuDeFormVatPham">➕ Thêm Vật Phẩm Mới</h3>
         <p class="adminGhiChu">
           Loại vật phẩm: <strong>avatar</strong>, <strong>bo_quan_co</strong>, <strong>ban_co</strong>,
@@ -771,7 +777,7 @@
       </div>
 
       <div class="adminKhoi">
-        <h3>📋 Danh Sách Vật Phẩm</h3>
+        <h3 id="vpTieuDeBang">📋 Danh Sách Vật Phẩm</h3>
         <div class="adminCuonNgang">
           <table class="adminBang">
             <thead>
