@@ -55,6 +55,7 @@
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
+       CẬP NHẬT: 24/11/2026 22:xx - KC_08F1: Quản trị chung › 🎯 Trình độ (qt_trinh_do.js + .css: các bé, đồ thị, đặt lại môn, thông số, đối soát).
        CẬP NHẬT: 24/11/2026 - KC_GB1: Quản trị chung › ⏱️ Tính giờ trả lời (qt_gio_bai.js: mọi thông số công thức giờ bài + xem thử + đối chiếu máy chủ).
        CẬP NHẬT: 24/11/2026 - KC_03C4b: 📚 Theo môn thêm khối 🔊 Âm thanh Theo môn (#qtmAmGoc, qt_kho_tieng.js nhánh "tm", tt_tri_thuc/tt_theo_mon_am.js).
       CẬP NHẬT: 24/11/2026 - KC_03C4: Thử Thách › 📚 Theo môn (qt_theo_mon.js: thưởng, luật chọn câu chung, thống kê 7 ngày, xem thử bộ câu của một bé, nút sang 🎵 Âm thanh chung).
@@ -77,6 +78,7 @@
   <link rel="stylesheet" href="qt_kho_tieng.css"> <!-- KC_09B1 -->
   <link rel="stylesheet" href="qt_kho_tri_thuc.css"> <!-- KC_03B1 -->
   <link rel="stylesheet" href="kc_hoc_cua_be.css"> <!-- KC_03B3 -->
+  <link rel="stylesheet" href="qt_trinh_do.css"> <!-- KC_08F1 -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -534,6 +536,7 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="ytuong" type="button">💡 Ý tưởng các bé gửi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinhchung" type="button">⚙️ Cấu hình chung</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="giobai-chung" type="button">⏱️ Tính giờ trả lời</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="trinhdo" type="button">🎯 Trình độ</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotu" type="button">📖 Kho từ vựng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khocau" type="button">❓ Kho câu hỏi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotrithuc" type="button">📚 Kho tri thức</button>
@@ -864,6 +867,14 @@
         <h3>⏱️ Tính Giờ Trả Lời (dùng chung cả app)</h3>
         <p class="adminGhiChu">Mọi số của công thức giờ bài: bé đọc nhanh chậm, nghĩ bao lâu, độ khó câu, mục tiêu bé giỏi / khá / trung bình. Dùng cho Ôn sau trận, 📚 Theo môn và các thử thách có đồng hồ cả bài. Ô viền cam là số đã khác mặc định; đổi xong xem ngay giờ ở khối 🔬 Xem thử trước khi 💾 Lưu. Hệ số k của từng game nằm ở cài đặt riêng của game đó, không đặt ở đây.</p>
         <div id="qtgGoc"></div>
+      </div>
+    </section>
+
+    <section class="adminManHinh" id="manhinh-trinhdo"> <!-- KC_08F1 -->
+      <div class="adminKhoi">
+        <h3>🎯 Trình Độ Các Bé (dùng chung cả app)</h3>
+        <p class="adminGhiChu">Trình độ thật của từng bé theo từng môn, tính từ mọi câu bé trả lời ở mọi nơi (Đấu Trường, ôn sau trận, Thử Thách...). Thang lớp: θ 4,3 = làm tốt câu đầu lớp 4. Lớp khai chỉ là điểm xuất phát. Bé không bao giờ thấy số này hay chữ "lớp"; bé chỉ thấy danh hiệu 🐣 → ⚡. Phụ huynh thấy dạng chữ ở 🎓 Học của con.</p>
+        <div id="qtrGoc"></div>
       </div>
     </section>
 
@@ -1766,6 +1777,7 @@
   <script src="qt_theo_mon.js"></script>    <!-- KC_03C4: 📚 Theo môn -->
   <script src="chung/gio_bai.js"></script>  <!-- KC_GB1: module giờ bài chung (xem thử) -->
   <script src="qt_gio_bai.js"></script>     <!-- KC_GB1: ⏱️ Tính giờ trả lời -->
+  <script src="qt_trinh_do.js"></script>    <!-- KC_08F1: 🎯 Trình độ -->
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
 </body>

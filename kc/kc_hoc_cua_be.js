@@ -13,6 +13,9 @@
 // CẬP NHẬT: 18/11/2026 - KC_03B3 (người dùng thử): thêm nhánh bằng TÊN tiếng Việt (tự đặt mã bỏ dấu, RPC kc_hs_them_nhanh,
 //   tên lưu ở kc_nhanh_hoc, SQL supabase_kc03b3b_nhanh.sql); đổi lớp thì dòng gợi ý đổi theo ngay.
 // CẬP NHẬT: 24/11/2026 18:00 - KC_03C2: ô "🪙 xu vàng" của bé ở đầu khối (RPC kc_vi_vang_xem, SQL supabase_kc03c2_vi_vang.sql).
+// CẬP NHẬT: 24/11/2026 22:xx - KC_08F1: khối "🎯 Con đang học tới đâu" (đầu cột trái): mỗi môn một dòng chữ "đang làm tốt câu
+//   khoảng lớp N (khá chắc)", lời báo lớp khai lệch trung tính + [✏️ Sửa lớp] [Giữ nguyên], dấu làm kém / tiến bộ đột ngột.
+//   Không số thập phân. RPC kc_td_phu_huynh (SQL supabase_kc08f1_quan_tri.sql). Chỉ người lớn thấy, bé không thấy.
 // ================================================================
 (function () {
   "use strict";
@@ -86,6 +89,7 @@
       }
       self.d = kq; self.ve();
       self.taiVang(so);
+      self.taiTrinhDo(so);
     });
   };
 
@@ -107,6 +111,52 @@
       + (this.vang.homNay > 0 ? " · hôm nay +" + this.vang.homNay.toLocaleString("vi-VN") : "") + "</span>";
   };
 
+  // KC_08F1: trình độ của bé dạng chữ cho người lớn (admin / phụ huynh đã liên kết; RPC kc_td_phu_huynh)
+  KhoiHoc.prototype.taiTrinhDo = function (so) {
+    var self = this;
+    this.goiRpc("kc_td_phu_huynh").then(function (kq) {
+      if (so !== self.lanTai) return;
+      self.td = kq && kq.thanhCong ? kq : { loi: (kq && kq.thongBao) || "Chưa đọc được" };
+      var o = self.k.querySelector(".hcbTrinhDo");
+      if (o) o.outerHTML = self.veTrinhDo();
+    });
+  };
+
+  var TIN_CAY = { thap: "mới làm ít câu, chưa chắc", tb: "khá chắc", cao: "chắc chắn" };
+  function chuLopLam(l) { return l === 0 ? "mẫu giáo" : "lớp " + l; }
+  function giuaDs(ds) { var a = ds.slice().sort(function (x, y) { return x - y; }); return a.length ? a[Math.floor((a.length - 1) / 2)] : null; }
+
+  KhoiHoc.prototype.veTrinhDo = function () {
+    var t = this.td, dau = '<section class="hcbKhoi hcbTrinhDo"><h4>🎯 Con đang học tới đâu</h4>';
+    if (!t) return dau + '<p class="hcbGhiChu">Đang tải...</p></section>';
+    if (t.loi) return dau + '<p class="hcbGhiChu">' + thoat(/function|does not exist|schema cache/i.test(t.loi) ? "Máy chủ chưa có phần trình độ (cần chạy SQL KC_08F1)." : t.loi) + "</p></section>";
+    var ds = t.mon || [];
+    if (!ds.length) return dau + '<p class="hcbGhiChu">Con chưa trả lời câu hỏi nào. Sau vài trận Đấu Trường hoặc Thử Thách, ở đây sẽ hiện con đang làm tốt câu khoảng lớp mấy ở từng môn.</p></section>';
+    var lech = t.coLech || {}, html = "", an = false;
+    try { an = localStorage.getItem("kc_td_giu_lop_" + this.be) === String(t.lop) + ":" + (lech.loai || ""); } catch (e) { an = false; }
+    if (lech.loai && !an) {
+      var lopTot = giuaDs(ds.filter(function (m) { return (lech.loai === "thap" ? lech.gioi : lech.yeu).indexOf(m.mon) >= 0; }).map(function (m) { return m.lopLamTot; }));
+      html += '<div class="hcbBaoLech"><p>💡 Con đang làm tốt câu khoảng <strong>' + chuLopLam(lopTot) + "</strong> ở nhiều môn, hồ sơ ghi <strong>"
+        + (t.lop === null || t.lop === undefined ? "chưa có lớp" : chuLopLam(t.lop)) + "</strong>. "
+        + (lech.loai === "thap" ? "Nếu con thật sự học lớp cao hơn, người lớn có thể sửa lớp; giữ nguyên cũng được, câu hỏi vẫn tự lên dần theo sức con."
+          : "Có thể lớp trong hồ sơ cao hơn thật, con cần ôn lại kiến thức lớp dưới, hoặc ai đó đã chơi hộ. Câu hỏi vẫn tự vừa sức con.")
+        + '</p><div class="hcbHang"><button type="button" class="hcbNutNho" data-hd="tdSuaLop">✏️ Sửa lớp</button>'
+        + '<button type="button" class="hcbNutNho" data-hd="tdGiuLop">Giữ nguyên</button></div></div>';
+    }
+    html += '<ul class="hcbTdDs">' + ds.map(function (m) {
+      var ghi = [];
+      if (!lech.loai && (lech.gioi || []).indexOf(m.mon) >= 0) ghi.push("⬆ giỏi hơn lớp trong hồ sơ");
+      if (!lech.loai && (lech.yeu || []).indexOf(m.mon) >= 0) ghi.push("⬇ cần ôn thêm lớp dưới");
+      if (m.batThuong < 0) ghi.push("❗ gần đây làm kém hơn thường lệ (con mệt, hoặc người khác chơi hộ?)");
+      if (m.batThuong > 0) ghi.push("⚡ gần đây tiến bộ nhanh");
+      return '<li><span class="hcbTdMon">' + thoat(m.bieuTuong || "") + " " + thoat(m.ten) + "</span>: đang làm tốt câu khoảng <strong>" + chuLopLam(m.lopLamTot)
+        + '</strong> <span class="hcbTdChac tc-' + thoat(m.tinCay) + '">(' + (TIN_CAY[m.tinCay] || "") + ")</span>"
+        + ' <span class="hcbGhiChu">· ' + (m.soLuot | 0).toLocaleString("vi-VN") + " câu</span>"
+        + (ghi.length ? '<div class="hcbTdGhi">' + ghi.join(" · ") + "</div>" : "") + "</li>";
+    }).join("") + "</ul>";
+    return dau + html + '<p class="hcbGhiChu">Tính từ mọi câu con trả lời trong app, không theo lớp khai. Chỉ người lớn thấy khối này; con chỉ thấy danh hiệu 🐣 → ⚡, không thấy chữ "lớp".</p></section>';
+  };
+
   // ---------------- VẼ ----------------
   KhoiHoc.prototype.ve = function () {
     var d = this.d;
@@ -115,7 +165,7 @@
       + "</span><span class=\"hcbChip\">Năm học " + d.namHoc + "-" + (d.namHoc + 1) + "</span>"
       + '<span class="hcbChip hcbChipNhan">🃏 Đang phải nhớ ' + (d.soThe | 0) + " thẻ · " + (d.soManh | 0) + " mảnh</span>" + this.veVang() + "</div></div>"
       + '<div class="hcbTin"></div>'
-      + '<div class="hcbLuoi"><div class="hcbCot">' + this.veHoSo() + this.veNhayCam() + "</div>"
+      + '<div class="hcbLuoi"><div class="hcbCot">' + this.veTrinhDo() + this.veHoSo() + this.veNhayCam() + "</div>"
       + '<div class="hcbCot">' + this.veTheRieng() + this.veGiao() + "</div></div>";
   };
 
@@ -267,6 +317,16 @@
     if (hd === "nhayCam") {
       if (n.tagName !== "INPUT") return;
       return this.giao("nhay_cam", n.getAttribute("data-ma"), n.checked ? "bat" : "");
+    }
+    if (hd === "tdSuaLop") {   // KC_08F1: tới ô lớp của khối 📅
+      var o = this.k.querySelector(".hcbLop");
+      if (o) { o.scrollIntoView({ behavior: "smooth", block: "center" }); o.focus(); }
+      return;
+    }
+    if (hd === "tdGiuLop") {   // KC_08F1: người lớn giữ lớp -> ẩn lời báo trên máy này tới khi lớp / kiểu lệch đổi
+      try { localStorage.setItem("kc_td_giu_lop_" + this.be, String(this.td.lop) + ":" + ((this.td.coLech || {}).loai || "")); } catch (e2) { /* không lưu được thì thôi */ }
+      var b = this.k.querySelector(".hcbBaoLech"); if (b) b.remove();
+      return;
     }
     if (hd === "luuHoSo") return this.luuHoSo(n);
     if (hd === "themNhanh") return this.themNhanh(n);
