@@ -12,6 +12,7 @@
 //   #dang-ky-phu-huynh (link "Đăng ký tài khoản phụ huynh" ở màn hình đăng
 //   nhập chung của Cờ Vua) thì hiện thẳng form đăng ký phụ huynh.
 // CẬP NHẬT: 18/11/2026 - KC_03B3: mỗi bé có nút "🎓 Học của con" mở khối dùng chung kc_hoc_cua_be.js
+// CẬP NHẬT: 24/11/2026 18:00 - KC_03C2: hàm gọi của khối Học chuyển tên người gọi sang p_ten cho kc_vi_vang_xem (🪙 của con).
 //   (lớp, thẻ riêng, nhạy cảm, giao thẻ; máy chủ kiểm phụ huynh đã liên kết). Mỗi lúc mở một bé.
 // PHỤ THUỘC: kc_config.js, kc_api.js, kc_auth.js phải nạp TRƯỚC file này.
 //            Lắng nghe sự kiện "kcSanSang" do kc_auth.js bắn ra (hợp đồng ở
@@ -236,7 +237,8 @@ function ttPhMoHoc(dong, nut, tenTre) {
   nut.classList.add("dangMo");
   nut.textContent = "✕ Đóng";
   KcHocCuaBe.mo(khung, { be: tenTre, goi: function (ham, ts) {
-    ts.p_nguoi = kcTaiKhoanHienTai.tenDangNhap; ts.p_ma_phien = kcTaiKhoanHienTai.maPhien;
+    // KC_03C2: ví xu vàng kc_vi_vang_xem nhận người gọi ở p_ten (các RPC kc_hs_* ở p_nguoi)
+    ts[ham === "kc_vi_vang_xem" ? "p_ten" : "p_nguoi"] = kcTaiKhoanHienTai.tenDangNhap; ts.p_ma_phien = kcTaiKhoanHienTai.maPhien;
     return kcGoiRpc(ham, ts);
   } });
 }

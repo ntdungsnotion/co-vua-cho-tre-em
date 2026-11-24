@@ -11,6 +11,8 @@
 .hcbDauSo { display: flex; flex-wrap: wrap; gap: 6px; }
 .hcbChip { padding: 3px 10px; border-radius: 999px; background: var(--mau-chinh-nhat, #EFE9FD); font-size: 0.82rem; font-weight: 600; }
 .hcbChipNhan { background: #fff4d6; color: var(--mau-phu-dam, #8A6100); }
+.hcbChipVang { background: #fff1b8; color: #7a5a00; border: 1px solid #e0b100; } /* KC_03C2 24/11/2026: 🪙 xu vàng */
+.hcbChipVang[hidden] { display: none; }
 .hcbLuoi { display: grid; grid-template-columns: 1fr; gap: 12px; }
 @container (min-width: 900px) { .hcbLuoi { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); } }
 .hcbCot { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
