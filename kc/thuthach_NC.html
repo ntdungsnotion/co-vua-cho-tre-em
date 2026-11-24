@@ -24,6 +24,9 @@
                  phiên với Cờ Vua qua kc_auth.js; tab "Cờ Vua" trên THANH TAB
                  CHUNG ẩn với phụ huynh nhờ data-an-voi-phu-huynh)
        CẬP NHẬT: 18/11/2026 - KC_03B3: nút "🎓 Học của con" ở mỗi bé (kc_hoc_cua_be.js/.css dùng chung với Quản trị).
+       CẬP NHẬT: 24/11/2026 - KC_03C6: khối "🧠 Thử thách tri thức" 4 ô ở đầu trang -> thu_thach_tri_thuc.html (mở 🏆 Chinh phục 30 câu).
+       CẬP NHẬT: 24/11/2026 - KC_03C5: mở ô ⚡ Tốc độ.
+       CẬP NHẬT: 24/11/2026 - KC_03C4: mở ô 📚 Theo môn.
        PHỤ THUỘC: kc_style.css, kc_config.js, kc_api.js, kc_auth.js,
                   kc_ytuong.js, tt_phuhuynh.js (đặt CÙNG THƯ MỤC /kc/).
        GHI CHÚ: định dạng RIÊNG của trang này (khối quy trình 5 bước, khối
@@ -220,6 +223,31 @@
     .ttNutHoc.dangMo { background: #fff; color: var(--mau-chinh-dam); }
     .ttKhungHoc { flex-basis: 100%; margin-top: 8px; padding-top: 10px; border-top: 2px dashed var(--mau-vien); }
     @media (max-width: 520px) { .ttDongTreThongTin { flex-basis: calc(100% - 52px); } .ttNutHoc, .ttNutGoLienKet { flex: 1 1 auto; } }
+    /* KC_03C6: khối "Thử thách tri thức" - 4 ô vào trang thu_thach_tri_thuc.html (điện thoại 2 x 2, máy tính 4 ô một hàng) */
+    #ttTriThuc { max-width: 720px; margin: 14px auto 22px; padding: 16px; background: var(--mau-nen-khoi); border: 2px solid var(--mau-vien);
+      border-radius: var(--bo-tron); box-shadow: var(--do-bong); }
+    #ttTriThuc h2 { margin: 0 0 10px; text-align: center; }
+    .ttttLuoi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .ttttO { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; padding: 14px 8px;
+      border-radius: 16px; border: 2px solid var(--mau-vien); color: var(--mau-chu); text-decoration: none; min-height: 120px; justify-content: center;
+      transition: transform .12s, box-shadow .2s; }
+    .ttttO:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(75,47,176,.15); }
+    .ttttO .ttttBt { font-size: 2.4rem; line-height: 1.1; }
+    .ttttO b { font-family: "Baloo 2", sans-serif; font-size: 1.1rem; }
+    .ttttO small { color: var(--mau-chu-nhat); font-size: .8rem; }
+    .ttttO.m1 { background: #eef6ff; } .ttttO.m2 { background: #fff2fb; } .ttttO.m3 { background: #fff8e6; }
+    .ttttO.m4 { background: linear-gradient(160deg, #f1ecff, #fff1c9); border-color: #ffcf4a; }
+    .ttttO.sapMo { opacity: .6; }
+    .ttttO.sapMo::after { content: "Sắp mở"; position: absolute; top: 6px; right: 6px; background: var(--mau-phu); color: #fff; font-size: .7rem;
+      font-weight: 700; padding: 1px 8px; border-radius: 999px; }
+    .ttttO.moi::after { content: "Mới!"; position: absolute; top: 6px; right: 6px; background: var(--mau-thanh-cong); color: #fff; font-size: .7rem;
+      font-weight: 700; padding: 1px 8px; border-radius: 999px; }
+    @media (min-width: 1024px) {
+      #ttTriThuc { max-width: 1000px; }
+      .ttttLuoi { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+      .ttttO { min-height: 150px; }
+      .ttttO .ttttBt { font-size: 3rem; }
+    }
     /* KC_00E: GIAO DIỆN MÁY TÍNH (>= 1024px) - các khối rộng hơn, chữ to hơn */
     @media (min-width: 1024px) {
       #ttQuyTrinh, #ttGhiChuPhuHuynh, #ttTuongLai, #ttKhuPhuHuynh { max-width: 1000px; }
@@ -280,6 +308,16 @@
 
   <!-- Toàn bộ nội dung chỉ hiện khi đã đăng nhập -->
   <div id="kcNoiDungCanDangNhap" style="display:none;">
+    <!-- KC_03C6 (24/11/2026): khối THỬ THÁCH TRI THỨC (Thiet_Ke_On_The.md 5.1). Mọi tài khoản đều là người chơi. -->
+    <section id="ttTriThuc" aria-label="Thử thách tri thức">
+      <h2>🧠 Thử thách tri thức</h2>
+      <div class="ttttLuoi">
+        <a class="ttttO m1 moi" href="thu_thach_tri_thuc.html#theo_mon"><span class="ttttBt">📚</span><b>Theo môn</b><small>Chọn môn, ôn cho nhớ</small></a>
+        <a class="ttttO m2 sapMo" href="thu_thach_tri_thuc.html#tong_hop"><span class="ttttBt">🌈</span><b>Tổng hợp</b><small>Trộn môn, thưởng × 1,5</small></a>
+        <a class="ttttO m3 moi" href="thu_thach_tri_thuc.html#toc_do"><span class="ttttBt">⚡</span><b>Tốc độ</b><small>60 giây, 10 câu</small></a>
+        <a class="ttttO m4 moi" href="thu_thach_tri_thuc.html#chinh_phuc"><span class="ttttBt">🏆</span><b>Chinh phục 30 câu</b><small>6 chặng, tới 1.500 💎</small></a>
+      </div>
+    </section>
 
     <div class="kcGioiThieu">
       <h2>Thử Thách cùng bố mẹ! 🎉</h2>

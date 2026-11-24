@@ -55,6 +55,12 @@
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
+       CẬP NHẬT: 24/11/2026 - KC_GB1: Quản trị chung › ⏱️ Tính giờ trả lời (qt_gio_bai.js: mọi thông số công thức giờ bài + xem thử + đối chiếu máy chủ).
+       CẬP NHẬT: 24/11/2026 - KC_03C4b: 📚 Theo môn thêm khối 🔊 Âm thanh Theo môn (#qtmAmGoc, qt_kho_tieng.js nhánh "tm", tt_tri_thuc/tt_theo_mon_am.js).
+      CẬP NHẬT: 24/11/2026 - KC_03C4: Thử Thách › 📚 Theo môn (qt_theo_mon.js: thưởng, luật chọn câu chung, thống kê 7 ngày, xem thử bộ câu của một bé, nút sang 🎵 Âm thanh chung).
+      CẬP NHẬT: 24/11/2026 - KC_03C6: Thử Thách › 🏆 Chinh phục 30 câu (qt_chinh_phuc.js: thưởng, độ khó chặng, thống kê 7 ngày).
+       CẬP NHẬT: 24/11/2026 - KC_03C5: Thử Thách › ⚡ Tốc độ (qt_toc_do.js: giây, số câu, thưởng, trừ vàng, thống kê 7 ngày).
+       CẬP NHẬT: 24/11/2026 - KC_03C5c: ⚡ Tốc độ thêm khối 🔊 Âm thanh Tốc độ (#qtdAmGoc, qt_kho_tieng.js nhánh "tdo", tt_tri_thuc/tt_toc_do_am.js).
        BẢO MẬT: đọc phiên chung sessionStorage "coVuaTaiKhoanDangNhap". Kiểm tra
                 vai trò ở trình duyệt chỉ để hiện giao diện; mọi RPC tự kiểm tra
                 admin ở máy chủ (kiem_tra_admin).
@@ -418,6 +424,65 @@
       #qtDuongDan { padding: 0 32px; margin-top: 22px; }
       .adminKhoi { padding: 20px 24px; }
     }
+    /* ----- KC_03C6: 🏆 Chinh phục 30 câu ----- */
+    .qcpHai { display: grid; gap: 16px; }
+    .qcpKhoi { min-width: 0; }
+    .qcpKhoi h4 { margin: 4px 0 8px; font-size: 1.05rem; }
+    .qcpTieuDe { margin: 14px 0 6px; font-weight: 700; font-size: .9rem; }
+    .qcpThuong { display: grid; gap: 6px; }
+    .qcpHang { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; align-items: end; }
+    .qcpChang { grid-column: 1 / -1; font-size: .8rem; font-weight: 700; color: #4b2fb0; }
+    .qcpKho { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+    .qcpO { position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .qcpO small { font-size: .72rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .qcpO input { width: 100%; box-sizing: border-box; padding: 5px 22px 5px 6px; border: 2px solid #ddd6f3; border-radius: 8px; font: inherit; font-size: .9rem; }
+    .qcpO.moc input { background: #fff8e1; border-color: #f4c430; }
+    .qcpO.khac input { border-color: #ff8a00; }
+    .qcpVe { position: absolute; right: 3px; bottom: 4px; border: 0; background: none; cursor: pointer; font-size: .9rem; padding: 0 2px; color: #ff8a00; }
+    #qcpGoc .adminHang { margin-top: 12px; }
+    .qcpTb { min-height: 1.2em; margin: 6px 0 0; color: #1a7f37; font-weight: 600; }
+    .qcpTb.xau, .qcpLoi { color: #c62828; font-weight: 600; }
+    .qcpToi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .qcpToiO { border: 2px solid #ddd6f3; border-radius: 10px; padding: 6px; text-align: center; display: flex; flex-direction: column; }
+    .qcpToiO b { font-size: 1.2rem; }
+    .qcpToiO i { font-style: normal; font-size: .78rem; color: #666; }
+    @media (min-width: 1024px) {
+      .qcpHai { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
+      .qcpToi { grid-template-columns: repeat(6, 1fr); }
+    }
+    /* ----- KC_03C5: ⚡ Tốc độ (dùng chung khung .qcp*) ----- */
+    .qtdMuc { gap: 14px; }
+    .qtdChon { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; cursor: pointer; }
+    .qtdChon input { width: 18px; height: 18px; }
+    .qtdThuong { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+    .qtdPhanBo { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)) !important; }
+    /* KC_03C4: 📚 Theo môn */
+    .qtmCot { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .qtmXtHang { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .qtmXtHang select, .qtmXtHang input { min-height: 40px; }
+    .qtmXt { overflow-x: auto; }
+    /* KC_GB1: ⏱️ Tính giờ trả lời */
+    .qtgLuoi { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .qtgCuon { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .qtgBang { border-collapse: collapse; font-size: .85rem; }
+    .qtgBang th, .qtgBang td { padding: 3px 4px; text-align: center; white-space: nowrap; }
+    .qtgBang th.qtgTen { text-align: left; white-space: normal; min-width: 130px; font-size: .78rem; }
+    .qtgBang .qcpO { width: 62px; }
+    .qtgBang .qcpO input { padding: 4px 2px 4px 4px; text-align: center; }
+    .qtgBang .qcpVe { display: none; }
+    .qtgKetQua th.chon, .qtgKetQua td.chon { background: #fff3cd; font-weight: 700; }
+    .qtgForm { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .qtgF { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .qtgF small { font-size: .72rem; color: #666; }
+    .qtgF input, .qtgF select, .qtgF textarea { width: 100%; box-sizing: border-box; padding: 6px; border: 2px solid #ddd6f3; border-radius: 8px; font: inherit; font-size: .9rem; }
+    .qtgF input[type=checkbox] { width: 22px; height: 22px; }
+    .qtgF:nth-last-child(-n+2) { grid-column: 1 / -1; }
+    .qtgKq { margin-top: 10px; }
+    @media (min-width: 1024px) {
+      .qtgHai { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+      .qtgPhai { position: sticky; top: 12px; }
+    }
+    @media (max-width: 480px) { .qtgForm { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body class="qtTrang">
@@ -468,6 +533,7 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="doithuong" type="button">📦 Đổi thưởng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="ytuong" type="button">💡 Ý tưởng các bé gửi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinhchung" type="button">⚙️ Cấu hình chung</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="giobai-chung" type="button">⏱️ Tính giờ trả lời</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotu" type="button">📖 Kho từ vựng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khocau" type="button">❓ Kho câu hỏi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotrithuc" type="button">📚 Kho tri thức</button>
@@ -509,6 +575,9 @@
       <div class="qtNhom" data-ten-nhom="Thử Thách">
         <div class="qtTenNhom">🎯 Thử Thách</div>
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinh-thuthach" type="button">⚙️ Cấu hình</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="tocdo-thuthach" type="button">⚡ Tốc độ</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="theomon-thuthach" type="button">📚 Theo môn</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="chinhphuc-thuthach" type="button">🏆 Chinh phục 30 câu</button>
       </div>
 
       <div class="qtNhom" data-ten-nhom="Học Tập">
@@ -787,6 +856,14 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <section class="adminManHinh" id="manhinh-giobai-chung"> <!-- KC_GB1 -->
+      <div class="adminKhoi">
+        <h3>⏱️ Tính Giờ Trả Lời (dùng chung cả app)</h3>
+        <p class="adminGhiChu">Mọi số của công thức giờ bài: bé đọc nhanh chậm, nghĩ bao lâu, độ khó câu, mục tiêu bé giỏi / khá / trung bình. Dùng cho Ôn sau trận, 📚 Theo môn và các thử thách có đồng hồ cả bài. Ô viền cam là số đã khác mặc định; đổi xong xem ngay giờ ở khối 🔬 Xem thử trước khi 💾 Lưu. Hệ số k của từng game nằm ở cài đặt riêng của game đó, không đặt ở đây.</p>
+        <div id="qtgGoc"></div>
       </div>
     </section>
 
@@ -1071,6 +1148,40 @@
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <section class="adminManHinh" id="manhinh-tocdo-thuthach">
+      <div class="adminKhoi">
+        <h3>⚡ Tốc Độ</h3>
+        <p class="adminGhiChu">Số giây, số câu, kim cương thưởng theo số câu đúng, xu vàng trừ mỗi câu sai, và số liệu 7 ngày gần nhất. Ô viền cam là số đã khác mặc định.</p>
+        <div id="qtdGoc"></div>
+      </div>
+      <div class="adminKhoi"> <!-- KC_03C5c: âm thanh riêng Tốc độ (qt_kho_tieng.js nhánh "tdo") -->
+        <h3>🔊 Âm thanh Tốc độ</h3>
+        <p class="adminGhiChu">Nhạc nền, đếm ngược, bé nghĩ lâu, gần hết giờ, đúng liên tiếp, hết giờ, kèn kết quả... Bấm một nội dung để nghe, tải file khác lên hoặc chỉnh độ to, số giây. Tiếng đúng / sai / kim cương dùng chung cả app ở 🎵 Âm thanh chung.</p>
+        <div id="qtdAmGoc"></div>
+      </div>
+    </section>
+
+    <section class="adminManHinh" id="manhinh-theomon-thuthach"> <!-- KC_03C4 -->
+      <div class="adminKhoi">
+        <h3>📚 Theo Môn</h3>
+        <p class="adminGhiChu">Kim cương tối đa mỗi 10 câu, xu vàng mỗi câu đúng, luật chọn câu (kiến thức mới / đến hạn ôn), số liệu 7 ngày và xem thử bộ câu một bé sẽ gặp. Ô viền cam là số đã khác mặc định.</p>
+        <div id="qtmGoc"></div>
+      </div>
+      <div class="adminKhoi"> <!-- KC_03C4b: âm thanh + nhịp riêng Theo môn (qt_kho_tieng.js nhánh "tm") -->
+        <h3>🔊 Âm thanh Theo môn</h3>
+        <p class="adminGhiChu">Nhạc sôi động lúc bé đọc câu, chuông tích tắc lúc chờ trả lời, tiếng hiện đáp án / bình luận / sang câu, và các mốc giây (đọc câu bao lâu, bình luận bao lâu). Bấm một nội dung để nghe, tải file khác lên hoặc chỉnh.</p>
+        <div id="qtmAmGoc"></div>
+      </div>
+    </section>
+
+    <section class="adminManHinh" id="manhinh-chinhphuc-thuthach">
+      <div class="adminKhoi">
+        <h3>🏆 Chinh Phục 30 Câu</h3>
+        <p class="adminGhiChu">Thưởng kim cương theo số câu đúng, độ khó từng chặng và số liệu 7 ngày gần nhất. Ô viền cam là số đã khác mặc định.</p>
+        <div id="qcpGoc"></div>
       </div>
     </section>
 
@@ -1648,6 +1759,13 @@
   <script src="qt_dau_truong.js"></script>   <!-- 🎛️ Thông số -->
   <script src="qt_dt_tai_khoan.js"></script> <!-- 👤 Tài khoản -->
   <script src="kc_hoc_cua_be.js"></script>   <!-- KC_03B3: khối Học của con dùng chung -->
+  <script src="qt_chinh_phuc.js"></script>  <!-- KC_03C6: 🏆 Chinh phục 30 câu -->
+  <script src="tt_tri_thuc/tt_toc_do_am.js"></script>
+  <script src="tt_tri_thuc/tt_theo_mon_am.js"></script> <!-- KC_03C4b: âm thanh Theo môn (nghe thử ở 🔊 Âm thanh Theo môn) --> <!-- KC_03C5c: âm thanh Tốc độ (nghe thử ở 🔊 Âm thanh Tốc độ) -->
+  <script src="qt_toc_do.js"></script>      <!-- KC_03C5: ⚡ Tốc độ -->
+  <script src="qt_theo_mon.js"></script>    <!-- KC_03C4: 📚 Theo môn -->
+  <script src="chung/gio_bai.js"></script>  <!-- KC_GB1: module giờ bài chung (xem thử) -->
+  <script src="qt_gio_bai.js"></script>     <!-- KC_GB1: ⏱️ Tính giờ trả lời -->
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
 </body>

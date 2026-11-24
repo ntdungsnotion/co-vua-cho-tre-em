@@ -1,0 +1,25 @@
+{
+  "_ghiChu": "CÀI ĐẶT ÂM THANH RIÊNG của ⚡ Tốc độ (KC_03C5c, 24/11/2026). Tiếng đúng / sai / kim cương KHÔNG ở đây: dùng Âm thanh chung (kc/chung/du_lieu/cau_hinh_am_thanh_chung.json). Đây là MẶC ĐỊNH; phần quản trị sửa lưu ở Supabase (kc_dt_qt_cau_hinh, tên 'cau_hinh_am_thanh_toc_do'), trộn từng khoá lên file này. Sửa ở Quản trị › 🎯 Thử Thách › ⚡ Tốc độ › 🔊 Âm thanh.",
+  "_ghiChuTieng": "tieng: mỗi tiếng một dòng. nhom = nhóm trong cây quản trị (vao / choi / ket); bat = có kêu; amLuong = độ to cả nội dung (0-2); file = mã file tải lên 'kho_<số>' ('' = tiếng tự tạo); amTep = độ to riêng của file; kieu = 'thay' (có file thì chỉ phát file) | 'chong' (file + tiếng tự tạo); tre = chờ bao nhiêu giây rồi file mới kêu.",
+  "_ghiChuNhac": "nhac.nen = file nhạc nền ('' = nhạc trống tự tạo nếu nhacNen.tuTao, không thì im). nhacNen.nhanhDan = nhạc nhanh dần khi gần hết giờ. amLuong.nhac = độ to nhạc nền, amLuong.tieng = độ to mọi tiếng riêng của Tốc độ.",
+  "_ghiChuHoiHop": "hoiHop: nghiLauGiay = bé chưa chọn sau chừng này giây thì kêu 'nghĩ lâu' (0 = tắt); nhacLaiGiay = còn nghĩ tiếp thì nhắc lại sau chừng này giây (0 = chỉ một lần); nhanhDanGiay = còn chừng này giây thì nhạc lên nhịp lần 1; ganHetGioGiay = còn chừng này giây thì tích tắc từng giây + nhạc lên nhịp lần 2 (nửa số này: lần 3).",
+  "phienBan": 1,
+  "amLuong": { "tieng": 1, "nhac": 0.35 },
+  "nhac": { "nen": "" },
+  "nhacNen": { "tuTao": true, "nhanhDan": true },
+  "hoiHop": { "nghiLauGiay": 6, "nhacLaiGiay": 4, "nhanhDanGiay": 20, "ganHetGioGiay": 10 },
+  "tieng": {
+    "demNguoc":      { "nhom": "vao",  "ten": "🚦 Đếm ngược 3-2-1", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "batDau":        { "nhom": "vao",  "ten": "🏁 Bắt đầu!", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "nghiLau":       { "nhom": "choi", "ten": "🤔 Bé nghĩ lâu (nhắc nhẹ)", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "ganHetGio":     { "nhom": "choi", "ten": "⏳ Gần hết giờ (tích tắc mỗi giây)", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "lenNhip":       { "nhom": "choi", "ten": "🌪️ Nhạc lên nhịp", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "dungLienTiep":  { "nhom": "choi", "ten": "🔥 Đúng liên tiếp (từ câu thứ 3)", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "boQua":         { "nhom": "choi", "ten": "⏭ Bỏ qua câu", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "hetGio":        { "nhom": "ket",  "ten": "⏰ Hết giờ", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "trongCuon":     { "nhom": "ket",  "ten": "🥁 Chờ chấm điểm (trống cuộn)", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "kenGioi":       { "nhom": "ket",  "ten": "🎺 Kết quả: đúng hết", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "kenKha":        { "nhom": "ket",  "ten": "🎺 Kết quả: đúng từ một nửa", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "kenNhe":        { "nhom": "ket",  "ten": "🎺 Kết quả: dưới một nửa", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 }
+  }
+}

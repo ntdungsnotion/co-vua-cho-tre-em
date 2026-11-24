@@ -1,0 +1,20 @@
+{
+  "_ghiChu": "CÀI ĐẶT ÂM THANH + NHỊP RIÊNG của 📚 Theo môn (KC_03C4b, 24/11/2026). Tiếng đúng / sai / kim cương KHÔNG ở đây: dùng Âm thanh chung. Đây là MẶC ĐỊNH; phần quản trị sửa lưu ở Supabase (kc_dt_qt_cau_hinh, tên 'cau_hinh_am_thanh_theo_mon'), trộn từng khoá lên file này. Sửa ở Quản trị › 🎯 Thử Thách › 📚 Theo môn › 🔊 Âm thanh.",
+  "_ghiChuTieng": "tieng: mỗi tiếng một dòng. nhom = nhóm trong cây quản trị (doc / cho / binh); bat = có kêu; amLuong = độ to cả nội dung (0-2); file = mã file tải lên 'kho_<số>' ('' = tiếng tự tạo); amTep = độ to riêng của file; kieu = 'thay' | 'chong'; tre = chờ bao nhiêu giây rồi file mới kêu.",
+  "_ghiChuNhac": "nhac.doc = file nhạc phát lúc đọc câu ('' = nhạc tự tạo nhanh, sôi động nếu nhacNen.tuTao). amLuong.nhac = độ to nhạc; amLuong.nhacKhiDoc = nhạc còn bấy nhiêu phần khi máy đọc thành tiếng.",
+  "_ghiChuNhip": "nhip: docThanhTieng = máy đọc câu hỏi thành tiếng; docDenLop = chỉ đọc cho bé từ lớp này trở xuống (12 = mọi bé); docGiayToiThieu / docGiayToiDa = thời gian đọc ít nhất / nhiều nhất trước khi hiện đáp án; docChuMoiGiay = bé đọc bấy nhiêu chữ mỗi giây (tính giờ đọc khi không đọc thành tiếng); binhLuanThanhTieng = đọc lời bình luận; binhLuanGiayDung / binhLuanGiaySai = bình luận đứng bấy nhiêu giây rồi tự sang câu (0 = chờ bé bấm); ticTacSau = chờ bấy nhiêu giây sau khi hiện đáp án rồi mới tích tắc.",
+  "phienBan": 1,
+  "amLuong": { "tieng": 1, "nhac": 0.35, "nhacKhiDoc": 0.45 },
+  "nhac": { "doc": "" },
+  "nhacNen": { "tuTao": true },
+  "nhip": {
+    "docThanhTieng": true, "docDenLop": 12, "docGiayToiThieu": 2.5, "docGiayToiDa": 15, "docChuMoiGiay": 3,
+    "binhLuanThanhTieng": true, "binhLuanGiayDung": 4, "binhLuanGiaySai": 8, "ticTacSau": 0
+  },
+  "tieng": {
+    "hienDapAn":  { "nhom": "doc",  "ten": "✨ Hiện 4 đáp án", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "ticTac":     { "nhom": "cho",  "ten": "⏱️ Chuông tích tắc lúc chờ trả lời", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "binhLuan":   { "nhom": "binh", "ten": "💬 Mở bình luận", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 },
+    "sangCau":    { "nhom": "binh", "ten": "⏭ Sang câu mới", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "thay", "tre": 0 }
+  }
+}
