@@ -28,6 +28,7 @@
                            (cài đặt, mặc định 6; lớp chưa biết thì không nói). Lời + tiếng + giọng đọc theo cài đặt chung
                            (kc/chung/du_lieu/cau_hinh_am_thanh_chung.json + phần sửa ở Quản trị › 🔊 Âm thanh chung).
      taiCauHinh() / datCauHinh(c) / cauHinh()        nạp lại / đặt thẳng (Quản trị nghe thử) / xem cài đặt đang dùng
+     urlTep(ma)                                      KC_03C5c: "kho_<id>" -> địa chỉ file tải lên (null nếu chưa nạp / không có)
    NỀN: Web Speech API + Web Audio API (có sẵn trong trình duyệt, không thư viện ngoài).
    BƯỚC: KC_09A
    NGÀY: 21/11/2026
@@ -391,8 +392,10 @@
     docCau, coDoc, coAmThanh, phanTich, doc, dung, tieng, phatTep,
     phanHoi, taiCauHinh, datCauHinh, cauHinh: () => ch, _chonLoi: chonLoi, _khoUrl: khoUrl,
     dangBat: () => bat, datBat,
+    urlTep: urlFile, // KC_03C5c: mã file kho "kho_<id>" -> địa chỉ (sau taiCauHinh); game có âm thanh riêng dùng chung kho file
     dangDoc: () => !!dangNoi,
     _thongKe: thongKe, _muonTrangNgoai: cs !== goc
   };
 })(typeof window !== "undefined" ? window : globalThis);
 // 21/11/2026 - BƯỚC: KC_09A (tạo mới: module âm thanh chung toàn app)
+// 24/11/2026 - BƯỚC: KC_03C5c (xuất urlTep cho âm thanh riêng của game, vd ⚡ Tốc độ)

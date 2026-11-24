@@ -8,7 +8,7 @@
 //     số câu ngắn mỗi môn (môn nào chưa đủ câu thì bé thấy mờ).
 //   Điện thoại: 1 cột. Máy tính: cấu hình + thống kê 2 cột (dùng chung khung .qcp* của Chinh phục).
 // RPC: kc_tt_admin_cau_hinh_doc, kc_tt_admin_cau_hinh_luu (nhóm toc_do), kc_tdo_admin_thong_ke (SQL repo_rieng supabase_kc03c5_toc_do.sql).
-// PHỤ THUỘC: ../admin_NC.js (adminGoiRpc, adminBaoTin), sự kiện "adminDaChuyenManHinh".
+// PHỤ THUỘC: ../admin_NC.js (adminGoiRpc, adminBaoTin), sự kiện "adminDaChuyenManHinh"; qt_kho_tieng.js (QKT_CAY, khối 🔊 Âm thanh, KC_03C5c).
 // BƯỚC: KC_03C5 - NGÀY: 24/11/2026
 // ================================================================
 (function () {
@@ -29,6 +29,9 @@
 
   document.addEventListener("adminDaChuyenManHinh", function (e) {
     if (e.detail && e.detail.ten === MAN && !S.daTai) { S.daTai = true; tai(); }
+    // KC_03C5c: khối 🔊 Âm thanh Tốc độ (cây nội dung dùng chung qt_kho_tieng.js, nhánh "tdo")
+    var am = document.getElementById("qtdAmGoc");
+    if (e.detail && e.detail.ten === MAN && am && window.QKT_CAY) window.QKT_CAY.gan(am, { nhanh: "tdo" });
   });
 
   function tai() {
@@ -179,3 +182,4 @@
   }
 })();
 // 24/11/2026 - BƯỚC: KC_03C5 (tạo mới)
+// 24/11/2026 - BƯỚC: KC_03C5c (gắn khối 🔊 Âm thanh Tốc độ)

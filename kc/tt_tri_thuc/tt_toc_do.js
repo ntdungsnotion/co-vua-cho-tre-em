@@ -12,7 +12,9 @@
               Máy tính (≥ 900 px): 3 cột: vòng đồng hồ lớn bên trái | câu + đáp án | 10 ô kết quả; phím 1-4 chọn, Space bỏ qua.
    DÙNG:      KC_TDO.gan(phanTu, { ten, maPhien, goiRpc(ten, thamSo) -> Promise<json> })
    RPC:       kc_tdo_trang_chu, kc_tdo_bat_dau, kc_tdo_ket_thuc (SQL repo_rieng supabase_kc03c5_toc_do.sql).
-   ÂM THANH:  tt_toc_do_am.js (KC_TDO_AM, KC_03C5b): nhạc nền dồn dập dần theo giờ còn, combo đúng liền, trống cuộn, kèn kết quả; nút 🔊/🔇.
+   ÂM THANH:  đúng / sai / 💎: module chung KC_AM_THANH (Quản trị › 🎵 Âm thanh chung). Tiếng riêng Tốc độ: tt_toc_do_am.js
+              (KC_TDO_AM, chỉnh ở Quản trị › ⚡ Tốc độ › 🔊 Âm thanh): nhạc nền nhanh dần, đếm ngược, bé nghĩ lâu, gần hết giờ,
+              đúng liên tiếp, bỏ qua, hết giờ, trống cuộn, kèn kết quả; nút 🔊/🔇.
    PHỤ THUỘC: chung/am_thanh.js (KC_AM_THANH: tiếng đúng / sai / thưởng, đọc luật). Dùng lại nút .cpNut của tt_chinh_phuc.css.
    BƯỚC: KC_03C5
    NGÀY: 24/11/2026
@@ -49,6 +51,7 @@
     const S = { ten: tc.ten, maPhien: tc.maPhien, goi: tc.goiRpc, tc: null, mon: "", luot: null, m: null, dong: true };
     const KHOA_DANG = "kc_tdo_dang_" + String(S.ten || "").toLowerCase();
     const KHOA_CHO = "kc_tdo_cho_" + String(S.ten || "").toLowerCase();
+    AMT.taiCauHinh(); // KC_03C5c: nạp sẵn cài đặt âm thanh riêng (mặc định + Quản trị sửa) lúc vào sảnh
     S.mon = docLS("kc_tdo_mon_" + String(S.ten || "").toLowerCase()) || "";
 
     function rpc(ten, ts) {
@@ -287,7 +290,7 @@
       for (const x of ["3", "2", "1", "Bắt đầu!"]) {
         if (S.dong) return;
         c.innerHTML = ""; const b = tao("div", "tdSo3", x); c.appendChild(b);
-        AMT.dem(x.length === 1 ? Number(x) : 0);
+        if (x.length === 1) AMT.phat("demNguoc", Number(x)); else AMT.phat("batDau");
         await ngu(x.length === 1 ? 650 : 450);
       }
       S.m.querySelector(".tdDay").hidden = false;
@@ -308,7 +311,13 @@
         S.m.classList.toggle("cam", con <= 10 && con > 5); S.m.classList.toggle("do", con <= 5);
         const giay = Math.ceil(con);
         AMT.muc(con);
-        if (giay <= 10 && giay > 0 && giay !== S.tich) { S.tich = giay; AMT.tich(giay); }
+        const hh = AMT.hoiHop();
+        if (giay <= hh.ganHetGioGiay && giay > 0 && giay !== S.tich) { S.tich = giay; AMT.phat("ganHetGio", giay); }
+        // bé nghĩ lâu: chưa chạm sau nghiLauGiay giây -> nhắc nhẹ; còn nghĩ tiếp thì nhắc lại mỗi nhacLaiGiay giây
+        if (hh.nghiLauGiay > 0 && !S.khoa && S.tCau) {
+          const nghi = (Date.now() - S.tCau) / 1000, moc = hh.nghiLauGiay + S.soNhac * (hh.nhacLaiGiay > 0 ? hh.nhacLaiGiay : Infinity);
+          if (nghi >= moc && giay > hh.ganHetGioGiay) { S.soNhac++; AMT.phat("nghiLau"); }
+        }
         if (con <= 0) { hetGio(); return; }
         S.raf = goc.requestAnimationFrame(buoc);
       };
@@ -335,7 +344,7 @@
       const l = S.luot, vt = l.tl.length;
       if (vt >= l.soCau) { ketThuc(false); return; }
       const cau = l.cau[vt], s = S.m.querySelector(".tdCau");
-      S.khoa = false;
+      S.khoa = false; S.tCau = Date.now(); S.soNhac = 0;
       s.innerHTML = ""; s.className = "tdCau vao"; s.dataset.vt = String(vt);
       const nh = tao("div", "tdNhan");
       if (cau.monTen) nh.appendChild(tao("span", "tdNhanMon", (cau.monBieuTuong || "") + " " + cau.monTen));
@@ -373,9 +382,10 @@
         const b = s.querySelector('.tdDa[data-i="' + i + '"]');
         if (b) b.classList.add(ok === true ? "dung" : ok === false ? "sai" : "da");
         if (ok === false && dsDung.length) { const bd = s.querySelector('.tdDa[data-i="' + dsDung[0] + '"]'); if (bd) bd.classList.add("laDung"); }
-        if (ok === true) { S.combo++; AMT.dung(S.combo); if (S.combo >= 3) veCombo(S.combo); }
-        else { S.combo = 0; if (ok === false) AMT.sai(); else tieng.kc(0); }
-      } else { s.classList.add("boQua"); S.combo = 0; AMT.boQua(); }
+        // đúng / sai: âm thanh CHUNG toàn app (Quản trị › 🎵 Âm thanh chung); combo: tiếng riêng Tốc độ
+        if (ok === true) { S.combo++; tieng.dung(); if (S.combo >= 3) { AMT.phat("dungLienTiep", S.combo); veCombo(S.combo); } }
+        else { S.combo = 0; if (ok === false) tieng.sai(); else tieng.kc(0); }
+      } else { s.classList.add("boQua"); S.combo = 0; AMT.phat("boQua"); }
       veDem();
       setTimeout(() => { if (S.dong || S.xong) return; if (l.tl.length >= l.soCau) ketThuc(false); else veCau(); }, ok === false ? 380 : 250);
     }
@@ -390,7 +400,7 @@
     function hetGio() {
       if (S.xong) return;
       S.xong = true;
-      AMT.hetGio();
+      AMT.dungNhac(true); AMT.phat("hetGio");
       const h = tao("div", "tdHetGio"); h.append(tao("span", "", "⏰"), tao("b", "", "Hết giờ!"));
       S.m.appendChild(h);
       setTimeout(() => { h.remove(); ketThuc(false); }, 1100);
@@ -423,7 +433,7 @@
       s.appendChild(tao("p", "tdTai", bo ? "Đang dừng lượt…" : "Cô Cú đang chấm lại… 🦉"));
       S.m.querySelector(".tdDay").hidden = true;
       AMT.dungNhac(false);
-      if (!bo) AMT.trongCuon();
+      if (!bo) AMT.phat("trongCuon");
       // chờ chấm ít nhất ~1,2 giây cho trống cuộn hồi hộp, rồi mới mở kết quả
       const [kq] = await Promise.all([rpcBen("kc_tdo_ket_thuc", { p_luot: l.id, p_tra_loi: ds, p_bo: !!bo }, 3), ngu(bo ? 0 : 1200)]);
       ghiLS(KHOA_DANG, null);
@@ -502,7 +512,8 @@
         xl.forEach(x => { const e = li[x.viTri]; if (e && x.kieu === "sai") { e.className = "sai"; e.querySelector(".tdDsChu").textContent = "✘ sai"; } });
       }
       // hiệu ứng: 💎 đếm lên
-      AMT.ketQua(kq.soDung || 0, l.soCau);
+      const ty = l.soCau ? (kq.soDung || 0) / l.soCau : 0;
+      AMT.phat(ty >= 1 ? "kenGioi" : ty >= 0.5 ? "kenKha" : "kenNhe");
       const dem0 = performance.now(), dai = Math.min(1600, 500 + kc * 120);
       const iv = setInterval(() => {
         const t = Math.min(1, (performance.now() - dem0) / dai);
@@ -561,3 +572,4 @@
 })(typeof window !== "undefined" ? window : globalThis);
 // 24/11/2026 - BƯỚC: KC_03C5 (tạo mới: màn Tốc độ, 2 khổ)
 // 24/11/2026 - BƯỚC: KC_03C5b (âm thanh hồi hộp: nhạc nền dồn dập, combo, trống cuộn, kèn, nút tắt tiếng)
+// 24/11/2026 - BƯỚC: KC_03C5c (đúng / sai dùng âm thanh chung; tiếng riêng theo cài đặt Quản trị; bé nghĩ lâu; gần hết giờ theo số giây cài đặt)
