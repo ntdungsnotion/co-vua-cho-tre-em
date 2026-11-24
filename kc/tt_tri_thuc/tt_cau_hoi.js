@@ -19,7 +19,8 @@
                          bình luận đúng / sai + lời giải + nút "⏭ Bỏ qua"; không có thì như cũ)
               }) -> Promise<{ ketQua | null, dong: "xong" | "bo" | "loi" | ma của nutThem }>
    CẦN NẠP TRƯỚC: chung/gio_bai.js (KC_GIO_BAI: trừ 💎 theo giờ, module chung toàn app).
-   BƯỚC: TC_D34B (phần 2: dùng module giờ chung); KC_03C4 (nutThem, loiMoDau, 🪙 xu vàng mỗi câu đúng); KC_03C4b (sanKhau)
+   BƯỚC: TC_D34B (phần 2: dùng module giờ chung); KC_03C4 (nutThem, loiMoDau, 🪙 xu vàng mỗi câu đúng); KC_03C4b (sanKhau);
+              KC_03C7 (Tổng hợp: 💎 đang chạy × heSo của lượt, khoản "🌈 Thưởng Tổng hợp × 1,5")
    NGÀY: 20/11/2026 · sửa 24/11/2026
    ================================================================ */
 (function (goc) {
@@ -27,7 +28,7 @@
   const doc = goc.document;
   const ngu = ms => new Promise(r => setTimeout(r, ms));
   const tao = (the, lop, chu) => { const e = doc.createElement(the); if (lop) e.className = lop; if (chu != null) e.textContent = chu; return e; };
-  const TEN_KHOAN = { hoan_thanh: "Hoàn thành", gioi: "Giỏi", thuoc_moi: "Thuộc mới", nhan_tong_hop: "Tổng hợp", toi_da: "Tối đa", sai: "Sai", thoi_gian: "⏱ Thời gian" };
+  const TEN_KHOAN = { hoan_thanh: "Hoàn thành", gioi: "Giỏi", thuoc_moi: "Thuộc mới", nhan_tong_hop: "🌈 Thưởng Tổng hợp", toi_da: "Tối đa", sai: "Sai", thoi_gian: "⏱ Thời gian" };
   const soVi = x => String(Math.round(x * 10) / 10).replace(".", ",");
   const DONG_VIEN = ["Con đã cố gắng rồi! Lần sau mình nhớ thêm nhé 🦉", "Sai là để nhớ lâu hơn. Cô Cú tin con! 🦉", "Từng chút một, con giỏi lên mỗi ngày 🦉"];
 
@@ -64,7 +65,7 @@
       // TC_D34B (người dùng 20/11/2026 13:21): ĐỒNG HỒ cả bài, chỉ chạy lúc câu đang mở. giayTong = a, giayGioi = t0 (máy chủ tính
       // theo số chữ, độ khó, lớp của bé). 0 → t0: đủ 💎; t0 → a: cứ (a − t0) / tối đa giây trừ 1 💎; hết giờ: 0 💎, vẫn ôn tiếp.
       // 💎 còn nhận = tối đa − trừ × số câu gốc sai − phần trừ theo giờ (máy chủ tính lại khi kết thúc).
-      const taoDh = l => (l && l.giayTong > 0 ? { tong: +l.giayTong, gioi: Math.max(0, Math.min(+l.giayGioi || 0, +l.giayTong - 1)), daDung: +l.giayDaDung || 0, kcToiDa: Number.isFinite(+l.kcToiDa) && l.kcToiDa != null ? +l.kcToiDa : null, tru: +l.truMoiSai || 0 } : null);
+      const taoDh = l => (l && l.giayTong > 0 ? { tong: +l.giayTong, gioi: Math.max(0, Math.min(+l.giayGioi || 0, +l.giayTong - 1)), daDung: +l.giayDaDung || 0, kcToiDa: Number.isFinite(+l.kcToiDa) && l.kcToiDa != null ? +l.kcToiDa : null, tru: +l.truMoiSai || 0, heSo: +l.heSo > 0 ? +l.heSo : 1 } : null);
       let dh = taoDh(luot), dhChay = false, dhHen = 0, dhBaoHet = false;
       const lichSu = []; // câu đã trả lời trong lần mở màn này (xem lại đáp án + lời giải ở màn nhận thưởng)
       let tong = luot.tong, viTri = luot.viTri, cau = luot.cau, chon = -1, luc0 = 0, dangGui = false, daCham = null, dong = false;
@@ -119,7 +120,8 @@
           const sai = daTraLoi.filter(x => x && !x.dung && !x.hoiLai).length;
           // mỗi câu sai trừ trước, rồi trừ theo giờ bằng module chung chung/gio_bai.js (trước t0 không trừ; hết giờ = 0 💎)
           const truoc = Math.max(0, dh.kcToiDa - dh.tru * sai);
-          kcO.querySelector("b").textContent = String(goc.KC_GIO_BAI.kcSauGio(truoc, dh.kcToiDa, giayDung(), dh.gioi, dh.tong));
+          // KC_03C7: Tổng hợp nhân hệ số (1,5) sau cùng, làm tròn xuống, như máy chủ
+          kcO.querySelector("b").textContent = String(Math.floor(goc.KC_GIO_BAI.kcSauGio(truoc, dh.kcToiDa, giayDung(), dh.gioi, dh.tong) * dh.heSo));
         }
         if (con <= 0 && !dhBaoHet && !goc0.classList.contains("ketQua")) { dhBaoHet = true; o.dataset.het = "1"; coCu("⏰ Hết giờ rồi! Lần này không có 💎, con ôn tiếp cho nhớ nhé"); tieng.tram(); }
       }
@@ -428,7 +430,7 @@
         (k.khoan || []).forEach(x => {
           if (!x || (x.ma !== "hoan_thanh" && x.ma !== "toi_da" && x.ma !== "thoi_gian" && !x.kc)) return;
           const ten = x.ma === "sai" ? "Sai " + (x.so || 0) + " câu" : x.ma === "thoi_gian" && x.giayTong ? TEN_KHOAN.thoi_gian + " " + soVi(Math.min(x.giay, x.giayTong)) + " / " + x.giayTong + " giây"
-            : (TEN_KHOAN[x.ma] || x.ma) + (x.so ? " × " + x.so : "");
+            : (TEN_KHOAN[x.ma] || x.ma) + (x.so ? " × " + soVi(x.so) : "");
           const kc = x.kc || 0, li = tao("li", kc < 0 ? "tru" : ""); li.append(tao("span", "", ten), tao("b", "", (kc < 0 ? "−" + -kc : "+" + kc) + " 💎"));
           ds.appendChild(li);
         });

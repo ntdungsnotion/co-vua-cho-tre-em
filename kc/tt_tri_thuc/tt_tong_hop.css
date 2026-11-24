@@ -1,0 +1,69 @@
+/* ================================================================
+   FILE: tt_tri_thuc/tt_tong_hop.css
+   CHỨC NĂNG: Giao diện sảnh 🌈 Tổng hợp (tt_tong_hop.js) + VÒNG QUAY MÔN. Dùng lại bố cục .tm* của tt_theo_mon.css
+              (lượt dở, số câu, luật, thưởng, bé, nút), chỉ đổi màu cầu vồng và thêm vòng quay.
+              Điện thoại (< 900 px): 1 cột, vòng quay ~ 270 px, nút Quay dính đáy. Máy tính (≥ 900 px): trái vòng quay to
+              (~ 380 px) + dải môn | phải khung số câu + luật + thưởng (dính khi cuộn).
+              Màn quay phủ toàn trang (.thQuay): vòng quay to giữa màn, kim chỉ ở trên, dừng ở môn máy chủ đã bốc.
+   BƯỚC: KC_03C7
+   NGÀY: 24/11/2026
+   ================================================================ */
+.thSanh .tmDau { background: linear-gradient(120deg, #ff5fa2 0%, #ff9a3c 30%, #ffd23f 52%, #3ccf8e 74%, #3d8cff 100%); box-shadow: 0 10px 26px rgba(255,95,162,.25); }
+.thSanh .tmTieuDe h2, .thSanh .tmTieuDe p { text-shadow: 0 1px 3px rgba(120,20,70,.45); }
+.thSanh .tmNutBatDau { background: linear-gradient(180deg, #ff74b0, #ff4f97) !important; box-shadow: 0 6px 0 #c92d6f !important; }
+.thSanh .tmThO.kc b small { font-size: .7em; }
+
+/* ---------- khối vòng quay ở sảnh ---------- */
+.thKhoiQuay { background: #fff; border: 2px solid #ffd9ec; border-radius: 22px; padding: 14px; text-align: center; }
+.thKhoiQuay h3 { margin: 0 0 4px; font-size: 1.15rem; }
+.thKhoiQuay > p { margin: 0 0 10px; color: var(--tm-nhat); font-size: .92rem; }
+.thVong { --th-co: 270px; position: relative; width: var(--th-co); height: var(--th-co); margin: 6px auto 12px; }
+.thDia { position: absolute; inset: 0; border-radius: 50%; border: 6px solid #fff; box-shadow: 0 0 0 4px #ffb3d4, 0 10px 26px rgba(201,45,111,.22);
+  will-change: transform; }
+.thDia.quay { transition: transform var(--th-giay, 3.4s) cubic-bezier(.12,.72,.18,1); }
+.thO { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.thO span { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); font-size: calc(var(--th-co) * .11); line-height: 1;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.18)); }
+.thTam { position: absolute; left: 50%; top: 50%; width: 22%; height: 22%; transform: translate(-50%, -50%); border-radius: 50%; background: #fff;
+  box-shadow: 0 3px 10px rgba(0,0,0,.18); display: grid; place-items: center; font-size: calc(var(--th-co) * .1); z-index: 2; }
+.thKim { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); width: 0; height: 0; z-index: 3;
+  border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 30px solid #e5484d; filter: drop-shadow(0 3px 2px rgba(0,0,0,.25)); }
+.thSanh .thDia { animation: thLac 6s ease-in-out infinite; }
+@keyframes thLac { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+.thDaiMon { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.thDaiMon span { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: #fff5fa; border: 2px solid #ffd9ec;
+  font-size: .85rem; font-weight: 600; }
+.thDaiMon span b { color: #c92d6f; font-size: .78rem; }
+.thMeo { margin: 10px 0 0; font-size: .85rem; color: var(--tm-nhat); }
+
+/* ---------- màn quay (phủ toàn trang) ---------- */
+.thQuay { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px;
+  background: radial-gradient(circle at 50% 40%, #fff6fb 0%, #ffe3f1 45%, #f3e7ff 100%); }
+.thQuayBo { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 520px; width: 100%; text-align: center; color: #22304a; }
+.thQuayBo h2 { margin: 0; font-size: 1.5rem; }
+.thQuay .thVong { --th-co: min(78vw, 360px); }
+.thKetQua { min-height: 3.2em; font-family: "Baloo 2", sans-serif; font-size: 1.6rem; font-weight: 800; line-height: 1.15; opacity: 0; transform: scale(.6);
+  transition: opacity .25s, transform .35s cubic-bezier(.2,1.6,.4,1); }
+.thKetQua.hien { opacity: 1; transform: scale(1); }
+.thKetQua small { display: block; font-family: "Be Vietnam Pro", sans-serif; font-size: .95rem; font-weight: 600; color: #66728c; }
+.thPhao { position: fixed; top: -20px; font-size: 1.4rem; pointer-events: none; animation: thRoi 1.6s ease-in forwards; z-index: 61; }
+@keyframes thRoi { to { transform: translateY(105vh) rotate(540deg); opacity: .2; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .thSanh .thDia { animation: none; }
+  .thDia.quay { transition-duration: .9s; }
+  .thPhao { display: none; }
+}
+
+/* ---------- máy tính ---------- */
+@media (min-width: 900px) {
+  .thKhoiQuay { padding: 20px; }
+  .thVong { --th-co: 360px; }
+  .thQuay .thVong { --th-co: min(60vh, 440px); }
+  .thQuayBo { max-width: 640px; }
+  .thQuayBo h2 { font-size: 1.9rem; }
+}
+@media (min-width: 900px) and (max-height: 700px) {
+  .thVong { --th-co: 280px; }
+}
+/* 24/11/2026 - BƯỚC: KC_03C7 (tạo mới) */
