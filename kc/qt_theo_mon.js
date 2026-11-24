@@ -55,6 +55,7 @@
       var hai = tao("div", "qcpHai");
       var trai = tao("div", "qtmCot");
       trai.appendChild(veThuong());
+      trai.appendChild(veHeSoK());
       trai.appendChild(veChung());
       hai.appendChild(trai);
       var phai = tao("div", "qtmCot");
@@ -88,7 +89,7 @@
     w.append(tao("small", "", ten), i, nut); to();
     return w;
   }
-  function hangLuu(k, nhom, tenNhom, thuGom) {
+  function hangLuu(k, nhom, tenNhom, thuGom, veMd) {
     var tb = tao("p", "qcpTb"); tb.setAttribute("aria-live", "polite");
     var h = tao("div", "adminHang");
     var luu = tao("button", "adminNut adminNutThanhCong", "💾 Lưu"); luu.type = "button";
@@ -108,7 +109,7 @@
       if (r.loi) { tb.className = "qcpTb xau"; tb.textContent = "⚠️ " + r.loi; return; }
       gui(r.gv);
     });
-    ve.addEventListener("click", function () { if (window.confirm("Đưa mọi số của " + tenNhom + " về mặc định?")) gui({}); });
+    ve.addEventListener("click", function () { if (window.confirm("Đưa mọi số của " + tenNhom + " về mặc định?")) gui(veMd ? veMd() : {}); });
   }
 
   // ---------------- ⚙️ THƯỞNG THEO MÔN ----------------
@@ -118,8 +119,7 @@
     var md = S.md.theo_mon, d = S.dang.theo_mon;
     var luoi = tao("div", "qcpKho");
     luoi.append(oSo(d.kc_toi_da_10, md.kc_toi_da_10, "💎 tối đa / 10 câu", "kc_toi_da_10"),
-      oSo(d.vang_moi_cau_dung, md.vang_moi_cau_dung, "🪙 mỗi câu đúng", "vang_moi_cau_dung"),
-      oSo(d.he_so_k, md.he_so_k, "Hệ số giờ k (0,3-3)", "he_so_k", "0.05"));
+      oSo(d.vang_moi_cau_dung, md.vang_moi_cau_dung, "🪙 mỗi câu đúng", "vang_moi_cau_dung"));
     k.appendChild(luoi);
     var vd = tao("p", "adminGhiChu");
     function capVd() {
@@ -134,12 +134,29 @@
       var gv = {}, loi = null;
       luoi.querySelectorAll("input[data-khoa]").forEach(function (i) {
         var v = Number(i.value);
-        if (i.dataset.khoa === "he_so_k") { if (!(v >= 0.3 && v <= 3)) loi = loi || "Hệ số giờ k: từ 0,3 đến 3"; }
-        else if (!Number.isInteger(v) || v < 0 || v > 1000) loi = loi || "Cần số nguyên 0 - 1000";
+        if (!Number.isInteger(v) || v < 0 || v > 1000) loi = loi || "Cần số nguyên 0 - 1000";
         gv[i.dataset.khoa] = v;
       });
+      gv.he_so_k = Number(S.dang.theo_mon.he_so_k); // k lưu ở mục riêng bên dưới
       return { loi: loi, gv: gv };
     });
+    return k;
+  }
+
+  // ---------------- ⏱️ HỆ SỐ K TÍNH THỜI GIAN TRẢ LỜI (mục riêng, người dùng 24/11/2026) ----------------
+  function veHeSoK() {
+    var k = tao("div", "qcpKhoi");
+    k.appendChild(tao("h4", "", "⏱️ Hệ số k tính thời gian trả lời (K_thoigian)"));
+    var md = S.md.theo_mon, d = S.dang.theo_mon;
+    var luoi = tao("div", "qcpKho");
+    luoi.appendChild(oSo(d.he_so_k, md.he_so_k, "K_thoigian (0,3-3)", "he_so_k", "0.05"));
+    k.appendChild(luoi);
+    k.appendChild(tao("p", "adminGhiChu", "Nhân vào mốc t₀ và tổng giờ a của Theo môn: k > 1 cho thêm giờ, k < 1 bớt giờ. Các số còn lại của công thức ở Quản trị chung › ⏱️ Tính giờ trả lời."));
+    hangLuu(k, "theo_mon", "hệ số k Theo môn", function () {
+      var v = Number(luoi.querySelector("input").value), gv = JSON.parse(JSON.stringify(S.dang.theo_mon));
+      gv.he_so_k = v;
+      return { loi: v >= 0.3 && v <= 3 ? null : "K_thoigian: từ 0,3 đến 3", gv: gv };
+    }, function () { var gv = JSON.parse(JSON.stringify(S.dang.theo_mon)); gv.he_so_k = md.he_so_k; return gv; });
     return k;
   }
 
