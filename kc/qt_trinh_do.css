@@ -1,0 +1,97 @@
+/* ================================================================
+   FILE: kc/qt_trinh_do.css
+   CHỨC NĂNG: Giao diện Quản trị › 🎯 Trình độ (qt_trinh_do.js). Dùng thêm khung .qcp* / .qtmCot của quantri_NC.html.
+   Điện thoại: 1 cột (danh sách thẻ, chi tiết bên dưới). Máy tính ≥ 1024px: danh sách trái, chi tiết phải (dính khi cuộn).
+   BƯỚC: KC_08F1 - NGÀY: 24/11/2026
+   ================================================================ */
+.qtrTab { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; border-bottom: 2px solid var(--mau-vien, #E4DBFB); }
+.qtrTabNut { border: 0; background: none; padding: 10px 14px; font: inherit; font-weight: 600; cursor: pointer; color: var(--mau-chu-nhat, #766F91);
+  border-bottom: 3px solid transparent; margin-bottom: -2px; min-height: 44px; }
+.qtrTabNut.chon { color: var(--mau-chinh-dam, #4B2FB0); border-bottom-color: var(--mau-chinh, #6C4CE0); }
+.qtrLoc { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.qtrLoc input, .qtrLoc select { min-height: 42px; padding: 6px 10px; border: 2px solid var(--mau-vien, #E4DBFB); border-radius: 8px; font: inherit; }
+.qtrLoc input { flex: 1 1 180px; min-width: 0; }
+.qtrTom { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.qtrChip { padding: 3px 10px; border-radius: 999px; background: var(--mau-chinh-nhat, #EFE9FD); font-size: .82rem; font-weight: 600; }
+.qtrHai { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.qtrDs { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.qtrCt { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.qtrGoiY { text-align: center; padding: 20px 8px; }
+
+.qtrBe { display: block; width: 100%; text-align: left; font: inherit; cursor: pointer; padding: 10px 12px; background: #fff;
+  border: 2px solid var(--mau-vien, #E4DBFB); border-radius: 12px; color: inherit; }
+.qtrBe:hover { border-color: var(--mau-chinh, #6C4CE0); }
+.qtrBe.chon { border-color: var(--mau-chinh, #6C4CE0); background: var(--mau-chinh-nhat, #EFE9FD); }
+.qtrBeDau { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.qtrBeLop { font-size: .82rem; color: var(--mau-chinh-dam, #4B2FB0); font-weight: 600; }
+.qtrBeLuc { font-size: .78rem; color: var(--mau-chu-nhat, #766F91); margin-left: auto; }
+.qtrBeMon { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.qtrMonChip { font-size: .78rem; padding: 2px 8px; border-radius: 999px; border: 1.5px solid; background: #fff; white-space: nowrap; }
+.tc-thap.qtrMonChip { border-color: #8fb3e8; }
+.tc-tb.qtrMonChip { border-color: #e6c25a; }
+.tc-cao.qtrMonChip { border-color: #4caf7a; }
+.qtrCoHang { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.qtrCo { font-size: .76rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+.qtrCoLen { background: #e3f4e8; color: #1a6b3a; }
+.qtrCoXuong { background: #fdecea; color: #a3261c; }
+.qtrCoNhe { background: #f1f1f6; color: #4d4866; }
+.qtrCoBat { background: #fff4d6; color: #7a5a00; }
+
+.qtrCtDau { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.qtrCtDau h4 { margin: 0; font-size: 1.1rem; }
+.qtrDong { margin-left: auto; padding: 6px 12px; min-height: 40px; }
+.qtrBaoLech { margin: 0; padding: 10px 12px; border-radius: 10px; background: #fff8e1; border: 1.5px solid #ecc86a; font-size: .88rem; }
+.qtrKhoi h4 { margin-top: 0; }
+.qtrMonLuoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.qtrMon { border: 2px solid var(--mau-vien, #E4DBFB); border-left-width: 6px; border-radius: 10px; padding: 10px; background: #fff; }
+.qtrMon.tc-thap { border-left-color: #8fb3e8; }
+.qtrMon.tc-tb { border-left-color: #e6c25a; }
+.qtrMon.tc-cao { border-left-color: #4caf7a; }
+.qtrMon.chon { box-shadow: 0 0 0 2px var(--mau-chinh, #6C4CE0); }
+.qtrMonDau { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.qtrMonTheta { font-weight: 700; font-size: 1.1rem; color: var(--mau-chinh-dam, #4B2FB0); }
+.qtrMonSo { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; font-size: .82rem; }
+.qtrMonSo dt { color: var(--mau-chu-nhat, #766F91); }
+.qtrMonSo dd { margin: 0; font-weight: 600; }
+.qtrMonNut { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.qtrNutNho { padding: 5px 10px; min-height: 36px; border: 1.5px solid var(--mau-chinh, #6C4CE0); border-radius: 8px; background: #fff;
+  color: var(--mau-chinh-dam, #4B2FB0); font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.qtrNutNho:hover { background: var(--mau-chinh-nhat, #EFE9FD); }
+.qtrNutXoa { border-color: var(--mau-that-bai, #E5484D); color: var(--mau-that-bai, #E5484D); }
+
+.qtrDoThiDau { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
+.qtrDoThiDau h4 { margin: 0 auto 0 0; }
+.qtrDoThiDau select { min-height: 38px; padding: 4px 8px; border: 2px solid var(--mau-vien, #E4DBFB); border-radius: 8px; font: inherit; font-size: .86rem; max-width: 100%; }
+.qtrBoc { position: relative; }
+.qtrSvg { width: 100%; height: auto; display: block; touch-action: pan-y; }
+.qtrLuoi { stroke: #ece9f5; stroke-width: 1; }
+.qtrTruc { font-size: 11px; fill: #8a849f; }
+.qtrMoc { stroke: #4caf7a; stroke-width: 1.5; stroke-dasharray: 5 4; }
+.qtrMocChu { font-size: 11px; fill: #1a6b3a; font-weight: 600; }
+.qtrDuong { fill: none; stroke: var(--mau-chinh, #6C4CE0); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.qtrDiemCuoi { fill: var(--mau-chinh, #6C4CE0); stroke: #fff; stroke-width: 2; }
+.qtrMoLop { font-size: 13px; }
+.qtrDoc { stroke: #8a849f; stroke-width: 1; }
+.qtrCham { fill: #fff; stroke: var(--mau-chinh, #6C4CE0); stroke-width: 2.5; pointer-events: none; }
+.qtrTip { position: absolute; top: 0; padding: 4px 8px; border-radius: 6px; background: #2B2640; color: #fff; font-size: .78rem;
+  white-space: nowrap; pointer-events: none; }
+
+.qtrCuon { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.qtrBang { border-collapse: collapse; font-size: .8rem; width: 100%; }
+.qtrBang th, .qtrBang td { padding: 4px 6px; border-bottom: 1px solid #eee; text-align: left; white-space: nowrap; }
+.qtrBang .qtrCauNd { white-space: normal; min-width: 180px; max-width: 320px; }
+.qtrDung { color: #1a7f37; font-weight: 600; }
+.qtrSai { color: #c62828; font-weight: 600; }
+.qtrLs { margin: 0; padding-left: 18px; font-size: .84rem; }
+.qtrLs li { margin: 6px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.qtrLs li span { flex: 1 1 220px; }
+.qtrSoLuoi { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); align-items: end; }
+.qtrSoLuoi .qcpO small { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; }
+.qtrGhiChuO { width: 100%; box-sizing: border-box; padding: 8px; border: 2px solid var(--mau-vien, #E4DBFB); border-radius: 8px; font: inherit; margin-bottom: 8px; }
+
+@media (min-width: 1024px) {
+  .qtrHai { grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.6fr); align-items: start; }
+  .qtrDs { max-height: calc(100vh - 160px); overflow-y: auto; padding-right: 4px; }
+  .qtrSoHai { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+/* 24/11/2026 - BƯỚC: KC_08F1 */
