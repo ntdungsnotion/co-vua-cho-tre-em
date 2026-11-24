@@ -142,8 +142,9 @@
       });
       phai.appendChild(hs);
       const luatChu = [
-        "Chạm đáp án là chấm luôn, rồi tự sang câu mới.",
-        "Đồng hồ chỉ chạy khi câu đang mở. Xong sớm thì được trọn kim cương.",
+        "Con đọc câu hỏi trước, đọc xong mới hiện 4 đáp án.",
+        "Đồng hồ chỉ chạy khi 4 đáp án đang hiện. Chạm đáp án là chấm luôn. Xong sớm thì được trọn kim cương.",
+        "Trả lời xong Cô Cú giải thích đáp án đúng. Con bấm Bỏ qua để sang câu mới.",
         "Sai thì Cô Cú hỏi lại bằng câu khác để con nhớ lâu."
       ];
       const luat = tao("div", "tmLuat");
@@ -152,7 +153,7 @@
       nghe.addEventListener("click", () => { const a = AM(); if (a) a.doc(luatChu.join(" "), { lang: "vi" }); });
       hl.appendChild(nghe); luat.appendChild(hl);
       const ul = tao("ul");
-      ul.append(tao("li", "", "👆 " + luatChu[0]), tao("li", "", "⏱️ " + luatChu[1]), tao("li", "", "🔁 " + luatChu[2]));
+      ul.append(tao("li", "", "📖 " + luatChu[0]), tao("li", "", "⏱️ " + luatChu[1]), tao("li", "", "💬 " + luatChu[2]), tao("li", "", "🔁 " + luatChu[3]));
       luat.appendChild(ul);
       phai.appendChild(luat);
       const th = tao("div", "tmThuong");
@@ -247,6 +248,7 @@
     async function batDau(mon, soCau, moi) {
       if (S.dangChoi) return;
       S.dangChoi = true;
+      const TA = goc.KC_TM_AM; if (TA) { TA.mo(); TA.taiCauHinh(); } // mở khoá âm thanh trong cú chạm (KC_03C4b)
       const b0 = goc0.querySelector(".tmNutBatDau"); if (b0) b0.disabled = true;
       const kq = await rpcBen("kc_tm_bat_dau", { p_mon: mon || null, p_so_cau: soCau || null, p_moi: !!moi });
       if (!kq.thanhCong || !kq.luot) {
@@ -257,6 +259,7 @@
         return;
       }
       cancelAnimationFrame(rafBe);
+      if (TA) await TA.taiCauHinh();
       const l = kq.luot;
       const n = l.soGoc || l.tong;
       const ten = (l.monBieuTuong ? l.monBieuTuong + " " : "") + (l.monTen || "Theo môn");
@@ -266,7 +269,8 @@
       };
       const kqMan = await goc.KC_TT.moLuot({
         luot: l, goi, tieuDe: "📚 " + ten, phuDe: n + " câu" + (kq.tiep ? " · chơi tiếp" : ""), nutKet: "🎯 Về Thử Thách",
-        nutThem: [{ chu: "▶ Chơi tiếp " + (soCau || n) + " câu", ma: "tiep" }], goc: "", lop: S.tc ? S.tc.lop : null, hoSo, loiMoDau: "Mình cùng học " + (l.monTen || "") + " nhé!"
+        nutThem: [{ chu: "▶ Chơi tiếp " + (soCau || n) + " câu", ma: "tiep" }], goc: "", lop: S.tc ? S.tc.lop : null, hoSo, loiMoDau: "Mình cùng học " + (l.monTen || "") + " nhé!",
+        sanKhau: TA ? { am: TA } : null
       });
       S.dangChoi = false;
       if (kqMan && kqMan.dong === "tiep") { const nc = soCau || n; S.mon = l.mon; S.soCau = nc; luuChon(); batDau(l.mon, nc, false); return; }
@@ -280,3 +284,4 @@
   goc.KC_TM = { gan };
 })(typeof window !== "undefined" ? window : globalThis);
 // 24/11/2026 - BƯỚC: KC_03C4 (tạo mới: 📚 Theo môn)
+// 24/11/2026 - BƯỚC: KC_03C4b (luật mới: đọc câu xong mới hiện đáp án, nhạc + tích tắc + bình luận qua KC_TM_AM)

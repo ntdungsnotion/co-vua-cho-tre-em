@@ -14,10 +14,12 @@
                 goc (tiền tố đường dẫn hình câu, vd "" ở kc/, "../" ở kc/dt/), lop (lớp bé: ≤ 3 có 🔊 đọc câu),
                 hoSo (ngoại hình bé, chung/nv_ve.js: có thì vẽ bé cổ vũ ở cột trái máy tính),
                 nutThem ([{ chu, ma }]: nút thêm ở màn kết quả, bấm thì đóng màn với dong = ma; KC_03C4 "▶ Chơi tiếp N câu"),
-                loiMoDau (Cô Cú nói ở câu đầu, mặc định "Mình cùng ôn lại nhé!")
+                loiMoDau (Cô Cú nói ở câu đầu, mặc định "Mình cùng ôn lại nhé!"),
+                sanKhau ({ am: KC_TM_AM }, KC_03C4b Theo môn: đọc câu xong mới hiện 4 đáp án + nhạc lúc đọc, tích tắc lúc chờ,
+                         bình luận đúng / sai + lời giải + nút "⏭ Bỏ qua"; không có thì như cũ)
               }) -> Promise<{ ketQua | null, dong: "xong" | "bo" | "loi" | ma của nutThem }>
    CẦN NẠP TRƯỚC: chung/gio_bai.js (KC_GIO_BAI: trừ 💎 theo giờ, module chung toàn app).
-   BƯỚC: TC_D34B (phần 2: dùng module giờ chung); KC_03C4 (nutThem, loiMoDau, 🪙 xu vàng mỗi câu đúng)
+   BƯỚC: TC_D34B (phần 2: dùng module giờ chung); KC_03C4 (nutThem, loiMoDau, 🪙 xu vàng mỗi câu đúng); KC_03C4b (sanKhau)
    NGÀY: 20/11/2026 · sửa 24/11/2026
    ================================================================ */
 (function (goc) {
@@ -49,7 +51,11 @@
 
   // ---------------- Màn ----------------
   function moLuot(tc) {
-    const t = Object.assign({ tieuDe: "Ôn lại", phuDe: "", batBuoc: false, nutKet: "Xong", goc: "", lop: null, hoSo: null, nutThem: [], loiMoDau: "Mình cùng ôn lại nhé!" }, tc || {});
+    const t = Object.assign({ tieuDe: "Ôn lại", phuDe: "", batBuoc: false, nutKet: "Xong", goc: "", lop: null, hoSo: null, nutThem: [], loiMoDau: "Mình cùng ôn lại nhé!", sanKhau: null }, tc || {});
+    // KC_03C4b (người dùng 24/11/2026, Theo môn): sanKhau = { am: KC_TM_AM } -> đọc câu xong mới hiện 4 đáp án (nhạc sôi động lúc đọc),
+    // tích tắc lúc chờ, trả lời xong có bình luận + nút bỏ qua. Đồng hồ bài chỉ chạy lúc 4 đáp án đang hiện.
+    const sk = t.sanKhau && t.sanKhau.am ? t.sanKhau : null;
+    const skAm = sk ? sk.am : null;
     const goi = t.goi;
     let luot = t.luot;
     return new Promise(xong => {
@@ -62,6 +68,7 @@
       let dh = taoDh(luot), dhChay = false, dhHen = 0, dhBaoHet = false;
       const lichSu = []; // câu đã trả lời trong lần mở màn này (xem lại đáp án + lời giải ở màn nhận thưởng)
       let tong = luot.tong, viTri = luot.viTri, cau = luot.cau, chon = -1, luc0 = 0, dangGui = false, daCham = null, dong = false;
+      let docDang = null, blDang = null; // KC_03C4b: pha đọc câu / pha bình luận đang mở
 
       const goc0 = tao("div", "ttMan"); goc0.setAttribute("role", "dialog"); goc0.setAttribute("aria-modal", "true"); goc0.setAttribute("aria-label", t.tieuDe);
       goc0.innerHTML =
@@ -170,11 +177,65 @@
         });
         s.appendChild(ds);
         const ph = tao("div", "ttPhan"); ph.setAttribute("aria-live", "polite"); s.appendChild(ph);
+        coCu(viTri === 0 ? t.loiMoDau : ["Con làm được mà!", "Cố lên nào!", "Đọc kỹ rồi chọn nhé!"][viTri % 3]);
+        tuThe = "dung";
+        if (sk) { docTruoc(s, ds); return; }
         luc0 = performance.now();
         chayDh(true);
         if (coAmThanh(cau)) setTimeout(() => { if (!dong) docTo(cau, t.lop, t.goc); }, 250); // câu nghe: tự đọc
-        coCu(viTri === 0 ? t.loiMoDau : ["Con làm được mà!", "Cố lên nào!", "Đọc kỹ rồi chọn nhé!"][viTri % 3]);
-        tuThe = "dung";
+      }
+
+      // ---------------- KC_03C4b: pha đọc câu (chưa hiện đáp án) ----------------
+      function docTruoc(s, ds) {
+        const n = skAm.nhip(), A = AM();
+        ds.classList.add("ttAnDa"); ds.setAttribute("aria-hidden", "true");
+        ds.querySelectorAll(".ttDa").forEach(b => { b.disabled = true; });
+        const khoi = tao("div", "ttDocKhoi");
+        const thanh = tao("div", "ttDocThanh"); const vach = tao("i"); thanh.appendChild(vach);
+        const nut = tao("button", "ttNut ttXongDoc", "👀 Xem đáp án"); nut.type = "button";
+        khoi.append(tao("p", "ttDocChu", "📖 Con đọc kỹ câu hỏi nhé…"), thanh, nut);
+        s.insertBefore(khoi, ds);
+        const dd = { xong: false, hen: [], ds, khoi };
+        docDang = dd;
+        const soChu = String(cau.noiDung || "").trim().split(/\s+/).filter(Boolean).length;
+        const nghe = coAmThanh(cau);
+        const thanhTieng = !nghe && n.docThanhTieng && !!A && (t.lop == null || t.lop <= n.docDenLop);
+        // giờ đọc ước lượng: bé tự đọc (chữ / giây) hoặc máy đọc (~2,5 chữ / giây); kẹp giữa tối thiểu và tối đa
+        const uoc = thanhTieng ? soChu / 2.5 + 1 : n.docChuMoiGiay > 0 ? soChu / n.docChuMoiGiay : n.docGiayToiThieu;
+        const giay = Math.min(n.docGiayToiDa, Math.max(n.docGiayToiThieu, uoc));
+        vach.style.transitionDuration = giay + "s";
+        requestAnimationFrame(() => requestAnimationFrame(() => { vach.style.width = "100%"; }));
+        const het = () => hienDa(dd);
+        nut.addEventListener("click", () => { skAm.mo(); het(); });
+        if (!nghe) skAm.batNhac();
+        if (nghe) { // câu nghe: không nhạc, đọc phần nghe xong mới hiện đáp án
+          dd.hen.push(setTimeout(() => { if (dd.xong || dong) return; const a = AM(); if (a) a.docCau(cau, { lop: t.lop, goc: t.goc || "", khiXong: () => { dd.hen.push(setTimeout(het, 500)); } }); else het(); }, 250));
+          dd.hen.push(setTimeout(het, Math.max(giay, n.docGiayToiDa) * 1000));
+        } else if (thanhTieng) {
+          // máy đọc thành tiếng: hiện đáp án khi đọc xong (ít nhất docGiayToiThieu), chậm nhất docGiayToiDa + 5 giây (máy đọc lỗi)
+          const t0 = performance.now();
+          skAm.nhoNhac(true);
+          A.doc(cau.noiDung || "", { lang: "vi-VN", khiXong: () => {
+            if (dd.xong) return; skAm.nhoNhac(false);
+            const con = n.docGiayToiThieu * 1000 - (performance.now() - t0);
+            dd.hen.push(setTimeout(het, Math.max(400, con)));
+          } });
+          dd.hen.push(setTimeout(het, (n.docGiayToiDa + 5) * 1000));
+        } else dd.hen.push(setTimeout(het, giay * 1000));
+      }
+      function hienDa(dd) {
+        if (!dd || dd !== docDang || dd.xong || dong) return;
+        dd.xong = true; docDang = null;
+        dd.hen.forEach(clearTimeout);
+        skAm.dungNhac(); skAm.nhoNhac(false);
+        dd.khoi.remove();
+        dd.ds.classList.remove("ttAnDa"); dd.ds.classList.add("ttHienDa"); dd.ds.removeAttribute("aria-hidden");
+        dd.ds.querySelectorAll(".ttDa").forEach(b => { b.disabled = false; });
+        skAm.phat("hienDapAn");
+        coCu("Con chọn đáp án nào?");
+        luc0 = performance.now();
+        chayDh(true);
+        skAm.batTicTac();
       }
 
       function chonDa(i) {
@@ -191,6 +252,7 @@
         goc0.querySelectorAll(".ttDa").forEach(b => { b.disabled = true; });
         const giay = Math.round((performance.now() - luc0) / 100) / 10, tBat = performance.now();
         chayDh(false);
+        if (skAm) skAm.dungTicTac();
         let kq = null;
         for (let lan = 0; lan < 3; lan++) {
           try { kq = await goi.traLoi(luot.id, viTri, chon, giay); } catch (e) { kq = null; }
@@ -230,7 +292,7 @@
       function nhanCham(kq) {
         dangGui = false;
         const dung = !!kq.dung;
-        const keNghe = !!(kq.cau && coAmThanh(kq.cau)); // câu kế là câu nghe: không nói lời khen / động viên (câu nghe tự đọc ngay, lời sẽ đè lên) (người dùng 21/11/2026)
+        const keNghe = !!(kq.cau && coAmThanh(kq.cau)) || !!(sk && skAm.nhip().binhLuanThanhTieng); // KC_03C4b: bình luận đọc thành tiếng thay lời khen // câu kế là câu nghe: không nói lời khen / động viên (câu nghe tự đọc ngay, lời sẽ đè lên) (người dùng 21/11/2026)
         daTraLoi[viTri] = { dung, hoiLai: !!(cau && cau.hoiLai) };
         veDongHo();
         daCham = kq;
@@ -260,7 +322,46 @@
           tieng.tram(t.lop, keNghe); coCu(kq.hoiLai ? "Lát nữa Cô Cú hỏi lại để con nhớ nhé" : "Không sao, mình nhớ lần sau nhé");
         }
         veCham();
+        if (sk) { binhLuan(kq, dung, dap); return; }
         setTimeout(tiep, dung ? 700 : 1300);
+      }
+
+      // ---------------- KC_03C4b: bình luận sau khi trả lời + nút bỏ qua ----------------
+      function binhLuan(kq, dung, dap) {
+        const n = skAm.nhip(), A = AM();
+        const ph = $(".ttPhan"); ph.innerHTML = "";
+        const bl = tao("div", "ttBinhLuan " + (dung ? "dung" : "sai"));
+        const dau = tao("p", "ttBlDau", dung ? ["✓ Đúng rồi!", "⭐ Giỏi quá!", "✓ Chính xác!"][viTri % 3] : "✗ Chưa đúng rồi");
+        if (dung && luot && luot.vangMoiCau > 0) dau.appendChild(tao("span", "ttVangCau", "+" + luot.vangMoiCau + " 🪙"));
+        bl.appendChild(dau);
+        const pd = tao("p", "ttBlDap"); pd.append(dung ? "Con chọn đúng: " : "Đáp án đúng: ", tao("b", "", dap != null ? String(dap) : "…")); bl.appendChild(pd);
+        const giai = String(kq.loiGiai || "").trim();
+        if (giai) bl.appendChild(tao("p", "ttBlGiai", "💡 " + giai));
+        if (!dung && kq.hoiLai) bl.appendChild(tao("p", "ttBlHoiLai", "🔁 Lát nữa Cô Cú hỏi lại bằng câu khác để con nhớ lâu nhé"));
+        const cuoi = kq.xong || !kq.cau;
+        const nut = tao("button", "ttNut tiep ttBoQua", cuoi ? "🎁 Xem phần thưởng" : "⏭ Bỏ qua, sang câu mới"); nut.type = "button";
+        bl.appendChild(nut);
+        ph.appendChild(bl);
+        skAm.phat("binhLuan");
+        const b = { hen: [], xong: false };
+        blDang = b;
+        const sang = () => {
+          if (b.xong || blDang !== b || dong) return;
+          b.xong = true; blDang = null; b.hen.forEach(clearTimeout); dungDoc();
+          skAm.phat("sangCau"); tiep();
+        };
+        b.sang = sang;
+        nut.addEventListener("click", sang);
+        const giay = dung ? n.binhLuanGiayDung : n.binhLuanGiaySai;
+        const tuSang = ms => { if (giay > 0) b.hen.push(setTimeout(sang, ms)); };
+        const loi = (dung ? "Đúng rồi! " : "Chưa đúng. Đáp án đúng là " + (dap != null ? String(dap) : "") + ". ") + giai;
+        if (n.binhLuanThanhTieng && A) {
+          // đọc lời bình luận (sau tiếng đúng / sai ~0,6 giây); đọc xong thì chờ 1,5 giây rồi tự sang câu
+          b.hen.push(setTimeout(() => { if (b.xong || dong) return; A.doc(loi, { lang: "vi-VN", khiXong: () => tuSang(1500) }); }, 650));
+          b.hen.push(setTimeout(() => tuSang(0), (giay + 25) * 1000)); // máy đọc lỗi: vẫn tự sang
+        } else tuSang(giay * 1000);
+        try { nut.focus({ preventScroll: true }); } catch (e) { /* bỏ qua */ }
+        try { bl.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) { /* bỏ qua */ } // màn thấp (laptop 125 %): nút Bỏ qua luôn thấy
       }
 
       function tiep() {
@@ -403,6 +504,8 @@
       function phim(e) {
         if (dong || e.altKey || e.ctrlKey || e.metaKey) return;
         if (goc0.classList.contains("ketQua")) { if (e.key === "Enter") { const n = goc0.querySelector(".ttKq .ttNut"); if (n && doc.activeElement !== n) { e.preventDefault(); n.click(); } } return; }
+        if (docDang && !docDang.xong && (e.key === " " || e.key === "Enter")) { e.preventDefault(); skAm.mo(); hienDa(docDang); return; }
+        if (blDang && (e.key === " " || e.key === "Enter")) { if (doc.activeElement && doc.activeElement.classList && doc.activeElement.classList.contains("ttBoQua")) return; e.preventDefault(); blDang.sang(); return; }
         const so = Number(e.key);
         if (Number.isInteger(so) && so >= 1 && so <= 6 && !daCham) { const b = goc0.querySelector('.ttDa[data-i="' + (so - 1) + '"]'); if (b && !b.disabled) { e.preventDefault(); chonDa(so - 1); } return; }
         if (e.key === "Escape" && !t.batBuoc) dongMan("bo", null);
@@ -412,6 +515,9 @@
       function dongMan(lyDo, ketQua) {
         if (dong) return; dong = true;
         cancelAnimationFrame(raf); clearInterval(dhHen);
+        if (docDang) { docDang.hen.forEach(clearTimeout); docDang = null; }
+        if (blDang) { blDang.hen.forEach(clearTimeout); blDang = null; }
+        if (skAm) { skAm.dungNhac(); skAm.dungTicTac(); }
         doc.removeEventListener("keydown", phim, true);
         dungDoc();
         goc0.classList.add("tat");
@@ -431,4 +537,5 @@
 // 20/11/2026 12:xx - BƯỚC: TC_D34B sửa (người dùng): đồng hồ đếm ngược + 💎 còn nhận giảm dần, khoản Tối đa / Sai / Thời gian
 // 20/11/2026 12:4x - BƯỚC: TC_D34B sửa (người dùng): chạm đáp án là chấm, báo đúng / sai ngắn rồi tự sang câu; 📖 Xem lại đáp án ở màn nhận
 // 21/11/2026 - BƯỚC: KC_09A: tiếng + đọc câu chuyển sang chung/am_thanh.js (chống nuốt câu, chọn giọng, câu đọc tệp / doc:vi)
+// 24/11/2026 - BƯỚC: KC_03C4b: sanKhau (Theo môn): đọc câu xong mới hiện 4 đáp án, nhạc lúc đọc, tích tắc lúc chờ, bình luận + nút bỏ qua
 // 24/11/2026 - BƯỚC: KC_03C4: nutThem ("▶ Chơi tiếp N câu" của Theo môn), loiMoDau; 🪙 xu vàng mỗi câu đúng (chép đúng phần KC_03C2 chưa merge)
