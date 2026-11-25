@@ -2,7 +2,7 @@
   "_ghiChu": "CÀI ĐẶT ÂM THANH Đấu Trường Tri Thức (TC_D05F, 21/11/2026; người dùng: 'Chuyển mọi âm thanh trong đấu trường vào cài đặt, bao gồm âm thanh tướng phát chiêu. Mỗi kỹ năng đều có âm thanh riêng'). File này chỉ là MẶC ĐỊNH; Quản trị › Đấu Trường › Thông số › 🔊 Âm thanh sửa, lưu phần khác mặc định lên Supabase (kc_dt_admin_luu_thong_so, tên 'cau_hinh_am_thanh'), dt3d_am_thanh.js trộn mặc định + phần sửa. Bé chỉ có nút 🔊 tắt / bật tiếng hiệu ứng.",
   "_ghiChuAmLuong": "amLuong: độ to chung. tieng = mọi tiếng hiệu ứng (0..1, cũ 0,85); nhac = nhạc nền (cũ 0,16, người dùng 30/10/2026 giảm 50%); nhacKhiDoc = nhạc còn bấy nhiêu phần khi máy đọc câu hỏi (cũ 0,35).",
   "_ghiChuNhac": "nhac: mã bài (thư viện kc/dt/am_thanh/thu_vien.json, mục nhac[]) cho từng bối cảnh. Để trống: tran / trum = im lặng; thang / thua = kèn ngắn tự tạo.",
-  "_ghiChuTieng": "tieng: mỗi tiếng / mỗi chiêu một dòng. ten = tên hiện trong Quản trị, nhom = chieu (tiếng tên chiêu của tướng, MỖI CHIÊU MỘT DÒNG, mã chieu_<mã chiêu>) | don (đòn đánh, di chuyển) | vung (tiếng bên trong chiêu phủ vùng) | ket (thắng, thua, báo động). bat = có kêu không; amLuong = độ to cả dòng (0..2); file = mã tiếng thu thật trong thư viện (tieng[]), trống = chỉ tiếng tự tạo; amTep = độ to riêng của file; kieu = chong (file kêu cùng tiếng tự tạo) | thay (chỉ file); tre = giây chờ trước khi file kêu. Chiêu mới chưa có dòng ở đây vẫn kêu tiếng tự tạo mặc định.",
+  "_ghiChuTieng": "tieng: mỗi tiếng / mỗi chiêu một dòng. ten = tên hiện trong Quản trị, nhom = chieu (tiếng tên chiêu của tướng, MỖI CHIÊU MỘT DÒNG, mã chieu_<mã chiêu>) | don (đòn đánh, di chuyển) | vung (tiếng bên trong chiêu phủ vùng) | ket (thắng, thua, báo động) | chon (TC_D06D2: bé chạm CHỌN người / công trình / quái / nguồn trên bản đồ; mã chon_<loại>, loại chưa có dòng riêng dùng dòng nhóm chon_thu_linh / chon_ct / chon_quai / chon_nguon; noi = câu máy đọc tiếng Việt, chỉ đọc khi dòng KHÔNG gắn file).bat = có kêu không; amLuong = độ to cả dòng (0..2); file = mã tiếng thu thật trong thư viện (tieng[]), trống = chỉ tiếng tự tạo; amTep = độ to riêng của file; kieu = chong (file kêu cùng tiếng tự tạo) | thay (chỉ file); tre = giây chờ trước khi file kêu. Chiêu mới chưa có dòng ở đây vẫn kêu tiếng tự tạo mặc định.",
   "phienBan": 1,
   "amLuong": { "tieng": 0.85, "nhac": 0.16, "nhacKhiDoc": 0.35 },
   "nhac": { "tran": "tran_rung_xanh", "trum": "trum_quyet_chien", "thang": "", "thua": "" },
@@ -43,6 +43,21 @@
 
     "thang": { "ten": "Thắng (kèn, khi chưa gắn nhạc thắng)", "nhom": "ket", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
     "thua": { "ten": "Thua (3 nốt nhẹ, khi chưa gắn nhạc thua)", "nhom": "ket", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
-    "kenLenh": { "ten": "Kèn lệnh (quái / trụ khai chiến trên bản đồ)", "nhom": "ket", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 }
+    "kenLenh": { "ten": "Kèn lệnh (quái / trụ khai chiến trên bản đồ)", "nhom": "ket", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_nong_dan": { "ten": "🧑‍🌾 Chạm chọn nông dân", "nhom": "chon", "noi": "Ngài sai việc gì?", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_thu_linh": { "ten": "👑 Chạm chọn Thủ lĩnh (tộc chưa có dòng riêng)", "nhom": "chon", "noi": "Ta sẵn sàng!", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_thu_linh_nhan": { "ten": "🛡️ Chạm chọn Thủ lĩnh Nhân tộc", "nhom": "chon", "noi": "Ta sẵn sàng!", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_thu_linh_quy": { "ten": "🔥 Chạm chọn Thủ lĩnh Quỷ tộc", "nhom": "chon", "noi": "Hừm, đánh ai đây?", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_thu_linh_tien": { "ten": "🌿 Chạm chọn Thủ lĩnh Tiên tộc", "nhom": "chon", "noi": "Ánh sáng dẫn lối!", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_ct": { "ten": "🏠 Chạm chọn công trình (loại chưa có dòng riêng)", "nhom": "chon", "noi": "", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_ct_leu": { "ten": "⛺ Chạm chọn Lều trại", "nhom": "chon", "noi": "", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_ct_ruong": { "ten": "🌾 Chạm chọn Ruộng", "nhom": "chon", "noi": "", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_ct_tru_ten": { "ten": "🏹 Chạm chọn Trụ tên", "nhom": "chon", "noi": "", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_quai": { "ten": "👾 Chạm chọn quái (loại chưa có dòng riêng)", "nhom": "chon", "noi": "", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_nguon": { "ten": "🌳 Chạm cây / bụi quả (nguồn chưa có dòng riêng)", "nhom": "chon", "noi": "", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_nguon_mo_da": { "ten": "🪨 Chạm mỏ đá", "nhom": "chon", "noi": "", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_nguon_mo_vang": { "ten": "🟡 Chạm mỏ vàng", "nhom": "chon", "noi": "", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_nguon_mo_sat": { "ten": "⛓️ Chạm mỏ sắt", "nhom": "chon", "noi": "", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 },
+    "chon_nguon_bai_ca": { "ten": "🐟 Chạm bãi cá", "nhom": "chon", "noi": "", "bat": true, "amLuong": 1, "file": "", "amTep": 1, "kieu": "chong", "tre": 0 }
   }
 }

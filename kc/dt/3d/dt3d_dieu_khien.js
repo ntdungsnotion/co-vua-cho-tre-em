@@ -23,7 +23,7 @@
 //       TC_D02B2b (ô chạm kèm điểm chính xác, nguồn trong vùng đen, lời báo khám phá);
 //       TC_D02B3b (người của bạn khác không chọn được, hình đang ẩn không chạm được); TC_D03A (móc chamO);
 //       TC_D03B1 (chamO gọi cả khi chưa chọn ai: chạm Lều trại); TC_D06A (chạm quái trên bản đồ)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 10:50; 28/10/2026 15:30; 30/10/2026
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 20:55; 28/10/2026 10:50; 28/10/2026 15:30; 30/10/2026; 25/11/2026 (TC_D06D2: tiếng khi chạm chọn ui.tiengChon(loai, vật); quái sát nông dân: chọn con có tâm gần tia)
 // ================================================================
 import * as THREE from "three";
 
@@ -40,6 +40,9 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
   const tia = new THREE.Raycaster(), diem = new THREE.Vector2();
   const canvas = ctx.renderer.domElement;
   let dangChon = null;
+  // TC_D06D2: bình phương khoảng cách từ tia chạm tới tâm một lưới bấm (so quái với nông dân đứng sát)
+  const hopT = new THREE.Box3(), tamT = new THREE.Vector3();
+  const lechTia = o => { hopT.setFromObject(o); hopT.getCenter(tamT); return tia.ray.distanceSqToPoint(tamT); };
 
   const vongDich = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.32, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: "#7dff9a", transparent: true, depthWrite: false }));
   vongDich.visible = false; ctx.canh.add(vongDich);
@@ -74,11 +77,17 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     const trungNv = tia.intersectObjects(boNhanVat.dsHinh.filter(h => h.vo.visible).map(h => h.trung), false)[0];
     // TC_D06A: chạm quái (gần mắt hơn nhân vật) -> phần quái xử lý (đánh / xem cấp)
     const trungQuai = ui.trungQuai && ui.trungQuai(tia);
-    if (trungQuai && (!trungNv || trungQuai.kc < trungNv.distance)) { ui.chamQuai(trungQuai.q, dangChon, e); return; } // TC_D06C2d: e (chuột / ngón tay)
+    // TC_D06D2: quái đứng sát nông dân -> tia hay trúng nông dân trước (nông dân cao hơn) nên chọn nhầm nông dân.
+    // Cả hai cùng trúng thì lấy con có TÂM gần tia nhất (bé chạm vào giữa con nào thì chọn con đó).
+    if (trungQuai && (!trungNv || (trungQuai.vat ? lechTia(trungQuai.vat) < lechTia(trungNv.object) : trungQuai.kc < trungNv.distance))) {
+      if (ui.tiengChon) ui.tiengChon("quai", trungQuai.q);
+      ui.chamQuai(trungQuai.q, dangChon, e); return; // TC_D06C2d: e (chuột / ngón tay)
+    }
     if (trungNv) {
       const h = trungNv.object.userData.hinh;
       if (h.dv.laBan) { ui.baoGoiY((ui.loiBan && ui.loiBan(h)) || "Đây là người của bạn khác."); return; }
       if (h === dangChon && !(ui.den && ui.den.dangChieu() !== h.vo)) { boChonTatCa(); return; } // chạm lại người đang chọn: bỏ chọn (điện thoại)
+      if (ui.tiengChon) ui.tiengChon("nguoi", h); // TC_D06D2: "Ngài sai việc gì?"
       chon(h); return;
     }
     // TC_D06C1: chạm công trình -> mở bảng điều khiển kiểu AoE (chạm chỗ khác: đóng). KHÔNG dừng ở đây:
@@ -89,6 +98,7 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
     let ct = null;
     if (ui.chamCongTrinh && ui.chonCongTrinh) {
       ct = ui.chamCongTrinh(tia) || null;
+      if (ct && ui.tiengChon) ui.tiengChon("ct", ct); // TC_D06D2
       ui.chonCongTrinh(ct);
       if (ui.den) { // chạm công trình -> đèn chiếu công trình; chạm chỗ khác -> đèn về người đang chọn (hoặc tắt)
         const hct = ct && ui.hinhCongTrinh && ui.hinhCongTrinh(ct);
@@ -109,6 +119,7 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
         else ui.baoGoiY("Chưa tới chỗ đó được. Chọn chỗ khác nhé.");
         return;
       }
+      if (ui.tiengChon) ui.tiengChon("nguon", n); // TC_D06D2
       if (ui.xemNguon) ui.xemNguon(n); // TC_D06D: thông số cây / mỏ / bãi cá ở thanh dưới (Thủ lĩnh vẫn đi tới đó)
       if (!dangChon) { ui.baoGoiY("Chạm nông dân 🧑‍🌾 trước, rồi chạm vào đây để giao việc nhé!"); return; }
     }

@@ -19,7 +19,7 @@
 //       KC_06B2 (11/11/2026: trang trận nhờ gọi máy chủ "dt-kho-hoi": câu kho, chấm, số Quản trị);
 //       KC_06F1 (16/11/2026: vào thung lũng hiện tin của bé, dt3d_thong_bao.js);
 //       KC_06F2 (17/11/2026: 💡 bóng điện thông báo ở thanh trên, dt3d_bong_den.js)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 30/10/2026
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 30/10/2026; 25/11/2026 (TC_D06D2: tiếng khi chạm chọn, bộ tiếng chung với quái)
 // PHỤ THUỘC: chung/nv_ve.js (KC_NV), dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), các phần dt/3d/*.js;
 //            thung lũng thêm dt/dt_ban_do.js, dt/dt_may_chu.js; trang game thêm chung/nv_ho_so.js,
 //            dt/dt_tien_do.js (phiên đăng nhập: sessionStorage của kc_auth.js)
@@ -39,6 +39,7 @@ import { taoDieuKhien } from "./dt3d_dieu_khien.js";
 import { vaoThungLung } from "./dt3d_vung.js";
 import { taoQuaiBanDo } from "./dt3d_quai_ban_do.js";
 import { taoDenChon } from "./dt3d_den_chon.js";
+import { taoAmThanh } from "./dt3d_am_thanh.js"; // TC_D06D2: tiếng khi chạm chọn
 import { taoThanhDuoi } from "./dt3d_thanh_duoi.js";
 import { taoTruBanDo } from "./dt3d_tru.js"; // TC_D06C2g: trụ phòng thủ (05/11/2026)
 import { taoNongDan } from "./dt3d_nong_dan.js"; // TC_D06C5: nút tìm nông dân rảnh + báo nông dân bị tấn công
@@ -133,6 +134,11 @@ const denChon = taoDenChon(ctx, diaHinh.doCaoDi); // TC_D06C2e
 const uiDk = { baoGoiY, lop: $("d3ChuNoi"), chamCongTrinh: tia => congTrinhVe.chon(tia), den: denChon, hinhCongTrinh: ct => congTrinhVe.hinhCt(ct.id) || (congTrinhVe.diemTuong(ct) && { nhom: congTrinhVe.diemTuong(ct) }),
   // chọn người -> ô "đang xem" về người đó; phần Lều / ruộng đang mở thì đóng (nút của chúng thôi hiện)
   baoChon: () => { if (thanh) thanh.xem(null); if (vung) { vung.dongXem(); vung.moc.capNhatNut(); } } };
+// TC_D06D2: tiếng riêng khi bé chạm chọn (người / công trình / quái / nguồn), cài đặt ở cau_hinh_am_thanh.json nhóm "chon"
+let amChon = null; try { amChon = taoAmThanh(); } catch (e) { amChon = null; }
+const khoaChon = (loai, v) => loai === "nguoi" ? (v.vaiTro === "thu_linh" ? "thu_linh_" + ((be.hoSo || {}).chungLoai || "nhan") : "nong_dan")
+  : loai === "ct" ? "ct_" + v.loai : loai === "quai" ? "quai_" + v.ma : "nguon_" + v.loai;
+uiDk.tiengChon = (loai, v) => { try { if (amChon && v) amChon.chon(khoaChon(loai, v)); } catch (e) { /* thiếu tiếng vẫn chơi được */ } };
 const dk = taoDieuKhien(ctx, cam, lang, taiNguyen, boNv, diaHinh, uiDk);
 
 let soNongDan = 0;
@@ -160,6 +166,7 @@ if (VUNG) {
       be: { ...be, ten: be.ten || "khach" }, lop: $("d3ChuNoi"), baoGoiY, den: o => denChon.dat(o), mayChu: vung.mayChu, vung, // TC_D06C1: quái chung từ máy chủ
       khiXem: fn => { if (thanh) thanh.xem(fn); }, chonTl: () => dk.chon(hTl), dangChon: () => dk.dangChon(), // TC_D06D; TC_D06C2d: ⚔️ Đánh sai nông dân
       capNhatKho: () => capNhatKho(), oKho: ma => $(O_KHO[ma] || "") && $(O_KHO[ma]).closest(".d3Tn"), // TC_D06C4: đồ rơi bay vào kho
+      am: amChon, // TC_D06D2: dùng chung một bộ tiếng
       boNv, boChon: dv => { const c = dk.dangChon(); if (c && c.dv === dv) dk.chon(null); } }); // TC_D06C2b: dân hết máu bỏ chạy
     uiDk.trungQuai = quaiBd.trung; uiDk.chamQuai = quaiBd.cham;
   } catch (e) { console.warn("Chưa dựng được quái trên bản đồ", e); } // thiếu quái vẫn chơi làng được
@@ -383,6 +390,8 @@ let chamLien = 0;
 const gocNguon = () => (lang.leu ? { x: lang.leu.x, z: lang.leu.z } : { x: dvTl.x, z: dvTl.z });
 window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNongDan: () => soNongDan, kho: lang.kho, chon: () => dk.dangChon() && dk.dangChon().dv.ten,
   chamDiem: (x, z) => cam.chieu(x, diaHinh.doCaoDi(x, z) + 0.5, z),
+  tiengChon: () => amChon && { goi: amChon.thongKe().daGoi, noi: amChon.daNoi() }, // TC_D06D2
+  denChieu: () => { const o = denChon.dangChieu(); return o ? (o.isObject3D ? "vat" : "diem") : null; },
   chamNguon: (x, z, y) => cam.chieu(x, diaHinh.doCao(x, z) + (y || 0.5), z),
   tenThuLinh: () => dvTl.ten,
   viTri: ten => { const d = lang.donVi.find(v => v.ten === ten); return d && { x: d.x, z: d.z, viec: d === dvTl && hTl.dien ? "dien" : d.trangThai, mang: d.mang.so, loai: d.mang.loai, ranh: d.ranh, nguon: d.viec && d.viec.loai }; },

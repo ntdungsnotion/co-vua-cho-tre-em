@@ -21,7 +21,7 @@
 //   lịch sử + hoàn tác ở Thông số); file tải lên + danh sách file từng nội dung (kc_am_thanh_admin_ds, _gan_them, _go,
 //   _xin_tai, _luu, _xin_xoa, _xoa_xong); thư viện file sẵn dt/am_thanh/thu_vien.json + kho (chung/kho_tieng.js).
 //   Mã nội dung: "dt:tieng:<khoá>", "dt:nhac:<bối cảnh>", "dt:chung".
-// BƯỚC: KC_09B1 - NGÀY: 21/11/2026 (bản danh sách 13:1x; bản cây 21/11/2026 14:xx)
+// BƯỚC: KC_09B1 - NGÀY: 21/11/2026 (bản danh sách 13:1x; bản cây 21/11/2026 14:xx); TC_D06D2 25/11/2026 (nhóm 🖐️ Khi chạm chọn + ô câu máy đọc)
 // PHỤ THUỘC: ../admin_NC.js (adminGoiRpc, adminThoat, adminBaoTin), chung/kho_tieng.js (KC_KHO_TIENG), dt/dt_cau_hinh.js
 //   (KC_DT_CAU_HINH, nạp sau file này: chỉ dùng lúc chạy), dt/3d/dt3d_am_thanh.js (▶ nghe như trong trận), qt_kho_tieng.css;
 //   SQL repo_rieng supabase_kc09b1_kho_tieng.sql + supabase_kc09b1b_cay_noi_dung.sql.
@@ -40,7 +40,8 @@
   var URL_MD = "dt/du_lieu/cau_hinh_am_thanh.json", URL_TV = "dt/am_thanh/thu_vien.json", TEN_TEP = "cau_hinh_am_thanh";
   var NHOM = [
     { ma: "chieu", ten: "✨ Chiêu tướng" }, { ma: "don", ten: "⚔️ Đòn đánh, đỡ, né" },
-    { ma: "vung", ten: "🌪️ Trong chiêu vùng" }, { ma: "ket", ten: "🏁 Thắng, thua, kèn lệnh" }
+    { ma: "vung", ten: "🌪️ Trong chiêu vùng" }, { ma: "ket", ten: "🏁 Thắng, thua, kèn lệnh" },
+    { ma: "chon", ten: "🖐️ Khi chạm chọn trên bản đồ" } // TC_D06D2
   ];
   var TEN_NHAC = { tran: "Trận thường", trum: "Trận trùm", thang: "Đoạn kết khi thắng", thua: "Đoạn kết khi thua" };
   var TRONG_NHAC = { tran: "🔇 Để trống (trận im lặng)", trum: "🔇 Để trống (trận im lặng)", thang: "🎺 Kèn ngắn tự tạo", thua: "🎺 Kèn ngắn tự tạo" };
@@ -307,6 +308,9 @@ var tc = (S.md.chung || {}).tieng || {}, ndc = Object.keys(tc).filter(function (
       h += '<div class="qktKhoi"><h5>Cài đặt</h5><div class="qktLuoiO">'
         + '<label class="qktO qktChon"><input type="checkbox" data-kt-o="' + p + 'bat"' + (d.bat !== false ? " checked" : "") + "> <span>Có kêu</span></label>"
         + soO(p + "amLuong", "Độ to cả nội dung (0 - 2)", d.amLuong, dm.amLuong, 0, 2, 0.05)
+        // TC_D06D2: tiếng chạm chọn có câu máy đọc (chỉ đọc khi chưa gắn file: file = giọng thu sẵn thay câu đọc)
+        + ((gocCH(S.md, khoa).tieng || {})[c.k] && (gocCH(S.md, khoa).tieng[c.k].nhom === "chon")
+          ? '<label class="qktO"><span>🗣️ Câu máy đọc <small>(để trống = không đọc; gắn file thì không đọc)</small></span><input type="text" maxlength="60" data-kt-o="' + p + 'noi" value="' + T(d.noi || "") + '"></label>' : "")
         + (dang ? soO(p + "amTep", "Độ to riêng của file (0 - 2)", d.amTep, dm.amTep, 0, 2, 0.05)
           + '<label class="qktO"><span>Kiểu</span><select data-kt-o="' + p + 'kieu"><option value="chong"' + (d.kieu !== "thay" ? " selected" : "") + '>Chồng (file + tiếng tự tạo)</option><option value="thay"' + (d.kieu === "thay" ? " selected" : "") + ">Thay (chỉ file)</option></select></label>"
           + soO(p + "tre", "Chờ bao lâu rồi file mới kêu (giây)", d.tre, dm.tre, 0, 5, 0.05) : "")
