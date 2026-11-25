@@ -6,6 +6,9 @@
 // BUOC: NC_06A-2 (nang cap tu NC_09B) - NGAY: 12/07/2026 21:00
 // CAP NHAT: 25/11/2026 06:xx - BUOC: KC_05: man hinh vat pham chia 2 che do (adminApCheDoVatPham):
 //   "quachung" = Cua Hang Qua CHUNG toan app (chi loai 'qua'), "vatpham" = do trong game Co Vua.
+// CAP NHAT: 25/11/2026 07:xx - BUOC: KC_05A: Cua hang chung them AVATAR CHUNG ban bang xu vang (kc_avatar_chung,
+//   RPC kc_avatar_chung_admin_ds / _luu; dong vat_pham de hien_thi=false de Co Vua khong ban bang 💎);
+//   avatar Co Vua chi con loai mien phi theo moc level (chan luu avatar Co Vua khong moc).
 // CAP NHAT: 22/10/2026 - BUOC: TC_03A: khoa kc_co_tuong_ ve nhom "cotuong" (Co Tuong, trang quan tri chung).
 // CAP NHAT: 17/10/2026 - BUOC: KC_00D-1B (nguoi dung thu KC_00D-1 - chung / rieng ro rang):
 //   (1) HO SO CAC BE chia tieu muc Thong tin chung / Co Vua / Giai Cuu Meo Con / sap co;
@@ -442,6 +445,7 @@ function adminCapNhatTroLyTheoLoai() {
   var loai = adminEl("vpLoai").value;
   adminEl("vpTroLyBoQuan").style.display = (loai === "bo_quan_co") ? "block" : "none";
   adminEl("vpTroLyBanCo").style.display  = (loai === "ban_co")     ? "block" : "none";
+  adminCapNhatOGia();   // KC_05A
 }
 
 function adminVeXemTruocHinhChinh() {
@@ -543,8 +547,31 @@ function adminTaiVatPham() {
       return;
     }
     adminDsVatPham = ph.danhSachVatPham || [];
-    adminVeBangVatPham();
+    // KC_05A: avatar chung (gia xu vang). SQL kc05a chua chay -> map rong, man hinh van chay.
+    adminGoiRpc("kc_avatar_chung_admin_ds", {}).then(function (av) {
+      adminAvatarChung = {};
+      adminCoAvatarChung = !!(av && av.thanhCong);
+      ((av && av.ds) || []).forEach(function (a) { adminAvatarChung[a.vatPhamId] = a; });
+      adminVeBangVatPham();
+    });
   });
+}
+
+// KC_05A: map vat_pham_id -> {giaVang, hien, thuTu, daBan} cua avatar CHUNG (kc_avatar_chung)
+var adminAvatarChung = {};
+var adminCoAvatarChung = false;   // false = SQL kc05a chua chay
+
+/** Vat pham thuoc Cua hang chung? (qua that, hoac avatar da khai o kc_avatar_chung) */
+function adminLaHangChung(vp) {
+  return vp.loai === "qua" || (vp.loai === "avatar" && !!adminAvatarChung[vp.id]);
+}
+
+/** O gia: avatar chung trong Cua hang chung dung gia 🪙, an gia 💎 + moc level */
+function adminCapNhatOGia() {
+  var laAvatarChung = (adminLocVatPham === "qua" && adminEl("vpLoai").value === "avatar");
+  adminEl("vpOGiaVang").style.display = laAvatarChung ? "" : "none";
+  adminEl("vpOGia").style.display = laAvatarChung ? "none" : "";
+  adminEl("vpOMocLevel").style.display = (adminLocVatPham === "qua") ? "none" : "";
 }
 
 // ----------------------------------------------------------------
@@ -564,23 +591,26 @@ function adminApCheDoVatPham(cheDo) {
   var chon = adminEl("vpLoai");
   for (var i = 0; i < chon.options.length; i++) {
     var opt = chon.options[i];
-    var an = laQua ? (opt.value !== "qua") : (opt.value === "qua");
+    // KC_05A: Cua hang chung = qua + avatar chung; Co Vua = moi loai so (avatar chi loai mien phi theo moc level)
+    var an = laQua ? (opt.value !== "qua" && opt.value !== "avatar") : (opt.value === "qua");
     opt.hidden = an;
     opt.disabled = an;
   }
-  if (laQua) chon.value = "qua";
-  else if (chon.value === "qua") chon.value = "avatar";
+  if (laQua && chon.value !== "avatar") chon.value = "qua";
+  else if (!laQua && chon.value === "qua") chon.value = "avatar";
   var oGhiChu = adminEl("vpGhiChuCheDo");
   if (oGhiChu) {
     oGhiChu.innerHTML = laQua
-      ? "🛍️ <strong>Cửa Hàng Quà CHUNG toàn app</strong>: quà THẬT (đồ chơi, đi chơi, xem phim...). " +
-        "Bé đổi bằng 💎 kim cương ở trang <strong>Cửa Hàng Quà</strong> (mọi game, mọi mảng dùng chung), " +
-        "rồi quà hiện ở mục <strong>📦 Đổi thưởng</strong> chờ trao tận tay. Mốc level không dùng cho quà."
-      : "♟️ <strong>Đồ trong game Cờ Vua</strong> (vật phẩm SỐ: avatar, bộ quân cờ, bàn cờ, hiệu ứng): " +
-        "bé nhận ngay, tự trang bị. Quà THẬT không tạo ở đây mà ở <strong>Quản trị chung › 🛍️ Cửa hàng quà</strong>.";
+      ? "🛍️ <strong>Cửa Hàng CHUNG toàn app</strong> (trang bé: <strong>🛍️ Cửa Hàng</strong>): " +
+        "<strong>qua</strong> = quà THẬT, bé đổi bằng 💎, rồi chờ trao ở <strong>📦 Đổi thưởng</strong>; " +
+        "<strong>avatar</strong> = avatar CHUNG, bé mua bằng 🪙 xu vàng, dùng ở mọi nơi trong app." +
+        (adminCoAvatarChung ? "" : " <span style=\"color:#a93226\">⚠️ Chưa chạy SQL KC_05A: chưa lưu được avatar chung.</span>")
+      : "♟️ <strong>Đồ trong game Cờ Vua</strong> (vật phẩm SỐ: bộ quân cờ, bàn cờ, hiệu ứng, avatar MIỄN PHÍ theo mốc level): " +
+        "bé nhận ngay, tự trang bị. Quà THẬT và avatar mua bằng tiền đặt ở <strong>Quản trị chung › 🛍️ Cửa hàng chung</strong>.";
   }
   var oTieuDeBang = adminEl("vpTieuDeBang");
-  if (oTieuDeBang) oTieuDeBang.textContent = laQua ? "📋 Quà Trong Cửa Hàng Quà" : "📋 Đồ Trong Game Cờ Vua";
+  if (oTieuDeBang) oTieuDeBang.textContent = laQua ? "📋 Hàng Trong Cửa Hàng Chung" : "📋 Đồ Trong Game Cờ Vua";
+  adminCapNhatOGia();
   if (doiCheDo) {
     // Form dang sua vat pham cua che do kia -> lam trong de khong luu nham
     if (adminEl("vpId").value) adminXoaFormVatPham();
@@ -594,11 +624,11 @@ function adminApCheDoVatPham(cheDo) {
 function adminVeBangVatPham() {
   var than = adminEl("bangVatPham");
   var dsLoc = adminDsVatPham.filter(function (vp) {
-    return adminLocVatPham === "qua" ? vp.loai === "qua" : vp.loai !== "qua";
+    return adminLocVatPham === "qua" ? adminLaHangChung(vp) : !adminLaHangChung(vp);
   });
   if (dsLoc.length === 0) {
     than.innerHTML = '<tr><td colspan="12" class="adminRong">' +
-      (adminLocVatPham === "qua" ? "Cửa Hàng Quà chưa có quà nào. Hãy thêm quà ở khối bên trên." :
+      (adminLocVatPham === "qua" ? "Cửa Hàng chung chưa có hàng nào. Hãy thêm ở khối bên trên." :
         "Chưa có đồ trong game nào. Hãy thêm ở khối bên trên.") + '</td></tr>';
     return;
   }
@@ -610,9 +640,13 @@ function adminVeBangVatPham() {
       : "—";
     var soLuong = (vp.soLuong === null || vp.soLuong === undefined) ? "∞" : vp.soLuong;
     var mocLevel = (vp.mocLevel === null || vp.mocLevel === undefined) ? "—" : ("Lv " + vp.mocLevel);
-    var hienThi = vp.hienThi
+    // KC_05A: avatar chung -> gia 🪙 + hien / an + thu tu + so da ban lay tu kc_avatar_chung
+    var avc = (vp.loai === "avatar") ? adminAvatarChung[vp.id] : null;
+    var hienThi = (avc ? avc.hien : vp.hienThi)
       ? '<span class="adminHuyHieu adminHuyHieuXong">Hiện</span>'
       : '<span class="adminHuyHieu adminHuyHieuAn">Ẩn</span>';
+    var giaO = avc ? ("🪙 " + avc.giaVang) : vp.giaKimCuong;
+    var daDoiO = avc ? ((vp.daDoi || 0) + " 💎 + " + avc.daBan + " 🪙") : vp.daDoi;
 
     html +=
       "<tr>" +
@@ -621,14 +655,14 @@ function adminVeBangVatPham() {
         "<td>" + adminThoat(vp.loai) + "</td>" +
         "<td>" + adminThoat(vp.ten) + "</td>" +
         "<td>" + adminThoat(vp.maDinhDanh) + "</td>" +
-        "<td>" + vp.giaKimCuong + "</td>" +
+        "<td>" + giaO + "</td>" +
         "<td>" + mocLevel + "</td>" +
         "<td>" + soLuong + "</td>" +
         // NC_06A-2: cot "Da doi" thanh nut 👥 -> xem TRE NAO da doi/mua
         '<td><button class="adminNut adminNutPhu" data-sohuu="' + vp.id + '" type="button" ' +
-          'title="Xem trẻ nào đã đổi/mua vật phẩm này">👥 ' + vp.daDoi + "</button></td>" +
+          'title="Xem trẻ nào đã đổi/mua vật phẩm này">👥 ' + daDoiO + "</button></td>" +
         "<td>" + hienThi + "</td>" +
-        "<td>" + vp.thuTuHienThi + "</td>" +
+        "<td>" + (avc ? avc.thuTu : vp.thuTuHienThi) + "</td>" +
         '<td>' +
           '<button class="adminNut" data-suavp="' + vp.id + '" type="button">✏️ Sửa</button> ' +
           '<button class="adminNut adminNutNguyHiem" data-xoavp="' + vp.id + '" type="button">🗑️ Xóa</button>' +
@@ -809,6 +843,13 @@ function adminDoVatPhamVaoForm(id) {
   adminEl("vpThuTu").value = vp.thuTuHienThi || 0;
   adminEl("vpHienThi").checked = !!vp.hienThi;
   adminEl("vpDuLieu").value = JSON.stringify(vp.duLieu || {});
+  // KC_05A: avatar chung -> gia 🪙, hien / an, thu tu lay tu kc_avatar_chung
+  var avc = (vp.loai === "avatar") ? adminAvatarChung[vp.id] : null;
+  adminEl("vpGiaVang").value = avc ? avc.giaVang : 0;
+  if (avc) {
+    adminEl("vpHienThi").checked = !!avc.hien;
+    adminEl("vpThuTu").value = avc.thuTu || 0;
+  }
 
   adminEl("tieuDeFormVatPham").textContent = "✏️ Sửa Vật Phẩm #" + vp.id;
   adminCapNhatBangCheDo(vp.id, vp.ten || "");
@@ -838,6 +879,7 @@ function adminXoaFormVatPham() {
   adminEl("vpThuTu").value = "0";
   adminEl("vpHienThi").checked = true;
   adminEl("vpDuLieu").value = "{}";
+  adminEl("vpGiaVang").value = "0";
   adminEl("vpFileHinh").value = "";
   // NC_09B SUA LOI: luoi quan nay la 12 o (6 quan x 2 mau - NC_09), id moi
   // vpQuan_<mau>_<quan>; vong lap cu theo id 6 o (vpQuan_<quan>) lam ham gay giua chung
@@ -926,8 +968,55 @@ function adminLuuVatPham() {
     if (!window.confirm(loiNhac)) return;
   }
 
+  // KC_05A: avatar Co Vua chi con loai MIEN PHI theo moc level; avatar ban bang tien la avatar CHUNG (🪙)
+  var loaiLuu = adminEl("vpLoai").value;
+  var laAvatarChung = (adminLocVatPham === "qua" && loaiLuu === "avatar");
+  if (adminLocVatPham !== "qua" && loaiLuu === "avatar" && adminSoHoacNull(adminEl("vpMocLevel").value) === null) {
+    adminBaoTin("❌ KHÔNG LƯU: avatar Cờ Vua phải có \"Mốc level miễn phí\". Avatar mua bằng tiền là avatar CHUNG: " +
+      "tạo ở Quản trị chung › 🛍️ Cửa hàng chung (bán bằng 🪙 xu vàng).", false);
+    return;
+  }
+  if (laAvatarChung && !adminCoAvatarChung) {
+    adminBaoTin("❌ Chưa chạy SQL KC_05A (supabase_kc05a_avatar_vang.sql) nên chưa lưu được avatar chung.", false);
+    return;
+  }
+
   var nut = adminEl("btnVpLuu");
   nut.disabled = true;
+
+  if (laAvatarChung) {
+    // Dong vat_pham: an voi Cua Hang Co Vua (hien_thi=false -> doi_vat_pham khong ban bang 💎), gia 💎 = 0, khong moc.
+    // Gia 🪙 + hien / an + thu tu nam o kc_avatar_chung (Cua Hang chung).
+    adminGoiRpc("admin_luu_vat_pham", {
+      p_id:           idCu ? parseInt(idCu, 10) : null,
+      p_loai:         "avatar",
+      p_ten:          ten,
+      p_mo_ta:        adminEl("vpMoTa").value.trim(),
+      p_gia:          0,
+      p_url_hinh:     adminEl("vpUrlHinh").value.trim(),
+      p_ma_dinh_danh: adminEl("vpMaDinhDanh").value.trim(),
+      p_du_lieu:      duLieu,
+      p_so_luong:     null,
+      p_hien_thi:     false,
+      p_thu_tu:       parseInt(adminEl("vpThuTu").value, 10) || 0,
+      p_moc_level:    null
+    }).then(function (ph) {
+      if (!ph.thanhCong) { nut.disabled = false; adminXuLyLoi(ph); return; }
+      adminGoiRpc("kc_avatar_chung_admin_luu", {
+        p_vat_pham_id: ph.id,
+        p_gia_vang:    Math.max(0, parseInt(adminEl("vpGiaVang").value, 10) || 0),
+        p_hien:        adminEl("vpHienThi").checked,
+        p_thu_tu:      parseInt(adminEl("vpThuTu").value, 10) || 0
+      }).then(function (kq) {
+        nut.disabled = false;
+        if (!kq || !kq.thanhCong) { adminXuLyLoi(kq); return; }
+        adminBaoTin("✅ Đã lưu avatar chung (ID " + ph.id + ").", true);
+        adminXoaFormVatPham();
+        adminTaiVatPham();
+      });
+    });
+    return;
+  }
 
   adminGoiRpc("admin_luu_vat_pham", {
     p_id:           idCu ? parseInt(idCu, 10) : null,

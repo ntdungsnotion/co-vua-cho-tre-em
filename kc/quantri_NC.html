@@ -20,6 +20,8 @@
        BƯỚC: KC_00D-1 - NGÀY: 17/10/2026
        CẬP NHẬT: 25/11/2026 06:xx - KC_05: mục "🛍️ Cửa hàng quà" (Quản trị chung) = cửa hàng quà THẬT
                  duy nhất toàn app (kc/cuahang_NC.html); Cờ Vua chỉ còn "🎨 Đồ trong game" (vật phẩm số).
+       CẬP NHẬT: 25/11/2026 07:xx - KC_05A: mục đổi tên "🛍️ Cửa hàng chung", thêm loại avatar chung bán bằng
+                 🪙 xu vàng (ô vpGiaVang, bảng kc_avatar_chung); avatar Cờ Vua chỉ còn loại miễn phí theo mốc level.
        CẬP NHẬT: 17/10/2026 - KC_00D-1B (người dùng thử KC_00D-1): Hồ sơ các bé chia tiểu mục
                  Thông tin chung / Cờ Vua / Giải Cứu Mèo Con / sắp có; danh sách chỉ thông tin chung.
                  Cấu hình: mỗi khóa về đúng lĩnh vực, khối "Khóa chưa xếp lĩnh vực", giọng đọc
@@ -535,7 +537,7 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="taikhoan" type="button">👥 Tài khoản <span class="qtSapCo">sắp có</span></button>
         <button class="adminNutManHinh qtMuc" data-manhinh="hosotre" type="button">👦 Hồ sơ các bé</button>
         <!-- KC_05 25/11/2026: MỘT cửa hàng quà thật chung toàn app (HƯỚNG DẪN 3.13); dùng chung màn hình vật phẩm, lọc loại 'qua' -->
-        <button class="adminNutManHinh qtMuc" data-manhinh="quachung" type="button">🛍️ Cửa hàng quà</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="quachung" type="button">🛍️ Cửa hàng chung</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="doithuong" type="button">📦 Đổi thưởng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="ytuong" type="button">💡 Ý tưởng các bé gửi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinhchung" type="button">⚙️ Cấu hình chung</button>
@@ -683,11 +685,16 @@
             <label for="vpMoTa">Mô tả</label>
             <input type="text" id="vpMoTa" placeholder="Bộ quân cờ hình khủng long ngộ nghĩnh">
           </div>
-          <div class="adminO">
+          <div class="adminO" id="vpOGia">
             <label for="vpGia">Giá (💎 kim cương)</label>
             <input type="number" id="vpGia" value="0" min="0">
           </div>
-          <div class="adminO">
+          <!-- KC_05A: avatar chung bán bằng xu vàng (bảng kc_avatar_chung), chỉ hiện ở Cửa hàng chung + loại avatar -->
+          <div class="adminO" id="vpOGiaVang" style="display:none;">
+            <label for="vpGiaVang">Giá (🪙 xu vàng)</label>
+            <input type="number" id="vpGiaVang" value="0" min="0">
+          </div>
+          <div class="adminO" id="vpOMocLevel">
             <label for="vpMocLevel">Mốc level miễn phí (để trống nếu không có)</label>
             <input type="number" id="vpMocLevel" min="1" max="20" placeholder="5">
           </div>
