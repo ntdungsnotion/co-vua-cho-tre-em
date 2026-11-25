@@ -9,7 +9,7 @@
 //            Trang không phải module: tải xong gán window.KC_DT_SAN3D và phát sự kiện "dt-san3d".
 // HÀM KHAI RA (window.KC_DT_SAN3D):
 //   tao(vungVe, { nhe, napTep }) -> Promise<san> (napTep(ten): sổ tướng đã trộn phần Quản trị sửa, TC_D05C0a); san = { datTran({ chungLoai, hoSo, quai, chu }),
-//        ketQua(k) (k: kết quả lượt của lõi; trả { giay, trung } khi diễn chiêu kết liễu dài - TC_D05E, còn lại undefined), thu(ben, bat), nghi(bat), ketThuc(thang),
+//        ketQua(k) (k: kết quả lượt của lõi; trả { giay, trung } khi diễn chiêu kết liễu dài - TC_D05E, còn lại undefined), thu(ben, bat), nghi(bat), dienBe(kieu) (chỉ trang thử, TC_D05C0b1), ketThuc(thang),
 //        tuLuc(vai) -> { bung(), tan(), manh(), choMang(b) } (KC_06B2: pha tụ lực lúc chờ máy chủ chấm; vai "danh" | "thu"),
 //        viTri(ben) -> { x, y } điểm ảnh trong vùng vẽ (trên đầu),
 //        chieuVung(ma) -> giây diễn (ma: mua_lua | thien_thach | loc_xoay | dam_dat | vo_khong_gian | mua_ten | chuong; TC_D05B2),
@@ -422,6 +422,7 @@ async function tao(vungVe, { nhe, napTep } = {}) {
       if (ben === "be") { giuThu = !!bat; if (bat) dien("thu"); else if (tuong && tuong.dangDien() === "thu") dien("dung"); }
     },
     nghi(bat) { bong.visible = !!bat; },
+    dienBe(kieu) { dien(kieu); }, // TC_D05C0b1: cho kịch bản thử (vd "di", "chay" của tướng); trận không gọi
     // KC_06B2: pha tụ lực lúc chờ máy chủ chấm; vai "danh" | "thu" -> tay cầm { bung(), tan(), manh(), choMang(b) }
     tuLuc(vai) { return taoTuLuc(vai); },
     ketQua(k) {
@@ -621,3 +622,4 @@ window.dispatchEvent(new Event("dt-san3d"));
 // 25/11/2026 - BƯỚC: TC_D05E (kết liễu Nhân tộc = Plasma Beam; ketQua trả { giay, trung }; tran.be.nhom + tran.camNhin cho kho chiêu thêm)
 // 25/11/2026 - BƯỚC: TC_D05C0a (sổ tướng chung dt_tuong.js: bỏ KIEU_TOC + Plasma viết cứng; màu / chiêu / kết liễu / phòng thủ theo mẫu tướng;
 //               tên chiêu vùng từ hieu_ung.json; tao(vungVe, { nhe, napTep }))
+// 25/11/2026 - BƯỚC: TC_D05C0b1 (san.dienBe(kieu) cho kịch bản thử đi / chạy của tướng)

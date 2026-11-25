@@ -12,7 +12,8 @@
 //   taoBoTuong(ctx, dongTac) -> { tao(glb, hoSo, cao) -> tuong }   (hoSo.boDongTac = dongTac.bo của mẫu; dungTay, dungTran)
 //   tuong = { vo, goc, cao, vlPhatSang[], dien(kieu, khiXong), capNhat(dt), dangDien() }
 //   kieu: dung, thu (giữ thế thủ), chem, chemLon (chí mạng), phep, phepLon (chí mạng Tiên), trung,
-//         do (đỡ được), ne, thua, mung, nghi (đứng thả lỏng: chỉ tướng có dungTay; dành cho bản đồ, trận không gọi).
+//         do (đỡ được), ne, thua, mung, nghi (đứng thả lỏng: chỉ tướng có dungTay; dành cho bản đồ, trận không gọi),
+//         di, chay (TC_D05C0b1: đi / chạy tại chỗ, dành cho bản đồ; trận không gọi).
 //         Kiểu mà tộc không có động tác (do của Quỷ / Tiên) thì giữ nguyên thế.
 //   Mỗi động tác đánh được dời + tua để lúc vũ khí chạm đúng 0,3 giây (phép: 0,22 giây) sau khi bắt đầu,
 //   khớp hiệu ứng của dt3d_tran.js (đo bằng repo_rieng dau_truong_tri_thuc/cong_cu/do_nhip_dong_tac.py).
@@ -39,7 +40,10 @@ const KIEU = {
   do: { clip: "BlockHit" },
   ne: { clip: "Dodge", tu: 0.15, toc: 2.2 },
   thua: { clip: "Defeated", toc: 1.6, giu: true },
-  mung: { clip: "Victory", toc: 1.15 }
+  mung: { clip: "Victory", toc: 1.15 },
+  // TC_D05C0b1: đi / chạy tại chỗ (Mixamo "Walking" / "Running" bản In Place) cho bản đồ Thung Lũng (TC_D05C0b2); trận không gọi
+  di: { clip: "Walking", lap: true },
+  chay: { clip: "Running", lap: true }
 };
 // BỘ ĐỘNG TÁC (TC_D05C0a: chọn theo `dongTac.bo` của mẫu tướng trong sổ tướng dt_tuong.js, không theo tộc).
 // null = bộ này không có động tác cho kiểu đó: giữ nguyên thế đang đứng. Thêm bộ mới = thêm ở đây + KC_DT_TUONG.HO_TRO.bo.
@@ -166,3 +170,4 @@ export function taoBoTuong(ctx, dongTac) {
 }
 // 29/10/2026 23:40 - BƯỚC: TC_D05B1
 // 25/11/2026 - BƯỚC: TC_D05C0a (KIEU_TOC -> BO_DONG_TAC chọn theo dongTac.bo của mẫu tướng, không theo tộc)
+// 25/11/2026 - BƯỚC: TC_D05C0b1 (kiểu di / chay: động tác Walking / Running mới trong dong_tac_tuong.glb)
