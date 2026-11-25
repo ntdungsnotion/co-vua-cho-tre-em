@@ -9,7 +9,7 @@
 //            Trang không phải module: tải xong gán window.KC_DT_SAN3D và phát sự kiện "dt-san3d".
 // HÀM KHAI RA (window.KC_DT_SAN3D):
 //   tao(vungVe, { nhe }) -> Promise<san>; san = { datTran({ chungLoai, hoSo, quai, chu }),
-//        ketQua(k) (k: kết quả lượt của lõi), thu(ben, bat), nghi(bat), ketThuc(thang),
+//        ketQua(k) (k: kết quả lượt của lõi; trả { giay, trung } khi diễn chiêu kết liễu dài - TC_D05E, còn lại undefined), thu(ben, bat), nghi(bat), ketThuc(thang),
 //        tuLuc(vai) -> { bung(), tan(), manh(), choMang(b) } (KC_06B2: pha tụ lực lúc chờ máy chủ chấm; vai "danh" | "thu"),
 //        viTri(ben) -> { x, y } điểm ảnh trong vùng vẽ (trên đầu),
 //        chieuVung(ma) -> giây diễn (ma: mua_lua | thien_thach | loc_xoay | dam_dat | vo_khong_gian | mua_ten | chuong; TC_D05B2),
@@ -24,6 +24,7 @@
 //        KC_06B2 (11/11/2026: tuLuc(vai) pha tụ lực che lúc chờ máy chủ chấm, bung / tan)
 //        TC_D05F (21/11/2026: tiếng tên chiêu riêng từng chiêu am.chieu(ma), theo cài đặt âm thanh của Quản trị)
 //        TC_D05D (bé phòng thủ đúng: thế thủ giữ tới lúc đòn của quái được tính, kể cả tướng tải xong giữa lượt / KayKit dự phòng)
+//        TC_D05E (25/11/2026: đòn kết liễu của Thủ lĩnh Nhân tộc = chiêu ⚡ Plasma Beam của kho chiêu thêm, camera điện ảnh)
 // NGÀY: 29/10/2026; 29/10/2026 19:00; 30/10/2026; 30/10/2026 06:00; 05/11/2026; 07/11/2026
 // ================================================================
 import * as THREE from "three";
@@ -123,6 +124,7 @@ async function tao(vungVe, { nhe } = {}) {
   const dvBe = { ten: "", x: X_BE, z: 0, huongMuon: HUONG_BE, trangThai: "dung", duong: [], viec: null, mang: { loai: null, so: 0 }, chay: false, ranh: false };
   const boTuong = glbDongTacTuong ? taoBoTuong(ctx, glbDongTacTuong) : null;
   let hBe = null, tuong = null, khoaBe = "", vlBe = [], caoBe = 1.5 * TI_BE, lanDung = 0;
+  let laNongDan = false; // TC_D05E
   let giuThu = false; // TC_D05D: bé phòng thủ đúng -> giữ thế thủ tới lúc đòn của quái được tính (ketQua)
   function dungBe(hoSo) {
     const khoa = JSON.stringify(hoSo);
@@ -396,6 +398,7 @@ async function tao(vungVe, { nhe } = {}) {
       if (hoSo && hoSo.tuong) hs.tuong = hoSo.tuong; // chuanHoa (dùng chung) không biết trường tuong
       if (hoSo && hoSo.nongDan) hs.nongDan = true; // TC_D06C2b
       dungBe(hs);
+      laNongDan = !!hs.nongDan; // TC_D05E: nông dân đánh quái không có chiêu kết liễu của Thủ lĩnh
       kieu = KIEU_TOC[hs.chungLoai] || KIEU_TOC.nhan;
       if (haoQuang) canh.remove(haoQuang.nhom);
       haoQuang = hu.taoHaoQuang(kieu.mau);
@@ -416,6 +419,17 @@ async function tao(vungVe, { nhe } = {}) {
       vong.be.visible = dangThu && k.tanCong === "quai"; vong.quai.visible = false; bong.visible = false;
       const trung = k.satThuong > 0, ne = k.kieu === "ne";
       const qn = quai.nhom;
+      // TC_D05E (người dùng 25/11/2026 chọn "đòn kết liễu"): đòn đúng của Thủ lĩnh Nhân tộc hạ được đối thủ
+      // -> chiêu ⚡ Plasma Beam đầy đủ (camera điện ảnh); chí mạng thường vẫn là Kiếm Quang Trảm.
+      // Trả { giay, trung } để trang chờ chiêu diễn xong mới kết thúc trận / hiện số trừ máu đúng lúc tia chạm.
+      if (k.tanCong === "be" && trung && k.ketThuc && k.ketThuc.thang === "be" && kieu === KIEU_TOC.nhan && !laNongDan) {
+        const c = ct && ct.ds.find(x => x.ma === "plasma_beam");
+        const giay = c ? san.chieuThem("plasma_beam") : 0;
+        if (giay) {
+          if (haoQuang) haoQuang.bat(2);
+          return { giay, trung: c.trung || giay * 0.6 };
+        }
+      }
       if (k.tanCong === "be") {
         const quaiNe = () => { am.ne(X_QUAI); hu.gio(V(qn.position.x, 0, 0.1), 1); noLapLanh(qn.position.clone(), "#bfeaff"); them(0.45, p => { qn.position.x = X_QUAI + Math.sin(p * Math.PI) * 0.9; qn.position.y = Math.sin(p * Math.PI) * 0.55; }); };
         const trungDon = p => {
@@ -558,9 +572,10 @@ async function tao(vungVe, { nhe } = {}) {
       const c = ct && ct.ds.find(x => x.ma === ma);
       if (!c || !quai) return 0;
       vong.be.visible = vong.quai.visible = bong.visible = false;
-      if (c.ten) { hu.chuChieu(c.ten, V(0, 2.4, 0.4), kieu.mau); am.chieu(ma); }
+      if (c.ten) { hu.chuChieu(c.ten, c.tenTrenDau ? V(dvBe.x + 0.15, caoBe + 0.25, 0.4) : V(0, 2.4, 0.4), kieu.mau); am.chieu(ma); } // TC_D05E: chiêu lia camera về Thủ lĩnh -> tên trên đầu Thủ lĩnh
       const tran = {
-        be: { tam: tamBe(), chan: V(dvBe.x, 0, dvBe.z), cao: caoBe },
+        be: { tam: tamBe(), chan: V(dvBe.x, 0, dvBe.z), cao: caoBe, nhom: voBe() || null }, // TC_D05E: nhom để chiêu tìm xương tay
+        camNhin: dich.clone(), // TC_D05E: chiêu lia camera trả về đúng điểm nhìn của sân
         quai: { nhom: quai.nhom, tam: tamQuai(), chan: V(quai.nhom.position.x, 0, quai.nhom.position.z), cao: quai.cao * TI_QUAI, chop: s => quai.chop(s) },
         dongTac: k => dien(k), them, mau: kieu.mau, am
       };
@@ -585,3 +600,4 @@ window.dispatchEvent(new Event("dt-san3d"));
 // 11/11/2026 - BƯỚC: KC_06B2 (pha tụ lực tuLuc: hút sáng vào vũ khí / tay, khiên tụ sáng; bung / tan)
 // 12/11/2026 - BƯỚC: KC_06B2 (sửa: tướng chưa tải xong thì Thủ lĩnh KayKit đứng tạm)
 // 21/11/2026 - BƯỚC: TC_D05F (mỗi chiêu một tiếng tên chiêu: am.chieu(ma))
+// 25/11/2026 - BƯỚC: TC_D05E (kết liễu Nhân tộc = Plasma Beam; ketQua trả { giay, trung }; tran.be.nhom + tran.camNhin cho kho chiêu thêm)
