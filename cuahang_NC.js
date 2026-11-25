@@ -5,6 +5,8 @@
 // CẬP NHẬT: 25/11/2026 06:xx - BƯỚC: KC_05: KHÔNG còn bán quà thật (loai 'qua'): quà thật
 //   chỉ ở Cửa Hàng Quà CHUNG toàn app kc/cuahang_NC.html (HƯỚNG DẪN KC 3.13). Khối
 //   "Quà Con Đã Đổi" thay bằng lối sang cửa hàng chung (vẫn liệt kê quà đã đổi).
+// CẬP NHẬT: 25/11/2026 07:xx - BƯỚC: KC_05A: avatar chỉ còn loại có mốc level (miễn phí theo level, đặc thù
+//   Cờ Vua); avatar mua bằng tiền là avatar chung, bán bằng 🪙 ở kc/cuahang_NC.html#avatar.
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "ch" (cua-hang) để tránh xung đột
 //
 // PHỤ THUỘC:
@@ -126,7 +128,13 @@ function chTaiDuLieu() {
     if (kqDanhSach.thanhCong) {
       // KC_05 (25/11/2026): quà THẬT (loai 'qua') chỉ bán ở Cửa Hàng Quà CHUNG toàn app
       // (kc/cuahang_NC.html). Cửa hàng Cờ Vua chỉ còn đồ SỐ trong game.
-      chDanhSachVatPham = (kqDanhSach.danhSachVatPham || []).filter(function (vp) { return vp.loai !== "qua"; });
+      // KC_05A (25/11/2026): avatar Cờ Vua chỉ còn loại MIỄN PHÍ theo mốc level; avatar mua bằng tiền
+      // là AVATAR CHUNG, bán bằng 🪙 xu vàng ở Cửa Hàng chung (ngăn 🙂 Avatar).
+      chDanhSachVatPham = (kqDanhSach.danhSachVatPham || []).filter(function (vp) {
+        if (vp.loai === "qua") return false;
+        if (vp.loai === "avatar" && vp.mocLevel == null) return false;
+        return true;
+      });
     } else {
       chDanhSachVatPham = [];
       chHienThongBao(kqDanhSach.thongBao || "Không tải được cửa hàng, con thử lại nhé.", "xau");
@@ -430,9 +438,10 @@ function chVeQuaChoTrao() {
   var quaList = chLichSuDoiQua.filter(function (ls) { return ls.loai === "qua"; });
 
   // KC_05: khối luôn hiện, mời bé sang Cửa Hàng Quà chung (nơi duy nhất đổi quà thật)
-  ds.innerHTML = '<p style="margin:0 0 8px;">Muốn đổi 💎 lấy <strong>quà thật</strong> (đồ chơi, đi chơi...)? ' +
-    'Quà thật nằm ở <strong>Cửa Hàng Quà</strong> chung của cả app.</p>' +
-    '<a class="chNutLienKet" href="kc/cuahang_NC.html">🛍️ Đến Cửa Hàng Quà</a>';
+  ds.innerHTML = '<p style="margin:0 0 8px;">Muốn đổi 💎 lấy <strong>quà thật</strong> (đồ chơi, đi chơi...) hay mua ' +
+    '<strong>avatar</strong> bằng 🪙 xu vàng? Tất cả ở <strong>Cửa Hàng</strong> chung của cả app.</p>' +
+    '<a class="chNutLienKet" href="kc/cuahang_NC.html">🎁 Quà thật</a> ' +
+    '<a class="chNutLienKet" href="kc/cuahang_NC.html#avatar">🙂 Avatar</a>';
   khoi.classList.add("hien");
   if (!quaList.length) return;
   quaList.forEach(function (ls) {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cửa Hàng Quà - Kids Challenge</title>
+  <title>Cửa Hàng - Kids Challenge</title>
 
   <!-- ================================================================
        FILE: kc/cuahang_NC.html
@@ -36,6 +36,15 @@
     @keyframes chqNay { 50% { transform: scale(1.15); } }
 
     .chqBoCuc { display: block; }
+    /* KC_05A: 2 ngăn Quà thật / Avatar */
+    .chqNgan { display: flex; gap: 8px; margin: 16px 0 10px; }
+    .chqNganNut { flex: 1; border: 3px solid var(--mau-vien); background: var(--mau-nen-khoi); border-radius: 999px; padding: 9px 12px;
+      font-family: "Baloo 2", sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--mau-chinh-dam); cursor: pointer; }
+    .chqNganNut.dangChon { background: var(--mau-chinh); border-color: var(--mau-chinh); color: #fff; }
+    .chqHinh.chqHinhAvatar img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: var(--do-bong); }
+    .chqThe.chqDangDung { border-color: var(--mau-phu); }
+    .chqGhiChu { font-size: 0.8rem; color: var(--mau-phu-dam); background: #fff5da; border-radius: 8px; padding: 3px 8px; margin: 4px 0 8px; }
+    .chqNut.chqNutDung { background: var(--mau-chinh); box-shadow: 0 4px 0 var(--mau-chinh-dam); }
     .chqTieuDe { margin: 18px 0 8px; color: var(--mau-chinh-dam); }
     /* ----- Lưới quà ----- */
     .chqLuoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
@@ -106,7 +115,7 @@
 <body>
 
   <header id="headerChinh">
-    <h1>🛍️ Cửa Hàng Quà</h1>
+    <h1>🛍️ Cửa Hàng</h1>
     <div id="trangThaiDangNhap">
       <span id="kcTenNguoiChoi"></span>
       <a class="kcNutLienKet" href="quantri_NC.html" data-chi-admin style="display:none;">🛠️ Quản trị</a>
@@ -144,16 +153,20 @@
 
       <div id="chqKhuBe">
         <div class="chqBang">
-          <h2>Đổi kim cương lấy quà thật! 🎁</h2>
-          <p>Kim cương con kiếm ở mọi trò chơi, bài học, thử thách đều gom về đây.</p>
-          <div class="chqSoDu" id="chqSoDu" title="Kim cương của con">💎 <span id="chqSoKimCuong">0</span></div>
+          <h2>Đổi kim cương lấy quà thật và avatar! 🎁</h2>
+          <p id="chqBangLoi">Kim cương con kiếm ở mọi trò chơi, bài học, thử thách đều gom về đây.</p>
+          <div class="chqSoDu" id="chqSoDu" title="Kim cương của con"><span id="chqSoDuHinh">💎</span> <span id="chqSoKimCuong">0</span></div>
         </div>
 
         <div class="chqThongBao" id="chqThongBao"></div>
 
         <div class="chqBoCuc">
           <div>
-            <h3 class="chqTieuDe">🎁 Quà đang có</h3>
+            <!-- KC_05A: 2 ngăn - quà thật / avatar (avatar dùng chung toàn app) -->
+            <div class="chqNgan" role="tablist">
+              <button class="chqNganNut dangChon" type="button" data-ngan="qua">🎁 Quà thật</button>
+              <button class="chqNganNut" type="button" data-ngan="avatar">🙂 Avatar</button>
+            </div>
             <div id="chqDangTai" class="chqRong">Đang mở cửa hàng...</div>
             <div class="chqLuoi" id="chqLuoi"></div>
           </div>
@@ -189,4 +202,4 @@
 <script src="kc_luot_truy_cap.js"></script>
 </body>
 </html>
-<!-- 25/11/2026 - BƯỚC: KC_05 (Cửa Hàng Quà chung toàn app) -->
+<!-- 25/11/2026 - BƯỚC: KC_05 (Cửa Hàng Quà chung toàn app) | 25/11/2026 07:xx - KC_05A: thêm ngăn 🙂 Avatar (avatar dùng chung toàn app chuyển từ Cửa Hàng Cờ Vua sang) -->
