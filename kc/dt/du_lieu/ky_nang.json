@@ -1,0 +1,20 @@
+{
+  "_ghiChu": "Đấu Trường Tri Thức - KHO KỸ NĂNG (TC_D05C0a 25/11/2026, đặc tả repo_rieng dau_truong_tri_thuc/dac_ta_tuong.md mục 3.3). CHỈ đọc qua kc/dt/dt_tuong.js. SỐ MẶC ĐỊNH; Quản trị lưu phần sửa (cài đặt 'ky_nang'). Kỹ năng = LUẬT, không biết gì về hình 3D: ten, loai (can_chien: lao tới | phep: đứng bắn | vung: phủ vùng | dac_biet: chiêu dài có camera riêng | ho_tro: hồi máu / khiên, TC_D05C), heSo (nhân sát thương; hiện = 1 mọi kỹ năng, máy chủ chưa đọc - TC_D05C), mp, hoiChieu (lượt), trinhDien (mã trong hieu_ung.json). Tiếng tên chiêu = mã kỹ năng (Quản trị › Âm thanh). Kỹ năng không ghi tộc: tướng và (sau này) quái dùng chung.",
+  "phienBan": 1,
+  "kyNang": {
+    "chem_kiem": { "ten": "Chém kiếm", "loai": "can_chien", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "chem_kiem" },
+    "chem_lua": { "ten": "Chém lửa", "loai": "can_chien", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "chem_lua" },
+    "cau_phep": { "ten": "Cầu phép", "loai": "phep", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "cau_phep" },
+    "kiem_quang_tram": { "ten": "Kiếm Quang Trảm", "loai": "can_chien", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "kiem_quang_tram" },
+    "hoa_nguc_bao": { "ten": "Hoả Ngục Bạo", "loai": "can_chien", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "hoa_nguc_bao" },
+    "loi_than_giang": { "ten": "Lôi Thần Giáng", "loai": "phep", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "loi_than_giang" },
+    "plasma_beam": { "ten": "Hoả Long Phóng Xạ", "loai": "dac_biet", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "plasma_beam" },
+    "mua_lua": { "ten": "Hoả Vũ Thiên Giáng", "loai": "vung", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "mua_lua" },
+    "thien_thach": { "ten": "Thiên Thạch Lạc", "loai": "vung", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "thien_thach" },
+    "loc_xoay": { "ten": "Cuồng Phong", "loai": "vung", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "loc_xoay" },
+    "dam_dat": { "ten": "Chấn Địa", "loai": "vung", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "dam_dat" },
+    "vo_khong_gian": { "ten": "Phá Không Quyền", "loai": "vung", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "vo_khong_gian" },
+    "mua_ten": { "ten": "Vạn Tiễn Tề Phát", "loai": "vung", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "mua_ten" },
+    "chuong": { "ten": "Thiên Quang Chưởng", "loai": "vung", "heSo": 1, "mp": 0, "hoiChieu": 0, "trinhDien": "chuong" }
+  }
+}

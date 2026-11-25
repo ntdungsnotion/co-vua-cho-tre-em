@@ -1,0 +1,20 @@
+{
+  "_ghiChu": "Đấu Trường Tri Thức - KHO TRÌNH DIỄN (cách VẼ một kỹ năng; TC_D05C0a 25/11/2026, đặc tả repo_rieng dau_truong_tri_thuc/dac_ta_tuong.md mục 3.4). CHỈ đọc qua kc/dt/dt_tuong.js. SỐ MẶC ĐỊNH; Quản trị lưu phần sửa (cài đặt 'hieu_ung'). Không ảnh hưởng sát thương. ham = hàm vẽ ĐÃ CÓ trong dt3d_tran.js (chem: lao tới chém | cau_phep: đứng bắn cầu phép | vet_x: hai vệt chéo chữ X | cot_lua: cột lửa | set: sét giáng | chieu_them: chiêu trong dt3d_chieu_them.js theo 'ma' | chieu_vung: chiêu phủ vùng dt3d_chieu_vung.js theo 'ma'). Thông số: chu (tên chiêu hiện giữa sân), mau (bỏ trống = màu chính của tướng), khoiKhiTrung (màu khói khi trúng), co (cỡ cột lửa), mauSet, amNo (độ to tiếng nổ của chiêu lớn).",
+  "phienBan": 1,
+  "trinhDien": {
+    "chem_kiem": { "ham": "chem" },
+    "chem_lua": { "ham": "chem", "khoiKhiTrung": "#ff8a3a" },
+    "cau_phep": { "ham": "cau_phep" },
+    "kiem_quang_tram": { "ham": "vet_x", "chu": "KIẾM QUANG TRẢM" },
+    "hoa_nguc_bao": { "ham": "cot_lua", "chu": "HOẢ NGỤC BẠO", "co": 0.9, "amNo": 0.7 },
+    "loi_than_giang": { "ham": "set", "chu": "LÔI THẦN GIÁNG", "mauSet": "#bfe9ff", "amNo": 0.5 },
+    "plasma_beam": { "ham": "chieu_them", "ma": "plasma_beam" },
+    "mua_lua": { "ham": "chieu_vung", "ma": "mua_lua", "chu": "HOẢ VŨ THIÊN GIÁNG" },
+    "thien_thach": { "ham": "chieu_vung", "ma": "thien_thach", "chu": "THIÊN THẠCH LẠC" },
+    "loc_xoay": { "ham": "chieu_vung", "ma": "loc_xoay", "chu": "CUỒNG PHONG" },
+    "dam_dat": { "ham": "chieu_vung", "ma": "dam_dat", "chu": "CHẤN ĐỊA" },
+    "vo_khong_gian": { "ham": "chieu_vung", "ma": "vo_khong_gian", "chu": "PHÁ KHÔNG QUYỀN" },
+    "mua_ten": { "ham": "chieu_vung", "ma": "mua_ten", "chu": "VẠN TIỄN TỀ PHÁT" },
+    "chuong": { "ham": "chieu_vung", "ma": "chuong", "chu": "THIÊN QUANG CHƯỞNG" }
+  }
+}

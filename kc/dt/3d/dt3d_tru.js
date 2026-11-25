@@ -233,7 +233,7 @@ export function taoTruBanDo(the) {
     const ts = new URLSearchParams({ nhung: "1", tru: "1", tran: String(tr.id), loaiTru: loaiSan, cap: String(tr.cap || 1),
       tenTru: tenTru(ct) + " của " + ct.chu, mauBe: String(tr.mauBe), mauBeToiDa: String(tr.mauBeToiDa), mauTru: String(tr.mauTru),
       mauTruToiDa: String(tr.mauTruToiDa), giayBe: String(C.giayBe), nghi: String(C.nghiGiay),
-      cl: be.hoSo.chungLoai || "nhan", gioi: be.hoSo.gioi || "nam", lop: String(be.lop || 2), ten: be.ten || "", tl: (dv ? dv.ten : dvTl.ten) || "" });
+      cl: be.hoSo.chungLoai || "nhan", gioi: be.hoSo.gioi || "nam", doi: be.thoiKy || "do_da" /* TC_D05C0a */, lop: String(be.lop || 2), ten: be.ten || "", tl: (dv ? dv.ten : dvTl.ten) || "" });
     if (dv) { ts.set("vai", "nong_dan"); ts.set("nd", String(dv.id)); } // nông dân (trang trận: thua = bỏ chạy, không nghỉ)
     if (!laTru(ct)) { // TC_D06C7b: đối thủ trên sân là Thủ lĩnh của chủ (tộc theo Thủ lĩnh bạn ấy máy này đang thấy; chưa thấy: Nhân tộc)
       const b = vung && vung.tlBan ? vung.tlBan(ct.chu) : null;

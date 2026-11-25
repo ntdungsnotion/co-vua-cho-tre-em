@@ -8,7 +8,7 @@
 //            kiệt sức rồi dịch chuyển về Lều (không có cảnh chết, đặc tả VI.8).
 //            Trang không phải module: tải xong gán window.KC_DT_SAN3D và phát sự kiện "dt-san3d".
 // HÀM KHAI RA (window.KC_DT_SAN3D):
-//   tao(vungVe, { nhe }) -> Promise<san>; san = { datTran({ chungLoai, hoSo, quai, chu }),
+//   tao(vungVe, { nhe, napTep }) -> Promise<san> (napTep(ten): sổ tướng đã trộn phần Quản trị sửa, TC_D05C0a); san = { datTran({ chungLoai, hoSo, quai, chu }),
 //        ketQua(k) (k: kết quả lượt của lõi; trả { giay, trung } khi diễn chiêu kết liễu dài - TC_D05E, còn lại undefined), thu(ben, bat), nghi(bat), ketThuc(thang),
 //        tuLuc(vai) -> { bung(), tan(), manh(), choMang(b) } (KC_06B2: pha tụ lực lúc chờ máy chủ chấm; vai "danh" | "thu"),
 //        viTri(ben) -> { x, y } điểm ảnh trong vùng vẽ (trên đầu),
@@ -37,6 +37,7 @@ import { taoHieuUng } from "./dt3d_hieu_ung.js";
 import { taoBoHat } from "./dt3d_hat.js";
 import { taoChieuVung } from "./dt3d_chieu_vung.js";
 import { taoAmThanh } from "./dt3d_am_thanh.js";
+import "../dt_tuong.js"; // TC_D05C0a: sổ tướng chung -> window.KC_DT_TUONG
 import { EffectComposer } from "../../thu_vien/three/postprocessing/EffectComposer.js";
 import { RenderPass } from "../../thu_vien/three/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "../../thu_vien/three/postprocessing/UnrealBloomPass.js";
@@ -45,12 +46,9 @@ import { OutputPass } from "../../thu_vien/three/postprocessing/OutputPass.js";
 const duongDan = p => new URL(p, import.meta.url).href;
 const X_BE = -1.55, X_QUAI = 1.55, TI_BE = 1.45, TI_QUAI = 1.25, CAO_TUONG = 1.85;
 const HUONG_BE = Math.PI / 2 - 0.6, HUONG_QUAI = -Math.PI / 2 + 0.85;
-// phong cách chiêu theo tộc: Nhân tộc kiếm quang vàng, Quỷ tộc chém lửa, Tiên tộc bắn cầu phép (chí mạng = chiêu lớn)
-const KIEU_TOC = {
-  nhan: { mau: "#ffd36b", mau2: "#fff3c4", chieu: "KIẾM QUANG TRẢM", ma: "kiem_quang_tram" },
-  quy: { mau: "#ff6a2a", mau2: "#ffc27a", chieu: "HOẢ NGỤC BẠO", ma: "hoa_nguc_bao" },
-  tien: { mau: "#7fd8ff", mau2: "#e2c8ff", chieu: "LÔI THẦN GIÁNG", ma: "loi_than_giang", phep: true }
-};
+// TC_D05C0a: KHÔNG còn phong cách chiêu theo tộc trong mã. Màu, tên chiêu, cách diễn, chiêu kết liễu lấy từ SỔ TƯỚNG
+// (dt/dt_tuong.js: mẫu tướng + kỹ năng + trình diễn). Chỉ giữ màu dự phòng khi sổ thiếu hẳn một ô (mất mạng / dữ liệu hỏng).
+const VE_DU_PHONG = { mau: "#ffd36b", mau2: "#fff3c4", mauThu: "#9fe4ff", mauNangLuong: "#2fa8ff", tuLucCao: 0.62, phongThu: { kieu: "khien" } };
 // đòn của quái: dom_dom bắn tia sáng từ xa, còn lại lao tới
 const KIEU_QUAI = { slime_so: { mau: "#86ff6e" }, nam_chu_cai: { mau: "#c995ff" }, dom_dom: { mau: "#fff27a", xa: true },
   tru_ten: { mau: "#ffe6a0", xa: true }, // TC_D06C2g: Trụ tên bắn tên từ sàn (không nhảy)
@@ -59,24 +57,32 @@ const KIEU_QUAI = { slime_so: { mau: "#86ff6e" }, nam_chu_cai: { mau: "#c995ff" 
 
 function anhTron(ve, co = 64) { const cv = document.createElement("canvas"); cv.width = cv.height = co; ve(cv.getContext("2d"), co); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; }
 
-async function tao(vungVe, { nhe } = {}) {
+// napTep(ten) -> Promise<json>: file sổ tướng ĐÃ trộn phần Quản trị sửa (trang trận trong khung nhờ bản đồ, xem thu_tran_dau.html).
+// Không đưa vào: đọc file mặc định (trang thử đứng riêng).
+async function tao(vungVe, { nhe, napTep } = {}) {
   nhe = nhe != null ? nhe : docDoHoa() === "nhe";
-  // tướng người thật (TC_D05B1): kho tướng ở du_lieu/tuong.json; chỉ tải file của tướng đang đấu
-  // (mỗi file ~1 MB), nhớ lại khi đấu tiếp. Lỗi ở bất kỳ bước nào thì dùng Thủ lĩnh KayKit như cũ.
+  // tướng người thật (TC_D05B1): SỔ TƯỚNG CHUNG (TC_D05C0a, dt/dt_tuong.js) chọn mẫu; chỉ tải file của tướng đang đấu
+  // (mỗi file ~1 MB, đã tải sẵn ở nền khi mở game - dt3d_luu_san.js), nhớ lại khi đấu tiếp. Lỗi thì dùng Thủ lĩnh KayKit như cũ.
   const boNhoTuong = {};
   const taiTuong = tep => boNhoTuong[tep] || (boNhoTuong[tep] = taiGlb(duongDan("../mo_hinh/" + tep)));
-  const [glbLang, glbNv, glbTran, glbDongTacTuong, khoTuong] = await Promise.all([
+  const napMacDinh = ten => fetch(duongDan("../du_lieu/" + ten + ".json"), { cache: "no-cache" }).then(r => r.json());
+  const [glbLang, glbNv, glbTran, glbDongTacTuong, soTuong] = await Promise.all([
     taiGlb(duongDan("../mo_hinh/lang.glb")), taiGlb(duongDan("../mo_hinh/nhan_vat.glb")), taiGlb(duongDan("../mo_hinh/dong_tac_tran.glb")),
     taiGlb(duongDan("../mo_hinh/dong_tac_tuong.glb")).catch(() => null),
-    fetch(duongDan("../du_lieu/tuong.json")).then(r => r.json()).catch(() => null)
+    window.KC_DT_TUONG.tai({ napTep: ten => (napTep ? Promise.resolve(napTep(ten)).then(j => j || napMacDinh(ten)) : napMacDinh(ten)) })
   ]);
-  // tướng cho hồ sơ: hoSo.tuong (mã trong kho, vd trang thử ?tuong=quy_toc) hoặc Thủ lĩnh theo tộc + giới
-  function chonTuong(hoSo) {
-    if (!khoTuong) return null;
-    const ma = hoSo.tuong || khoTuong.thuLinh[hoSo.chungLoai + "_" + (hoSo.gioi === "nu" ? "nu" : "nam")] || khoTuong.thuLinh.nhan_nam;
-    return khoTuong.kho.find(t => t.ma === ma) || null;
+  // mẫu tướng cho hồ sơ: hoSo.tuong (vd trang thử ?tuong=quy_toc) hoặc Thủ lĩnh theo tộc + giới + đời (sổ tướng)
+  const chonTuong = hoSo => soTuong.thuLinh(hoSo);
+  { const t = chonTuong({ chungLoai: "nhan" }); if (t.tep) taiTuong(t.tep).catch(() => {}); } // tải sẵn tướng mặc định
+  // cách vẽ chiêu của một hồ sơ: màu + phòng thủ của MẪU TƯỚNG, kỹ năng thường / chí mạng / kết liễu + trình diễn của SỔ
+  function taoVe(hoSo) {
+    const m = chonTuong(hoSo), c = soTuong.chieuCua(m), mau = m.mau || {}, D = VE_DU_PHONG;
+    return {
+      mau: mau.chinh || D.mau, mau2: mau.phu || D.mau2, mauThu: mau.thu || D.mauThu, mauNangLuong: mau.nangLuong || D.mauNangLuong,
+      tuLucCao: m.tuLucCao || D.tuLucCao, phongThu: m.phongThu || D.phongThu,
+      phep: !!(c.thuong && c.thuong.loai === "phep"), thuong: c.thuong, chiMang: c.chiMang, ketLieu: c.ketLieu
+    };
   }
-  if (khoTuong) { const t = chonTuong({ chungLoai: "nhan" }); if (t) taiTuong(t.tep).catch(() => {}); } // tải sẵn tướng mặc định
   const ctx = taoCanh(vungVe, { nhe });
   const { canh } = ctx;
   canh.background = new THREE.Color("#9fd2ec");
@@ -94,7 +100,7 @@ async function tao(vungVe, { nhe } = {}) {
   const coChieuThem = import("./dt3d_chieu_them.js")
     .then(m => (ct = m.taoChieuThem({ ctx, hu, bo: boHat, cv, nhe, layCamera: () => camera })))
     .catch(e => { console.warn("Kho chiêu thêm lỗi, bỏ qua", e); return null; });
-  let kieu = KIEU_TOC.nhan, haoQuang = null, cham = 0;
+  let ve = taoVe({ chungLoai: "nhan" }), haoQuang = null, cham = 0;
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
   // --- bãi cỏ (màu loang), sân đất giữa, cây + đá xung quanh ---
@@ -131,16 +137,17 @@ async function tao(vungVe, { nhe } = {}) {
     const vo = tuong ? tuong.vo : hBe && hBe.vo;
     if (vo && khoa === khoaBe) { vo.visible = true; return; }
     khoaBe = khoa;
-    const lan = ++lanDung, tt = boTuong && !hoSo.nongDan && chonTuong(hoSo); // TC_D06C2b: nông dân đánh quái -> hình nông dân KayKit
+    const lan = ++lanDung, m = boTuong && !hoSo.nongDan && chonTuong(hoSo), tt = m && m.tep ? m : null; // TC_D06C2b: nông dân đánh quái -> hình nông dân KayKit
     if (tt) { // tải tướng (lần đầu ~1 MB); trong lúc tải giữ tướng cũ trên sân
       if (!tuong && !hBe) dungKayKit(hoSo); // KC_06B2b: mạng chậm, tướng chưa tải xong -> Thủ lĩnh KayKit (đã có sẵn) đứng tạm, không để trống sân
       taiTuong(tt.tep).then(glb => {
         if (lan !== lanDung) return; // bé đã đổi tướng khác trong lúc tải
         if (tuong) canh.remove(tuong.vo);
         if (hBe) { boNv.xoa(hBe); hBe = null; }
-        tuong = boTuong.tao(glb, Object.assign({}, hoSo, { chungLoai: tt.toc, dungTay: tt.dungTay, dungTran: tt.dungTran }), CAO_TUONG); tuong.vo.rotation.y = HUONG_BE;
+        const dt = tt.dongTac || {}, cao = tt.cao || CAO_TUONG;
+        tuong = boTuong.tao(glb, Object.assign({}, hoSo, { boDongTac: dt.bo, dungTay: dt.dungTay, dungTran: dt.dungTran }), cao); tuong.vo.rotation.y = HUONG_BE;
         tuong.vo.position.set(dvBe.x, 0, dvBe.z);
-        vlBe = tuong.vlPhatSang; caoBe = CAO_TUONG;
+        vlBe = tuong.vlPhatSang; caoBe = cao;
       }, () => { if (lan === lanDung && !tuong) dungKayKit(hoSo); });
       return;
     }
@@ -244,9 +251,9 @@ async function tao(vungVe, { nhe } = {}) {
   // manh(): chờ lâu -> vòng sáng thứ hai + rung nhẹ; choMang(true): chờ mạng -> ánh sáng dịu xuống. Đồ hoạ Nhẹ: không hạt.
   const dsTuLuc = [];
   function taoTuLuc(vai) {
-    const thu = vai === "thu", mau = thu ? (kieu === KIEU_TOC.quy ? "#ffb070" : "#9fe4ff") : kieu.mau, mau2 = thu ? "#ffffff" : kieu.mau2;
+    const thu = vai === "thu", mau = thu ? ve.mauThu : ve.mau, mau2 = thu ? "#ffffff" : ve.mau2;
     const sp = (m, co) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: chopTex, color: m, transparent: true, depthTest: false, blending: THREE.AdditiveBlending })); s.scale.setScalar(co); canh.add(s); return s; };
-    const tam = () => thu ? V(dvBe.x + 0.15, caoBe * 0.5, 0.3) : kieu.phep ? V(dvBe.x + 0.32, caoBe * 0.6, 0.32) : V(dvBe.x + 0.42, caoBe * (kieu === KIEU_TOC.quy ? 0.5 : 0.62), 0.35);
+    const tam = () => thu ? V(dvBe.x + 0.15, caoBe * 0.5, 0.3) : ve.phep ? V(dvBe.x + 0.32, caoBe * 0.6, 0.32) : V(dvBe.x + 0.42, caoBe * ve.tuLucCao, 0.35);
     const loi = sp(mau, 0.2), vien = sp(mau2, 0.1);
     let vong2 = null, t = 0, manh = false, choMang = false, xong = false, hen = 0, sang = 0;
     const hat = [];
@@ -261,7 +268,7 @@ async function tao(vungVe, { nhe } = {}) {
         const p = tam(), nhip = Math.sin(t * 11) * 0.05;
         if (manh && !choMang) p.x += Math.sin(t * 47) * 0.012; // rung nhẹ
         loi.position.copy(p); vien.position.copy(p);
-        loi.scale.setScalar((kieu.phep && !thu ? 0.35 : 0.22) + 0.5 * sang + nhip);
+        loi.scale.setScalar((ve.phep && !thu ? 0.35 : 0.22) + 0.5 * sang + nhip);
         vien.scale.setScalar(0.12 + 0.18 * sang - nhip);
         loi.material.opacity = 0.35 + 0.6 * Math.min(1, sang); vien.material.opacity = 0.6 * Math.min(1, sang);
         if (thu) { vb.vlVom.uniforms.uMo.value = 0.1 + 0.5 * Math.min(1, sang); vb.day.material.opacity = 0.2 + 0.6 * Math.min(1, sang); }
@@ -377,15 +384,19 @@ async function tao(vungVe, { nhe } = {}) {
     hu.rung(manh ? 0.09 : 0.035, manh ? 0.45 : 0.22);
     if (manh) cham = 0.1;
   }
-  // chiêu lớn khi chí mạng, theo tộc
+  // chiêu lớn khi chí mạng: kỹ năng chiMang của mẫu tướng, vẽ theo hàm trình diễn của nó (TC_D05C0a; trước là theo tộc)
+  // Hàm trình diễn mà sổ tướng được gọi (KC_DT_TUONG.HO_TRO.ham): chem, cau_phep (đòn thường, trong ketQua),
+  // vet_x, cot_lua, set (ở đây), chieu_them (san.chieuThem), chieu_vung (san.chieuVung).
   function chieuLon(p) {
-    hu.chuChieu(kieu.chieu, V(0, 2.4, 0.4), kieu.mau); am.chieu(kieu.ma); // TC_D05F: mỗi chiêu một tiếng (Quản trị › Âm thanh)
-    if (kieu === KIEU_TOC.quy) { hu.cotLua(V(p.x, 0, 0), 0.9); am.thachNo(p.x, 0.7); }
-    else if (kieu === KIEU_TOC.tien) { hu.set(V(p.x, 0, 0), "#bfe9ff"); am.thachNo(p.x, 0.5); }
-    else {
-      hu.vetChem(p, kieu.mau2, { r: 1.25, day: 0.5, tu: 2.5, den: -0.7, xoayY: 0, giay: 0.32, sang: 2 });
-      them(0.01, () => { am.chem(p.x); hu.vetChem(p, kieu.mau, { r: 1.25, day: 0.5, tu: 0.65, den: -2.55, xoayY: 0, giay: 0.32, sang: 2 }); }, 0.1);
-      them(0.01, () => { hu.songXung(V(p.x, 0, 0), kieu.mau, 2.6, 0.7); hu.chop(p, kieu.mau2, 2.6, 0.35, 0.5); }, 0.18);
+    const k = ve.chiMang, td = (k && k.td) || { ham: "vet_x" }, mau = td.mau || ve.mau;
+    if (td.chu) hu.chuChieu(td.chu, V(0, 2.4, 0.4), mau);
+    if (k) am.chieu(k.ma); // TC_D05F: mỗi chiêu một tiếng (Quản trị › Âm thanh), khoá = mã kỹ năng
+    if (td.ham === "cot_lua") { hu.cotLua(V(p.x, 0, 0), td.co || 0.9); am.thachNo(p.x, td.amNo || 0.7); }
+    else if (td.ham === "set") { hu.set(V(p.x, 0, 0), td.mauSet || ve.mau2); am.thachNo(p.x, td.amNo || 0.5); }
+    else { // vet_x: hai vệt chéo chữ X
+      hu.vetChem(p, ve.mau2, { r: 1.25, day: 0.5, tu: 2.5, den: -0.7, xoayY: 0, giay: 0.32, sang: 2 });
+      them(0.01, () => { am.chem(p.x); hu.vetChem(p, mau, { r: 1.25, day: 0.5, tu: 0.65, den: -2.55, xoayY: 0, giay: 0.32, sang: 2 }); }, 0.1);
+      them(0.01, () => { hu.songXung(V(p.x, 0, 0), mau, 2.6, 0.7); hu.chop(p, ve.mau2, 2.6, 0.35, 0.5); }, 0.18);
     }
   }
 
@@ -399,9 +410,9 @@ async function tao(vungVe, { nhe } = {}) {
       if (hoSo && hoSo.nongDan) hs.nongDan = true; // TC_D06C2b
       dungBe(hs);
       laNongDan = !!hs.nongDan; // TC_D05E: nông dân đánh quái không có chiêu kết liễu của Thủ lĩnh
-      kieu = KIEU_TOC[hs.chungLoai] || KIEU_TOC.nhan;
+      ve = taoVe(hs); // TC_D05C0a: màu + chiêu theo mẫu tướng của sổ (nông dân: theo Thủ lĩnh cùng tộc, không kết liễu)
       if (haoQuang) canh.remove(haoQuang.nhom);
-      haoQuang = hu.taoHaoQuang(kieu.mau);
+      haoQuang = hu.taoHaoQuang(ve.mau);
       dungQuai(ma, chu, doiThu); // TC_D06C7b: doiThu = { chungLoai } -> Thủ lĩnh của chủ công trình
       vong.be.visible = vong.quai.visible = bong.visible = false;
       am.phatNhac({ boiCanh: "tran" }); // nhạc nền trận từ thư viện (chưa có bài thì im)
@@ -419,12 +430,13 @@ async function tao(vungVe, { nhe } = {}) {
       vong.be.visible = dangThu && k.tanCong === "quai"; vong.quai.visible = false; bong.visible = false;
       const trung = k.satThuong > 0, ne = k.kieu === "ne";
       const qn = quai.nhom;
-      // TC_D05E (người dùng 25/11/2026 chọn "đòn kết liễu"): đòn đúng của Thủ lĩnh Nhân tộc hạ được đối thủ
-      // -> chiêu ⚡ Plasma Beam đầy đủ (camera điện ảnh); chí mạng thường vẫn là Kiếm Quang Trảm.
+      // TC_D05E (người dùng 25/11/2026 chọn "đòn kết liễu"): đòn đúng của Thủ lĩnh hạ được đối thủ -> chiêu KẾT LIỄU của
+      // mẫu tướng (TC_D05C0a: kyNang.ketLieu trong sổ tướng; Nhân tộc = ⚡ Plasma Beam, camera điện ảnh); chí mạng thường vẫn là chiêu chiMang.
       // Trả { giay, trung } để trang chờ chiêu diễn xong mới kết thúc trận / hiện số trừ máu đúng lúc tia chạm.
-      if (k.tanCong === "be" && trung && k.ketThuc && k.ketThuc.thang === "be" && kieu === KIEU_TOC.nhan && !laNongDan) {
-        const c = ct && ct.ds.find(x => x.ma === "plasma_beam");
-        const giay = c ? san.chieuThem("plasma_beam") : 0;
+      const tdKl = ve.ketLieu && ve.ketLieu.td;
+      if (k.tanCong === "be" && trung && k.ketThuc && k.ketThuc.thang === "be" && tdKl && tdKl.ham === "chieu_them" && !laNongDan) {
+        const c = ct && ct.ds.find(x => x.ma === tdKl.ma);
+        const giay = c ? san.chieuThem(tdKl.ma) : 0;
         if (giay) {
           if (haoQuang) haoQuang.bat(2);
           return { giay, trung: c.trung || giay * 0.6 };
@@ -433,25 +445,26 @@ async function tao(vungVe, { nhe } = {}) {
       if (k.tanCong === "be") {
         const quaiNe = () => { am.ne(X_QUAI); hu.gio(V(qn.position.x, 0, 0.1), 1); noLapLanh(qn.position.clone(), "#bfeaff"); them(0.45, p => { qn.position.x = X_QUAI + Math.sin(p * Math.PI) * 0.9; qn.position.y = Math.sin(p * Math.PI) * 0.55; }); };
         const trungDon = p => {
-          quai.chop(0.3); am.trung(p.x, k.chiMang); vaCham(p, kieu.mau, k.chiMang);
-          if (kieu === KIEU_TOC.quy) hu.khoi(p, "#ff8a3a", 6, 0.5);
+          quai.chop(0.3); am.trung(p.x, k.chiMang); vaCham(p, ve.mau, k.chiMang);
+          const tdThuong = ve.thuong && ve.thuong.td;
+          if (tdThuong && tdThuong.khoiKhiTrung) hu.khoi(p, tdThuong.khoiKhiTrung, 6, 0.5);
           if (k.chiMang) chieuLon(p);
           them(0.35, q => { qn.position.x = X_QUAI + Math.sin(q * Math.PI) * 0.45; qn.scale.set(TI_QUAI * (1 + Math.sin(q * Math.PI) * 0.18), TI_QUAI * (1 - Math.sin(q * Math.PI) * 0.18), TI_QUAI); });
         };
-        if (kieu.phep) { // Tiên tộc: đứng tại chỗ bắn cầu phép
+        if (ve.phep) { // kỹ năng thường loại phép (trình diễn cau_phep, vd Tiên tộc): đứng tại chỗ bắn cầu phép
           dien(k.chiMang ? "phepLon" : "phep");
           them(0.01, () => {
             const tu = V(dvBe.x + 0.45, caoBe * 0.7, 0.25), den = tamQuai();
             if (ne) den.x += 1.8; else if (!trung) den.set(den.x - 0.5, 0.05, 0.3);
-            hu.chop(tu, kieu.mau, 1.3, 0.3); am.phep(tu.x, k.chiMang);
-            hu.phong(tu, den, { mau: kieu.mau, mau2: "#ffffff", giay: 0.32, co: 0.3, cong: 0.25, khiToi: p => { if (trung) trungDon(p); else if (!ne) { am.hut(p.x); hu.khoi(p, "#9aa7b5", 5, 0.6, false); } } });
+            hu.chop(tu, ve.mau, 1.3, 0.3); am.phep(tu.x, k.chiMang);
+            hu.phong(tu, den, { mau: ve.mau, mau2: "#ffffff", giay: 0.32, co: 0.3, cong: 0.25, khiToi: p => { if (trung) trungDon(p); else if (!ne) { am.hut(p.x); hu.khoi(p, "#9aa7b5", 5, 0.6, false); } } });
           }, 0.22);
           if (ne) them(0.01, quaiNe, 0.36);
-        } else { // Nhân / Quỷ tộc: lao tới chém
+        } else { // kỹ năng thường cận chiến (trình diễn chem, vd Nhân / Quỷ tộc): lao tới chém
           dien(k.chiMang ? "chemLon" : "chem");
           const tamDanh = tuong ? 1.45 : 1.15; // tướng người thật tay dài + kiếm: dừng xa quái hơn
           them(0.28, p => { dvBe.x = X_BE + (X_QUAI - tamDanh - X_BE) * Math.sin(p * Math.PI / 2); });
-          them(0.01, () => { am.chem(dvBe.x); hu.vetChem(V(dvBe.x + 0.5, caoBe * 0.52, 0.35), kieu.mau, { r: 0.9, giay: 0.3, nghieng: -0.15 }); }, 0.2);
+          them(0.01, () => { am.chem(dvBe.x); hu.vetChem(V(dvBe.x + 0.5, caoBe * 0.52, 0.35), ve.mau, { r: 0.9, giay: 0.3, nghieng: -0.15 }); }, 0.2);
           them(0.01, () => { if (trung) trungDon(tamQuai()); else if (ne) quaiNe(); else { am.hut(dvBe.x + 0.9); hu.tia(V(dvBe.x + 0.9, 0.1, 0.2), "#d8c9a8", 6, 2.5); } }, 0.3);
           them(0.35, p => { dvBe.x = X_QUAI - tamDanh + (X_BE - X_QUAI + tamDanh) * p; }, 0.75);
         }
@@ -469,10 +482,12 @@ async function tao(vungVe, { nhe } = {}) {
             them(0.35, q => { dvBe.x = X_BE - Math.sin(q * Math.PI) * 0.4; });
           } else if (ne) { dien("ne"); am.ne(dvBe.x); hu.gio(V(dvBe.x, 0, 0.1), -1); noLapLanh(V(dvBe.x, 0, 0), "#bfeaff"); }
           else if (k.beChon != null) {
-            // đỡ được: Nhân tộc giơ khiên + khiên năng lượng; Quỷ tộc đứng tấn chịu đòn (bụi + tia); Tiên tộc kết giới sáng
+            // đỡ được, theo phongThu của mẫu tướng: "khien" giơ khiên + khiên năng lượng (Nhân; Tiên kết giới sáng);
+            // "dung_tan" đứng tấn chịu đòn: bụi + tia (Quỷ)
             if (dangThu) dien("do", () => { if (!daTha) dien("thu"); }); else dien("do");
-            if (kieu === KIEU_TOC.quy) { am.dungTan(dvBe.x); hu.tia(p, "#ffb070", 12, 4); hu.khoi(V(dvBe.x, 0.1, 0.2), "#cdbf9c", 6, 0.6, false); hu.rung(0.03, 0.2); }
-            else { am.keng(dvBe.x, kieu === KIEU_TOC.tien ? 1.5 : 1); hu.khien(V(dvBe.x, caoBe * 0.5, 0.05), kieu === KIEU_TOC.tien ? "#9fe4ff" : kieu.mau, 0.6, caoBe * 0.55); hu.tia(p, "#ffffff", 8, 4); }
+            const pt = ve.phongThu || {};
+            if (pt.kieu === "dung_tan") { am.dungTan(dvBe.x); hu.tia(p, ve.mauThu, 12, 4); hu.khoi(V(dvBe.x, 0.1, 0.2), "#cdbf9c", 6, 0.6, false); hu.rung(0.03, 0.2); }
+            else { am.keng(dvBe.x, pt.amCao || 1); hu.khien(V(dvBe.x, caoBe * 0.5, 0.05), pt.mau || ve.mau, 0.6, caoBe * 0.55); hu.tia(p, "#ffffff", 8, 4); }
           }
           else { if (!dangThu) dien("dung"); am.hut(dvBe.x + 0.6); hu.khoi(V(dvBe.x + 0.6, 0.1, 0.2), "#cdbf9c", 5, 0.6, false); }
         };
@@ -506,7 +521,7 @@ async function tao(vungVe, { nhe } = {}) {
         dien("thua"); am.doanKet(false); // tướng quỳ xuống kiệt sức rồi dịch chuyển về Lều (không có cảnh chết)
         them(0.01, () => { am.dichChuyen(dvBe.x); noLapLanh(V(dvBe.x, 0, 0), "#fff1a8"); hu.chop(V(dvBe.x, 1, 0.2), "#fff1a8", 2.4, 0.4); if (voBe()) voBe().visible = false; }, tuong ? 2.4 : 1.3);
       } else {
-        if (thang === "be") { dien("mung"); am.doanKet(true); if (haoQuang) haoQuang.bat(2); them(0.01, () => { hu.songXung(V(dvBe.x, 0, 0), kieu.mau, 2.4, 0.8); hu.chop(V(dvBe.x, 1.2, 0.2), kieu.mau2, 3, 0.5); }, 0.2); }
+        if (thang === "be") { dien("mung"); am.doanKet(true); if (haoQuang) haoQuang.bat(2); them(0.01, () => { hu.songXung(V(dvBe.x, 0, 0), ve.mau, 2.4, 0.8); hu.chop(V(dvBe.x, 1.2, 0.2), ve.mau2, 3, 0.5); }, 0.2); }
         const q = quai;
         if (q.laTru) { // TC_D06C2g: trụ thua sụp thành đống gạch (hòa: trụ đứng nguyên)
           if (thang === "be") { them(0.01, () => { am.trung(q.nhom.position.x, true); hu.khoi(V(q.nhom.position.x, 0.3, 0.1), "#b9a68a", 14, 1.2, false); hu.rung(0.08, 0.5); }, 0.5);
@@ -522,10 +537,13 @@ async function tao(vungVe, { nhe } = {}) {
     chieuVung(ma) {
       if (!quai) return 0;
       const qn = quai.nhom, xq = qn.position.x;
-      const TEN = { mua_lua: "HOẢ VŨ THIÊN GIÁNG", thien_thach: "THIÊN THẠCH LẠC", loc_xoay: "CUỒNG PHONG", dam_dat: "CHẤN ĐỊA", vo_khong_gian: "PHÁ KHÔNG QUYỀN", mua_ten: "VẠN TIỄN TỀ PHÁT", chuong: "THIÊN QUANG CHƯỞNG" };
-      if (!TEN[ma]) return 0;
+      // TC_D05C0a: tên chiêu + có hay không lấy từ sổ tướng (kỹ năng ma -> trình diễn ham "chieu_vung"); ma của trình diễn chọn cách vẽ
+      const kn = soTuong.kyNang(ma), td = kn && soTuong.trinhDien(kn.trinhDien);
+      if (!td || td.ham !== "chieu_vung") return 0;
       vong.be.visible = vong.quai.visible = bong.visible = false;
-      hu.chuChieu(TEN[ma], V(0, 2.4, 0.4), kieu.mau); am.chieu(ma);
+      if (td.chu) hu.chuChieu(td.chu, V(0, 2.4, 0.4), td.mau || ve.mau);
+      am.chieu(ma);
+      ma = td.ma;
       const runQuai = (giay, tre) => them(giay, p => { if (Math.random() < 0.06) quai.chop(0.12); qn.position.x = xq + Math.sin(p * 70) * 0.02; }, tre);
       // mưa lửa / thiên thạch: ít và chậm để mắt theo kịp (người dùng 30/10/2026: giảm còn 1/3, chậm hơn)
       if (ma === "mua_lua") { dien("phepLon"); runQuai(3.2, 1.9); return cv.muaLua({ tam: V(xq + 0.4, 0, -0.5), r: 2.3 }); } // chỉ phủ nửa sân phía quái, không trùm lên bé
@@ -546,7 +564,7 @@ async function tao(vungVe, { nhe } = {}) {
       if (ma === "chuong") { // gồng 1,3 giây rồi bắn luồng sáng xuyên qua quái, quái bị đẩy lùi
         dien("phepLon");
         const gom = 1.3, ban = 1.4;
-        const giay = cv.chuongNangLuong({ tu: V(dvBe.x + 0.6, caoBe * 0.56, 0.25), den: V(7, caoBe * 0.5, 0.1), trung: tamQuai(), gom, ban, mau: kieu === KIEU_TOC.quy ? "#ff7a3a" : kieu === KIEU_TOC.tien ? "#a070ff" : "#2fa8ff" });
+        const giay = cv.chuongNangLuong({ tu: V(dvBe.x + 0.6, caoBe * 0.56, 0.25), den: V(7, caoBe * 0.5, 0.1), trung: tamQuai(), gom, ban, mau: ve.mauNangLuong });
         them(ban, p => { qn.position.x = xq + Math.sin(Math.min(1, p * 1.4) * Math.PI / 2) * 0.7 + Math.sin(p * 80) * 0.03; if (Math.random() < 0.08) quai.chop(0.1); }, gom);
         them(0.5, p => { qn.position.x = xq + 0.7 * (1 - p); }, gom + ban);
         return giay;
@@ -572,12 +590,12 @@ async function tao(vungVe, { nhe } = {}) {
       const c = ct && ct.ds.find(x => x.ma === ma);
       if (!c || !quai) return 0;
       vong.be.visible = vong.quai.visible = bong.visible = false;
-      if (c.ten) { hu.chuChieu(c.ten, c.tenTrenDau ? V(dvBe.x + 0.15, caoBe + 0.25, 0.4) : V(0, 2.4, 0.4), kieu.mau); am.chieu(ma); } // TC_D05E: chiêu lia camera về Thủ lĩnh -> tên trên đầu Thủ lĩnh
+      if (c.ten) { hu.chuChieu(c.ten, c.tenTrenDau ? V(dvBe.x + 0.15, caoBe + 0.25, 0.4) : V(0, 2.4, 0.4), ve.mau); am.chieu(ma); } // TC_D05E: chiêu lia camera về Thủ lĩnh -> tên trên đầu Thủ lĩnh
       const tran = {
         be: { tam: tamBe(), chan: V(dvBe.x, 0, dvBe.z), cao: caoBe, nhom: voBe() || null }, // TC_D05E: nhom để chiêu tìm xương tay
         camNhin: dich.clone(), // TC_D05E: chiêu lia camera trả về đúng điểm nhìn của sân
         quai: { nhom: quai.nhom, tam: tamQuai(), chan: V(quai.nhom.position.x, 0, quai.nhom.position.z), cao: quai.cao * TI_QUAI, chop: s => quai.chop(s) },
-        dongTac: k => dien(k), them, mau: kieu.mau, am
+        dongTac: k => dien(k), them, mau: ve.mau, am
       };
       try { return c.chay(tran) || 0; } catch (e) { console.warn("Chiêu " + ma + " lỗi", e); return 0; }
     },
@@ -601,3 +619,5 @@ window.dispatchEvent(new Event("dt-san3d"));
 // 12/11/2026 - BƯỚC: KC_06B2 (sửa: tướng chưa tải xong thì Thủ lĩnh KayKit đứng tạm)
 // 21/11/2026 - BƯỚC: TC_D05F (mỗi chiêu một tiếng tên chiêu: am.chieu(ma))
 // 25/11/2026 - BƯỚC: TC_D05E (kết liễu Nhân tộc = Plasma Beam; ketQua trả { giay, trung }; tran.be.nhom + tran.camNhin cho kho chiêu thêm)
+// 25/11/2026 - BƯỚC: TC_D05C0a (sổ tướng chung dt_tuong.js: bỏ KIEU_TOC + Plasma viết cứng; màu / chiêu / kết liễu / phòng thủ theo mẫu tướng;
+//               tên chiêu vùng từ hieu_ung.json; tao(vungVe, { nhe, napTep }))
