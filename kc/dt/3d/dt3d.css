@@ -483,3 +483,39 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 @keyframes d3CbSoi { 50% { box-shadow: 0 0 0 8px rgba(126, 224, 138, .15); } }
 @media (max-width: 600px) { .d3BongDen { font-size: 1.15rem; padding: 4px 6px; min-width: 40px; } }
 /* 17/11/2026 - BƯỚC: KC_06F2 */
+/* TC_D06D3 (25/11/2026): nút ⚙️ Cài đặt ở thanh trên + bảng cài đặt của bé (dt3d_cai_dat.js):
+   🎵 Nhạc nền, 🔊 Âm thanh trận đấu (bật / tắt + to nhỏ), ✨ Chất lượng game (Đẹp / Nhẹ). Máy tính: hộp giữa màn hình;
+   điện thoại: hộp gần đủ ngang màn hình, cuộn được khi thấp. Nằm trên mọi bảng nổi của làng, dưới khung trận (30) */
+.d3NutCaiDat { flex: 0 0 auto; font-size: 1.3rem; padding: 6px 10px; }
+.d3CaiDat { position: fixed; inset: 0; z-index: 28; display: grid; place-items: center; padding: 16px; box-sizing: border-box;
+  background: rgba(8, 12, 32, .55); }
+.d3CaiDatHop { width: min(440px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: auto; box-sizing: border-box;
+  padding: 14px 16px 18px; background: rgba(20, 32, 74, .97); }
+.d3CaiDatDau { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.d3CaiDatDau h2 { margin: 0; font-family: "Baloo 2", sans-serif; font-size: 1.45rem; color: var(--vang); }
+.d3CdMuc { padding: 12px 0; border-top: 1px solid rgba(255, 194, 75, .25); }
+.d3CdHang { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.d3CdTen { display: grid; gap: 2px; min-width: 0; }
+.d3CdTen b { font-family: "Baloo 2", sans-serif; font-size: 1.15rem; }
+.d3CdTen small { color: var(--nhat); font-size: .85rem; }
+.d3CdBat { flex: 0 0 auto; min-width: 78px; min-height: 44px; border-radius: 22px; border: 2px solid rgba(255, 194, 75, .7); cursor: pointer;
+  font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.05rem; color: #14204a; background: #7ee08a; }
+.d3CdBat[aria-checked="false"] { background: #59627f; color: var(--sang); border-color: rgba(185, 195, 236, .5); }
+.d3CdBat:focus-visible, .d3CdChon button:focus-visible, .d3CdTo input:focus-visible { outline: 3px solid var(--vang); outline-offset: 2px; }
+.d3CdTo { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 1.1rem; }
+.d3CdTo input { flex: 1 1 auto; min-width: 0; height: 32px; accent-color: var(--vang); cursor: pointer; }
+.d3CdTo output { min-width: 3.2em; text-align: right; font-family: "Baloo 2", sans-serif; font-weight: 800; color: var(--vang); font-size: 1rem; }
+.d3CdTat .d3CdTo { opacity: .45; }
+.d3CdChon { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.d3CdChon button { display: grid; gap: 2px; justify-items: center; min-height: 64px; padding: 8px; border-radius: 14px; cursor: pointer;
+  border: 2px solid rgba(185, 195, 236, .45); background: rgba(255, 255, 255, .06); color: var(--sang);
+  font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.1rem; }
+.d3CdChon button small { font-family: "Be Vietnam Pro", system-ui, sans-serif; font-weight: 500; font-size: .78rem; color: var(--nhat); }
+.d3CdChon button[aria-checked="true"] { border-color: var(--vang); background: rgba(255, 194, 75, .22); box-shadow: 0 0 0 3px rgba(255, 194, 75, .25); }
+.d3CdBao { margin: 10px 0 0; color: var(--vang); font-weight: 700; text-align: center; }
+@media (max-width: 600px) {
+  .d3NutCaiDat { font-size: 1.15rem; padding: 4px 6px; min-width: 40px; }
+  .d3CaiDat { padding: 8px; }
+  .d3CaiDatHop { padding: 12px 12px 14px; }
+}
+/* 25/11/2026 - BƯỚC: TC_D06D3 */
