@@ -533,6 +533,65 @@ export function taoAmThanh({ cauHinh: chDua, batLuon } = {}) {
   // tiếng tên chiêu: MỖI CHIÊU MỘT DÒNG "chieu_<ma>"; tiếng tự tạo mặc định = trống "thùng" với cao độ riêng của chiêu
   const caoDo = ma => { let h = 0; for (const c of String(ma)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return 0.78 + (h % 1000) / 1000 * 0.5; };
   am.chieu = (ma, tre = 0) => keu("chieu_" + ma, () => trongChieu(tre, caoDo(ma)), [], undefined);
+  // TC_D06D2 (người dùng 04/11/2026: "mỗi đối tượng có âm thanh đặc trưng, ví dụ chọn nông dân phát âm thanh ngài sai
+  // việc gì?"): tiếng khi bé CHẠM CHỌN một vật trên bản đồ. khoa: nong_dan | thu_linh_<tộc> | ct_<loại công trình> |
+  // quai_<mã quái> | nguon_<cay | mo_da | mo_vang | mo_sat | bai_ca | bui_trai_cay>. Dòng cài đặt "chon_<khoa>"; chưa có
+  // dòng riêng thì dùng dòng nhóm (chon_thu_linh / chon_ct / chon_quai / chon_nguon). Dòng có thêm "noi" = câu MÁY ĐỌC
+  // tiếng Việt (chỉ đọc khi dòng KHÔNG gắn file: file = giọng thu sẵn, thay câu đọc; máy không có giọng Việt thì im).
+  const NHOM_CHON = ["thu_linh", "ct", "quai", "nguon"];
+  function dongChon(khoa) {
+    const t = ch.tieng || {};
+    if (t["chon_" + khoa]) return "chon_" + khoa;
+    const goc = NHOM_CHON.find(n => khoa.indexOf(n + "_") === 0);
+    return goc && t["chon_" + goc] ? "chon_" + goc : "chon_" + khoa;
+  }
+  function tuTaoChon(khoa, x) {
+    if (!duoc("chon", 0.12)) return;
+    const k = caoDo(khoa);
+    if (khoa.indexOf("thu_linh") === 0) { // kèn hiệu 2 nốt: "ta đây!"
+      ton({ giay: 0.16, kieu: "sawtooth", tu: not(62) * k, am: 0.13, len: 0.02, x, vang: 0.3 });
+      ton({ tre: 0.13, giay: 0.34, kieu: "sawtooth", tu: not(69) * k, am: 0.14, len: 0.02, x, vang: 0.4 });
+      ton({ tre: 0.13, giay: 0.34, kieu: "sine", tu: not(57) * k, am: 0.18, x });
+    } else if (khoa === "nong_dan") { // "hử?" vui, đi lên
+      ton({ giay: 0.12, kieu: "triangle", tu: not(72), den: not(76), am: 0.28, x });
+      ton({ tre: 0.1, giay: 0.18, kieu: "triangle", tu: not(79), den: not(84), am: 0.24, x });
+    } else if (khoa.indexOf("quai") === 0) { // gầm gừ trầm
+      ton({ giay: 0.5, kieu: "sawtooth", tu: 95 * k, den: 60 * k, am: 0.18, len: 0.06, x });
+      xen({ giay: 0.45, loc: "lowpass", tu: 700 * k, den: 250, am: 0.28, len: 0.08, x });
+    } else if (khoa.indexOf("ct") === 0) { // gõ gỗ "cốc cốc"
+      for (const tr of [0, 0.11]) { xen({ tre: tr, giay: 0.07, tu: 900 * k, q: 4, am: 0.5, x }); ton({ tre: tr, giay: 0.09, tu: 260 * k, den: 180 * k, am: 0.3, x }); }
+    } else if (/^nguon_mo/.test(khoa)) { // cuốc chạm đá "keng"
+      ton({ giay: 0.4, tu: 1900 * k, am: 0.12, x, vang: 0.3 }); xen({ giay: 0.05, loc: "highpass", tu: 2500, am: 0.3, x });
+    } else if (khoa === "nguon_bai_ca") { // nước "bloop"
+      ton({ giay: 0.18, tu: 300, den: 900, am: 0.3, x }); ton({ tre: 0.14, giay: 0.14, tu: 420, den: 1100, am: 0.18, x });
+    } else if (khoa.indexOf("nguon") === 0) { // lá xào xạc
+      xen({ giay: 0.32, loc: "highpass", tu: 2600, den: 4200, am: 0.22, len: 0.08, x });
+      ton({ giay: 0.1, tu: 330 * k, am: 0.12, x });
+    } else ton({ giay: 0.15, kieu: "triangle", tu: not(76) * k, am: 0.25, x });
+  }
+  let giongVi = null, daNoi = []; // daNoi: các câu đã đọc (kịch bản thử Chrome đọc)
+  function timGiongVi() {
+    try { giongVi = (speechSynthesis.getVoices() || []).find(v => /^vi/i.test(v.lang)) || null; } catch (e) { giongVi = null; }
+  }
+  try { if (window.speechSynthesis) { timGiongVi(); speechSynthesis.addEventListener("voiceschanged", timGiongVi); } } catch (e) { /* máy không có giọng đọc */ }
+  function noiChon(ten) {
+    const c = dong(ten), cau = String(c.noi || "").trim();
+    if (!cau || c.file || !bat) return;
+    daNoi.push(cau); if (daNoi.length > 20) daNoi.shift();
+    try {
+      if (!window.speechSynthesis || !giongVi) return; // không đọc tiếng Việt bằng giọng nước ngoài
+      speechSynthesis.cancel(); // chạm liền tay: câu mới thay câu cũ
+      const u = new SpeechSynthesisUtterance(cau);
+      u.voice = giongVi; u.lang = giongVi.lang; u.rate = 1.1; u.pitch = 1.1;
+      u.volume = Math.max(0, Math.min(1, mucTieng() * so(c.amLuong, 1)));
+      setTimeout(() => speechSynthesis.speak(u), 60); // Chrome nuốt câu khi speak() ngay sau cancel()
+    } catch (e) { /* giọng máy lỗi: chỉ còn tiếng tự tạo */ }
+  }
+  am.chon = (khoa, x) => {
+    const ten = dongChon(String(khoa || ""));
+    keu(ten, () => { tuTaoChon(String(khoa), x); noiChon(ten); }, [], x);
+  };
+  am.daNoi = () => daNoi.slice();
   am.cauHinh = () => hoaCh.then(() => ch);
   // Quản trị nghe thử ô chưa lưu: thay cài đặt ngay (độ to chung, nhạc, từng dòng)
   am.datCauHinh = c => {
@@ -546,8 +605,9 @@ export function taoAmThanh({ cauHinh: chDua, batLuon } = {}) {
     moKhoa();
     for (const k of Object.keys(lanCuoi)) delete lanCuoi[k];
     if (ten.indexOf("chieu_") === 0) return am.chieu(ten.slice(6));
+    if (ten.indexOf("chon_") === 0) return am.chon(ten.slice(5), 0); // TC_D06D2
     if (typeof am[ten] === "function" && KHONG_GAN.indexOf(ten) < 0) am[ten](...(THU_MAU[ten] || [0]));
   };
   return am;
 }
-// 30/10/2026 - BƯỚC: TC_D05B3; 04/11/2026 - TC_D06C2a (kèn lệnh); 21/11/2026 - TC_D05F (cài đặt âm thanh, tiếng riêng mỗi chiêu)
+// 30/10/2026 - BƯỚC: TC_D05B3; 04/11/2026 - TC_D06C2a (kèn lệnh); 21/11/2026 - TC_D05F (cài đặt âm thanh, tiếng riêng mỗi chiêu); 25/11/2026 - TC_D06D2 (chon(khoa): tiếng + câu máy đọc khi chạm chọn)

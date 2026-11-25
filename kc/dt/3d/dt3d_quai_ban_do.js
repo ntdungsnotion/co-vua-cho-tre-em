@@ -52,7 +52,7 @@
 //   TC_D06C7a (07/11/2026, lỗi quái vượt hàng rào): quái không bước lên ô cổng; tránh cả lãnh địa máy chủ gửi (the.laLanhDia);
 //     quái đã có mà bị rào kín thì sống bình thường trong vùng rào (không ra được); bỏ chạy / lao dừng ở chân rào (lõi diThangDuoc).
 // BƯỚC: TC_D06C7a (07/11/2026: rào kín an toàn); TC_D06C4 (06/11/2026: quái rơi đồ); TC_D06F (05/11/2026: trang ẩn thì quái hung không lao); TC_D06A; TC_D06C1 (quái chung trên máy chủ, thấy bạn đánh quái, giờ nghỉ ở máy chủ); TC_D06C2a (quái hung dữ); TC_D06C2b (nông dân đánh quái)
-// NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx
+// NGÀY: 30/10/2026; 30/10/2026 17:30; 04/11/2026; 04/11/2026 23:xx; 25/11/2026 (TC_D06D2: trung trả thêm vat; the.am bộ tiếng chung)
 // ================================================================
 import * as THREE from "three";
 import { taoQuai3d } from "./dt3d_quai.js";
@@ -88,7 +88,7 @@ export async function taoQuaiBanDo(the) {
   const mien = new Map(); // id quái -> Date.now() hết miễn: vừa đánh / rút / thả thì con đó chưa lao lại ngay
   const datMien = id => { if (hung) mien.set(id, Date.now() + hung.mienGiay * 1000); };
   let am = null; // bộ tiếng (kèn lệnh); tạo một lần, mở ở lần chạm đầu
-  try { am = taoAmThanh(); } catch (e) { am = null; }
+  try { am = the.am || taoAmThanh(); } catch (e) { am = null; } // TC_D06D2: the.am = bộ tiếng chung của trang
   let soLao = 0; // số lần quái lao vào Thủ lĩnh (kịch bản thử Chrome đọc)
   const danh = new Map(); // TC_D06C2b: id nông dân -> trận của nông dân { dv, r, giai: "toi" | "lao" | "danh" | "be", td, nhan, ... }
   const giuTren = id => (dangToi && dangToi.id === id) || (trongTran && trongTran.r.id === id) || [...danh.values()].some(f => f.r.id === id);
@@ -806,7 +806,7 @@ export async function taoQuaiBanDo(the) {
     const ds = [...hinh.values()].filter(h => h.vo.visible && h.p && h.p.trangThai !== "chay").map(h => h.trung);
     const k = tia.intersectObjects(ds, false)[0];
     const r = k && ghi.get(k.object.userData.id);
-    return r ? { q: r, kc: k.distance } : null;
+    return r ? { q: r, kc: k.distance, vat: k.object } : null; // TC_D06D2: vat = lưới bấm (dt3d_dieu_khien so tâm với nông dân)
   }
 
   return {
