@@ -40,6 +40,8 @@
              lượt trụ gửi mã lượt + mã câu phòng thủ để máy chủ tự chấm)
              KC_08D (20/11/2026: trận kho chọn câu theo TRÌNH ĐỘ MÁY CHỦ (kho("hoSo") = RPC kc_td_ho_so đầu mỗi trận), lõi chung
              kc/chung/trinh_do.js qua dt_chon_cau_td.js; máy chỉ giữ bản tạm "kc_td_tam_<tên>" khi mất mạng; thay "kc_dt_trinh_do_<tên>")
+             TC_D05E (25/11/2026: đòn kết liễu Thủ lĩnh Nhân tộc = chiêu ⚡ Plasma Beam 3,4 giây; sân trả { giay, trung } -> số trừ
+             máu hiện lúc tia chạm, trận kết thúc + màn tổng kết sau khi chiêu diễn xong)
        NGÀY: 29/10/2026; 29/10/2026 22:47; 30/10/2026; 30/10/2026 06:00; 30/10/2026 (TC_D06A); 04/11/2026 (TC_D06C2a)
        PHỤ THUỘC: chung/nv_ve.js, dt/dt_trinh_do.js, dt/dt_nguon_kho.js (KC_06B2), dt/dt_sinh_toan.js + dt/dt_sinh_tieng_anh.js (chỉ trang thử),
                   dt/dt_cau_hoi.js, dt/dt_quai.js, dt/dt_tran_dau.js, dt/dt_ve_quai.js,
@@ -763,7 +765,10 @@
       $("cKetQua").querySelector(".kieu").textContent = textKetQua(k);
       $("cKetQua").querySelector(".loi-giai").textContent = k.loiGiai ? "💡 " + k.loiGiai : ""; // chấm nhanh: lời giải điền sau (capLoiGiai)
       capNhatDongHo();
-      if (san3d) san3d.ketQua(k);
+      // TC_D05E: sân trả { giay, trung } khi diễn chiêu kết liễu dài (Plasma Nhân tộc) -> số trừ máu hiện lúc tia chạm,
+      // trận kết thúc sau khi chiêu diễn xong
+      const dien3d = san3d ? san3d.ketQua(k) : null;
+      const msTrung = dien3d && dien3d.trung ? dien3d.trung * 1000 : 320, msDien = dien3d && dien3d.giay ? dien3d.giay * 1000 : 0;
       // hiệu ứng: bên tấn công lao tới, bên kia trúng / né
       const benDo = k.tanCong === "be" ? "quai" : "be";
       hieuUng = { loai: k.kieu === "ne" ? "ne" : (k.satThuong > 0 ? "trung" : "hut"), danh: k.tanCong, do: benDo, t0: bayGio() };
@@ -774,12 +779,12 @@
         if (k.mp.be) soBay("be", "+" + k.mp.be + " MP", "mp", 0.55);
         if (k.mp.quai) soBay("quai", "+" + k.mp.quai + " MP", "mp", 0.55);
         veThanh();
-      }, 320);
+      }, msTrung);
       if (k.phanDon) setTimeout(() => { // TC_D06C2g: bé trả lời sai / hết giờ ở lượt tấn công -> trụ phản đòn
         if (san3d) san3d.ketQua({ tanCong: "quai", kieu: "trung", satThuong: k.phanDon, beChon: null, combo: null });
         setTimeout(() => soBay("be", "−" + k.phanDon, ""), 450);
       }, 950);
-      if (k.ketThuc) { ketThucLuc = bayGio(); setTimeout(() => { if (san3d) san3d.ketThuc(k.ketThuc.thang); }, 700); setTimeout(() => moKetThuc(k.ketThuc), 2600); }
+      if (k.ketThuc) { ketThucLuc = bayGio(); setTimeout(() => { if (san3d) san3d.ketThuc(k.ketThuc.thang); }, msDien ? msDien + 150 : 700); setTimeout(() => moKetThuc(k.ketThuc), msDien ? msDien + 2050 : 2600); }
       else { // tự sang lượt sau (người dùng 29/10/2026); bé sai / không trả lời thì đọc lời giải lâu hơn
         const beDung = k.beChon != null && cauNay.dung.indexOf(k.beChon) >= 0;
         henTiep = setTimeout(moLuotMoi, (beDung ? chTran.latBaiGiay.dung : chTran.latBaiGiay.sai) * 1000);
