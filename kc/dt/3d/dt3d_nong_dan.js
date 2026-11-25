@@ -68,25 +68,38 @@ export function taoNongDan(the) {
   setInterval(veX, 250);
 
   // ---- nút đỏ ⚠️ nông dân bị tấn công ----
+  // TC_D06D4 (người dùng 25/11/2026: "nên có 1 vị trí cho nút cài đặt và thông báo bị tấn công"): nút nằm trong Ô CHUNG
+  // #d3OChung của thanh trên; đang báo thì ⚙️ ẩn, hết bị đánh thì ⚙️ hiện lại. Điện thoại chỉ hiện ⚠️ + số người (chữ .d3Chu ẩn).
+  // Trang không có ô chung thì nút nổi như cũ (dưới thanh trên, bên phải).
+  const oChung = document.getElementById("d3OChung"), nutCaiDat = document.getElementById("d3CaiDat");
   const bao = document.createElement("button");
-  bao.type = "button"; bao.className = "d3Nut d3Khung d3BiDanh"; bao.hidden = true; bao.setAttribute("aria-live", "assertive");
-  document.body.appendChild(bao);
+  bao.type = "button"; bao.id = "d3BiDanh"; bao.className = "d3Nut d3Khung d3BiDanh" + (oChung ? " d3BiDanhO" : ""); bao.hidden = true;
+  bao.setAttribute("aria-live", "assertive");
+  bao.innerHTML = '<span aria-hidden="true">⚠️</span><span class="d3Chu"></span><b class="d3BiDanhSo" hidden></b>';
+  const baoChu = bao.querySelector(".d3Chu"), baoSo = bao.querySelector(".d3BiDanhSo");
+  (oChung || document.body).appendChild(bao);
   const biDanh = new Map(); // dv -> { loai, luc }
-  let dvBao = null;
+  let dvBao = null, epBiDanh = false; // epBiDanh: kịch bản thử bật giả "nông dân đầu tiên bị quái đánh"
+  function hienBao(co) {
+    if (bao.hidden === !co) return;
+    bao.hidden = !co;
+    if (oChung && nutCaiDat) nutCaiDat.hidden = co;
+  }
   bao.addEventListener("click", e => {
     e.stopPropagation();
-    if (!dvBao || !lang.donVi.includes(dvBao)) { bao.hidden = true; return; }
+    if (!dvBao || !lang.donVi.includes(dvBao)) { hienBao(false); return; }
     toiVaChon(dvBao);
     const loai = (biDanh.get(dvBao) || {}).loai;
     baoGoiY("👀 " + dvBao.ten + (loai === "tru" ? " đang bị trụ bắn · chạm chỗ xa trụ để dẫn đi trốn, hoặc bấm ⚔️ để đánh trả" : " đang bị quái tấn công · bấm ⚔️ để vào trận giúp"));
   });
   function veBao() {
     const ds = [...biDanh.entries()].sort((a, b) => b[1].luc - a[1].luc);
-    if (!ds.length) { dvBao = null; if (!bao.hidden) bao.hidden = true; return; }
+    if (!ds.length) { dvBao = null; hienBao(false); return; }
     dvBao = ds[0][0];
-    const chu = "⚠️ " + dvBao.ten + " bị tấn công" + (ds.length > 1 ? " +" + (ds.length - 1) : "") + " · 👀";
-    if (bao.textContent !== chu) { bao.textContent = chu; bao.setAttribute("aria-label", dvBao.ten + " bị tấn công, chạm để xem"); }
-    if (bao.hidden) bao.hidden = false;
+    const chu = " " + dvBao.ten + " bị tấn công · 👀", so = ds.length > 1 ? String(ds.length) : "";
+    if (baoChu.textContent !== chu) { baoChu.textContent = chu; bao.setAttribute("aria-label", dvBao.ten + " bị tấn công, chạm để xem"); }
+    if (baoSo.textContent !== so) { baoSo.textContent = so; baoSo.hidden = !so; }
+    hienBao(true);
   }
 
   function capNhat() {
@@ -99,7 +112,7 @@ export function taoNongDan(the) {
     // bị tấn công
     const bay = Date.now(), con = new Set();
     for (const dv of ds) {
-      const loai = the.biTanCong ? the.biTanCong(dv) : null;
+      const loai = epBiDanh && dv === ds[0] ? "quai" : the.biTanCong ? the.biTanCong(dv) : null;
       if (!loai) continue;
       con.add(dv);
       if (!biDanh.has(dv)) biDanh.set(dv, { loai, luc: bay });
@@ -115,9 +128,11 @@ export function taoNongDan(the) {
     moc: { // kịch bản thử Chrome
       soRanh: () => danMinh().filter(ranh).length, nut: () => !nut.hidden && nut.textContent,
       bao: () => !bao.hidden && bao.textContent, bamRanh: () => nut.click(), bamBao: () => bao.click(), capNhat,
-      bamTl: () => nutTl.click(), coX: () => !nutX.hidden, bamX: () => nutX.click()
+      bamTl: () => nutTl.click(), coX: () => !nutX.hidden, bamX: () => nutX.click(),
+      thuBiDanh: co => { epBiDanh = !!co; capNhat(); return dvBao && dvBao.ten } // TC_D06D4: bật / tắt giả "bị tấn công"
     }
   };
 }
 // 06/11/2026 - BƯỚC: TC_D06C5
 // 07/11/2026 - BƯỚC: TC_D06C6 (nút 👑 tìm Thủ lĩnh, nút ✕ bỏ chọn)
+// 25/11/2026 - BƯỚC: TC_D06D4 (nút ⚠️ vào ô chung #d3OChung thay chỗ ⚙️; điện thoại chỉ ⚠️ + số người; móc thử thuBiDanh)

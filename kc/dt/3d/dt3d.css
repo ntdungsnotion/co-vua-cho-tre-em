@@ -6,7 +6,7 @@
               biểu tượng trên nút, nút lệnh một hàng vuốt ngang.
               Dùng cho trang game kc/dt_thung_lung.html và trang thử kc/dt_thu_3d.html.
    BƯỚC: TC_D02B2b (tách từ <style> của dt_thu_3d.html, TC_D01C..TC_D02B2a)
-   NGÀY: 27/10/2026. Sửa 14/11/2026 KC_06E2 (🔍 Kiểm tra / 📨 Gửi, lời Cô Cú, 🛡️ chọn tuỳ ý)
+   NGÀY: 27/10/2026. Sửa 25/11/2026 TC_D06D4 (ô chung ⚙️ / ⚠️, điện thoại gọn: cuối file). Sửa 14/11/2026 KC_06E2 (🔍 Kiểm tra / 📨 Gửi, lời Cô Cú, 🛡️ chọn tuỳ ý)
    ================================================================ */
 :root { --dem: #14204a; --dem2: #1f2f6b; --vang: #ffc24b; --cam: #ff8a3d; --sang: #fff6dc; --nhat: #b9c3ec; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); color: var(--sang);
@@ -519,3 +519,60 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   .d3CaiDatHop { padding: 12px 12px 14px; }
 }
 /* 25/11/2026 - BƯỚC: TC_D06D3 */
+/* TC_D06D4 (25/11/2026, người dùng: "ở giao diện điện thoại, thung lũng, các nút và chữ quá to, đè lên nhau và che mất không gian
+   điều khiển. nên có 1 vị trí cho nút cài đặt và thông báo bị tấn công"):
+   - Ô CHUNG #d3OChung ở thanh trên: bình thường ⚙️; nông dân bị tấn công thì nút đỏ ⚠️ (.d3BiDanhO, dt3d_nong_dan.js) hiện THAY ⚙️.
+     Máy tính: ⚠️ kèm chữ "Nông dân 2 bị tấn công · 👀". Điện thoại: chỉ ⚠️ + số người (khi từ 2 người).
+   - Điện thoại (<= 600 px): thanh trên một hàng thấp 36 px (nút 38 x 36, chữ tài nguyên nhỏ, số gọn 12,3K ở dt3d_thu.js);
+     thanh dưới thu còn ~80% (người dùng: "thanh dưới còn tinh chỉnh nhiều, sẽ bàn trong phiên khác, tạm thời giảm kích thước còn khoảng 80%");
+     dấu "!" nông dân rảnh, nhãn cấp quái, nhãn máu, chữ nổi nhỏ lại. Máy tính giữ như cũ. */
+.d3OChung { flex: 0 0 auto; display: flex; }
+.d3OChung:empty { display: none; }
+.d3BiDanhO { position: relative; top: auto; right: auto; z-index: auto; max-width: 360px; min-height: 44px; flex: 0 1 auto; }
+.d3BiDanhO { overflow: visible; }
+.d3BiDanhO .d3Chu { display: inline-block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.d3BiDanhSo { position: absolute; top: -7px; right: -7px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center;
+  background: #fff3d6; color: #a0141c; border: 2px solid #a0141c; font-size: .78rem; font-weight: 800; line-height: 1; box-sizing: border-box; }
+@media (min-width: 900px) { .d3BiDanhO { top: auto; right: auto; min-height: 49px; } }
+@media (max-width: 600px) {
+  /* thanh trên */
+  .d3Tren { top: calc(6px + env(safe-area-inset-top)); left: 6px; right: 6px; gap: 5px; }
+  .d3Tren .d3Nut { min-height: 36px; min-width: 38px; height: 36px; padding: 0 6px; font-size: 1rem; border-radius: 12px; box-sizing: border-box; }
+  .d3Tren .d3NutCaiDat, .d3Tren .d3BongDen, .d3Tren .d3BiDanhO { font-size: 1.05rem; padding: 0 4px; }
+  .d3Tren .d3TranNhanh { font-size: 1.1rem; }
+  .d3Kho { height: 36px; box-sizing: border-box; padding: 0 4px; gap: 1px; border-radius: 12px; align-items: center;
+    container-type: inline-size; } /* ô tài nguyên lấp chỗ còn lại; chữ tự nhỏ khi thanh trên có thêm nút (⚔️, 💡) */
+  .d3Tn { font-size: .8rem; padding: 0 1px; line-height: 1; letter-spacing: -.01em; }
+  .d3BiDanhO { max-width: none; overflow: visible; }
+  .d3BiDanhO .d3Chu { display: none; }
+  .d3BdSo { top: -5px; right: -5px; min-width: 18px; height: 18px; line-height: 18px; font-size: .72rem; }
+  .d3BiDanhSo { top: -5px; right: -5px; min-width: 18px; height: 18px; font-size: .72rem; }
+  /* thanh dưới ~80% */
+  #d3GoiY { font-size: .8rem; padding: 5px 10px; margin: 0 6px; }
+  .d3Duoi { gap: 5px; }
+  .d3Thanh { gap: 5px; padding: 5px 6px max(5px, env(safe-area-inset-bottom)); border-top-width: 2px; }
+  .d3BangChon { gap: 6px; padding: 3px 5px; }
+  .d3BangAnh { width: 37px; height: 37px; font-size: 1.3rem; }
+  .d3BangThongTin strong { font-size: .85rem; }
+  .d3BangThongTin span { font-size: .68rem; }
+  .d3BangMuc { height: 6px; margin-top: 2px; }
+  .d3Thanh .d3Nut { min-height: 37px; min-width: 36px; font-size: .78rem; padding: 3px 6px; gap: 4px; }
+  .d3Lenh .d3Nut { min-width: 42px; }
+  .d3Chung { max-width: 150px; gap: 3px; }
+  .d3NdRanh, .d3TimTl { font-size: .92rem; }
+  .d3NdRanhSo { top: -6px; right: -6px; min-width: 17px; height: 17px; font-size: .68rem; padding: 0 4px; }
+  .d3BoChon { width: 28px; height: 28px; top: -10px; right: -6px; font-size: .9rem; }
+  /* biểu tượng nổi trên cảnh */
+  .d3Ranh { width: 22px; height: 22px; line-height: 20px; font-size: 1.15rem; }
+  .d3LvQuai, .d3NghiTl, .d3MauDan { font-size: .78rem; padding: 3px 6px; border-radius: 8px; }
+  .d3Noi { font-size: 1.15rem; }
+  .d3DanhDau { min-width: 74px; min-height: 40px; font-size: .92rem; padding: 3px 10px 4px; }
+}
+@media (max-width: 380px) { /* điện thoại hẹp (360): 6 ô tài nguyên không dính nhau */
+  .d3Kho { gap: 3px; padding: 0 3px; justify-content: space-between; }
+  .d3Tn { font-size: .72rem; }
+  .d3DanSo { padding-left: 3px; }
+}
+@container (max-width: 250px) { .d3Tn { font-size: .66rem; letter-spacing: -.02em; } }
+@container (max-width: 205px) { .d3Tn { font-size: .6rem; } .d3DanSo { border-left-width: 1px; } }
+/* 25/11/2026 - BƯỚC: TC_D06D4 */
