@@ -11,8 +11,10 @@
 //              khi đã quá nhiều tiếng đang kêu, cuối đường có bộ nén âm lượng.
 //            THƯ VIỆN ÂM THANH (file thu thật, CC0) ở kc/dt/am_thanh/thu_vien.json (phụ tá điền, việc A7):
 //            - nhac[]: nhạc nền theo bối cảnh (tran / trum / lang / sanh / thang / thua...), lặp liền
-//              (tự cắt khoảng lặng đầu / cuối file mp3), chuyển bài êm. Nhạc do QUẢN TRỊ chọn, bé không
-//              tắt / đổi được (người dùng 30/10/2026); nút 🔊 của bé chỉ tắt tiếng hiệu ứng.
+//              (tự cắt khoảng lặng đầu / cuối file mp3), chuyển bài êm. Bài nhạc do QUẢN TRỊ chọn (bé không
+//              đổi bài). TC_D06D3 (người dùng 25/11/2026, thay luật 30/10): bé TẮT / BẬT + chỉnh to nhỏ riêng nhạc nền
+//              và tiếng hiệu ứng ở ⚙️ Cài đặt màn Thung lũng (dt3d_cai_dat.js; khoá kc_dt_nhac / kc_dt_tieng /
+//              kc_dt_to_nhac / kc_dt_to_tieng); độ to thật = độ to Quản trị x độ to bé chọn.
 //            - tieng[]: tiếng thu thật, mỗi tiếng vài biến thể (chọn ngẫu nhiên cho đỡ nhàm).
 //            CÀI ĐẶT ÂM THANH (TC_D05F): MỌI tiếng + nhạc + độ to nằm ở kc/dt/du_lieu/cau_hinh_am_thanh.json
 //            (mặc định) + phần Quản trị sửa (Supabase, Quản trị › Đấu Trường › Thông số › 🔊 Âm thanh), không
@@ -44,6 +46,9 @@
 // ================================================================
 import "../../chung/kho_tieng.js"; // KC_09B1: window.KC_KHO_TIENG
 const KHOA = "kc_dt_tieng", KHOA_NHAC = "kc_dt_nhac";
+// TC_D06D3: độ to bé chọn ở ⚙️ Cài đặt (màn Thung lũng), 0..1, nhân với độ to Quản trị đặt
+const KHOA_TO = "kc_dt_to_tieng", KHOA_TO_NHAC = "kc_dt_to_nhac";
+const docTo = v => { const n = v == null || v === "" ? 1 : Number(v); return isFinite(n) ? Math.max(0, Math.min(1, n)) : 1; };
 const TOI_DA = 64; // không mở tiếng mới khi đã có ngần này nguồn đang kêu
 const URL_THU_VIEN = new URL("../am_thanh/thu_vien.json", import.meta.url).href;
 const TEN_CH = "cau_hinh_am_thanh", URL_CH = new URL("../du_lieu/" + TEN_CH + ".json", import.meta.url).href;
@@ -88,11 +93,19 @@ function taiCauHinh() {
 
 export function taoAmThanh({ cauHinh: chDua, batLuon } = {}) {
   let ac = null, tong = null, guiVang = null, nhieu = null, dangKeu = 0, busNhac = null;
-  let bat = true, batNhac = true;
-  if (!batLuon) try { bat = localStorage.getItem(KHOA) !== "tat"; batNhac = localStorage.getItem(KHOA_NHAC) !== "tat"; } catch (e) { /* bị chặn lưu: mặc định bật */ }
+  let bat = true, batNhac = true, toTieng = 1, toNhac = 1; // toTieng / toNhac: độ to bé chọn ở ⚙️ Cài đặt (0..1, TC_D06D3)
+  const docMay = () => {
+    if (batLuon) return;
+    try {
+      bat = localStorage.getItem(KHOA) !== "tat"; batNhac = localStorage.getItem(KHOA_NHAC) !== "tat";
+      toTieng = docTo(localStorage.getItem(KHOA_TO)); toNhac = docTo(localStorage.getItem(KHOA_TO_NHAC));
+    } catch (e) { /* bị chặn lưu: mặc định bật, to hết cỡ */ }
+  };
+  docMay();
   let ch = chDua || CH_DU_PHONG; // cài đặt đang dùng (TC_D05F)
   const hoaCh = chDua ? Promise.resolve(chDua) : taiCauHinh().catch(() => CH_DU_PHONG);
-  const mucTieng = () => (bat ? so(ch.amLuong && ch.amLuong.tieng, 0.85) : 0);
+  // độ to thật = độ to Quản trị đặt (amLuong) x độ to bé chọn; bé tắt thì 0
+  const mucTieng = () => (bat ? so(ch.amLuong && ch.amLuong.tieng, 0.85) * toTieng : 0);
   const dong = ten => Object.assign({}, DONG_MAC_DINH, (ch.tieng || {})[ten]);
   let heSo = 1; // độ to của dòng đang kêu (ra() chèn thêm nút âm lượng)
   let moXong; const choMo = new Promise(r => { moXong = r; }); // xong khi bé chạm trang lần đầu
@@ -227,6 +240,12 @@ export function taoAmThanh({ cauHinh: chDua, batLuon } = {}) {
     if (ac && busNhac) busNhac.gain.setTargetAtTime(mucNhac(), ac.currentTime, 0.1);
   });
   let tvSan = null; thuVien().then(tv => { tvSan = tv; });
+  // TC_D06D3: bé đổi ⚙️ Cài đặt ở trang / khung khác (cùng máy) -> đọc lại, chỉnh độ to đang kêu ngay
+  const apDoTo = () => {
+    if (ac && tong) tong.gain.setTargetAtTime(mucTieng(), ac.currentTime, 0.05);
+    if (ac && busNhac) busNhac.gain.setTargetAtTime(mucNhac(), ac.currentTime, 0.1);
+  };
+  try { window.addEventListener("storage", e => { if (!e.key || /^kc_dt_(tieng|nhac|to_tieng|to_nhac)$/.test(e.key)) { docMay(); apDoTo(); } }); } catch (e) { /* thôi */ }
 
   // phát một tiếng thư viện (biến thể ngẫu nhiên); trả false nếu chưa có / chưa tải xong
   function mau(ma, x, amLuong = 1, bienThe, tre = 0) {
@@ -285,7 +304,7 @@ export function taoAmThanh({ cauHinh: chDua, batLuon } = {}) {
     g.gain.cancelScheduledValues(t0); g.gain.setValueAtTime(g.gain.value, t0); g.gain.linearRampToValueAtTime(0.0001, t0 + giay);
     s.stop(t0 + giay + 0.05); nhacDang = null;
   }
-  function mucNhac() { return (batNhac ? so(ch.amLuong && ch.amLuong.nhac, 0.16) : 0) * (giam ? so(ch.amLuong && ch.amLuong.nhacKhiDoc, 0.35) : 1); }
+  function mucNhac() { return (batNhac ? so(ch.amLuong && ch.amLuong.nhac, 0.16) * toNhac : 0) * (giam ? so(ch.amLuong && ch.amLuong.nhacKhiDoc, 0.35) : 1); }
 
   // ---------- tiếng đòn đánh ----------
   const am = {
@@ -299,6 +318,11 @@ export function taoAmThanh({ cauHinh: chDua, batLuon } = {}) {
     thongKe: () => ({ trangThai: ac ? ac.state : "chua_mo", bat, batNhac, nhac: nhacDang ? nhacDang.ma : null, dangKeu, daKeu: { ...daKeu }, daGoi: { ...daGoi } }),
     thuVien, phatNhac, dungNhac, mau,
     nhacBat: () => batNhac,
+    // TC_D06D3: độ to bé chọn (0..1), máy nhớ
+    toTieng: () => toTieng,
+    toNhac: () => toNhac,
+    datToTieng(v) { toTieng = docTo(v); try { localStorage.setItem(KHOA_TO, String(toTieng)); } catch (e) { /* bỏ qua */ } apDoTo(); },
+    datToNhac(v) { toNhac = docTo(v); try { localStorage.setItem(KHOA_TO_NHAC, String(toNhac)); } catch (e) { /* bỏ qua */ } apDoTo(); },
     datNhac(b) {
       batNhac = !!b;
       try { localStorage.setItem(KHOA_NHAC, batNhac ? "bat" : "tat"); } catch (e) { /* bỏ qua */ }
@@ -524,7 +548,8 @@ export function taoAmThanh({ cauHinh: chDua, batLuon } = {}) {
       goc(...a);
     } finally { heSo = cu; }
   }
-  const KHONG_GAN = ["dangBat", "datBat", "moKhoa", "thongKe", "thuVien", "phatNhac", "dungNhac", "mau", "nhacBat", "datNhac", "giamNhac", "doanKet", "chuChieu"];
+  const KHONG_GAN = ["dangBat", "datBat", "moKhoa", "thongKe", "thuVien", "phatNhac", "dungNhac", "mau", "nhacBat", "datNhac", "giamNhac", "doanKet", "chuChieu",
+    "toTieng", "toNhac", "datToTieng", "datToNhac"]; // TC_D06D3
   for (const ten of Object.keys(am)) {
     const goc = am[ten];
     if (typeof goc !== "function" || KHONG_GAN.indexOf(ten) >= 0) continue;
