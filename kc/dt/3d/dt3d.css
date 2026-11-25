@@ -523,7 +523,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
    điều khiển. nên có 1 vị trí cho nút cài đặt và thông báo bị tấn công"):
    - Ô CHUNG #d3OChung ở thanh trên: bình thường ⚙️; nông dân bị tấn công thì nút đỏ ⚠️ (.d3BiDanhO, dt3d_nong_dan.js) hiện THAY ⚙️.
      Máy tính: ⚠️ kèm chữ "Nông dân 2 bị tấn công · 👀". Điện thoại: chỉ ⚠️ + số người (khi từ 2 người).
-   - Điện thoại (<= 600 px): thanh trên một hàng thấp 36 px (nút 38 x 36, chữ tài nguyên nhỏ, số gọn 12,3K ở dt3d_thu.js);
+   - Điện thoại (<= 600 px): thanh trên một hàng thấp 36 px (nút 38 x 36); số tài nguyên GIỮ CẢ 2 CÁCH (người dùng 25/11/2026): chữ nhỏ + tự nhỏ thêm khi chật,
+     đồng thời từ 4 chữ số viết gọn 3,7K / x,xM (dt3d_thu.js, mọi khổ);
      thanh dưới thu còn ~80% (người dùng: "thanh dưới còn tinh chỉnh nhiều, sẽ bàn trong phiên khác, tạm thời giảm kích thước còn khoảng 80%");
      dấu "!" nông dân rảnh, nhãn cấp quái, nhãn máu, chữ nổi nhỏ lại. Máy tính giữ như cũ. */
 .d3OChung { flex: 0 0 auto; display: flex; }

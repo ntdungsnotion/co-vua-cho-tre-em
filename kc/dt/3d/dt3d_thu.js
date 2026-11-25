@@ -332,26 +332,25 @@ $("d3TenVuong").textContent = be.tenVuongQuoc ? "Vương quốc " + be.tenVuongQ
 
 // ---------------- Thanh tài nguyên ----------------
 const O_KHO = { go: "d3Go", da: "d3Da", vang: "d3Vang", luong_thuc: "d3Lt", sat: "d3Sat" }; // TC_D06C4: Sắt (quái rơi) hiện khi bé có
-// TC_D06D4: điện thoại (<= 600 px) viết số gọn từ 10.000 (12345 -> "12,3K", 2500000 -> "2,5M") để 5-6 ô không đè nhau;
-// số đủ nằm ở title. Máy tính giữ số đủ.
-const kheDt = window.matchMedia ? matchMedia("(max-width: 600px)") : { matches: false };
+// TC_D06D4 (người dùng 25/11/2026: "nếu còn dạng 3 số xxx thì để, nhưng nếu lên 4 số, như 3674 => viết 3,7K, lên triệu thì x,xM"):
+// mọi khổ màn hình. Dưới 1.000 giữ nguyên; 3674 -> "3,7K", 12345 -> "12,3K", 250000 -> "250K", 2500000 -> "2,5M"; ",0" bỏ (3000 -> "3K").
+// Số đủ nằm ở title của ô (rê chuột trên máy tính).
 function soGon(n) {
-  if (!kheDt.matches || n < 10000) return String(n);
-  const [d, c] = n < 1e6 ? [1e3, "K"] : [1e6, "M"];
+  if (n < 1000) return String(n);
+  const [d, c] = n < 999950 ? [1e3, "K"] : [1e6, "M"];
   const v = n / d;
-  return (v < 100 ? (Math.floor(v * 10) / 10).toString().replace(".", ",") : String(Math.floor(v))) + c;
+  return (v < 100 ? (Math.round(v * 10) / 10).toFixed(1) : String(Math.round(v))).replace(".", ",").replace(/,0$/, "") + c;
 }
 function capNhatKho() {
   for (const k in O_KHO) {
     const el = $(O_KHO[k]); if (!el) continue;
-    const n = lang.kho[k] || 0, chu = soGon(n);
+    const n = lang.kho[k] || 0, chu = soGon(n), o = el.parentNode;
     if (el.textContent !== chu) el.textContent = chu;
-    if (el.parentNode) el.parentNode.dataset.so = n;
+    if (o) { if (!o.dataset.ten) o.dataset.ten = o.title || ""; o.dataset.so = n; o.title = o.dataset.ten + ": " + n.toLocaleString("vi-VN"); }
   }
   const oSat = $("d3SatO"); if (oSat) oSat.hidden = !((lang.kho.sat || 0) > 0);
 }
 lang.nghe(su => { if (su.loai === "cat") capNhatKho(); });
-if (kheDt.addEventListener) kheDt.addEventListener("change", capNhatKho);
 
 // ---------------- Nút ----------------
 // TC_D06D3: nút ⚙️ Cài đặt (nhạc nền, âm thanh trận đấu, chất lượng game) thay nút "✨ Đồ họa" cũ ở thanh dưới
