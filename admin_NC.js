@@ -596,7 +596,8 @@ function adminApCheDoVatPham(cheDo) {
     opt.hidden = an;
     opt.disabled = an;
   }
-  if (laQua && chon.value !== "avatar") chon.value = "qua";
+  if (doiCheDo) chon.value = laQua ? "qua" : "avatar";   // doi muc -> loai mac dinh cua muc do
+  else if (laQua && chon.value !== "avatar") chon.value = "qua";
   else if (!laQua && chon.value === "qua") chon.value = "avatar";
   var oGhiChu = adminEl("vpGhiChuCheDo");
   if (oGhiChu) {
