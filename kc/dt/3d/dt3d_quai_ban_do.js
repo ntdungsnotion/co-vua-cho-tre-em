@@ -340,6 +340,7 @@ export async function taoQuaiBanDo(the) {
     baoDanh(r, 0);
     const h = hinh.get(r.id);
     const ts = new URLSearchParams({ nhung: "1", quai: r.ma, lv: String(r.lv), cl: be.hoSo.chungLoai || "nhan", gioi: be.hoSo.gioi || "nam",
+      doi: be.thoiKy || "do_da", // TC_D05C0a: đời -> sổ tướng chọn mẫu Thủ lĩnh
       lop: String(be.lop || 2), ten: be.ten || "", tl: dvTl.ten || "", chu: (h && h.chu) || "" });
     if (quaiTruoc) ts.set("quaiTruoc", "1");
     if (dvTl.mau != null) ts.set("hp", String(dvTl.mau)); // TC_D06C2g: máu Thủ lĩnh còn lại (không tự hồi)

@@ -3,13 +3,13 @@
 // CHỨC NĂNG: Thủ lĩnh trên sân đấu là tướng dáng người thật (nhân vật Mixamo, Blender chuyển
 //            FBX -> GLB). MỖI TỘC LÀ NHÂN VẬT RIÊNG (người dùng 29/10/2026: "chủng tộc khác là nhân vật
 //            khác chứ không phải đội mũ lên đầu"), mỗi tộc có nam + nữ. Danh sách tướng + file ở
-//            du_lieu/tuong.json (kho tướng để sau này bé chiêu mộ); dt3d_tran.js chọn và tải file.
+//            sổ tướng chung (dt/dt_tuong.js: du_lieu/tuong.json + Quản trị); dt3d_tran.js hỏi sổ rồi tải file.
 //            Một bộ động tác dùng chung (dong_tac_tuong.glb): mỗi động tác chỉ giữ phần xoay khớp + độ
 //            cao hông (bỏ phần đi tới vì sân tự dời nhân vật; hông nhân theo tỉ lệ chân của từng tướng).
-//            Mỗi tộc có thể thay vài động tác (KIEU_TOC): Quỷ đứng thủ kiếm hai tay + phòng thủ đứng tấn,
-//            Tiên đứng niệm phép + phòng thủ lập kết giới + chí mạng giáng phép xuống đất.
+//            Mỗi BỘ động tác (BO_DONG_TAC, mẫu tướng chọn bằng dongTac.bo) có thể thay vài động tác: bộ "quy" đứng
+//            thủ kiếm hai tay + phòng thủ đứng tấn; bộ "tien" đứng niệm phép + kết giới + chí mạng giáng phép xuống đất.
 // HÀM KHAI RA:
-//   taoBoTuong(ctx, dongTac) -> { tao(glb, hoSo, cao) -> tuong }   (hoSo.chungLoai = tộc của tướng)
+//   taoBoTuong(ctx, dongTac) -> { tao(glb, hoSo, cao) -> tuong }   (hoSo.boDongTac = dongTac.bo của mẫu; dungTay, dungTran)
 //   tuong = { vo, goc, cao, vlPhatSang[], dien(kieu, khiXong), capNhat(dt), dangDien() }
 //   kieu: dung, thu (giữ thế thủ), chem, chemLon (chí mạng), phep, phepLon (chí mạng Tiên), trung,
 //         do (đỡ được), ne, thua, mung, nghi (đứng thả lỏng: chỉ tướng có dungTay; dành cho bản đồ, trận không gọi).
@@ -41,9 +41,10 @@ const KIEU = {
   thua: { clip: "Defeated", toc: 1.6, giu: true },
   mung: { clip: "Victory", toc: 1.15 }
 };
-// null = tộc này không có động tác cho kiểu đó: giữ nguyên thế đang đứng
-const KIEU_TOC = {
-  nhan: {},
+// BỘ ĐỘNG TÁC (TC_D05C0a: chọn theo `dongTac.bo` của mẫu tướng trong sổ tướng dt_tuong.js, không theo tộc).
+// null = bộ này không có động tác cho kiểu đó: giữ nguyên thế đang đứng. Thêm bộ mới = thêm ở đây + KC_DT_TUONG.HO_TRO.bo.
+const BO_DONG_TAC = {
+  can_chien: {},
   quy: { dung: { clip: "QuyIdle", lap: true }, thu: { clip: "QuyStance", lap: true }, do: null },
   tien: { dung: { clip: "TienIdle", lap: true }, thu: { clip: "TienShield", lap: true }, do: null,
           phepLon: { clip: "TienArea", tu: 0.7, toc: 2.5 } } // hai tay giáng xuống ở giây 1,28 gốc
@@ -114,7 +115,7 @@ export function taoBoTuong(ctx, dongTac) {
 
   function tao(glb, hoSo, cao) {
     const goc = nhanBanXuong(glb.scene);
-    const bang = Object.assign({}, KIEU, KIEU_TOC[hoSo.chungLoai] || {});
+    const bang = Object.assign({}, KIEU, BO_DONG_TAC[hoSo.boDongTac] || {});
     const vlPhatSang = [];
     goc.traverse(o => {
       if (!o.isMesh) return;
@@ -164,3 +165,4 @@ export function taoBoTuong(ctx, dongTac) {
   return { tao };
 }
 // 29/10/2026 23:40 - BƯỚC: TC_D05B1
+// 25/11/2026 - BƯỚC: TC_D05C0a (KIEU_TOC -> BO_DONG_TAC chọn theo dongTac.bo của mẫu tướng, không theo tộc)

@@ -9,14 +9,14 @@
 //   layPhanSua() -> Promise<{ ten: phần sửa }>  (hỏi máy chủ MỘT lần mỗi trang, chờ tối đa 5 giây)
 //   tron(macDinh, sua) -> json        object trộn từng khoá (đệ quy); mảng / số / chữ: sua thay trọn
 //   khac(macDinh, hienTai) -> phần sửa (chỉ các ô khác mặc định; undefined = không khác)
-//   TEP: danh sách 4 file quản trị sửa được
+//   TEP: danh sách file quản trị sửa được (TC_D05C0a: + 3 file sổ tướng tuong / ky_nang / hieu_ung, đọc qua dt_tuong.js)
 // Không đụng DOM: chạy được trong node (kiểm thử).
 // BƯỚC: TC_D18A - NGÀY: 10/11/2026
 // ================================================================
 (function (goc) {
   "use strict";
 
-  const TEP = ["cau_hinh", "cau_hinh_tran_dau", "cau_hinh_trinh_do", "cau_hinh_am_thanh"]; // TC_D05F: + cài đặt âm thanh
+  const TEP = ["cau_hinh", "cau_hinh_tran_dau", "cau_hinh_trinh_do", "cau_hinh_am_thanh", "tuong", "ky_nang", "hieu_ung"]; // TC_D05F: + âm thanh; TC_D05C0a: + sổ tướng
   const CHO_TOI_DA_MS = 5000;
   const laObj = v => v !== null && typeof v === "object" && !Array.isArray(v);
 
@@ -63,3 +63,4 @@
   goc.KC_DT_CAU_HINH = { TEP, tai, layPhanSua, tron, khac };
 })(typeof window !== "undefined" ? window : globalThis);
 // 21/11/2026 - BƯỚC: TC_D05F (thêm tệp cau_hinh_am_thanh)
+// 25/11/2026 - BƯỚC: TC_D05C0a (thêm tệp sổ tướng: tuong, ky_nang, hieu_ung)

@@ -44,6 +44,7 @@ import { taoCaiDat } from "./dt3d_cai_dat.js"; // TC_D06D3: bảng ⚙️ Cài �
 import { taoThanhDuoi } from "./dt3d_thanh_duoi.js";
 import { taoTruBanDo } from "./dt3d_tru.js"; // TC_D06C2g: trụ phòng thủ (05/11/2026)
 import { taoNongDan } from "./dt3d_nong_dan.js"; // TC_D06C5: nút tìm nông dân rảnh + báo nông dân bị tấn công
+import "../dt_tuong.js"; // TC_D05C0a: sổ tướng chung (window.KC_DT_TUONG): danh sách tướng tải nền
 import { taoChay } from "./dt3d_chay.js"; // TC_D06C7e: công trình bị đánh cháy nhỏ / cháy to
 import { ganOnSauTran } from "./dt3d_on_sau_tran.js"; // TC_D34B: ôn bắt buộc sau trận
 
@@ -63,7 +64,7 @@ function docBeDangNhap() {
   const td = ten && window.KC_DT_TIEN_DO.doc(ten);
   if (!td) return null;
   const hoSo = window.KC_NV_HO_SO.doc(ten) || NV.chuanHoa({ chungLoai: td.chungLoai });
-  return { ten, hoSo, tenThuLinh: td.tenThuLinh, tenVuongQuoc: td.tenVuongQuoc, lop: td.lop };
+  return { ten, hoSo, tenThuLinh: td.tenThuLinh, tenVuongQuoc: td.tenVuongQuoc, lop: td.lop, thoiKy: td.thoiKy || "do_da" }; // TC_D05C0a: thoiKy
 }
 // Trang thử: hồ sơ ngoại hình đầu tiên tìm thấy trên máy này (không có thì hình mẫu)
 function docHoSoBe() {
@@ -203,7 +204,7 @@ if (VUNG) {
 
 // ---------------- KC_06B2: trang trận (khung dt/thu_tran_dau.html) nhờ gọi máy chủ: câu kho + chấm + số Quản trị ----------------
 // { loai: "dt-kho-hoi", so, ham: "o" | "lo" | "cham" | "cauHinh", ts } -> { loai: "dt-kho-dap", so, kq }. Máy chủ thật / giả đều có kho().
-const SO_QT = ["cau_hinh_tran_dau", "cau_hinh_trinh_do", "cau_hinh_am_thanh"], boNhoCh = {}; // TC_D05F: + cài đặt âm thanh (dt3d_am_thanh.js hỏi)
+const SO_QT = ["cau_hinh_tran_dau", "cau_hinh_trinh_do", "cau_hinh_am_thanh", "tuong", "ky_nang", "hieu_ung"], boNhoCh = {}; // TC_D05F: + âm thanh; TC_D05C0a: + sổ tướng
 window.addEventListener("message", async e => {
   const d = e.data;
   if (e.origin !== location.origin || !d || d.loai !== "dt-kho-hoi" || !e.source) return;
@@ -223,22 +224,29 @@ window.addEventListener("message", async e => {
 });
 
 // ---------------- KC_06B2 (12/11/2026, người dùng): TẢI SẴN CẢNH TRẬN khi mở game ----------------
-// Bản đồ tải xong mới tải ở nền (từng file, lúc rảnh): tướng của bé + bộ động tác. File lưu trong trình duyệt
-// (dt3d_luu_san.js); lần sau chỉ ping xem có bản mới. Tướng của bạn khác: lưu khi gặp lần đầu.
+// Bản đồ tải xong mới tải ở nền (từng file, lúc rảnh). File lưu trong trình duyệt (dt3d_luu_san.js); lần sau chỉ ping
+// xem có bản mới. TC_D05C0a (luật tải nền, LUAT_DAU_TRUONG.md luật 4): danh sách tướng lấy từ SỔ TƯỚNG (dt_tuong.js):
+// tướng của bé trước, cảnh trận, rồi MỌI tướng còn lại trong sổ (bạn khác gặp lần đầu đã có sẵn trong trình duyệt).
 let dangTaiSan = false; // đang tải sẵn ở nền: khung hình tụt tạm thời, không báo "Máy hơi chậm"
 setTimeout(async () => {
   dangTaiSan = true;
   try {
-    const kt = await fetch(duongDan("../du_lieu/tuong.json"), { cache: "no-cache" }).then(r => r.json());
-    const h = be.hoSo || {}, ma = kt.thuLinh[h.chungLoai + "_" + (h.gioi === "nu" ? "nu" : "nam")] || kt.thuLinh.nhan_nam;
-    const t = kt.kho.find(x => x.ma === ma);
+    const CH = window.KC_DT_CAU_HINH;
+    const so = await window.KC_DT_TUONG.tai({ napTep: ten => {
+      const url = duongDan("../du_lieu/" + ten + ".json");
+      return boNhoCh[ten] || (boNhoCh[ten] = (CH ? CH.tai(ten, url) : fetch(url, { cache: "no-cache" }).then(r => r.json())).catch(() => null));
+    } });
+    const [tepBe, ...tepKhac] = so.tepCanTai([be.hoSo ? Object.assign({ thoiKy: be.thoiKy }, be.hoSo) : {}]);
+    const moHinh = t => duongDan("../mo_hinh/" + t);
     // mô hình (kho bền) + mã của cảnh trận: chiêu thức, hiệu ứng, âm thanh, quái, trang trận (bộ nhớ đệm thường)
     const TV = "../../thu_vien/three/";
-    await taiTruoc([t && duongDan("../mo_hinh/" + t.tep), duongDan("../mo_hinh/dong_tac_tuong.glb"), duongDan("../mo_hinh/dong_tac_tran.glb"),
+    await taiTruoc([tepBe && moHinh(tepBe), duongDan("../mo_hinh/dong_tac_tuong.glb"), duongDan("../mo_hinh/dong_tac_tran.glb"),
       ...["dt3d_tran.js", "dt3d_tuong.js", "dt3d_hieu_ung.js", "dt3d_chieu_vung.js", "dt3d_chieu_them.js", "dt3d_hat.js", "dt3d_quai.js", "dt3d_am_thanh.js"].map(f => duongDan("./" + f)),
       ...["postprocessing/EffectComposer.js", "postprocessing/OutputPass.js", "postprocessing/RenderPass.js", "postprocessing/UnrealBloomPass.js", "postprocessing/Pass.js",
         "postprocessing/ShaderPass.js", "postprocessing/MaskPass.js", "shaders/CopyShader.js", "shaders/LuminosityHighPassShader.js", "shaders/OutputShader.js"].map(f => duongDan(TV + f)),
-      ...["../thu_tran_dau.html", "../dt_tran_dau.js", "../dt_quai.js", "../dt_ve_quai.js", "../dt_nguon_kho.js", "../dt_chon_cau_td.js", "../../chung/trinh_do.js", "../../chung/am_thanh.js", "../../chung/kho_tieng.js", "../du_lieu/cau_hinh_tran_dau.json", "../du_lieu/cau_hinh_am_thanh.json"].map(duongDan)
+      ...["../thu_tran_dau.html", "../dt_tran_dau.js", "../dt_quai.js", "../dt_ve_quai.js", "../dt_nguon_kho.js", "../dt_chon_cau_td.js", "../../chung/trinh_do.js", "../../chung/am_thanh.js", "../../chung/kho_tieng.js", "../du_lieu/cau_hinh_tran_dau.json", "../du_lieu/cau_hinh_am_thanh.json",
+        "../dt_tuong.js", "../du_lieu/tuong.json", "../du_lieu/ky_nang.json", "../du_lieu/hieu_ung.json"].map(duongDan),
+      ...tepKhac.map(moHinh) // TC_D05C0a: mọi tướng còn lại trong sổ
     ].filter(Boolean));
   } catch (e) { /* tải sẵn hỏng: vào trận sẽ tải */ }
   setTimeout(() => { dangTaiSan = false; }, 3000);
@@ -446,3 +454,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 20/11/2026 - BƯỚC: KC_08D (tải sẵn dt_chon_cau_td.js + kc/chung/trinh_do.js cho trận theo trình độ máy chủ)
 // 21/11/2026 - BƯỚC: TC_D05F (trang trận hỏi được cài đặt âm thanh cau_hinh_am_thanh qua "cauHinh"; tải sẵn file mặc định)
 // 21/11/2026 - BƯỚC: KC_09A (tải sẵn chung/am_thanh.js cho trang trận)
+// 25/11/2026 - BƯỚC: TC_D05C0a (sổ tướng: tải nền tướng của bé + MỌI tướng của sổ; trang trận xin được tuong / ky_nang / hieu_ung; be.thoiKy)
