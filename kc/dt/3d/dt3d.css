@@ -101,7 +101,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   .d3Tren { left: 12px; right: 12px; top: 12px; }
   .d3Ten { flex: 0 1 auto; }
 }
-@media (max-width: 600px) {
+@media (max-width: 600px), (max-height: 500px) {
   .d3Ten { display: none; } /* điện thoại: nhường chỗ cho 4 ô tài nguyên */
   .d3Kho { flex: 1 1 auto; justify-content: space-around; gap: 2px; padding: 4px; min-width: 0; }
   .d3Tn { min-width: 0; font-size: .95rem; padding: 4px 2px; }
@@ -158,7 +158,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3BtDong1 i.d3Thap { color: #ff8f8f; }
 .d3BtDan { text-align: right; }
 .d3BtVs { font-family: "Baloo 2", sans-serif; font-weight: 800; color: var(--vang); font-size: .85rem; text-align: center; white-space: nowrap; }
-@media (max-width: 600px) { .d3BangTran { top: calc(62px + env(safe-area-inset-top)); right: 8px; width: calc(100vw - 16px); max-height: calc(100vh - 250px); }
+@media (max-width: 600px), (max-height: 500px) { .d3BangTran { top: calc(62px + env(safe-area-inset-top)); right: 8px; width: calc(100vw - 16px); max-height: calc(100vh - 250px); }
   .d3BtDong1 b { font-size: .92rem; } }
 @media (min-width: 900px) { .d3BangTran { width: 480px; } .d3BtDong1 { min-height: 64px; } .d3BtDong1 b { font-size: 1.1rem; } }
 /* 05/11/2026 - BƯỚC: TC_D06C2d (👥 dân số ở thanh trên, danh sách trận, bong bóng ⚔️ Đánh trên đầu quái) */
@@ -227,7 +227,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 14px rgba(0, 0, 0, .4); animation: d3BiDanhNhay .8s ease-in-out infinite alternate; }
 @keyframes d3BiDanhNhay { to { box-shadow: 0 0 0 5px rgba(255, 90, 90, .45), 0 4px 14px rgba(0, 0, 0, .4); } }
 @media (min-width: 900px) { .d3BiDanh { right: 12px; top: 80px; font-size: 1.1rem; min-height: 50px; } }
-@media (max-width: 600px) { .d3Chung { max-width: 176px; } .d3NdRanh { font-size: 1.1rem; } }
+@media (max-width: 600px), (max-height: 500px) { .d3Chung { max-width: 176px; } .d3NdRanh { font-size: 1.1rem; } }
 @media (prefers-reduced-motion: reduce) { .d3BiDanh { animation: none; } }
 /* TC_D06C6: nút ✕ bỏ chọn (góc trên phải ô đang xem) + nút 👑 tìm Thủ lĩnh */
 .d3BangChon { position: relative; }
@@ -238,7 +238,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3BoChon:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .d3BoChon[hidden] { display: none; }
 .d3TimTl { font-size: 1.2rem; }
-@media (max-width: 600px) { .d3TimTl { font-size: 1.1rem; } }
+@media (max-width: 600px), (max-height: 500px) { .d3TimTl { font-size: 1.1rem; } }
 /* 07/11/2026 - BƯỚC: TC_D06C6 */
 /* TC_D06C7e: bảng chọn câu khi mua 🛡️ (mỗi câu là một nút to, chạm là chọn) */
 .d3ChonCauDs { list-style: none; padding-left: 0 !important; }
@@ -481,7 +481,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3CauCon .d3CauBe_dat::after { content: none; }
 .d3CbSoi { border-color: #7ee08a !important; box-shadow: 0 0 0 4px rgba(126, 224, 138, .35) !important; animation: d3CbSoi 1.2s ease-in-out 2; }
 @keyframes d3CbSoi { 50% { box-shadow: 0 0 0 8px rgba(126, 224, 138, .15); } }
-@media (max-width: 600px) { .d3BongDen { font-size: 1.15rem; padding: 4px 6px; min-width: 40px; } }
+@media (max-width: 600px), (max-height: 500px) { .d3BongDen { font-size: 1.15rem; padding: 4px 6px; min-width: 40px; } }
 /* 17/11/2026 - BƯỚC: KC_06F2 */
 /* TC_D06D3 (25/11/2026): nút ⚙️ Cài đặt ở thanh trên + bảng cài đặt của bé (dt3d_cai_dat.js):
    🎵 Nhạc nền, 🔊 Âm thanh trận đấu (bật / tắt + to nhỏ), ✨ Chất lượng game (Đẹp / Nhẹ). Máy tính: hộp giữa màn hình;
@@ -513,7 +513,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3CdChon button small { font-family: "Be Vietnam Pro", system-ui, sans-serif; font-weight: 500; font-size: .78rem; color: var(--nhat); }
 .d3CdChon button[aria-checked="true"] { border-color: var(--vang); background: rgba(255, 194, 75, .22); box-shadow: 0 0 0 3px rgba(255, 194, 75, .25); }
 .d3CdBao { margin: 10px 0 0; color: var(--vang); font-weight: 700; text-align: center; }
-@media (max-width: 600px) {
+@media (max-width: 600px), (max-height: 500px) {
   .d3NutCaiDat { font-size: 1.15rem; padding: 4px 6px; min-width: 40px; }
   .d3CaiDat { padding: 8px; }
   .d3CaiDatHop { padding: 12px 12px 14px; }
@@ -535,7 +535,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3BiDanhSo { position: absolute; top: -7px; right: -7px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center;
   background: #fff3d6; color: #a0141c; border: 2px solid #a0141c; font-size: .78rem; font-weight: 800; line-height: 1; box-sizing: border-box; }
 @media (min-width: 900px) { .d3BiDanhO { top: auto; right: auto; min-height: 49px; } }
-@media (max-width: 600px) {
+@media (max-width: 600px), (max-height: 500px) {
   /* thanh trên */
   .d3Tren { top: calc(6px + env(safe-area-inset-top)); left: 6px; right: 6px; gap: 5px; }
   .d3Tren .d3Nut { min-height: 36px; min-width: 38px; height: 36px; padding: 0 6px; font-size: 1rem; border-radius: 12px; box-sizing: border-box; }
@@ -577,3 +577,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 @container (max-width: 250px) { .d3Tn { font-size: .66rem; letter-spacing: -.02em; } }
 @container (max-width: 205px) { .d3Tn { font-size: .6rem; } .d3DanSo { border-left-width: 1px; } }
 /* 25/11/2026 - BƯỚC: TC_D06D4 */
+/* TC_D06D4c (26/11/2026, người dùng: "Điện thoại để theo chiều đứng thì đạt, chiều ngang thì không đạt"): điện thoại NẰM NGANG
+   (rộng > 600 nhưng cao <= 500) dùng chung luật gọn của điện thoại (các @media ở trên có thêm "(max-height: 500px)"),
+   riêng thanh dưới xếp MỘT HÀNG (đang xem | lệnh | chung) cho đỡ tốn chiều cao; hiện lại tên vương quốc nếu đủ chỗ. */
+@media (max-height: 500px) and (min-width: 601px) {
+  .d3Thanh { grid-template-columns: minmax(180px, 260px) minmax(0, 1fr) auto; grid-template-areas: "chon lenh chung"; align-items: center; }
+  .d3Lenh { overflow-x: auto; }
+  .d3Lenh.d3Trong { display: flex; }
+  .d3Chung { max-width: none; flex-wrap: nowrap; }
+  .d3Kho { flex: 0 1 520px; margin-right: auto; }
+  #d3GoiY { max-width: min(640px, calc(100% - 12px)); }
+}
+/* 26/11/2026 - BƯỚC: TC_D06D4c */
