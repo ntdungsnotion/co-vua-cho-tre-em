@@ -1035,7 +1035,9 @@
       const ve2d = () => { $("dangTai").classList.add("an"); };
       if (/2d/.test(location.hash)) return ve2d();
       // TC_D05C0a: sổ tướng (tuong / ky_nang / hieu_ung) đã trộn phần Quản trị sửa: trận thật nhờ bản đồ; trang thử đọc file mặc định
-      const napTep = NHUNG ? (ten => hoiKho("cauHinh", { ten }).then(k => (k && k.ok && k.ch) || null)) : null;
+      // TC_D05C0c: &banNhap=1 = ▶ Xem thử của Quản trị › 🛡️ Tướng (trang này nằm trong khung phủ): lấy BẢN ĐANG SỬA của trang cha
+      const banNhap = ten => { try { const f = window.parent !== window && window.parent.QDTT_banNhap; return f ? f(ten) : null; } catch (e) { return null; } };
+      const napTep = NHUNG ? (ten => hoiKho("cauHinh", { ten }).then(k => (k && k.ok && k.ch) || null)) : TS.get("banNhap") === "1" ? banNhap : null;
       const thu = () => window.KC_DT_SAN3D.tao($("san3d"), { napTep }).then(s => {
         san3d = s; $("canvas").classList.add("an"); $("dangTai").classList.add("an");
         batNutChieu(); // TC_D06D3: nút 🔊 bỏ khỏi trận, bé chỉnh tiếng ở ⚙️ Cài đặt màn Thung lũng
@@ -1089,3 +1091,4 @@
 <!-- 21/11/2026 - BƯỚC: KC_09A (đọc câu nghe qua chung/am_thanh.js: chữa câu nghe im trong trận) -->
 <!-- 26/11/2026 - BƯỚC: TC_D06D5 (chốt chiều cao sân bằng px: thanh địa chỉ ẩn / hiện không làm câu hỏi nhảy, sân 3D không chớp đen) -->
 <!-- 26/11/2026 - BƯỚC: TC_D05C0b2 (trận công trình: &doiGioi / &doiDoi -> đối thủ là tướng thật của chủ) -->
+<!-- 26/11/2026 - BƯỚC: TC_D05C0c (&banNhap=1: ▶ Xem thử của Quản trị › 🛡️ Tướng dùng bản đang sửa của trang cha) -->

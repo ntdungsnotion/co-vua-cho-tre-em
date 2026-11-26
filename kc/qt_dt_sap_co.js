@@ -5,6 +5,7 @@
 //   thêm dòng <script> vào quantri_NC.html và XOÁ dòng đặt chỗ tương ứng ở đây.
 // BƯỚC: TC_D18A - NGÀY: 10/11/2026
 // CẬP NHẬT: 12/11/2026 - KC_06C: mục Câu hỏi trỏ sang Quản trị chung › ❓ Kho câu hỏi (kho chung toàn app).
+//           26/11/2026 - TC_D05C0c: "Tướng & lính" thành "Lính & cấp" (tướng sang mục 🛡️ Tướng, qt_dt_tuong.js).
 // PHỤ THUỘC: qt_dt_khung.js (QDT).
 // ================================================================
 
@@ -13,10 +14,10 @@ QDT.dangKyMuc({
   moTa: "Câu hỏi nằm ở kho chung toàn app: Quản trị chung › ❓ Kho câu hỏi (duyệt, sửa, nhập câu, từ cấm). Ở đây sau này chỉ còn phần riêng của Đấu Trường.",
   seCo: ["Bật / tắt từng dạng câu sinh tự động", "Xem trình độ từng bé", "Xem trước câu ở cả khổ điện thoại"]
 });
-QDT.dangKyMuc({
-  ma: "quandoi", ten: "Tướng & lính", bieuTuong: "🧙", sapCo: true,
-  moTa: "Danh mục tướng, lính và kỹ năng.",
-  seCo: ["Danh mục tướng chiêu mộ: máu, công, thủ, kỹ năng, giá", "Lính cung, kỵ binh, bộ binh: chỉ số và giá huấn luyện", "Cấp (Lv) Thủ lĩnh: điểm cần cho mỗi cấp"]
+QDT.dangKyMuc({ // TC_D05C0c: phần tướng + kỹ năng đã thành mục 🛡️ Tướng (qt_dt_tuong.js)
+  ma: "quandoi", ten: "Lính & cấp", bieuTuong: "🧙", sapCo: true,
+  moTa: "Lính và cấp Thủ lĩnh. Tướng, kỹ năng, trình diễn: mục 🛡️ Tướng.",
+  seCo: ["Giá chiêu mộ tướng (Quán Anh Hùng)", "Lính cung, kỵ binh, bộ binh: chỉ số và giá huấn luyện", "Cấp (Lv) Thủ lĩnh: điểm cần cho mỗi cấp"]
 });
 QDT.dangKyMuc({
   ma: "thoiky", ten: "Thời kỳ", bieuTuong: "🏛️", sapCo: true,

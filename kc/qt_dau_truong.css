@@ -203,3 +203,52 @@
 @media (min-width: 1700px) {
   .qtkKhung { grid-template-columns: 340px minmax(0, 1fr); }
 }
+
+/* ----- TC_D05C0c: mục 🛡️ Tướng (qt_dt_tuong.js); ô .qdO + bảng .qdBang dùng chung ở trên ----- */
+.qdttLoi { display: none; padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; background: #fff1f1; border: 1px solid var(--mau-that-bai); font-size: 0.88rem; }
+.qdttLoi.hien { display: block; }
+.qdttLoi ul { margin: 4px 0 0; padding-left: 20px; }
+.qdttBang td { border: 2px solid transparent; }
+.qdttBang td.daSua { background: #fff6d6; }
+.qdttBang td.chuaLuu { border-color: var(--mau-chinh); }
+.qdttBang td.loi { border-color: var(--mau-that-bai); }
+.qdttTdNhap { display: flex; gap: 4px; align-items: center; }
+.qdttTdNhap .qdNhap { flex: 1 1 auto; width: 100%; min-width: 0; }
+.qdttBang td .qdVe { display: none; flex: 0 0 auto; }
+.qdttBang td.daSua .qdVe { display: inline-block; visibility: visible; }
+.qdttBang tr { grid-template-columns: minmax(0, 1fr); } /* điện thoại: mỗi ô một hàng, tên tướng không bị cắt */
+.qdttBang th.qdTenHang code { font-size: 0.7rem; color: #9aa3b5; font-weight: normal; }
+.qdNhap.nhuTruoc { color: #9aa3b5; font-style: italic; }
+.qdttHinh { font-size: 1.5rem; }
+.qdttChiDoc { font-size: 0.85rem; color: var(--mau-chu-nhat); margin: 0 0 6px; overflow-wrap: anywhere; }
+.qdttNho { margin: 0 0 4px; font-size: 0.78rem; }
+.qdttTheTuong.daAn { opacity: 0.6; }
+.qdttBon { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.qdttBon .qdNhap { min-width: 0; }
+.qdttMau { display: flex; gap: 4px; align-items: center; }
+.qdttMau .qdNhap { flex: 1 1 auto; min-width: 0; font-family: ui-monospace, Consolas, monospace; }
+.qdttChonMau { flex: 0 0 40px; width: 40px; height: 34px; padding: 0; border: 1px solid var(--mau-vien); border-radius: 8px; background: #fff; cursor: pointer; }
+.qdttHangNut { margin-top: 8px; text-align: right; }
+.qdttThu { min-height: 40px; }
+/* thẻ tướng: ô bộ kỹ năng và chọn đòn rộng hơn ô số thường */
+.qdttTheTuong .qdO { grid-template-columns: minmax(0, 1fr); grid-template-areas: "ten" "nhap" "md"; }
+.qdttTheTuong .qdMd { text-align: left; white-space: normal; }
+.qdttKhungThu { position: fixed; inset: 0; z-index: 2000; background: rgba(10, 16, 40, 0.75); display: flex; flex-direction: column; }
+.qdttKhungDau { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #fff; }
+.qdttKhungDau strong { color: var(--mau-chinh-dam); }
+.qdttKhungDau button { margin-left: auto; }
+.qdttKhungThu iframe { flex: 1 1 auto; width: 100%; border: 0; background: #14204a; }
+@media (min-width: 900px) {
+  .qdttTheTuong .qdO { grid-template-columns: 150px minmax(0, 1fr); grid-template-areas: "ten nhap" "ten md"; }
+  .qdttBon { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .qdttBang tr { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qdttLuoi { grid-template-columns: repeat(auto-fill, minmax(min(520px, 100%), 1fr)); }
+  .qdttKhungThu { padding: 24px 5vw; }
+}
+@media (min-width: 1280px) {
+  .qdttBang select.qdNhap { min-width: 180px; }
+  .qdttBang input[type="text"].qdNhap { min-width: 150px; }
+  .qdttBang input[type="number"].qdNhap { min-width: 64px; max-width: 80px; }
+  .qdttBang td .qdttThu { min-height: 32px; padding: 4px 10px; }
+}
+/* 26/11/2026 - BƯỚC: TC_D05C0c (mục 🛡️ Tướng) */
