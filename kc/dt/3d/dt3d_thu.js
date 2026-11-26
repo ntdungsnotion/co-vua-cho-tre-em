@@ -169,7 +169,8 @@ if (VUNG) {
       khiXem: fn => { if (thanh) thanh.xem(fn); }, chonTl: () => dk.chon(hTl), dangChon: () => dk.dangChon(), // TC_D06D; TC_D06C2d: ⚔️ Đánh sai nông dân
       capNhatKho: () => capNhatKho(), oKho: ma => $(O_KHO[ma] || "") && $(O_KHO[ma]).closest(".d3Tn"), // TC_D06C4: đồ rơi bay vào kho
       am: amChon, // TC_D06D2: dùng chung một bộ tiếng
-      boNv, boChon: dv => { const c = dk.dangChon(); if (c && c.dv === dv) dk.chon(null); } }); // TC_D06C2b: dân hết máu bỏ chạy
+      boNv, boChon: dv => { const c = dk.dangChon(); if (c && c.dv === dv) dk.chon(null); }, // TC_D06C2b: dân hết máu bỏ chạy
+      toiDan: dv => { cam.nhinVe(dv.x, dv.z); const h = boNv.dsHinh.find(k => k.dv === dv); if (h) dk.chon(h); } }); // TC_D06D6b: 👀 Tới chỗ
     uiDk.trungQuai = quaiBd.trung; uiDk.chamQuai = quaiBd.cham;
   } catch (e) { console.warn("Chưa dựng được quái trên bản đồ", e); } // thiếu quái vẫn chơi làng được
   // TC_D06C2g: trụ phòng thủ (trụ của bạn khai chiến Thủ lĩnh trong tầm; trụ của mình tự chọn câu)
@@ -182,7 +183,9 @@ if (VUNG) {
   // TC_D06C5 (người dùng 06/11/2026): nút 🧑‍🌾 tìm nông dân rảnh + nút ⚠️ nông dân bị tấn công (chạm: màn hình tới người đó)
   try {
     nongDanBd = taoNongDan({ ctx, lang, boNv, dk, cam, baoGoiY, chung: document.querySelector(".d3Chung"), truocNut: $("d3VeLang"),
-      biTanCong: dv => (quaiBd && quaiBd.biTanCong && quaiBd.biTanCong(dv) ? "quai" : truBd && truBd.biBan && truBd.biBan(dv) ? "tru" : null) });
+      biTanCong: dv => (quaiBd && quaiBd.biTanCong && quaiBd.biTanCong(dv) ? "quai" : truBd && truBd.biBan && truBd.biBan(dv) ? "tru" : null),
+      moBangTran: () => !!(quaiBd && quaiBd.moBang && quaiBd.moBang()), doiBao: () => { if (quaiBd && quaiBd.veNut) quaiBd.veNut(); } }); // TC_D06D6b
+    if (quaiBd && quaiBd.datAnNut) quaiBd.datAnNut(() => !!(nongDanBd && nongDanBd.moc.dangBao())); // TC_D06D6b: có ⚠️ thì ẩn ⚔️
   } catch (e) { console.warn("Chưa dựng được nút nông dân", e); }
   // KC_06F1: tin chưa đọc của bé (câu bị trả lại đã được thay câu khác ở công trình); không chặn việc vào làng
   if (GAME) setTimeout(() => moThongBao({ mayChu: vung.mayChu }).catch(() => null), 1200);

@@ -570,16 +570,14 @@ export async function taoQuaiBanDo(the) {
       const nut = (chu, nhan, fn) => { const b = document.createElement("button"); b.type = "button"; b.className = "d3Nut d3BtNut"; b.textContent = chu; b.setAttribute("aria-label", nhan);
         b.addEventListener("click", e => { e.stopPropagation(); dongBang(); fn(); }); return b; };
       const cum = document.createElement("span"); cum.className = "d3BtCum";
-      cum.append(nut("⚔️ Đánh", "Vào trận: " + n.nhan, n.vao), nut("👀 Xem", "Tới chỗ " + n.nhan, n.xem));
+      cum.append(nut("⚔️ Vào trận", "Vào trận: " + n.nhan, n.vao), nut("👀 Tới chỗ", "Tới chỗ " + n.nhan, n.xem)); // TC_D06D6b: cùng chữ với hàng quái
       h.appendChild(cum);
       return h;
     };
-    bangTran.replaceChildren(dau, ...dong.map(d => {
-      const b = document.createElement("button"); b.type = "button"; b.className = "d3BtDong1"; b.innerHTML = d.html;
-      b.setAttribute("aria-label", "Vào điều khiển " + d.f.dv.ten + " đánh " + tenLoai(d.f.r.ma));
-      b.addEventListener("click", e => { e.stopPropagation(); dongBang(); if (!trongTran && danh.get(d.f.dv.id) === d.f) vaoDieuKhien(d.f); });
-      return b;
-    }), ...ng.map(hangNgoai));
+    // TC_D06D6b (người dùng 26/11/2026: bấm ⚠️ "mới có tùy chọn vào trận hoặc di chuyển đến quân đang bị tấn công"): hàng trận quái
+    // cũng có 2 nút ⚔️ Vào trận + 👀 Tới chỗ như hàng trụ (trước: chạm cả hàng là vào trận)
+    bangTran.replaceChildren(dau, ...dong.map(d => hangNgoai({ html: d.html, nhan: d.f.dv.ten + " đánh " + tenLoai(d.f.r.ma),
+      vao: () => { if (!trongTran && danh.get(d.f.dv.id) === d.f) vaoDieuKhien(d.f); }, xem: () => toiDan(d.f.dv) })), ...ng.map(hangNgoai));
   }
   nutTran.setAttribute("aria-haspopup", "dialog"); nutTran.setAttribute("aria-expanded", "false");
   nutTran.addEventListener("click", e => {
@@ -592,11 +590,19 @@ export async function taoQuaiBanDo(the) {
     }
     if (ds[0]) vaoDieuKhien(ds[0]);
   });
+  // TC_D06D6b: ⚠️ (dt3d_nong_dan.js) mở bảng này cả khi chỉ 1 trận; đang có ⚠️ thì ẩn ⚔️ (một biểu tượng cảnh báo)
+  const toiDan = dv => (the.toiDan ? the.toiDan(dv) : cam.nhinVe(dv.x, dv.z));
+  let anNut = () => false;
+  function moBang() {
+    if (trongTran || banNgoai() || (!tranDangCo().length && !tranNgoai().length)) return false;
+    bangTran.hidden = false; khoaBang = ""; nutTran.setAttribute("aria-expanded", "true"); veBang(); return true;
+  }
   addEventListener("keydown", e => { if (e.key === "Escape") dongBang(); });
   canvas.addEventListener("pointerdown", dongBang); // chạm bản đồ: đóng bảng
   function veNut() {
     const n = tranDangCo().length + tranNgoai().length; // TC_D06C2h: cả trận trụ bắn nông dân
-    if (nutTran.hidden !== !n) nutTran.hidden = !n;
+    const an = !n || anNut(); // TC_D06D6b
+    if (nutTran.hidden !== an) nutTran.hidden = an;
     const chu = "⚔️" + (n > 1 ? " " + n : "");
     if (nutTran.textContent !== chu) nutTran.textContent = chu;
     veBang();
@@ -827,6 +833,7 @@ export async function taoQuaiBanDo(the) {
     // nông dân hết máu bỏ chạy (hình chạy ra xa rồi mất); vẽ lại nút
     themTranNgoai: fn => { dsNgoai.push(fn); veNut(); }, datBanNgoai: fn => { banNgoai = fn; }, dangTran: () => !!trongTran,
     danBoChay, veNut, dangDanh: dv => danh.has(dv.id),
+    moBang, datAnNut: fn => { anNut = fn || (() => false); veNut(); }, bangMo: () => !bangTran.hidden, // TC_D06D6b
     // TC_D06C5: nông dân bị quái hung dữ tấn công (quái đang lao tới, hoặc trận do quái lao vào) -> dt3d_nong_dan.js báo ⚠️
     biTanCong: dv => { const f = danh.get(dv.id); return !!(f && (f.giai === "lao" || (f.giai === "danh" && f.quaiTruoc))); },
     moc: { // kịch bản thử Chrome
@@ -881,3 +888,4 @@ export async function taoQuaiBanDo(the) {
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (quái không đứng trên cổng, quái bị rào kín sống trong vùng rào)
 // 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)
 // 26/11/2026 - BƯỚC: TC_D06D6 (chiSoTl: máu + công / thủ / nhanh / pháp của Thủ lĩnh cho thanh dưới)
+// 26/11/2026 - BƯỚC: TC_D06D6b (⚠️ mở bảng trận: mỗi hàng ⚔️ Vào trận + 👀 Tới chỗ; đang có ⚠️ thì ẩn ⚔️)

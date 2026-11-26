@@ -31,7 +31,7 @@
 //     chạy, máy chủ xoá người dân đó). Cần SQL TC_D06C2b. donVi[].mau = máu nông dân (null = đầy).
 //   TC_D06C2d: phaHuy(ten, id) -> kc_dt_pha_huy (phá hủy công trình đã xong của bé; Lều trại: la_leu).
 //   TC_D06C4: quaiThang(ten, id, dan) (thắng quái + đồ rơi trên đất, RPC kc_dt_quai_thang), nhatDo(ten, id, dv) (kc_dt_nhat_do),
-//     doRoiDs() (kc_dt_do_roi_ds), bangRoiDo() (kc_dt_doc_roi_do).
+//     doRoiDs() (kc_dt_do_roi_ds), bangRoiDo() (kc_dt_doc_roi_do). TC_D06D6b: vutDo(ten, dv, giu) (kc_dt_vut_do).
 //   TC_D06C2g: truCau / truKhai / truLuot / truTra / truRut (trụ phòng thủ, như dt_may_chu.js); quaiKet(..., dan = { mau }) không có dv
 //     = máu Thủ lĩnh còn lại (giữ nguyên sau trận, không tự hồi). vaoVung trả congTrinh (số công trình từ bảng kc_dt_loai_cong_trinh).
 //   TC_D06C7a (07/11/2026): vaoVung / layQuanh trả thêm lanhDia [{ chu, mat (base64) }] (lãnh địa mọi bé, cần SQL TC_D06C7a;
@@ -162,6 +162,7 @@
       async bangRoiDo() { return goi("kc_dt_doc_roi_do", {}); },
       async nhatDo(ten, id, dv) { return goi("kc_dt_nhat_do", { p_id: id, p_dv: dv }); },
       async catDo(ten, dv) { return goi("kc_dt_cat_do", { p_dv: dv }); }, // TC_D06C5: nông dân cầm đồ về tới Lều / kho
+      async vutDo(ten, dv, giu) { return goi("kc_dt_vut_do", { p_dv: dv, p_giu: giu || null }); }, // TC_D06D6b: giao lấy tài nguyên khác -> vứt đồ rơi đang cầm (SQL supabase_tc_d06d6_vut_do.sql)
       async doRoiDs() { return goi("kc_dt_do_roi_ds", {}); },
       // TC_D06C5: không còn nông dân -> tặng một người (cần SQL TC_D06C5: repo_rieng SQL/supabase_tc_d06c5_nong_dan_mien_phi.sql)
       async nongDanMienPhi() { return goi("kc_dt_nong_dan_mien_phi", {}); },
@@ -302,3 +303,4 @@
 // 20/11/2026 - BƯỚC: KC_08D (kho("hoSo"): RPC kc_td_ho_so, trình độ máy chủ cho trận; SQL kc08d)
 // 24/11/2026 - BƯỚC: KC_03C7b (ttChuoi: RPC kc_tt_chuoi_luot)
 // 25/11/2026 - BƯỚC: KC_08F2 (goiDanhHieu: RPC kc_td_danh_hieu_be / kc_td_danh_hieu_da_xem cho màn chúc mừng)
+// 26/11/2026 - BƯỚC: TC_D06D6b (vutDo: kc_dt_vut_do)

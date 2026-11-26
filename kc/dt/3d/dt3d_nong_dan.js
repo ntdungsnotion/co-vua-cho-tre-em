@@ -84,10 +84,13 @@ export function taoNongDan(the) {
     if (bao.hidden === !co) return;
     bao.hidden = !co;
     if (oChung && nutCaiDat) nutCaiDat.hidden = co;
+    if (the.doiBao) the.doiBao(co); // TC_D06D6b: ⚔️ ở thanh trên ẩn / hiện theo ⚠️
   }
   bao.addEventListener("click", e => {
     e.stopPropagation();
     if (!dvBao || !lang.donVi.includes(dvBao)) { hienBao(false); return; }
+    // TC_D06D6b (người dùng 26/11/2026): chạm ⚠️ mở bảng trận (mỗi người bị đánh: ⚔️ Vào trận / 👀 Tới chỗ); chưa có trận thì như cũ
+    if (the.moBangTran && the.moBangTran()) return;
     toiVaChon(dvBao);
     const loai = (biDanh.get(dvBao) || {}).loai;
     baoGoiY("👀 " + dvBao.ten + (loai === "tru" ? " đang bị trụ bắn · chạm chỗ xa trụ để dẫn đi trốn, hoặc bấm ⚔️ để đánh trả" : " đang bị quái tấn công · bấm ⚔️ để vào trận giúp"));
@@ -127,7 +130,7 @@ export function taoNongDan(the) {
   return {
     moc: { // kịch bản thử Chrome
       soRanh: () => danMinh().filter(ranh).length, nut: () => !nut.hidden && nut.textContent,
-      bao: () => !bao.hidden && bao.textContent, bamRanh: () => nut.click(), bamBao: () => bao.click(), capNhat,
+      bao: () => !bao.hidden && bao.textContent, dangBao: () => !bao.hidden /* TC_D06D6b */, bamRanh: () => nut.click(), bamBao: () => bao.click(), capNhat,
       bamTl: () => nutTl.click(), coX: () => !nutX.hidden, bamX: () => nutX.click(),
       thuBiDanh: co => { epBiDanh = !!co; capNhat(); return dvBao && dvBao.ten } // TC_D06D4: bật / tắt giả "bị tấn công"
     }
@@ -136,3 +139,4 @@ export function taoNongDan(the) {
 // 06/11/2026 - BƯỚC: TC_D06C5
 // 07/11/2026 - BƯỚC: TC_D06C6 (nút 👑 tìm Thủ lĩnh, nút ✕ bỏ chọn)
 // 25/11/2026 - BƯỚC: TC_D06D4 (nút ⚠️ vào ô chung #d3OChung thay chỗ ⚙️; điện thoại chỉ ⚠️ + số người; móc thử thuBiDanh)
+// 26/11/2026 - BƯỚC: TC_D06D6b (chạm ⚠️ mở bảng trận của quaiBd; báo doiBao để ẩn ⚔️)
