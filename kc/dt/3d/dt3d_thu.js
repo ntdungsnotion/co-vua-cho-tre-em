@@ -19,7 +19,7 @@
 //       KC_06B2 (11/11/2026: trang trận nhờ gọi máy chủ "dt-kho-hoi": câu kho, chấm, số Quản trị);
 //       KC_06F1 (16/11/2026: vào thung lũng hiện tin của bé, dt3d_thong_bao.js);
 //       KC_06F2 (17/11/2026: 💡 bóng điện thông báo ở thanh trên, dt3d_bong_den.js)
-// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 30/10/2026; 25/11/2026 (TC_D06D2: tiếng khi chạm chọn, bộ tiếng chung với quái); 25/11/2026 (TC_D06D3: nút ⚙️ Cài đặt thay nút Đồ họa)
+// NGÀY: 23/10/2026; 26/10/2026; 27/10/2026; 27/10/2026 18:55; 27/10/2026 20:55; 30/10/2026; 25/11/2026 (TC_D06D2: tiếng khi chạm chọn, bộ tiếng chung với quái); 25/11/2026 (TC_D06D3: nút ⚙️ Cài đặt thay nút Đồ họa); 26/11/2026 (TC_D06D7: toàn màn hình điện thoại, dt3d_toan_man_hinh.js)
 // PHỤ THUỘC: chung/nv_ve.js (KC_NV), dt/dt_luoi.js, dt/dt_lang.js (KC_DT_LANG), các phần dt/3d/*.js;
 //            thung lũng thêm dt/dt_ban_do.js, dt/dt_may_chu.js; trang game thêm chung/nv_ho_so.js,
 //            dt/dt_tien_do.js (phiên đăng nhập: sessionStorage của kc_auth.js)
@@ -41,6 +41,7 @@ import { taoQuaiBanDo } from "./dt3d_quai_ban_do.js";
 import { taoDenChon } from "./dt3d_den_chon.js";
 import { taoAmThanh } from "./dt3d_am_thanh.js"; // TC_D06D2: tiếng khi chạm chọn
 import { taoCaiDat } from "./dt3d_cai_dat.js"; // TC_D06D3: bảng ⚙️ Cài đặt của bé
+import { taoToanManHinh } from "./dt3d_toan_man_hinh.js"; // TC_D06D7: điện thoại chơi toàn màn hình
 import { taoThanhDuoi } from "./dt3d_thanh_duoi.js";
 import { taoThuGon } from "./dt3d_thu_gon.js"; // TC_D06D6c: điện thoại thu gọn thanh trên / dưới thành nút
 import { taoTruBanDo } from "./dt3d_tru.js"; // TC_D06C2g: trụ phòng thủ (05/11/2026)
@@ -377,7 +378,9 @@ lang.nghe(su => { if (su.loai === "cat") capNhatKho(); });
 
 // ---------------- Nút ----------------
 // TC_D06D3: nút ⚙️ Cài đặt (nhạc nền, âm thanh trận đấu, chất lượng game) thay nút "✨ Đồ họa" cũ ở thanh dưới
-const caiDat = $("d3CaiDat") ? taoCaiDat({ nut: $("d3CaiDat"), am: amChon, doHoa, luuDoHoa }) : null;
+// TC_D06D7: điện thoại tự vào toàn màn hình ở cú chạm đầu (⛶ Bật / Tắt trong Cài đặt)
+const tmh = $("d3CaiDat") ? taoToanManHinh() : null;
+const caiDat = $("d3CaiDat") ? taoCaiDat({ nut: $("d3CaiDat"), am: amChon, doHoa, luuDoHoa, tmh }) : null;
 if (GAME) {
   for (const id of ["d3DoiHinh", "d3ThuTran", "d3Tua", "d3ThemNd", "d3LamLai"]) $(id).hidden = true; // nút thử: chỉ trang thử
 } else if (VUNG) {
@@ -438,6 +441,7 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   chamDiem: (x, z) => cam.chieu(x, diaHinh.doCaoDi(x, z) + 0.5, z),
   tiengChon: () => amChon && { goi: amChon.thongKe().daGoi, noi: amChon.daNoi() }, // TC_D06D2
   caiDat: () => caiDat && { mo: caiDat.dangMo(), tieng: amChon && { bat: amChon.dangBat(), to: amChon.toTieng(), nhac: amChon.nhacBat(), toNhac: amChon.toNhac() }, doHoa }, // TC_D06D3
+  toanManHinh: () => tmh && { hoTro: tmh.hoTro, bat: tmh.batChon(), dang: tmh.dangToan() }, // TC_D06D7
   denChieu: () => { const o = denChon.dangChieu(); return o ? (o.isObject3D ? "vat" : "diem") : null; },
   chamNguon: (x, z, y) => cam.chieu(x, diaHinh.doCao(x, z) + (y || 0.5), z),
   tenThuLinh: () => dvTl.ten,

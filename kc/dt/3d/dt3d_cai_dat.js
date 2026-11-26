@@ -5,20 +5,22 @@
 //            trận đấu, độ phân giải game (chất lượng game) và cài đặt khác sau này bổ sung"):
 //            - 🎵 Nhạc nền: bật / tắt + to nhỏ (thả thanh trượt thì nghe thử vài giây nhạc trận)
 //            - 🔊 Âm thanh trận đấu: tiếng đánh, chiêu, tiếng khi chạm chọn: bật / tắt + to nhỏ (thả thanh: kêu thử)
+//            - ⛶ Toàn màn hình: bật / tắt (TC_D06D7, chỉ điện thoại có Fullscreen API; dt3d_toan_man_hinh.js)
 //            - ✨ Chất lượng game: Đẹp / Nhẹ (đổi thì tải lại trang)
 //            Máy nhớ mọi lựa chọn (localStorage, dt3d_am_thanh.js + dt3d_canh.js đọc); khung trận mở sau đó đọc theo.
 //            Thêm mục mới: thêm một khối vào mảng MUC bên dưới (mỗi khối tự vẽ + tự nối).
 // HÀM KHAI RA:
-//   taoCaiDat({ nut, am, doHoa, luuDoHoa }) -> { mo(), dong(), dangMo() }
+//   taoCaiDat({ nut, am, doHoa, luuDoHoa, tmh }) -> { mo(), dong(), dangMo() }
 //     nut: nút ⚙️ (DOM); am: bộ tiếng dt3d_am_thanh.js (có thể null: ẩn 2 mục tiếng);
-//     doHoa: "dep" | "nhe" đang dùng; luuDoHoa(chế độ) (dt3d_canh.js)
-// BƯỚC: TC_D06D3
-// NGÀY: 25/11/2026
+//     doHoa: "dep" | "nhe" đang dùng; luuDoHoa(chế độ) (dt3d_canh.js);
+//     tmh: bộ toàn màn hình dt3d_toan_man_hinh.js (null / hoTro false: ẩn mục ⛶)
+// BƯỚC: TC_D06D3; TC_D06D7 (mục ⛶ toàn màn hình)
+// NGÀY: 25/11/2026; 26/11/2026
 // ================================================================
 
 const phanTram = v => Math.round(v * 100);
 
-export function taoCaiDat({ nut, am, doHoa, luuDoHoa }) {
+export function taoCaiDat({ nut, am, doHoa, luuDoHoa, tmh }) {
   const nen = document.createElement("div");
   nen.className = "d3CaiDat"; nen.hidden = true;
   nen.innerHTML = '<div class="d3CaiDatHop d3Khung" role="dialog" aria-modal="true" aria-labelledby="d3CaiDatTen">'
@@ -81,6 +83,23 @@ export function taoCaiDat({ nut, am, doHoa, luuDoHoa }) {
       luuDoHoa(b.dataset.cl); cl.querySelector(".d3CdBao").hidden = false;
       setTimeout(() => location.reload(), 300);
     });
+  }
+  // TC_D06D7: ⛶ toàn màn hình (chỉ điện thoại có Fullscreen API; máy tính / iPhone không hiện dòng này)
+  if (tmh && tmh.hoTro) {
+    const k = document.createElement("section");
+    k.className = "d3CdMuc"; k.dataset.muc = "toan_man_hinh";
+    k.innerHTML = '<div class="d3CdHang"><span class="d3CdTen"><b>⛶ Toàn màn hình</b><small>Ẩn thanh địa chỉ trình duyệt</small></span>'
+      + '<button class="d3CdBat" type="button" role="switch" data-cd="bat"></button></div>';
+    const nb = k.querySelector("[data-cd=bat]");
+    const ve = () => {
+      const b = tmh.batChon();
+      nb.setAttribute("aria-checked", b ? "true" : "false"); nb.textContent = b ? "Bật" : "Tắt";
+      nb.setAttribute("aria-label", "Toàn màn hình" + (b ? ": đang bật, chạm để tắt" : ": đang tắt, chạm để bật"));
+      k.classList.toggle("d3CdTat", !b);
+    };
+    nb.addEventListener("click", () => { tmh.datBat(!tmh.batChon()); ve(); });
+    ve();
+    MUC.push({ k, ve });
   }
   for (const m of MUC) ruot.appendChild(m.k);
   ruot.appendChild(cl);
