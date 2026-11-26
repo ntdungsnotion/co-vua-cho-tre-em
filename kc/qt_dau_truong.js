@@ -80,7 +80,8 @@ QD.NHAN = {
   heSoNguoi: "Hệ số người cùng xây", heSoCap: "Hệ số theo cấp [cấp 1, 2, 3]", treGiay: "Cho trễ (giây)", heSoChungLoai: "Hệ số theo chủng loại",
   tinh: "Loại tính vào dân số", tamNhin: "Tầm nhìn (ô)", themTien: "Tiên tộc nhìn thêm (ô)", banKinhCong: "Sáng sẵn quanh cổng (ô)",
   soBeToiDa: "Số bé tối đa mỗi vùng", chuKyGui: "Gửi máy chủ mỗi (giây)", thayNhaThemO: "Thấy nhà bạn thêm (ô)",
-  chuKyLuuKhamPha: "Lưu khám phá mỗi (giây)", cachNhauKhamPha: "Khám phá cách nhau (ô)", nong_dan: "Nông dân", thu_linh: "Thủ lĩnh", linh: "Lính",
+  chuKyLuuKhamPha: "Lưu khám phá mỗi (giây)", cachNhauKhamPha: "Khám phá cách nhau (ô)",
+  tuongThat: "Thủ lĩnh tướng thật", cao: "Chiều cao (ô)", dayDu: "Số tướng cử động đủ", tocDi: "Sải chân Đi (ô/giây, tướng cao 1 ô)", tocChay: "Sải chân Chạy (ô/giây, tướng cao 1 ô)", // TC_D05C0b2: banDo.tuongThat nong_dan: "Nông dân", thu_linh: "Thủ lĩnh", linh: "Lính",
   leu: "Lều trại", nha: "Nhà", thap_canh: "Tháp canh", tru_ten: "Trụ tên", tuong: "Tường", cong: "Công",
   kho_go: "Kho gỗ", kho_da: "Kho đá", kho_vang: "Kho vàng", vua_luong_thuc: "Vựa lương thực", nha_o: "Nhà ở", choi_hai_luom: "Chòi hái lượm", choi_mo: "Chòi mỏ",
   // công trình

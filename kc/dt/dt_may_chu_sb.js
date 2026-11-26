@@ -164,6 +164,8 @@
       async catDo(ten, dv) { return goi("kc_dt_cat_do", { p_dv: dv }); }, // TC_D06C5: nông dân cầm đồ về tới Lều / kho
       async vutDo(ten, dv, giu) { return goi("kc_dt_vut_do", { p_dv: dv, p_giu: giu || null }); }, // TC_D06D6b: giao lấy tài nguyên khác -> vứt đồ rơi đang cầm (SQL supabase_tc_d06d6_vut_do.sql)
       async doRoiDs() { return goi("kc_dt_do_roi_ds", {}); },
+      // TC_D05C0b2: tộc / giới / đời Thủ lĩnh mọi bé cùng vùng (sổ tướng chọn đúng tướng; SQL supabase_tc_d05c0b2_thu_linh_vung.sql)
+      async thuLinhVung() { return goi("kc_dt_thu_linh_vung", {}); },
       // TC_D06C5: không còn nông dân -> tặng một người (cần SQL TC_D06C5: repo_rieng SQL/supabase_tc_d06c5_nong_dan_mien_phi.sql)
       async nongDanMienPhi() { return goi("kc_dt_nong_dan_mien_phi", {}); },
       // TC_D06C2g: trụ phòng thủ (luật dt/dt_tru_tran.js; máy chủ giữ đáp án câu của trụ, chấm lượt bé)
@@ -304,3 +306,4 @@
 // 24/11/2026 - BƯỚC: KC_03C7b (ttChuoi: RPC kc_tt_chuoi_luot)
 // 25/11/2026 - BƯỚC: KC_08F2 (goiDanhHieu: RPC kc_td_danh_hieu_be / kc_td_danh_hieu_da_xem cho màn chúc mừng)
 // 26/11/2026 - BƯỚC: TC_D06D6b (vutDo: kc_dt_vut_do)
+// 26/11/2026 - BƯỚC: TC_D05C0b2 (thuLinhVung: kc_dt_thu_linh_vung)

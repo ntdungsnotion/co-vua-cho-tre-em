@@ -237,7 +237,10 @@ export function taoTruBanDo(the) {
     if (dv) { ts.set("vai", "nong_dan"); ts.set("nd", String(dv.id)); } // nông dân (trang trận: thua = bỏ chạy, không nghỉ)
     if (!laTru(ct)) { // TC_D06C7b: đối thủ trên sân là Thủ lĩnh của chủ (tộc theo Thủ lĩnh bạn ấy máy này đang thấy; chưa thấy: Nhân tộc)
       const b = vung && vung.tlBan ? vung.tlBan(ct.chu) : null;
-      ts.set("doiCl", (b && ((b.d && b.d.chungLoai) || b.dv.chungLoai)) || "nhan");
+      const cl = (b && ((b.d && b.d.chungLoai) || b.dv.chungLoai)) || null;
+      // TC_D05C0b2: giới + đời của chủ (RPC kc_dt_thu_linh_vung) -> sổ tướng vẽ đúng tướng đối thủ (bạn nữ là nữ)
+      const hs = vung && vung.thuLinhCua ? vung.thuLinhCua(ct.chu, cl) : { chungLoai: cl || "nhan", gioi: "nam", thoiKy: "do_da" };
+      ts.set("doiCl", hs.chungLoai || "nhan"); ts.set("doiGioi", hs.gioi || "nam"); ts.set("doiDoi", hs.thoiKy || "do_da");
     }
     const khung = document.createElement("div"); khung.className = "d3Tran";
     const fr = document.createElement("iframe");
@@ -841,3 +844,4 @@ export function taoTruBanDo(the) {
 // 11/11/2026 - BƯỚC: KC_06B2 (máy chủ giả: nạp bộ sinh câu khi cần, trang game không nạp sẵn)
 // 12/11/2026 - BƯỚC: KC_06B3 (truTra gửi mã lượt + mã câu phòng thủ để máy chủ tự chấm)
 // 12/11/2026 - BƯỚC: KC_06D (thẻ ✏️ Câu của con trong bảng 📝: dt3d_cau_cua_be.js)
+// 26/11/2026 - BƯỚC: TC_D05C0b2 (trận công trình gửi thêm doiGioi / doiDoi của chủ -> đối thủ đúng tướng)

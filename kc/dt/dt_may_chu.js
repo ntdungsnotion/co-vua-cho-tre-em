@@ -735,6 +735,12 @@
         if (vut.length) { tt.doRoi = tt.doRoi.filter(d => !vut.includes(d)); luu(); }
         return { ok: true, vut: vut.map(d => ({ id: d.id, ma: d.ma, so: d.so })) };
       },
+      // TC_D05C0b2: tộc / giới / đời Thủ lĩnh mọi bé cùng vùng -> { ok, ds: [{ ten, chungLoai, gioi, thoiKy }] }
+      // (bản giả: bé không lưu giới / đời thì nam / do_da; kịch bản thử đặt tt.be[ten].gioi / thoiKy)
+      async thuLinhVung(ten) {
+        if (!tt.be[tenChuan(ten)]) return { ok: false, ma: "chua_vao", lyDo: "Con chưa vào thung lũng." };
+        return { ok: true, ds: Object.keys(tt.be).map(t => ({ ten: t, chungLoai: tt.be[t].chungLoai || "nhan", gioi: tt.be[t].gioi === "nu" ? "nu" : "nam", thoiKy: tt.be[t].thoiKy || "do_da" })) };
+      },
       // TC_D06C5 (người dùng 06/11/2026: "tài khoản không còn nông dân thì có một nông dân miễn phí"): bé đã có Lều trại xong mà
       // không còn nông dân nào -> máy chủ tặng một người ở ô quanh Lều (không trả giá). -> { ok, donVi: { id, x, z } } | { ok: false, ma: con_nong_dan | chua_co_leu }
       async nongDanMienPhi(ten) {
@@ -1324,3 +1330,4 @@
 // 12/11/2026 - BƯỚC: KC_06B3 (truLuot kèm số trận + mã kiểm câu; truTra tự chấm câu phòng thủ theo mã câu)
 // 20/11/2026 - BƯỚC: TC_D34B (ôn sau trận giả: ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc, _ttThu); sửa 12:xx: đồng hồ + luật 💎 mới
 // 26/11/2026 - BƯỚC: TC_D06D6b (vutDo: giao lấy tài nguyên khác thì vứt đồ rơi đang cầm)
+// 26/11/2026 - BƯỚC: TC_D05C0b2 (thuLinhVung: tộc / giới / đời Thủ lĩnh các bé cùng vùng)

@@ -265,7 +265,7 @@ export async function vaoThungLung(the) {
   const dvTl = lang.themDonVi("thu_linh", pTl.x, pTl.z, be.tenThuLinh || "Thủ lĩnh");
   dvTl.idMayChu = dvMcTl.id;
   dvTl.mau = Number.isFinite(dvMcTl.mau) ? dvMcTl.mau : null; // TC_D06C2g: máu Thủ lĩnh máy chủ giữ (null = đầy, không tự hồi)
-  const hTl = boNv.tao(dvTl, "thu_linh", be.hoSo);
+  const hTl = boNv.tao(dvTl, "thu_linh", be.hoSo, the.tuongBe); // TC_D05C0b2: tướng thật (đã tải ở màn tải đầu) hoặc KayKit
   soiLai();
   // Lều đang dựng dở: Thủ lĩnh dựng tiếp SAU khi nạp xong (gửi lại lệnh kèm công trình để máy chủ tính tiến độ)
   if (!(leuBe && !leuBe.xong) && !pTl.xong) lang.lenhDi(dvTl, { x: dvMcTl.lenh.den[0], y: dvMcTl.lenh.den[1] }); // đang đi dở: đi tiếp
@@ -300,11 +300,33 @@ export async function vaoThungLung(the) {
   const ban = new Map(); // id máy chủ -> { d (đơn vị máy chủ), dv, h }
   const nhoDuong = new WeakMap();
   let soNdBan = 0;
+  // TC_D05C0b2 (dac_ta_tuong.md mục 5.3): tộc / giới / đời Thủ lĩnh các bé cùng vùng (RPC riêng kc_dt_thu_linh_vung) -> sổ tướng
+  // chọn đúng tướng của bạn. Hỏi lúc vào vùng và khi thấy chủ mới (tối đa 5 giây một lần). Máy chủ chưa có hàm (chưa chạy SQL):
+  // tộc theo donVi, giới nam.
+  const tlVung = new Map(); // tên bé -> { chungLoai, gioi, thoiKy }
+  let hoiTl = null, hoiTlLuc = 0;
+  function hoiThuLinh() {
+    if (!mayChu.thuLinhVung) return Promise.resolve();
+    if (!hoiTl) hoiTl = Promise.resolve().then(() => mayChu.thuLinhVung(ten))
+      .then(kq => { if (kq && kq.ok && Array.isArray(kq.ds)) for (const d of kq.ds) if (d && d.ten) tlVung.set(String(d.ten).toLowerCase(), d); })
+      .catch(() => {}).then(() => { hoiTl = null; hoiTlLuc = Date.now(); });
+    return hoiTl;
+  }
+  await hoiThuLinh();
+  const hoSoTl = (chu, cl) => { const t = tlVung.get(String(chu).toLowerCase()) || {};
+    return { chungLoai: cl || t.chungLoai || "nhan", gioi: t.gioi === "nu" ? "nu" : "nam", thoiKy: t.thoiKy || "do_da" }; };
+  function hoSoTlBan(chu, cl) { // Promise<hồ sơ> (đợi lần hỏi mới nếu chưa biết chủ này)
+    if (tlVung.has(String(chu).toLowerCase()) || !mayChu.thuLinhVung) return Promise.resolve(hoSoTl(chu, cl));
+    const doi = Math.max(0, 5000 - (Date.now() - hoiTlLuc));
+    return new Promise(ok => setTimeout(ok, doi)).then(() => (tlVung.has(String(chu).toLowerCase()) ? null : hoiThuLinh())).then(() => hoSoTl(chu, cl));
+  }
   function themBan(d) {
     const laTl = d.loai === "thu_linh", cl = d.chungLoai || "nhan";
     const dv = { laBan: true, chu: d.chu, vaiTro: d.loai, ten: (laTl ? "Thủ lĩnh" : "Nông dân") + " của " + d.chu,
       x: d.x, z: d.z, huongMuon: 0, duong: [], trangThai: "dung", viec: null, mang: { loai: null, so: 0 }, ranh: false, chay: false };
-    const h = boNv.tao(dv, laTl ? "thu_linh" : "nong_dan", laTl ? NV.chuanHoa({ chungLoai: cl }) : NV.hoSoNongDan(cl, soNdBan++));
+    // TC_D05C0b2: Thủ lĩnh bạn = tướng thật của sổ tướng (chế độ Nhẹ: KayKit đúng giới); chưa biết hồ sơ / chưa có file thì CHƯA HIỆN
+    const tuong = laTl && the.tuongBan ? hoSoTlBan(d.chu, cl).then(hs => Promise.resolve(the.tuongBan(hs)).then(kq => kq || { hoSo: NV.chuanHoa({ chungLoai: hs.chungLoai, gioi: hs.gioi }) })) : undefined;
+    const h = boNv.tao(dv, laTl ? "thu_linh" : "nong_dan", laTl ? NV.chuanHoa({ chungLoai: cl, gioi: hoSoTl(d.chu, cl).gioi }) : NV.hoSoNongDan(cl, soNdBan++), tuong);
     h.vo.visible = false;
     return { d, dv, h };
   }
@@ -1091,6 +1113,9 @@ export async function vaoThungLung(the) {
     tlBan: chu => { for (const b of ban.values()) if (b.dv.chu === chu && b.dv.vaiTro === "thu_linh") return b; return null; },
     dvBan: id => ban.get(id) || null, // TC_D06C2b: nông dân của bạn đang đánh quái (id máy chủ)
     dsDvBan: () => [...ban.values()].map(b => b.dv), // TC_D06C7a: người của bạn đi qua cổng của bạn ấy -> cổng mở
+    // TC_D05C0b2: hồ sơ Thủ lĩnh (tộc / giới / đời) của bé khác: trận công trình vẽ đúng tướng đối thủ; tải nền tướng các bạn trước
+    thuLinhCua: (chu, cl) => hoSoTl(chu, cl),
+    hoSoBan: () => [...tlVung.entries()].filter(([t]) => t !== tenChuan).map(([t, d]) => hoSoTl(t, d.chungLoai)),
     phaHuy, duocPhaHuy, PHA_HUY_GIAY,
     hongCt: ct => { apHong(ct); capNhatLd(); }, // TC_D06C7b: công trình vừa bị đánh sập (dt3d_tru.js)
     nhanKho, // TC_D06C7d: mua câu / sửa xong (dt3d_tru.js)
@@ -1125,7 +1150,8 @@ export async function vaoThungLung(the) {
       nongDan: () => dsNd.map(d => ({ ten: d.ten, x: d.x, z: d.z, viec: d.trangThai, nguon: d.viec && d.viec.loai, tuKhamPha: d.tuKhamPha, ranh: d.ranh })),
       capNhatNut,
       // TC_D02B3b: quân + nhà của bạn đang thấy, hỏi lại máy chủ ngay, phần kho còn phải trừ
-      ban: () => [...ban.values()].map(b => ({ id: b.d.id, chu: b.dv.chu, vaiTro: b.dv.vaiTro, x: b.dv.x, z: b.dv.z, hien: b.h.vo.visible, viec: b.dv.trangThai, di: b.dv.duong.length > 0 })),
+      ban: () => [...ban.values()].map(b => ({ id: b.d.id, chu: b.dv.chu, vaiTro: b.dv.vaiTro, x: b.dv.x, z: b.dv.z, hien: b.h.vo.visible, viec: b.dv.trangThai, di: b.dv.duong.length > 0,
+        tuong: b.h.maTuong || null, cho: !!b.h.cho, kieu: b.h.kieu || null, cl: b.d.chungLoai || null, gioi: hoSoTl(b.dv.chu, b.d.chungLoai).gioi })), // TC_D05C0b2
       nhaBan: () => [...ctBan.values()].map(c => ({ id: c.id, chu: c.chu, x: c.x, y: c.y, xong: c.xong, tienDo: c.tienDo })),
       hoiLai: chuKy, no: () => ({ ...no }),
       // TC_D03A: lời báo vắng mặt, kho + sức chứa, ai đang xây gì, chạm móng như bé (chọn nông dân rồi chạm)
@@ -1153,3 +1179,5 @@ export async function vaoThungLung(the) {
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (ct.sua theo máy chủ; guiSua: nông dân tới sửa; chạm công trình đang sửa khi chọn nông dân; báo sửa xong)
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (tự phá Lều, dời làng: phaHuy nhận Lều, bỏ leuBe ngay; Lều dựng lại không thêm nông dân, ai ôm đồ mang về Lều mới)
 // 26/11/2026 - BƯỚC: TC_D06D6 (menu Xây chỉ biểu tượng; chạm 1 lần xem trước ở ô trái: hình + tài nguyên cần + chỉ số; chạm lại mới chọn chỗ)
+// 26/11/2026 - BƯỚC: TC_D05C0b2 (Thủ lĩnh bé + bạn là tướng thật: the.tuongBe / the.tuongBan; RPC thuLinhVung -> giới / đời bạn;
+//              thuLinhCua, hoSoBan cho trận công trình + tải nền; moc.ban có tuong / cho / kieu / gioi)
