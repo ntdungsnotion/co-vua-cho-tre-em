@@ -56,6 +56,7 @@
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; background: var(--dem); color: var(--sang); font-family: system-ui, "Segoe UI", sans-serif; }
+    html { overscroll-behavior: none; } /* TC_D06D5: vuốt trong trận không kéo thanh địa chỉ của trang ngoài */
     body { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; font-size: 18px; }
     button, select { font: inherit; color: inherit; }
     .an { display: none !important; }
@@ -71,7 +72,10 @@
     .tran { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
     /* ---- sân đấu ---- */
-    .san { position: relative; height: 46vh; height: 46dvh; min-height: 240px; overflow: hidden; border-bottom: 2px solid var(--vien); }
+    /* TC_D06D5 (26/11/2026): điện thoại chốt chiều cao sân bằng px (--caoSan, đặt một lần lúc mở trang + khi xoay máy).
+       Trước đây 46dvh: thanh địa chỉ Chrome ẩn / hiện làm khung trận cao thấp ~56 px -> sân đổi ~26 px liên tục ->
+       câu hỏi, đáp án nhảy lên xuống (ảnh chụp thấy "in đôi") + sân 3D dựng lại khung vẽ mỗi lần (chớp đen) */
+    .san { position: relative; height: 46vh; height: 46dvh; height: var(--caoSan, 46dvh); min-height: 240px; overflow: hidden; border-bottom: 2px solid var(--vien); }
     .san canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     .san3d { position: absolute; inset: 0; }
     .san3d canvas { display: block; }
@@ -285,6 +289,22 @@
   <script src="dt_ve_quai.js"></script>
   <script type="importmap">{ "imports": { "three": "../thu_vien/three/three.module.min.js" } }</script>
   <script type="module" src="3d/dt3d_tran.js"></script>
+  <script>
+  // TC_D06D5 (26/11/2026): chốt chiều cao sân (điện thoại) = 46% chiều cao lúc mở trang, chỉ tính lại khi XOAY MÁY
+  // (bề ngang đổi) hoặc chiều cao đổi hẳn (> 25%, vd vào / ra toàn màn hình). Thanh địa chỉ ẩn / hiện (~56 px) bỏ qua.
+  (function () {
+    let rong = 0, cao = 0;
+    function chot() {
+      const w = window.innerWidth, h = window.innerHeight;
+      if (w === rong && cao && Math.abs(h - cao) < cao * 0.25) return;
+      rong = w; cao = h;
+      document.documentElement.style.setProperty("--caoSan", Math.round(h * 0.46) + "px");
+    }
+    chot();
+    window.addEventListener("resize", chot);
+    window.__caoSan = () => ({ rong, cao, caoSan: getComputedStyle(document.documentElement).getPropertyValue("--caoSan") }); // kịch bản thử
+  })();
+  </script>
   <script>
   (function () {
     "use strict";
@@ -1065,3 +1085,4 @@
 <!-- 11/11/2026 - BƯỚC: KC_06B2 (câu kho chung, máy chủ chấm qua bản đồ; pha tụ lực; số Quản trị; trang thật không nạp bộ sinh câu) -->
 <!-- 12/11/2026 - BƯỚC: KC_06B2 (sửa: tải sân 3D ngay từ đầu, không chờ câu kho; chấm nhanh trên máy, tụ chiêu cố định toiThieuGiay rồi phát) -->
 <!-- 21/11/2026 - BƯỚC: KC_09A (đọc câu nghe qua chung/am_thanh.js: chữa câu nghe im trong trận) -->
+<!-- 26/11/2026 - BƯỚC: TC_D06D5 (chốt chiều cao sân bằng px: thanh địa chỉ ẩn / hiện không làm câu hỏi nhảy, sân 3D không chớp đen) -->
