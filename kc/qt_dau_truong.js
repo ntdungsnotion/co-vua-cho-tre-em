@@ -22,7 +22,8 @@ var QD = {
   MAN: "dautruong-thongso",
   URL: { cau_hinh: "dt/du_lieu/cau_hinh.json", cau_hinh_tran_dau: "dt/du_lieu/cau_hinh_tran_dau.json", cau_hinh_trinh_do: "dt/du_lieu/cau_hinh_trinh_do.json",
     cau_hinh_am_thanh: "dt/du_lieu/cau_hinh_am_thanh.json" }, // TC_D05F
-  TEN_TEP: { cau_hinh: "Số làng / bản đồ", cau_hinh_tran_dau: "Số trận đấu", cau_hinh_trinh_do: "Độ khó câu hỏi", cau_hinh_am_thanh: "Âm thanh" },
+  TEN_TEP: { cau_hinh: "Số làng / bản đồ", cau_hinh_tran_dau: "Số trận đấu", cau_hinh_trinh_do: "Độ khó câu hỏi", cau_hinh_am_thanh: "Âm thanh",
+    tuong: "🛡️ Sổ tướng", ky_nang: "🛡️ Kỹ năng", hieu_ung: "🛡️ Trình diễn" }, // TC_D05C0c: tên trong 🕘 Lịch sử (sửa ở mục 🛡️ Tướng)
   daTai: false, coMayChu: false, dangLuu: false,
   md: {}, daLuu: {}, ht: {},        // mặc định (file repo) / đã lưu (mặc định + phần sửa trên máy chủ) / đang sửa trên trang
   bang: {}, bangSua: {},            // hàng 3 bảng; bangSua[bảng][khoá hàng] = { cột: giá trị mới }
