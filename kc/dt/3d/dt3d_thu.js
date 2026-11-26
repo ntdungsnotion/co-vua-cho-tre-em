@@ -308,7 +308,8 @@ function ttCongTrinh(ct) {
   } else if (!ct.xong) { tt.dong = "🔨 Đang xây · " + pt(ct.tienDo) + (nguoi ? " · 🧑‍🌾 " + nguoi : ""); tt.muc = ct.tienDo || 0; }
   else tt.dong = "Đã hoàn thành";
   tt.phu = !cuaMinh ? "Của " + (ct.chu || "bạn") : vung ? vung.thongTinCt(ct) : null;
-  const ttTru = truBd ? truBd.thongTin(ct) : null; // TC_D06C2g: máu, tầm, câu của trụ; đống gạch
+  // TC_D06D8: đang sụp (phá hủy) thì giữ dòng đếm ngược, không hiện máu / câu / nút cập nhật, mua câu
+  const ttTru = truBd && ct.phaHuyLuc == null ? truBd.thongTin(ct) : null; // TC_D06C2g: máu, tầm, câu của trụ; đống gạch
   if (ttTru) { if (ttTru.dong) tt.dong = ttTru.dong; if (ttTru.phu) tt.phu = ttTru.phu; if (ttTru.muc != null) tt.muc = ttTru.muc; tt.nut.push(...ttTru.nut); if (ct.hongLuc != null) return tt; } // TC_D06C7e: muc = tiến độ sửa
   // TC_D06C2d: nút Phá hủy bật lại (máy chủ ghi nhận). TC_D06C7c: Lều trại của mình cũng phá được (dời làng), lời hỏi riêng
   const laLeu = ct.loai === "leu";
@@ -346,6 +347,7 @@ const thuGon = taoThuGon();
 }
 uiDk.chonCongTrinh = ct => thanh.xem(ct ? () => ttCongTrinh(ct) : null);
 uiDk.xemCt = ct => thanh.xem(() => ttCongTrinh(ct));
+uiDk.boXem = () => { if (vung) vung.dongXem(); }; // TC_D06D8: bỏ vật đang xem -> đóng nút Sinh nông dân / Trồng lại
 uiDk.xemXay = fn => thanh.xemTruoc(fn); uiDk.dangXemXay = () => thanh.dangXemTruoc(); // TC_D06D6: menu 🔨 Xây chạm 1 lần -> ô trái xem trước công trình (dt3d_vung.js), giữ nút menu
 uiDk.xemNguon = n => { thanh.xem(() => ttNguon(n)); denChon.dat({ x: n.x, z: n.z, r: n.loai === "bui_trai_cay" ? 0.7 : 0.9 }); }; // TC_D06C2e: vòng sáng dưới cây / mỏ
 if (vung) {
@@ -500,3 +502,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 25/11/2026 - BƯỚC: TC_D06D4 (điện thoại viết số tài nguyên gọn từ 10.000: 12,3K / 2,5M)
 // 26/11/2026 - BƯỚC: TC_D06D6 (ô đang xem gọn: nông dân chỉ ❤️; Thủ lĩnh ❤️ + công / thủ / nhanh / pháp; móc xemXay cho menu Xây)
 // 26/11/2026 - BƯỚC: TC_D06D6c (thu gọn thanh trên / dưới trên điện thoại: dt3d_thu_gon.js; chạm thứ có thông số thì thanh dưới mở tạm)
+// 26/11/2026 - BƯỚC: TC_D06D8 (công trình đang sụp giữ dòng đếm ngược; nối uiDk.boXem)
