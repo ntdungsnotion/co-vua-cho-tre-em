@@ -14,7 +14,8 @@
 //         (TC_D03A) chamO(hinh đang chọn | null, ô) -> true nếu phần trang đã xử lý cú chạm đất (móng đang xây;
 //         TC_D03B1: Lều trại, gọi cả khi chưa chọn ai),
 //         (TC_D06A) trungQuai(tia) -> { q, kc } | null + chamQuai(q, hình đang chọn | null): quái trên bản đồ,
-//         (TC_D06D) xemNguon(n): chạm nguồn mà không giao việc -> thanh dưới hiện thông số nguồn }
+//         (TC_D06D) xemNguon(n): chạm nguồn mà không giao việc -> thanh dưới hiện thông số nguồn,
+//         (TC_D06D8) boXem(): chạm đất chỉ để bỏ vật đang xem -> phần trang đóng nút riêng của vật đó }
 //   datCheDoCham(fn(ô {x, y, px, pz}, "cham" | "re")): chế độ chạm riêng (soi đất, chọn chỗ dựng)
 // LUẬT NỐI: dùng ctx (dt3d_canh.js), cam.khiCham / camera (dt3d_camera.js), taiNguyen.chon
 //           (dt3d_tai_nguyen.js), boNhanVat.dsHinh (dt3d_nhan_vat.js), diaHinh.matDat / doCaoDi,
@@ -106,6 +107,7 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
       }
     }
     if (phuTruoc && !ct && !taiNguyen.chon(tia) && tia.intersectObject(diaHinh.matDat, false)[0]) {
+      if (ui.boXem) ui.boXem(); // TC_D06D8: nhánh này thoát trước chamO -> đóng luôn nút của Lều / Ruộng đang xem
       ui.baoGoiY(dangChon ? "Đã bỏ chọn. Chạm đất lần nữa để " + dangChon.dv.ten + " đi." : "Đã bỏ chọn.");
       return;
     }
@@ -189,3 +191,4 @@ export function taoDieuKhien(ctx, cam, lang, taiNguyen, boNhanVat, diaHinh, ui) 
 // 30/10/2026 - BƯỚC: TC_D06A; 03/11/2026 23:2x - TC_D06C1 (chạm công trình mở bảng mà không chặn Lều / móng / ruộng)
 // 04/11/2026 - BƯỚC: TC_D06D (xemNguon: chạm nguồn hiện thông số ở thanh dưới)
 // 05/11/2026 - BƯỚC: TC_D06C2d (chamQuai nhận sự kiện con trỏ: điện thoại chạm quái -> bong bóng ⚔️ Đánh)
+// 26/11/2026 - BƯỚC: TC_D06D8 (boXem: chạm đất bỏ vật đang xem thì đóng luôn nút của Lều / Ruộng)
