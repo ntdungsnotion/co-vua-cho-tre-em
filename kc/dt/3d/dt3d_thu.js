@@ -42,6 +42,7 @@ import { taoDenChon } from "./dt3d_den_chon.js";
 import { taoAmThanh } from "./dt3d_am_thanh.js"; // TC_D06D2: tiếng khi chạm chọn
 import { taoCaiDat } from "./dt3d_cai_dat.js"; // TC_D06D3: bảng ⚙️ Cài đặt của bé
 import { taoThanhDuoi } from "./dt3d_thanh_duoi.js";
+import { taoThuGon } from "./dt3d_thu_gon.js"; // TC_D06D6c: điện thoại thu gọn thanh trên / dưới thành nút
 import { taoTruBanDo } from "./dt3d_tru.js"; // TC_D06C2g: trụ phòng thủ (05/11/2026)
 import { taoNongDan } from "./dt3d_nong_dan.js"; // TC_D06C5: nút tìm nông dân rảnh + báo nông dân bị tấn công
 import "../dt_tuong.js"; // TC_D05C0a: sổ tướng chung (window.KC_DT_TUONG): danh sách tướng tải nền
@@ -335,6 +336,13 @@ function ttMacDinh() {
   return { anh: "🏰", ten: $("d3TenVuong").textContent, dong: "🧑‍🌾 " + nd + " nông dân" };
 }
 thanh = taoThanhDuoi($, ttMacDinh);
+// TC_D06D6c: thanh dưới đang gọn (điện thoại) mà bé chạm thứ có thông số / chọn người -> mở tạm; bỏ chọn, không xem gì -> gọn lại
+const thuGon = taoThuGon();
+{
+  const xem0 = thanh.xem, xemTruoc0 = thanh.xemTruoc;
+  thanh.xem = fn => { xem0(fn); if (fn || dk.dangChon()) thuGon.moTam(); else thuGon.dongTam(); };
+  thanh.xemTruoc = fn => { xemTruoc0(fn); if (fn) thuGon.moTam(); };
+}
 uiDk.chonCongTrinh = ct => thanh.xem(ct ? () => ttCongTrinh(ct) : null);
 uiDk.xemCt = ct => thanh.xem(() => ttCongTrinh(ct));
 uiDk.xemXay = fn => thanh.xemTruoc(fn); uiDk.dangXemXay = () => thanh.dangXemTruoc(); // TC_D06D6: menu 🔨 Xây chạm 1 lần -> ô trái xem trước công trình (dt3d_vung.js), giữ nút menu
@@ -445,6 +453,7 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   quai: quaiBd && quaiBd.moc, // TC_D06A: quái trên bản đồ
   tru: truBd && truBd.moc, // TC_D06C2g: trụ phòng thủ
   nongDan: nongDanBd && nongDanBd.moc, // TC_D06C5: nút nông dân rảnh + báo bị tấn công
+  thuGon: thuGon.moc, // TC_D06D6c
   ttCt: id => { const ct = lang.congTrinh.find(c => c.id === id); return ct ? ttCongTrinh(ct) : null; }, // thông số thanh dưới của công trình
   xemCt: id => { const ct = lang.congTrinh.find(c => c.id === id); if (ct) uiDk.xemCt(ct); return !!ct; }, // TC_D06C7d: mở thanh dưới như bé chạm công trình
   mauTl: () => dvTl.mau,
@@ -486,3 +495,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 25/11/2026 - BƯỚC: TC_D05C0a (sổ tướng: tải nền tướng của bé + MỌI tướng của sổ; trang trận xin được tuong / ky_nang / hieu_ung; be.thoiKy)
 // 25/11/2026 - BƯỚC: TC_D06D4 (điện thoại viết số tài nguyên gọn từ 10.000: 12,3K / 2,5M)
 // 26/11/2026 - BƯỚC: TC_D06D6 (ô đang xem gọn: nông dân chỉ ❤️; Thủ lĩnh ❤️ + công / thủ / nhanh / pháp; móc xemXay cho menu Xây)
+// 26/11/2026 - BƯỚC: TC_D06D6c (thu gọn thanh trên / dưới trên điện thoại: dt3d_thu_gon.js; chạm thứ có thông số thì thanh dưới mở tạm)

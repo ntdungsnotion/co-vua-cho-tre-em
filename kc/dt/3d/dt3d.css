@@ -595,3 +595,23 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 [id^="d3Xay_"]:not(#d3Xay_tiep):not(#d3Xay_xoay) { font-size: 1.25rem; }
 @media (max-width: 600px), (max-height: 500px) { [id^="d3Xay_"]:not(#d3Xay_tiep):not(#d3Xay_xoay) { font-size: 1.05rem; padding: 3px 4px; } }
 /* 26/11/2026 - BƯỚC: TC_D06D6 */
+/* TC_D06D6c (26/11/2026, người dùng: "Trên điện thoại, bổ sung chức năng thu gọn thanh trên và thanh dưới thành nút"; dt3d_thu_gon.js):
+   ▴ cuối ô tài nguyên thu thanh trên còn 💰 (⚙️ / ⚠️, ⚔️, 💡 vẫn hiện); tay nắm ▾ mép trên thu thanh dưới còn 🎛️ góc dưới phải.
+   Chỉ khổ điện thoại; máy tính không có nút. */
+#d3MoTren, #d3MoDuoi, .d3ThuGon { display: none; }
+@media (max-width: 600px), (max-height: 500px) {
+  .d3Kho .d3ThuGon { display: inline-grid; place-items: center; flex: 0 0 auto; width: 18px; height: 28px; margin-left: 1px; padding: 0;
+    border: 0; border-left: 1px solid rgba(216, 188, 129, .45); background: none; color: #ffe0a0; font-size: .9rem; cursor: pointer; }
+  .d3Thanh { position: relative; }
+  .d3ThuDuoi { display: grid; place-items: center; position: absolute; left: 50%; top: -17px; transform: translateX(-50%); width: 52px; height: 17px;
+    padding: 0; border: 2px solid #d8bc81; border-bottom: 0; border-radius: 9px 9px 0 0; background: #5b4128; color: #ffe0a0; font-size: .85rem;
+    line-height: 1; cursor: pointer; }
+  .d3TrenGon .d3Tren > a.d3Nut, .d3TrenGon .d3Tren > .d3Ten, .d3TrenGon .d3Tren > .d3Kho { display: none; }
+  .d3TrenGon #d3MoTren { display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+  .d3TrenGon .d3OChung { margin-left: auto; }
+  .d3DuoiGon .d3Thanh { display: none; }
+  .d3DuoiGon #d3MoDuoi { display: inline-flex; align-items: center; justify-content: center; position: fixed; right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom)); width: 46px; height: 46px; font-size: 1.35rem; border-radius: 14px; z-index: 5; }
+  .d3DuoiGon #d3GoiY { margin-right: 62px; margin-bottom: 8px; }
+}
+/* 26/11/2026 - BƯỚC: TC_D06D6c */
