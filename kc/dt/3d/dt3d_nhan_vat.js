@@ -36,7 +36,8 @@ const VIEC = {
 
 // nhipLam(loai nguồn) -> giây cho 1 tài nguyên (cau_hinh.json). Mỗi nhát động tác = 1 tài nguyên
 // (người dùng chốt 23/10/2026): động tác làm được tua cho 1 vòng đúng bằng 1 nhịp.
-export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam } = {}) {
+export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, opt = {}) {
+  const nhipLam = opt.nhipLam;
   const nhe = ctx.nhe;
   // Ảnh tô nhân vật là bảng 8 x 4 ô màu; ô (hàng 0, cột 0) = da, (0,1) = tóc / râu,
   // (1,0) và (1,1) = áo. Đổi màu: giữ độ sáng tối từng điểm, thay sắc màu.
@@ -153,7 +154,33 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam } = {}) 
   const hinhTrung = new THREE.CylinderGeometry(0.6, 0.6, 1.5, 8).translate(0, 0.75, 0);
   let clipTran = [];
 
-  function tao(dv, vaiTro, hoSo) {
+  // TC_D05C0b2: tuong = tướng thật của sổ tướng cho Thủ lĩnh (dt3d_tuong_ban_do.js):
+  //   bỏ trống -> KayKit như cũ; { glb, mau } -> tướng thật ngay; Promise<{ glb, mau } | { hoSo } | null> -> CHƯA HIỆN, xong mới hiện
+  //   ({ hoSo } / null = KayKit theo hồ sơ đó / hồ sơ ban đầu, vd mẫu không có file, chế độ Nhẹ). Không hiện hình tạm rồi đổi (LUAT_DAU_TRUONG.md luật 4).
+  function tao(dv, vaiTro, hoSo, tuong) {
+    if (vaiTro !== "thu_linh" || !tuong || !opt.tuongBd) return taoKayKit(dv, vaiTro, hoSo);
+    const vo = new THREE.Group(), trung = new THREE.Mesh(hinhTrung, vlTrung);
+    vo.add(trung); vo.position.set(dv.x, diaHinh.doCaoDi(dv.x, dv.z), dv.z); ctx.canh.add(vo);
+    const h = { dv, vaiTro, vo, goc: null, trung, tron: null, dt: {}, dongTac: null, huong: dv.huongMuon, vuKhi: {}, vuKhiMacDinh: null, doMang: null, monDangHien: null, dien: null,
+      laTuong: true, tuong: null, kieu: null, cho: true };
+    trung.userData.hinh = h; trung.layers.disable(0); // đang chờ: không chạm trúng
+    const gan = kq => {
+      if (!dsHinh.includes(h)) return; // đã bỏ trong lúc chờ
+      if (kq && kq.glb) {
+        const t = opt.tuongBd.tao(kq.glb, kq.mau);
+        h.goc = new THREE.Group(); h.goc.add(t.vo); vo.add(h.goc); h.tuong = t; h.maTuong = kq.mau.ma;
+      } else { // KayKit (kq.hoSo: hồ sơ biết muộn, vd giới của bạn): dựng bằng hàm cũ rồi chuyển phần hình vào vỏ này
+        const k = taoKayKit(dv, vaiTro, (kq && kq.hoSo) || hoSo); xoa(k);
+        k.vo.remove(k.trung); vo.add(k.goc);
+        Object.assign(h, { goc: k.goc, tron: k.tron, dt: k.dt, dongTac: k.dongTac, vuKhi: k.vuKhi, laTuong: false });
+      }
+      h.cho = false; trung.layers.enable(0);
+    };
+    dsHinh.push(h);
+    if (typeof tuong.then === "function") tuong.then(gan, () => gan(null)); else gan(tuong);
+    return h;
+  }
+  function taoKayKit(dv, vaiTro, hoSo) {
     const goc = nhanBanXuong(glbNv.scene);
     const laThuLinh = vaiTro === "thu_linh";
     const mauDa = NV.BANG.da[hoSo.mauDa], mauToc = NV.BANG.toc[hoSo.mauToc];
@@ -209,8 +236,67 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam } = {}) 
     return m.loai in { go: 1, da: 1, vang: 1 } ? m.loai : (m.loai === "sat" ? "da" : null);
   }
 
+  // TC_D05C0b2: Thủ lĩnh là tướng thật (dt3d_tuong.js): kiểu động tác theo việc; Đi / Chạy tua theo tốc độ thật để chân
+  // không trượt (tocChan: ô / giây của động tác ở tướng cao 1 ô, cau_hinh.json banDo.tuongThat);hoạt ảnh theo mức xa gần (muc).
+  function capNhatTuong(h, dt) {
+    const dv = h.dv, t = h.tuong, TB = opt.tuongBd;
+    const truoc = h.vo.position.x, truocZ = h.vo.position.z;
+    h.vo.position.set(dv.x, diaHinh.doCaoDi(dv.x, dv.z), dv.z);
+    const v = dt > 0 ? Math.hypot(dv.x - truoc, dv.z - truocZ) / dt : 0;
+    h.vTb = (h.vTb || 0) + (Math.min(v, 8) - (h.vTb || 0)) * Math.min(1, dt * 6);
+    h.huongMuon = dv.huongMuon;
+    if (h.huongMuon != null) {
+      let d = h.huongMuon - h.huong; d = Math.atan2(Math.sin(d), Math.cos(d));
+      h.huong += d * Math.min(1, dt * 12);
+      h.goc.rotation.y = h.huong;
+    }
+    let kieu, heSo = 1;
+    if (h.reo > 0 && !dv.duong.length) { h.reo -= dt; kieu = "mung"; }
+    else if (dv.duong.length) {
+      kieu = dv.chay ? "chay" : "di";
+      const chan = TB.tocChan(kieu) * t.cao;
+      heSo = chan > 0 ? Math.max(0.6, Math.min(2.2, h.vTb / chan)) : 1;
+    } else if (dv.trangThai === "danh") kieu = "danh";
+    else kieu = "nghi"; // đứng thả lỏng (bộ không có thì đứng thường)
+    if (h.dien) kieu = h.kieu; // trang thử đang diễn động tác trận của tướng (nút ⚔️, dt3d_thu.js): giữ nguyên
+    else if (kieu === "danh") { // Thủ lĩnh bạn đánh quái: mỗi NHIP_DANH giây một nhát (quái chớp cùng nhịp)
+      if (h.kieu !== "danh" || (h.danhCon -= dt) <= 0) { t.dien("chem"); h.danhCon = NHIP_DANH; }
+    } else if (kieu !== h.kieu) t.dien(kieu);
+    h.kieu = kieu;
+    // mức hoạt ảnh: 0 gần = mỗi khung; 1 vừa = 1/3 khung; 2 xa / ngoài khung / bị ẩn = dừng
+    h.dtCho = (h.dtCho || 0) + dt * heSo;
+    if (!h.dien) { // đang diễn (nút thử) thì luôn chạy cho xong chuỗi động tác
+      if (h.muc === 2 || !h.vo.visible) return;
+      if (h.muc === 1 && ++h.demKhung % 3) return;
+    }
+    t.capNhat(h.dtCho); h.dtCho = 0;
+  }
+  const khoiNhin = new THREE.Frustum(), maNhin = new THREE.Matrix4(), cauNhin = new THREE.Sphere(new THREE.Vector3(), 1.2), huongCam = new THREE.Vector3();
+  let demMuc = 0;
+  // Mỗi ~0,25 giây xếp mức cho các tướng (camera bản đồ trực giao: "gần" = gần tâm màn hình). Ngoài khung hình / bị ẩn -> 2 (dừng);
+  // trong khung: dayDu tướng gần tâm nhất -> 0 (mỗi khung), còn lại -> 1 (1 / 3 khung). Thủ lĩnh của bé luôn được tính trước.
+  function xepMuc(dt) {
+    if ((demMuc -= dt) > 0) return;
+    demMuc = 0.25;
+    const cam = ctx.camera || null, ds = dsHinh.filter(h => h.tuong);
+    if (!ds.length) return;
+    for (const h of ds) if (h.demKhung == null) h.demKhung = 0;
+    if (!cam) { for (const h of ds) h.muc = 0; return; }
+    cam.updateMatrixWorld(); maNhin.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); khoiNhin.setFromProjectionMatrix(maNhin);
+    cam.getWorldDirection(huongCam);
+    const k = huongCam.y < -1e-3 ? -cam.position.y / huongCam.y : 0, tx = cam.position.x + huongCam.x * k, tz = cam.position.z + huongCam.z * k;
+    const dayDu = opt.tuongBd.muc().dayDu;
+    const xa = ds.map(h => { cauNhin.center.copy(h.vo.position); cauNhin.center.y += 0.8;
+      return { h, trong: h.vo.visible && khoiNhin.intersectsSphere(cauNhin), d: h.dv.laBan ? Math.hypot(h.vo.position.x - tx, h.vo.position.z - tz) : -1 }; })
+      .sort((a, b) => a.d - b.d);
+    let du = 0;
+    for (const x of xa) x.h.muc = !x.trong ? 2 : du++ < dayDu ? 0 : 1;
+  }
+
   function capNhatMot(h, dt) {
     const dv = h.dv;
+    if (h.cho) { h.vo.position.set(dv.x, diaHinh.doCaoDi(dv.x, dv.z), dv.z); return; } // tướng đang tải: chưa hiện
+    if (h.tuong) { capNhatTuong(h, dt); return; }
     if (h.dien) { // diễn động tác trận (nút thử)
       const d = h.dien, ten = d.ds[d.i];
       if (d.t === 0) { datDongTac(h, ten, true); h.huongMuon = d.huong != null ? d.huong : Math.atan2(ctx.camera.position.x - dv.x, ctx.camera.position.z - dv.z); if (d.khiDoi) d.khiDoi(ten); }
@@ -245,10 +331,15 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam } = {}) 
 
   return {
     dsHinh, tao, xoa,
-    capNhat(dt) { for (const h of dsHinh) capNhatMot(h, dt); },
+    capNhat(dt) { if (opt.tuongBd) xepMuc(dt); for (const h of dsHinh) capNhatMot(h, dt); },
     reo(h, giay) { h.reo = giay || 2.5; },
-    themDongTac(clip) { clipTran = clip; for (const h of dsHinh) for (const c of clip) if (!h.dt[c.name]) h.dt[c.name] = h.tron.clipAction(c); },
-    dien(h, ds, khiDoi, khiXong, huong) { hienVuKhi(h, "1H_Axe"); if (h.vuKhi["1H_Axe"]) h.vuKhi["1H_Axe"].visible = true; h.dien = { ds, i: 0, t: 0, khiDoi, khiXong, huong }; }
+    themDongTac(clip) { clipTran = clip; for (const h of dsHinh) if (h.tron) for (const c of clip) if (!h.dt[c.name]) h.dt[c.name] = h.tron.clipAction(c); },
+    dien(h, ds, khiDoi, khiXong, huong) {
+      if (!h.tron) { if (khiXong) khiXong(); return; } // tướng thật / đang tải: không có động tác KayKit
+      hienVuKhi(h, "1H_Axe"); if (h.vuKhi["1H_Axe"]) h.vuKhi["1H_Axe"].visible = true; h.dien = { ds, i: 0, t: 0, khiDoi, khiXong, huong };
+    }
   };
 }
 // 28/10/2026 19:05 - BƯỚC: TC_D03B2; 29/10/2026 - TC_D05; 30/10/2026 17:30 - TC_D06C1 (động tác "danh")
+// 26/11/2026 - BƯỚC: TC_D05C0b2 (Thủ lĩnh tướng thật: tao(..., tuong) qua opt.tuongBd = dt3d_tuong_ban_do.js; chờ tải thì chưa hiện;
+//              Đi / Chạy tua theo tốc độ thật; mức hoạt ảnh theo khung hình, tối đa dayDu tướng chạy đủ)

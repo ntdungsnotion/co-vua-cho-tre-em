@@ -179,7 +179,53 @@ async function tao(vungVe, { nhe, napTep } = {}) {
   // cung là lính cung... Giờ chưa có quân đại diện thì thay bằng thủ lĩnh"): đánh công trình thường -> đối thủ là THỦ LĨNH của chủ
   // (KayKit theo tộc của chủ, cầm rìu, lao tới chém như quái), công trình (maCt: ct_nha / ct_rao) đứng sau làm cảnh, bé thắng thì sụp.
   // Sau này có quân đại diện từng loại nhà thì đổi hình ở đây.
+  // TC_D05C0b2: đối thủ là TƯỚNG THẬT của chủ (sổ tướng: tộc + giới + đời, như Thủ lĩnh của bạn ấy trên Thung Lũng). File đã tải nền
+  // nên thường có ngay; đang tải thì sân chưa hiện đối thủ, xong mới hiện (không hình tạm). Không có file / lỗi: Thủ lĩnh KayKit như cũ.
   function taoTlDoi(maCt, doiThu) {
+    const m = boTuong ? chonTuong({ chungLoai: doiThu.chungLoai || "nhan", gioi: doiThu.gioi || "nam", thoiKy: doiThu.thoiKy || "do_da" }) : null;
+    if (!m || !m.tep) return taoTlDoiKayKit(maCt, doiThu);
+    const nhom = new THREE.Group(), cao = m.cao || CAO_TUONG;
+    const nen = taoQuai3d(/^ct_\w+$/.test(maCt || "") ? maCt : "ct_nha", { nhe });
+    nen.nhom.position.set(X_QUAI + 1.5, 0, -2.2); nen.nhom.rotation.y = HUONG_QUAI + 0.5; nen.nhom.scale.setScalar(TI_QUAI * 0.85);
+    canh.add(nen.nhom);
+    let t = null, kk = null, vl = [], chopCon = 0, mo = 1, boRoi = false;
+    const toMo = goc => goc.traverse(o => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = mo; } });
+    const doi = {
+      nhom, cao: cao / TI_QUAI, laTru: false, nen,
+      capNhat(dt) { // KayKit dự phòng: boNv.capNhat chạy động tác; tướng thật: mixer của tướng
+        if (t) t.capNhat(dt);
+        if (chopCon > 0) { chopCon = Math.max(0, chopCon - dt); const k = chopCon / 0.25 * 0.5;
+          for (const v of vl) { const g = v.userData.sangGoc || 0; v.emissive.setRGB(g + k, g + k * 0.55, g + k * 0.5); } }
+      },
+      chop(giay) { chopCon = giay || 0.25; if (t) t.dien("trung"); else if (kk) boNv.dien(kk, ["Hit_A"], null, null, 0); },
+      danh() { if (t) t.dien("chem"); else if (kk) boNv.dien(kk, ["1H_Melee_Attack_Slice_Diagonal"], null, null, 0); },
+      datChu() {},
+      datMo(a) { mo = a; if (t) toMo(t.vo); if (kk) toMo(kk.goc); },
+      sup() { // công trình sau lưng sụp khi bé thắng (như bản KayKit)
+        them(0.01, () => { am.trung(nen.nhom.position.x, true); hu.khoi(V(nen.nhom.position.x, 0.3, nen.nhom.position.z), "#b9a68a", 14, 1.2, false); hu.rung(0.08, 0.5); }, 0.9);
+        const s = nen.nhom.scale.x;
+        them(1.4, p => { nen.nhom.scale.set(s * (1 + p * 0.35), s * Math.max(0.12, 1 - p), s * (1 + p * 0.35)); }, 0.9);
+      },
+      boDi() { boRoi = true; if (kk) boNv.xoa(kk); canh.remove(nen.nhom); }
+    };
+    taiTuong(m.tep).then(glb => {
+      if (boRoi) return;
+      const dt = m.dongTac || {};
+      t = boTuong.tao(glb, { boDongTac: dt.bo, dungTay: dt.dungTay, dungTran: dt.dungTran }, cao);
+      canh.remove(t.vo); nhom.add(t.vo); t.vo.scale.multiplyScalar(1 / TI_QUAI); // nhóm đã nhân TI_QUAI
+      vl = t.vlPhatSang; if (mo < 1) toMo(t.vo);
+    }, () => { // file lỗi: Thủ lĩnh KayKit của chủ, cầm rìu
+      if (boRoi) return;
+      const dvQ = { ten: "", x: 0, z: 0, huongMuon: 0, trangThai: "dung", duong: [], viec: null, mang: { loai: null, so: 0 }, chay: false, ranh: false };
+      kk = boNv.tao(dvQ, "thu_linh", NV.chuanHoa({ chungLoai: doiThu.chungLoai || "nhan", gioi: doiThu.gioi || "nam" }));
+      nhom.add(kk.vo); kk.vo.scale.setScalar(TI_BE / TI_QUAI); kk.huongMuon = 0;
+      kk.vuKhiMacDinh = "1H_Axe"; if (kk.vuKhi["1H_Axe"]) kk.vuKhi["1H_Axe"].visible = true;
+      kk.goc.traverse(o => { if (o.isMesh && o.material.emissive && vl.indexOf(o.material) < 0) vl.push(o.material); });
+      if (mo < 1) toMo(kk.goc);
+    });
+    return doi;
+  }
+  function taoTlDoiKayKit(maCt, doiThu) {
     const nhom = new THREE.Group();
     const dvQ = { ten: "", x: 0, z: 0, huongMuon: 0, trangThai: "dung", duong: [], viec: null, mang: { loai: null, so: 0 }, chay: false, ranh: false };
     const h = boNv.tao(dvQ, "thu_linh", NV.chuanHoa({ chungLoai: doiThu.chungLoai || "nhan", gioi: doiThu.gioi || "nam" }));
@@ -423,6 +469,7 @@ async function tao(vungVe, { nhe, napTep } = {}) {
     },
     nghi(bat) { bong.visible = !!bat; },
     dienBe(kieu) { dien(kieu); }, // TC_D05C0b1: cho kịch bản thử (vd "di", "chay" của tướng); trận không gọi
+    demTuong() { let n = 0; canh.traverse(o => { if (o.name === "mixamorigHips") n++; }); return n; }, // TC_D05C0b2: kịch bản thử đếm tướng thật trên sân
     // KC_06B2: pha tụ lực lúc chờ máy chủ chấm; vai "danh" | "thu" -> tay cầm { bung(), tan(), manh(), choMang(b) }
     tuLuc(vai) { return taoTuLuc(vai); },
     ketQua(k) {
@@ -623,3 +670,5 @@ window.dispatchEvent(new Event("dt-san3d"));
 // 25/11/2026 - BƯỚC: TC_D05C0a (sổ tướng chung dt_tuong.js: bỏ KIEU_TOC + Plasma viết cứng; màu / chiêu / kết liễu / phòng thủ theo mẫu tướng;
 //               tên chiêu vùng từ hieu_ung.json; tao(vungVe, { nhe, napTep }))
 // 25/11/2026 - BƯỚC: TC_D05C0b1 (san.dienBe(kieu) cho kịch bản thử đi / chạy của tướng)
+// 26/11/2026 - BƯỚC: TC_D05C0b2 (đối thủ trận công trình = tướng thật của chủ qua sổ tướng, doiThu { chungLoai, gioi, thoiKy };
+//              lỗi file thì Thủ lĩnh KayKit; san.demTuong() cho kịch bản thử)

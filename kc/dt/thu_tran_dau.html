@@ -1001,7 +1001,9 @@
           cl: chTran.thuLinh[TS.get("cl")] ? TS.get("cl") : "nhan", gioi: TS.get("gioi") === "nu" ? "nu" : "nam", thongTha: null };
         if (TRU) chon.quai = /^(tru|ct)_\w+$/.test(TS.get("loaiTru") || "") ? TS.get("loaiTru") : "tru_ten"; // TC_D06C2g: đối thủ là trụ (sân 3D dt3d_quai.js); TC_D06C7b: ct_rao / ct_nha = công trình thường
         // TC_D06C7b (người dùng 08/11/2026): đánh công trình thường -> đối thủ trên sân là Thủ lĩnh của chủ (&doiCl = tộc của chủ), công trình đứng sau
-        chon.doiThu = TRU && /^ct_/.test(chon.quai) ? { chungLoai: chTran.thuLinh[TS.get("doiCl")] ? TS.get("doiCl") : "nhan" } : null;
+        // TC_D05C0b2: + &doiGioi / &doiDoi (giới, đời của chủ) -> sân vẽ đúng tướng đối thủ qua sổ tướng
+        chon.doiThu = TRU && /^ct_/.test(chon.quai) ? { chungLoai: chTran.thuLinh[TS.get("doiCl")] ? TS.get("doiCl") : "nhan",
+          gioi: TS.get("doiGioi") === "nu" ? "nu" : "nam", thoiKy: /^[a-z_]{2,20}$/.test(TS.get("doiDoi") || "") ? TS.get("doiDoi") : "do_da" } : null;
         document.title = "Trận đấu - Đấu Trường Tri Thức";
         $("nutChonTran").classList.add("an"); $("nutRutLui").classList.remove("an");
         document.querySelector(".dau h1").firstChild.textContent = "⚔️ Trận đấu";
@@ -1086,3 +1088,4 @@
 <!-- 12/11/2026 - BƯỚC: KC_06B2 (sửa: tải sân 3D ngay từ đầu, không chờ câu kho; chấm nhanh trên máy, tụ chiêu cố định toiThieuGiay rồi phát) -->
 <!-- 21/11/2026 - BƯỚC: KC_09A (đọc câu nghe qua chung/am_thanh.js: chữa câu nghe im trong trận) -->
 <!-- 26/11/2026 - BƯỚC: TC_D06D5 (chốt chiều cao sân bằng px: thanh địa chỉ ẩn / hiện không làm câu hỏi nhảy, sân 3D không chớp đen) -->
+<!-- 26/11/2026 - BƯỚC: TC_D05C0b2 (trận công trình: &doiGioi / &doiDoi -> đối thủ là tướng thật của chủ) -->

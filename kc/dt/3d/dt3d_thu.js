@@ -47,6 +47,7 @@ import { taoThuGon } from "./dt3d_thu_gon.js"; // TC_D06D6c: điện thoại thu
 import { taoTruBanDo } from "./dt3d_tru.js"; // TC_D06C2g: trụ phòng thủ (05/11/2026)
 import { taoNongDan } from "./dt3d_nong_dan.js"; // TC_D06C5: nút tìm nông dân rảnh + báo nông dân bị tấn công
 import "../dt_tuong.js"; // TC_D05C0a: sổ tướng chung (window.KC_DT_TUONG): danh sách tướng tải nền
+import { taoTuongBanDo } from "./dt3d_tuong_ban_do.js"; // TC_D05C0b2: Thủ lĩnh trên bản đồ là tướng thật
 import { taoChay } from "./dt3d_chay.js"; // TC_D06C7e: công trình bị đánh cháy nhỏ / cháy to
 import { ganOnSauTran } from "./dt3d_on_sau_tran.js"; // TC_D34B: ôn bắt buộc sau trận
 
@@ -105,15 +106,23 @@ function baoTai(ten, da, tong) {
   let a = 0, b = 0; for (const k in tienTai) { a += tienTai[k][0]; b += tienTai[k][1]; }
   chuTai.textContent = "Đang dựng làng… " + Math.round(100 * a / Math.max(b, 1)) + "%";
 }
-const [banDo, cauHinh, glbLang, glbNv] = await Promise.all([
+// TC_D05C0a / TC_D05C0b2: file sổ tướng + số cài đặt (đã trộn phần Quản trị sửa); trang trận trong khung cũng xin qua đây
+const boNhoCh = {};
+const napCh = ten => {
+  const url = duongDan("../du_lieu/" + ten + ".json");
+  return boNhoCh[ten] || (boNhoCh[ten] = (window.KC_DT_CAU_HINH ? window.KC_DT_CAU_HINH.tai(ten, url) : fetch(url, { cache: "no-cache" }).then(r => r.json())).catch(() => null));
+};
+const [banDo, cauHinh, glbLang, glbNv, soTuong, glbDongTacTuong] = await Promise.all([
   fetch(duongDan(VUNG ? "../du_lieu/vung_dat.json" : "../du_lieu/lang_thu_3d.json"), { cache: "no-cache" }).then(r => r.json()),
   // TC_D18A: số mặc định + phần quản trị đã sửa (dt/dt_cau_hinh.js); trang không nạp file đó thì chỉ số mặc định
   window.KC_DT_CAU_HINH ? window.KC_DT_CAU_HINH.tai("cau_hinh", duongDan("../du_lieu/cau_hinh.json"))
     : fetch(duongDan("../du_lieu/cau_hinh.json"), { cache: "no-cache" }).then(r => r.json()),
   taiGlb(duongDan("../mo_hinh/lang.glb"), baoTai),
-  taiGlb(duongDan("../mo_hinh/nhan_vat.glb"), baoTai)
+  taiGlb(duongDan("../mo_hinh/nhan_vat.glb"), baoTai),
+  // TC_D05C0b2: Thủ lĩnh trên bản đồ là tướng thật (sổ tướng + bộ động tác); lỗi thì Thủ lĩnh KayKit như cũ
+  window.KC_DT_TUONG.tai({ napTep: napCh }).catch(() => null),
+  taiGlb(duongDan("../mo_hinh/dong_tac_tuong.glb"), baoTai).catch(() => null)
 ]).catch(e => { chuTai.textContent = "Chưa tải được làng. Kiểm tra mạng rồi tải lại trang nhé!"; throw e; });
-let soByte = 0; for (const k in tienTai) soByte += tienTai[k][1];
 
 // ---------------- Lõi + các phần vẽ ----------------
 const doHoa = docDoHoa(), NHE = doHoa === "nhe";
@@ -121,6 +130,13 @@ const lang = LANG.taoLang({ banDo, cauHinh, chungLoai: be.hoSo.chungLoai });
 const CH = lang.CH;
 const vungVe = $("d3Canh");
 const ctx = taoCanh(vungVe, { nhe: NHE });
+// TC_D05C0b2: Thủ lĩnh trên bản đồ là tướng thật (dt3d_tuong_ban_do.js). Luật tải nền (LUAT_DAU_TRUONG.md luật 4): lần đầu trên
+// máy này màn tải CHỜ tướng của chính bé (~1 MB) rồi mới vào, không hình tạm. Thiếu sổ / bộ động tác thì KayKit như cũ.
+const tuongBd = soTuong && glbDongTacTuong ? taoTuongBanDo({ ctx, so: soTuong, dongTac: glbDongTacTuong, cauHinh, nhe: NHE,
+  taiTep: tep => taiGlb(duongDan("../mo_hinh/" + tep), baoTai) }) : null;
+const hoSoTuong = (hoSo, thoiKy) => Object.assign({ thoiKy: thoiKy || "do_da" }, hoSo);
+const tuongBe = tuongBd ? await tuongBd.choBe(hoSoTuong(be.hoSo, be.thoiKy)) : null; // { glb, mau } | null (KayKit)
+let soByte = 0; for (const k in tienTai) soByte += tienTai[k][1];
 ctx.moiKhung(dt => lang.capNhat(dt)); // lõi chạy trước, các phần vẽ theo sau
 const moHinh = taoBoMoHinh(ctx, glbLang);
 const cam = taoCamera(ctx, vungVe, banDo);
@@ -129,7 +145,7 @@ const congTrinhVe = taoCongTrinh(ctx, moHinh, diaHinh, banDo, cam.huong, lang);
 let chayBd = null; // TC_D06C7e
 try { if (window.KC_DT_TRU_TRAN) chayBd = taoChay({ ctx, lang, cauHinh, doCao: diaHinh.doCao, hinhCt: id => congTrinhVe.hinhCt(id) }); } catch (e) { console.warn("Chưa dựng được lửa cháy", e); }
 const taiNguyen = taoTaiNguyen(ctx, moHinh, diaHinh, lang);
-const boNv = taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam: loai => CH.nguon[loai].nhipLam });
+const boNv = taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam: loai => CH.nguon[loai].nhipLam, tuongBd });
 ctx.moiKhung(dt => boNv.capNhat(dt));
 const goiY = $("d3GoiY");
 const baoGoiY = chu => { goiY.textContent = chu; };
@@ -160,7 +176,8 @@ if (VUNG) {
   let kho = null; try { localStorage.setItem("kc_dt_thu", "1"); kho = localStorage; } catch (e) { /* bị chặn: giữ trong bộ nhớ */ }
   const mayChu = GAME ? taoMayChuThat() : null; // trang thử ?vung: máy chủ giả trên máy
   try {
-    vung = await vaoThungLung({ ctx, cam, lang, banDo, cauHinh, diaHinh, boNv, dk, uiDk, be: { ...be, ten: be.ten || "khach" }, themNongDan, $, baoGoiY, kho, mayChu, capNhatKho: () => capNhatKho() });
+    vung = await vaoThungLung({ ctx, cam, lang, banDo, cauHinh, diaHinh, boNv, dk, uiDk, be: { ...be, ten: be.ten || "khach" }, themNongDan, $, baoGoiY, kho, mayChu, capNhatKho: () => capNhatKho(),
+      tuongBe: tuongBe || undefined, tuongBan: tuongBd ? hoSo => tuongBd.cua(hoSo, false) : null }); // TC_D05C0b2: Thủ lĩnh bé + bạn là tướng thật
   } catch (e) { chuTai.textContent = e.lyDo || "Chưa vào được làng. Tải lại trang nhé!"; throw e; }
   dvTl = vung.dvTl; hTl = vung.hTl;
   congTrinhVe.datNguoiQuaCong(vung.dsDvBan); // TC_D06C7a: người của bạn đi qua cổng thì cổng mở
@@ -203,13 +220,13 @@ if (VUNG) {
   }, 1500);
 } else {
   dvTl = lang.themDonVi("thu_linh", banDo.batDau.thuLinh.x, banDo.batDau.thuLinh.z, be.tenThuLinh || "Thủ lĩnh");
-  hTl = boNv.tao(dvTl, "thu_linh", hoSoTl);
+  hTl = boNv.tao(dvTl, "thu_linh", hoSoTl, tuongBe || undefined);
   for (const p of banDo.batDau.nongDan || []) themNongDan(p.x, p.z);
 }
 
 // ---------------- KC_06B2: trang trận (khung dt/thu_tran_dau.html) nhờ gọi máy chủ: câu kho + chấm + số Quản trị ----------------
 // { loai: "dt-kho-hoi", so, ham: "o" | "lo" | "cham" | "cauHinh", ts } -> { loai: "dt-kho-dap", so, kq }. Máy chủ thật / giả đều có kho().
-const SO_QT = ["cau_hinh_tran_dau", "cau_hinh_trinh_do", "cau_hinh_am_thanh", "tuong", "ky_nang", "hieu_ung"], boNhoCh = {}; // TC_D05F: + âm thanh; TC_D05C0a: + sổ tướng
+const SO_QT = ["cau_hinh_tran_dau", "cau_hinh_trinh_do", "cau_hinh_am_thanh", "tuong", "ky_nang", "hieu_ung"]; // TC_D05F: + âm thanh; TC_D05C0a: + sổ tướng (bộ nhớ boNhoCh ở đầu file)
 window.addEventListener("message", async e => {
   const d = e.data;
   if (e.origin !== location.origin || !d || d.loai !== "dt-kho-hoi" || !e.source) return;
@@ -217,8 +234,7 @@ window.addEventListener("message", async e => {
   try {
     if (d.ham === "cauHinh") {
       const ten = SO_QT.indexOf(d.ts && d.ts.ten) >= 0 ? d.ts.ten : null;
-      const url = ten && duongDan("../du_lieu/" + ten + ".json");
-      const ch = !ten ? null : await (boNhoCh[ten] || (boNhoCh[ten] = (window.KC_DT_CAU_HINH ? window.KC_DT_CAU_HINH.tai(ten, url) : fetch(url, { cache: "no-cache" }).then(r => r.json())).catch(() => null)));
+      const ch = !ten ? null : await napCh(ten);
       kq = ch ? { ok: true, ch } : { ok: false, ma: "mang" };
     } else {
       const mc = vung && vung.mayChu;
@@ -236,12 +252,9 @@ let dangTaiSan = false; // đang tải sẵn ở nền: khung hình tụt tạm 
 setTimeout(async () => {
   dangTaiSan = true;
   try {
-    const CH = window.KC_DT_CAU_HINH;
-    const so = await window.KC_DT_TUONG.tai({ napTep: ten => {
-      const url = duongDan("../du_lieu/" + ten + ".json");
-      return boNhoCh[ten] || (boNhoCh[ten] = (CH ? CH.tai(ten, url) : fetch(url, { cache: "no-cache" }).then(r => r.json())).catch(() => null));
-    } });
-    const [tepBe, ...tepKhac] = so.tepCanTai([be.hoSo ? Object.assign({ thoiKy: be.thoiKy }, be.hoSo) : {}]);
+    const so = soTuong || await window.KC_DT_TUONG.tai({ napTep: napCh });
+    // TC_D05C0b2 (dac_ta_tuong.md mục 8): tướng của bé trước, rồi tướng của các bé đang ở vùng, rồi phần còn lại
+    const [tepBe, ...tepKhac] = so.tepCanTai([hoSoTuong(be.hoSo, be.thoiKy), ...(vung && vung.hoSoBan ? vung.hoSoBan() : [])]);
     const moHinh = t => duongDan("../mo_hinh/" + t);
     // mô hình (kho bền) + mã của cảnh trận: chiêu thức, hiệu ứng, âm thanh, quái, trang trận (bộ nhớ đệm thường)
     const TV = "../../thu_vien/three/";
@@ -413,7 +426,7 @@ $("d3DoiHinh").addEventListener("click", () => {
   h.mauAo = (h.mauAo + 1) % NV.BANG.ao.length; h.mauToc = (h.mauToc + 2) % NV.BANG.toc.length; h.mauDa = (h.mauDa + 1) % NV.BANG.da.length;
   hoSoTl = NV.chuanHoa(h);
   const dangChonTl = dk.dangChon() === hTl, huong = hTl.huong;
-  boNv.xoa(hTl); hTl = boNv.tao(dvTl, "thu_linh", hoSoTl); hTl.huong = huong;
+  boNv.xoa(hTl); hTl = boNv.tao(dvTl, "thu_linh", hoSoTl, tuongBd ? tuongBd.cua(hoSoTuong(hoSoTl, be.thoiKy), true) : undefined); hTl.huong = huong; // TC_D05C0b2
   if (dangChonTl) dk.chon(hTl);
   lang.datChungLoai(hoSoTl.chungLoai);
   baoGoiY("Đang xem " + TEN_CL[hoSoTl.chungLoai] + ", " + (hoSoTl.gioi === "nu" ? "bé gái" : "bé trai") + ". " +
@@ -425,8 +438,22 @@ $("d3DoiHinh").addEventListener("click", () => {
 const TEN_DONG_TAC = { "1H_Melee_Attack_Slice_Diagonal": "Chém chéo", "Spellcast_Shoot": "Phóng phép", "Block_Hit": "Đỡ đòn",
   "Dodge_Right": "Né sang phải", "2H_Melee_Attack_Spin": "Xoay vòng", "Hit_A": "Trúng đòn", "1H_Ranged_Shoot": "Bắn", "Cheer": "Reo mừng chiến thắng" };
 let goiTran = null;
+// TC_D05C0b2: Thủ lĩnh là tướng thật -> diễn lần lượt động tác trận của tướng (dt3d_tuong.js), không dùng gói KayKit
+const TEN_KIEU_TUONG = { chem: "Chém", chemLon: "Chí mạng", phep: "Phóng phép", thu: "Thế thủ", do: "Đỡ đòn", ne: "Né", trung: "Trúng đòn", mung: "Reo mừng chiến thắng" };
 $("d3ThuTran").addEventListener("click", async () => {
   if (hTl.dien) return;
+  if (hTl.tuong) {
+    const ds = Object.keys(TEN_KIEU_TUONG); let i = 0;
+    dvTl.duong.length = 0; hTl.dien = { tuong: true }; // capNhatTuong bỏ qua kiểu theo việc trong lúc diễn
+    const tiep = () => {
+      if (i >= ds.length) { hTl.dien = null; hTl.kieu = null; baoGoiY("Tướng có " + ds.length + " động tác trận; trận đấu thật chọn theo đúng / sai của câu trả lời."); return; }
+      const k = ds[i++]; baoGoiY("⚔️ " + TEN_KIEU_TUONG[k]);
+      hTl.tuong.dien(k, () => setTimeout(tiep, 250));
+      if (k === "thu") setTimeout(tiep, 1200); // thế thủ lặp mãi: tự sang động tác sau
+    };
+    tiep();
+    return;
+  }
   baoGoiY("Đang tải động tác trận…");
   try { goiTran = goiTran || (await taiGlb(duongDan("../mo_hinh/dong_tac_tran.glb"))).animations; } catch (e) { baoGoiY("Chưa tải được động tác trận."); return; }
   boNv.themDongTac(goiTran);
@@ -463,6 +490,10 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   ttCt: id => { const ct = lang.congTrinh.find(c => c.id === id); return ct ? ttCongTrinh(ct) : null; }, // thông số thanh dưới của công trình
   xemCt: id => { const ct = lang.congTrinh.find(c => c.id === id); if (ct) uiDk.xemCt(ct); return !!ct; }, // TC_D06C7d: mở thanh dưới như bé chạm công trình
   mauTl: () => dvTl.mau,
+  // TC_D05C0b2: Thủ lĩnh của bé trên bản đồ: mã tướng thật (null = KayKit), kiểu động tác, mức hoạt ảnh (0 đủ / 1 thưa / 2 dừng)
+  tuongTl: () => ({ tuong: hTl.maTuong || null, cho: !!hTl.cho, kieu: hTl.kieu || null, muc: hTl.muc == null ? null : hTl.muc,
+    soTuong: boNv.dsHinh.filter(h => h.tuong).length, nhe: NHE }),
+  hinhTl: () => hTl, // bài thử đo sải chân (tc_d05c0b2_sai_chan_chrome.mjs)
   moCong: id => { const h = congTrinhVe.hinhCt(id); return h ? (h.mo || 0) : null; }, // TC_D06C7a: độ mở cánh cổng 0..1
   chay: id => (chayBd ? (id == null ? chayBd.so() : chayBd.muc(id)) : null) // TC_D06C7e: mức lửa đang vẽ (0 / 1 nhỏ / 2 to), không id: số công trình đang cháy
 };
@@ -503,3 +534,5 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 26/11/2026 - BƯỚC: TC_D06D6 (ô đang xem gọn: nông dân chỉ ❤️; Thủ lĩnh ❤️ + công / thủ / nhanh / pháp; móc xemXay cho menu Xây)
 // 26/11/2026 - BƯỚC: TC_D06D6c (thu gọn thanh trên / dưới trên điện thoại: dt3d_thu_gon.js; chạm thứ có thông số thì thanh dưới mở tạm)
 // 26/11/2026 - BƯỚC: TC_D06D8 (công trình đang sụp giữ dòng đếm ngược; nối uiDk.boXem)
+// 26/11/2026 - BƯỚC: TC_D05C0b2 (Thủ lĩnh trên bản đồ là tướng thật: màn tải chờ sổ tướng + bộ động tác + tướng của bé;
+//              dt3d_tuong_ban_do.js; tải nền theo thứ tự bé -> bạn cùng vùng -> còn lại; móc __dt3d.tuongTl / hinhTl)
