@@ -43,6 +43,9 @@
 //             (TC_D06D) khiXem(fn): chạm quái -> thanh dưới đọc fn() lấy thông số + nút ⚔️ Đánh; chonTl(): chọn Thủ lĩnh;
 //             (TC_D06C2d) dangChon(): người đang chọn -> nút ⚔️ Đánh sai nông dân (đang chọn / rảnh gần nhất), không phải Thủ lĩnh }
 //     trả thêm conNghi() (ms còn nghỉ), dongHo(ms) cho thông số Thủ lĩnh ở thanh dưới
+//     TC_D06D6: chiSoTl() -> { hp, toiDa, cong, thu, nhanh, phap } (cau_hinh_tran_dau.json thuLinh[tộc] + phần Quản trị sửa:
+//       str, def, agi, int); máu = dvTl.mau (bị trụ / quái đánh còn lại, null = đầy); đang nghỉ thì hồi dần theo giờ nghỉ
+//       (thua.nghiGiay), hết nghỉ là đầy
 //   dt3d_dieu_khien.js gọi trung / cham qua ui.trungQuai / ui.chamQuai.
 // LUẬT NỐI: lõi KC_DT_QUAI_BAN_DO, KC_DT_LUOI, KC_DT_BAN_DO (SANG); lang.lenhDi; ctx.nghiVe (dt3d_canh.js).
 //   TC_D06C2b: the thêm boNv (bộ vẽ nhân vật: dân bỏ chạy), boChon(dv) (bỏ chọn dân vừa mất); trả thêm mauDan(dv) ->
@@ -509,6 +512,12 @@ export async function taoQuaiBanDo(the) {
   // ================= TC_D06C2b: NÔNG DÂN ĐÁNH QUÁI =================
   const ND = chTran.nongDan || {};
   const clBe = () => (be.hoSo && be.hoSo.chungLoai) || lang.chungLoai || "nhan";
+  function chiSoTl() { // TC_D06D6: ô đang xem của Thủ lĩnh ở thanh dưới
+    const ds = chTran.thuLinh || {}, c = ds[clBe()] || ds.nhan || {}, toiDa = c.hp || 0;
+    const nghi = Math.max(1, ((chTran.thua && chTran.thua.nghiGiay) || 120) * 1000), con = conNghi();
+    const hp = con > 0 ? Math.floor(toiDa * (1 - con / nghi)) : Number.isFinite(dvTl.mau) ? dvTl.mau : toiDa; // TC_D06C2g: dvTl.mau = máu còn (null = đầy)
+    return { hp: Math.max(0, Math.min(toiDa, hp)), toiDa, cong: c.str, thu: c.def, nhanh: c.agi, phap: c.int };
+  }
   const toiDaDan = () => { const c = (ND.chiSo || {})[clBe()] || (ND.chiSo || {}).nhan; return c ? c.hp : 0; };
   // máu nông dân: dv.mau (máy chủ giữ, null = đầy); không tự hồi (người dùng 04/11/2026: chỉ phù thủy chữa)
   function mauDan(dv) { const toiDa = toiDaDan(); return { hp: dv.mau == null ? toiDa : Math.max(0, Math.min(toiDa, dv.mau)), toiDa }; }
@@ -811,7 +820,7 @@ export async function taoQuaiBanDo(the) {
   }
 
   return {
-    trung, cham: chamUi, conNghi, dongHo, mauDan, // TC_D06C2b: mauDan; TC_D06C2d: chạm quái qua chamUi (bong bóng ⚔️ Đánh)
+    trung, cham: chamUi, conNghi, dongHo, mauDan, chiSoTl, // TC_D06D6: chiSoTl; TC_D06C2b: mauDan; TC_D06C2d: chạm quái qua chamUi (bong bóng ⚔️ Đánh)
     // TC_D06C2g (trụ phòng thủ, dt3d_tru.js): Thủ lĩnh đang tới / đang đánh quái thì trụ không khai chiến; thua trụ thì nghỉ
     banThuLinh: () => !!(dangToi || (trongTran && !trongTran.dan)), datNghi: ms => { nghiDen = Math.max(nghiDen, ms); }, dungTl,
     // TC_D06C2h (trụ bắn nông dân, dt3d_tru.js): thêm nguồn trận ngoài cho nút ⚔️; báo đang trong trận trụ; màn trận quái đang mở;
@@ -871,3 +880,4 @@ export async function taoQuaiBanDo(the) {
 // 06/11/2026 - BƯỚC: TC_D06C5 (biTanCong: nông dân bị quái hung dữ tấn công)
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (quái không đứng trên cổng, quái bị rào kín sống trong vùng rào)
 // 10/11/2026 - BƯỚC: TC_D18A (số cân bằng = mặc định + phần quản trị đã sửa, dt/dt_cau_hinh.js)
+// 26/11/2026 - BƯỚC: TC_D06D6 (chiSoTl: máu + công / thủ / nhanh / pháp của Thủ lĩnh cho thanh dưới)

@@ -589,3 +589,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   #d3GoiY { max-width: min(640px, calc(100% - 12px)); }
 }
 /* 26/11/2026 - BƯỚC: TC_D06D4c */
+/* TC_D06D6 (26/11/2026): menu 🔨 Xây chỉ biểu tượng; nút mờ = chưa xây được (thiếu tài nguyên / đủ giới hạn), vẫn chạm để xem trước */
+.d3Thanh .d3Nut.d3NutMo { opacity: .5; filter: grayscale(.6); }
+.d3Thanh .d3NutMo[aria-pressed="true"] { opacity: .85; }
+[id^="d3Xay_"]:not(#d3Xay_tiep):not(#d3Xay_xoay) { font-size: 1.25rem; }
+@media (max-width: 600px), (max-height: 500px) { [id^="d3Xay_"]:not(#d3Xay_tiep):not(#d3Xay_xoay) { font-size: 1.05rem; padding: 3px 4px; } }
+/* 26/11/2026 - BƯỚC: TC_D06D6 */
