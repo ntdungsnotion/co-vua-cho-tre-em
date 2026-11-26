@@ -28,6 +28,7 @@
 //            kho_day (TC_D03A: về tới lều mà kho loại đó đầy, nông dân đứng chờ, đồ còn trên tay),
 //            ruong (TC_D03B2: ruộng của bé đổi giai đoạn mam / chin / bai; kèm ct, n)
 //            "cat" kèm tu = { mã nguồn: số } (đồ vừa cất lấy từ nguồn nào: máy bé gửi thu hoạch lúc cất)
+//            vut_do (TC_D06D6: giao việc loại khác khi đang mang -> vứt đồ; kèm mang = { loai, so })
 //            "lenh_di" kèm xay (id công trình đang tới xây) + hang (id các móng xây tiếp) cho máy chủ
 //            bi_chan (TC_D06C2i: công trình mới chặn đường đang đi; kèm ct, vong = còn đường vòng; không thì đứng lại)
 // TC_D03A: XÂY THEO SỐ NGƯỜI: mỗi khung, công trình có n người đang đứng xây thì tiến thêm
@@ -739,16 +740,16 @@
         if (!coKe(n)) n = nguonGanNhat(n.loai, n.x, n.z, CH.banKinhChonBia);
         if (!n) return null;
       }
-      // TC_D06C6 (người dùng 07/11/2026: "mỗi thời điểm chỉ mang một loại", không mất đồ cũ): đang mang loại khác thì
-      // về Lều / kho cất trước rồi mới tới việc mới (chưa có chỗ cất: bỏ đồ như cũ)
-      const doiLoai = dv.mang.so > 0 && dv.mang.loai !== n.taiNguyen;
-      dv.viec = n; dv.ranh = false; dv.dich = null; dv.xay = null; dv.hangXay = []; dv.tuKhamPha = false; dv.catTai = null;
-      const choCat = doiLoai ? choCatGanNhat(dv) : null;
-      if (doiLoai && choCat) { dv.trangThai = "ve_kho"; diToi(dv, choCat); }
-      else {
-        if (doiLoai) { dv.mang = { loai: null, so: 0 }; dv.mangTu = {}; }
-        dv.trangThai = "toi_viec"; diToi(dv, oLam(dv, n));
+      // Mỗi lúc chỉ mang một loại. TC_D06D6 (người dùng 26/11/2026, thay luật TC_D06C6 07/11/2026 "về cất trước"):
+      // đang mang loại khác thì VỨT đồ đang mang, đi thẳng tới việc mới (máy chủ chỉ ghi thu hoạch lúc đồ về kho nên
+      // đồ vứt không vào kho; muốn giữ thì bé chạm Lều / kho để cất trước: lenhCat). Phát "vut_do" (loại, số đã vứt).
+      if (dv.mang.so > 0 && dv.mang.loai !== n.taiNguyen) {
+        const vut = { loai: dv.mang.loai, so: dv.mang.so };
+        dv.mang = { loai: null, so: 0 }; dv.mangTu = {};
+        phat({ loai: "vut_do", dv, mang: vut });
       }
+      dv.viec = n; dv.ranh = false; dv.dich = null; dv.xay = null; dv.hangXay = []; dv.tuKhamPha = false; dv.catTai = null;
+      dv.trangThai = "toi_viec"; diToi(dv, oLam(dv, n));
       phat({ loai: "giao_viec", dv, n });
       return n;
     }
@@ -978,3 +979,4 @@
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (conLam / suaTien: nông dân sửa công trình bị đánh, sự kiện sua_xong)
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (dungDuoc: công trình đang sụp vì bị phá, cả Lều, không còn là chỗ cất / sức chứa / chỗ ở)
 // 07/11/2026 - BƯỚC: TC_D06C6 (mỗi lúc mang một loại: giao việc loại khác thì cất trước; lenhCat: chạm Lều / kho để cất)
+// 26/11/2026 - BƯỚC: TC_D06D6 (giao việc loại khác khi đang mang: vứt đồ, đi thẳng tới việc mới; sự kiện vut_do)

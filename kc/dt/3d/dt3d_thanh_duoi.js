@@ -6,10 +6,11 @@
 //            🧑‍🌾 Sinh nông dân, 🌱 Trồng lại do dt3d_vung.js bật / tắt), Ô CHUNG bên phải (về lều, dân số,
 //            khám phá, đồ họa). Thông số vẽ lại 4 lần / giây nên đếm giờ, tiến độ xây tự chạy.
 // HÀM KHAI RA:
-//   taoThanhDuoi($, macDinh) -> { xem(fn | null), ve() }
+//   taoThanhDuoi($, macDinh) -> { xem(fn | null), xemTruoc(fn | null), dangXemTruoc(), ve() }
 //     fn() -> { anh, ten, dong, phu, muc (0..1 | null), nut: [{ id, chu, nhan, bam }] } | null
 //     xem(fn): từ giờ ô đang xem đọc fn; fn trả null (quái đã chạy, cây đã cạn...) hoặc xem(null)
 //     thì quay về macDinh() (người đang chọn, không chọn ai thì cả làng).
+//     xemTruoc(fn) (TC_D06D6): như xem nhưng GIỮ nút của người đang chọn (menu 🔨 Xây): ô trái xem trước công trình định xây.
 // PHỤ THUỘC: các phần tử d3BangAnh, d3BangTen, d3BangDong, d3BangPhu, d3BangMuc(+Day), d3LenhRieng, d3Lenh
 //            trong kc/dt_thung_lung.html và kc/dt_thu_3d.html; kiểu ở dt3d.css.
 // BƯỚC: TC_D06D
@@ -20,7 +21,7 @@ const NUT_NGUOI = "#d3SoiDat, [id^='d3Xay_'], #d3KhamPhaNut"; // nút gắn vớ
 export function taoThanhDuoi($, macDinh) {
   const anh = $("d3BangAnh"), ten = $("d3BangTen"), dong = $("d3BangDong"), phu = $("d3BangPhu");
   const muc = $("d3BangMuc"), mucDay = $("d3BangMucDay"), lenhRieng = $("d3LenhRieng"), lenh = $("d3Lenh");
-  let nguon = null, khoaNut = "";
+  let nguon = null, giuLenh = false, khoaNut = "";
   const dat = (el, chu) => { chu = chu || ""; if (el.textContent !== chu) el.textContent = chu; el.hidden = !chu; };
 
   let dsNut = []; // nút của lần vẽ mới nhất (bấm gọi đúng thứ đang xem, kể cả khi nút không vẽ lại)
@@ -41,7 +42,7 @@ export function taoThanhDuoi($, macDinh) {
   function ve() {
     let tt = null;
     try { tt = nguon && nguon(); } catch (e) { tt = null; console.warn("Thanh dưới: chưa đọc được thông số", e); window.__dt3dLoiThanh = String(e && e.stack || e); }
-    if (!tt) { nguon = null; tt = macDinh() || {}; }
+    if (!tt) { nguon = null; giuLenh = false; tt = macDinh() || {}; }
     if (anh.textContent !== (tt.anh || "🏰")) anh.textContent = tt.anh || "🏰";
     dat(ten, tt.ten || "");
     dat(dong, tt.dong);
@@ -52,10 +53,15 @@ export function taoThanhDuoi($, macDinh) {
     veNut(tt.nut || []);
     // Đang xem thứ khác (nhà, nguồn, quái) thì nút của NGƯỜI đang chọn (🔨 Xây + menu, 🔭) thôi hiện (dt3d.css .d3XemKhac):
     // ô lệnh chỉ có nút của đúng thứ đang xem. Ô lệnh trống: điện thoại thu hàng nút lại cho rộng chỗ nhìn.
-    lenh.classList.toggle("d3XemKhac", !!nguon);
-    lenh.classList.toggle("d3Trong", ![...lenh.querySelectorAll(".d3Nut:not([hidden])")].some(b => !(nguon && b.matches(NUT_NGUOI))));
+    lenh.classList.toggle("d3XemKhac", !!nguon && !giuLenh);
+    lenh.classList.toggle("d3Trong", ![...lenh.querySelectorAll(".d3Nut:not([hidden])")].some(b => !(nguon && !giuLenh && b.matches(NUT_NGUOI))));
   }
   setInterval(ve, 250);
-  return { xem(fn) { nguon = fn || null; ve(); }, ve };
+  return {
+    xem(fn) { nguon = fn || null; giuLenh = false; ve(); },
+    xemTruoc(fn) { nguon = fn || null; giuLenh = !!fn; ve(); },
+    dangXemTruoc: () => !!nguon && giuLenh, ve
+  };
 }
 // 04/11/2026 - BƯỚC: TC_D06D
+// 26/11/2026 - BƯỚC: TC_D06D6 (xemTruoc: xem trước công trình định xây, giữ nút menu Xây)

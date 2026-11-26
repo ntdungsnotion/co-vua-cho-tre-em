@@ -535,6 +535,7 @@ export async function vaoThungLung(the) {
   }
   function batCheDo(loai) {
     cheDo = loai || null; choXem = null; dauTuong = null; xoayTay = null; oCongXem = null; soiDat.an();
+    if (!cheDo) xemXay = null; // TC_D06D6: thôi chọn chỗ / xây xong thì ô trái về người đang chọn
     if (!cheDo) { dk.datCheDoCham(null); capNhatNut(); return; }
     menuMo = false;
     if (cheDo !== "tuong" && cheDo !== "cong") { const g = choGoiY(cheDo); if (g) { soiDat.hien(g.x, g.y, g.rong, g.sau); choXem = g; } } // chạm đúng ô xanh này là xây luôn
@@ -844,6 +845,31 @@ export async function vaoThungLung(the) {
     $("d3SoiDat").parentNode.insertBefore(b, $("d3KhamPhaNut"));
     nutXay[loai] = b;
   }
+  // TC_D06D6: thông số xem trước của công trình định xây (ô đang xem ở thanh dưới). Máu khi mới xây = câu có sẵn x máu mỗi câu
+  // (soCauMoi, dac_ta_cong_trinh.md mục 0B); trụ thêm công + tầm. Số đọc từ cấu hình (đã trộn phần Quản trị sửa).
+  const BT_XAY = Object.fromEntries(MENU_XAY);
+  let xemXay = null;
+  function ttXay(loai) {
+    const m = CT[loai];
+    if (!m) return null;
+    const so = m.gioiHan ? cuaMinh(loai).length + "/" + m.gioiHan : null, thieu = thieuGia(m.gia, 1);
+    const dong = [giaChu(m.gia, 1) + (loai === "tuong" ? "/ô" : "") + (thieu ? " ❌" : "")];
+    if (m.giayXay) dong.push("⏱ " + giayChu(m.giayXay));
+    const phu = [];
+    if (TTR && TTR.danhDuoc(cauHinh, loai)) {
+      const d = TTR.soDanh(cauHinh, loai, 1);
+      phu.push("❤️ " + TTR.coSan(cauHinh) * d.mauMoiCau);
+      if (d.thu) phu.push("🛡️ " + d.thu);
+      if (m.tru) phu.push("⚔️ " + d.cong, "🎯 tầm " + d.tam + " ô");
+    }
+    const kho = LA_KHO[loai];
+    if (kho) phu.push("+" + KC_LANG.sucChuaCt(cauHinh, loai, 1, lang.chungLoai, kho) + " " + TN[kho].bieuTuong + " sức chứa");
+    else if (loai === "ruong") phu.push(KC_LANG.sanLuongRuong(cauHinh, 1) + " " + TN.luong_thuc.bieuTuong + "/vụ", "🌱 " + giayChu(MR.chinGiay)); // 🌱 = chín sau
+    else if (LA_CHOI[loai]) phu.push("cất " + catChu(loai));
+    else if (loai === "thap_canh") phu.push("👁️ nhìn xa " + BD.tamNhinCt(CB, "thap_canh", lang.chungLoai) + " ô");
+    else if (m.choO) phu.push("+" + m.choO + " chỗ ở");
+    return { anh: BT_XAY[loai] || "🏗️", ten: m.ten + (so ? " · " + so : ""), dong: dong.join(" · "), phu: phu.join(" · ") || null };
+  }
   function chonMenu(loai) {
     if (loai === "xoay") { xoayCong(); return; }
     if (loai === "tiep") {
@@ -854,6 +880,14 @@ export async function vaoThungLung(the) {
       capNhatNut(); return;
     }
     const m = CT[loai];
+    // TC_D06D6 (người dùng 26/11/2026): menu chỉ có biểu tượng; chạm 1 lần -> ô trái thanh dưới xem trước (hình + tài nguyên
+    // cần + chỉ số), chạm LẠI đúng biểu tượng đó mới chọn chỗ xây (người dùng chọn "chạm 2 lần")
+    if (xemXay !== loai || !(uiDk.dangXemXay && uiDk.dangXemXay())) {
+      xemXay = loai;
+      if (uiDk.xemXay) uiDk.xemXay(() => (xemXay && (cheDo ? cheDo === xemXay : menuMo) ? ttXay(xemXay) : null));
+      baoGoiY(BT_XAY[loai] + " " + m.ten + " · chạm lần nữa để chọn chỗ xây.");
+      capNhatNut(); return;
+    }
     if (m.gioiHan && cuaMinh(loai).length >= m.gioiHan) { baoGoiY("❌ " + BD.LY_DO.gioi_han(m.ten) + " (tối đa " + m.gioiHan + ")"); return; }
     const thieu = loiThieu(m.gia, 1);
     if (thieu) { baoGoiY(thieu); return; }
@@ -893,7 +927,11 @@ export async function vaoThungLung(the) {
       if (!CT[loai]) { nutXay[loai].hidden = true; continue; } // TC_D06C2g: loại máy chủ chưa mở
       const m = CT[loai], so = m.gioiHan ? " (" + cuaMinh(loai).length + "/" + m.gioiHan + ")" : "";
       nutXay[loai].hidden = !hienMenu;
-      if (hienMenu) datNut(nutXay[loai], bt + "<span class=\"d3Chu\"> " + m.ten + "</span> " + giaChu(m.gia, 1) + (loai === "tuong" ? "/ô" : "") + so, "Xây " + m.ten + ", giá " + giaChu(m.gia, 1) + (loai === "tuong" ? " mỗi ô" : "") + so);
+      if (hienMenu) { // TC_D06D6: chỉ biểu tượng (giá + chỉ số ở ô trái khi chạm); mờ khi chưa xây được, sáng khi đang xem
+        datNut(nutXay[loai], bt, m.ten + ", giá " + giaChu(m.gia, 1) + (loai === "tuong" ? " mỗi ô" : "") + so);
+        nutXay[loai].classList.toggle("d3NutMo", !!thieuGia(m.gia, 1) || !!(m.gioiHan && cuaMinh(loai).length >= m.gioiHan));
+        nutXay[loai].setAttribute("aria-pressed", String(xemXay === loai));
+      }
     }
     nutXay.xoay.hidden = cheDo !== "cong"; // TC_D03A: xoay cổng trước khi đặt
     if (cheDo === "cong") {
@@ -932,6 +970,7 @@ export async function vaoThungLung(the) {
     if (leuBe) { // Lều đã xong: menu Xây (TC_D02C)
       if (cheDo) { batCheDo(null); baoGoiY("Đã thôi xây. Bấm 🔨 Xây khi muốn xây tiếp nhé."); return; }
       menuMo = !menuMo;
+      xemXay = null; // TC_D06D6
       if (menuMo) leuMo = false; // TC_D03B1
       capNhatNut();
       if (menuMo) baoGoiY("🔨 Xây gì? Tường cọc gỗ rào kín làng thành lãnh địa, Cổng cho người của mình đi qua, Tháp canh nhìn thật xa. " + (dk.dangChon() ? dk.dangChon().dv.ten : "Nông dân") + " sẽ đi xây."); // TC_D06D: chỉ nông dân đang chọn mở được menu
@@ -1113,3 +1152,4 @@ export async function vaoThungLung(the) {
 // 07/11/2026 23:5x - BƯỚC: TC_D06C7a (lãnh địa mọi bé từ máy chủ cho quái tránh)
 // 08/11/2026 16:xx - BƯỚC: TC_D06C7e (ct.sua theo máy chủ; guiSua: nông dân tới sửa; chạm công trình đang sửa khi chọn nông dân; báo sửa xong)
 // 08/11/2026 22:xx - BƯỚC: TC_D06C7c (tự phá Lều, dời làng: phaHuy nhận Lều, bỏ leuBe ngay; Lều dựng lại không thêm nông dân, ai ôm đồ mang về Lều mới)
+// 26/11/2026 - BƯỚC: TC_D06D6 (menu Xây chỉ biểu tượng; chạm 1 lần xem trước ở ô trái: hình + tài nguyên cần + chỉ số; chạm lại mới chọn chỗ)

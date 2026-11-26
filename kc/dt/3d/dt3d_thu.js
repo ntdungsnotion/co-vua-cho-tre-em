@@ -272,14 +272,25 @@ function ttDonVi(h) {
     : sua ? "🔧 Đang sửa " + tenCt(dv.xay) + " · " + pt(sua.tienDo)
     : xay ? "🔨 Đang xây " + tenCt(dv.xay) + " · " + pt(dv.xay.tienDo)
       : dv.ranh ? "💤 Đang rảnh" : dv.trangThai === "lam" && dv.viec ? LAM[dv.viec.loai] || "Đang làm" : TRANG_DV[dv.trangThai] || "";
-  if (laTl) tt.dong = "Thủ lĩnh" + (dv.laBan ? "" : " · " + TEN_CL[lang.chungLoai]);
-  else {
-    const m = dv.mang || {}, t = m.so && CH.taiNguyen[m.loai];
+  // TC_D06D6 (người dùng 26/11/2026): ô đang xem gọn. Nông dân chỉ ❤️ máu (bỏ chữ "Nông dân", bỏ "mang x/y");
+  // Thủ lĩnh (thay "Thủ lĩnh · <tộc>"): dòng 1 ❤️ máu (+ việc đáng chú ý: nghỉ, đánh, xây), dòng 2 ⚔️ công 🛡️ thủ 💨 nhanh nhẹn
+  // ✨ pháp lực. Bỏ "Đứng chờ / Đang đi" (nhìn bản đồ đã thấy) cho vừa khổ 360.
+  const phan = [];
+  if (laTl) {
+    const c = !dv.laBan && quaiBd && quaiBd.chiSoTl ? quaiBd.chiSoTl() : null;
+    if (c) {
+      phan.push("❤️ " + c.hp + "/" + c.toiDa);
+      if (nghi > 0) phan.push("⛺ còn " + quaiBd.dongHo(nghi));
+      else if (dv.trangThai === "danh") phan.push("⚔️ Đang đánh");
+      else if (xay) phan.push("🔨 " + pt(dv.xay.tienDo));
+      tt.phu = "⚔️ " + c.cong + " 🛡️ " + c.thu + " 💨 " + c.nhanh + " ✨ " + c.phap;
+    } else if (!dv.laBan) phan.push(TEN_CL[lang.chungLoai]); // trang thử không có quái bản đồ
+  } else {
     const mau = !dv.laBan && quaiBd && quaiBd.mauDan ? quaiBd.mauDan(dv) : null; // TC_D06C2b: máu nông dân (không tự hồi)
-    tt.dong = "Nông dân" + (mau ? " · ❤️ " + mau.hp + "/" + mau.toiDa : "") + (t ? " · mang " + m.so + "/" + lang.sucMang() + " " + t.bieuTuong : "");
-    if (!xay && t) tt.muc = m.so / lang.sucMang();
+    if (mau) phan.push("❤️ " + mau.hp + "/" + mau.toiDa);
   }
-  if (dv.laBan) tt.dong += " · của " + dv.chu;
+  if (dv.laBan) phan.push("của " + dv.chu);
+  tt.dong = phan.join(" · ");
   return tt;
 }
 function ttCongTrinh(ct) {
@@ -323,6 +334,7 @@ function ttMacDinh() {
 thanh = taoThanhDuoi($, ttMacDinh);
 uiDk.chonCongTrinh = ct => thanh.xem(ct ? () => ttCongTrinh(ct) : null);
 uiDk.xemCt = ct => thanh.xem(() => ttCongTrinh(ct));
+uiDk.xemXay = fn => thanh.xemTruoc(fn); uiDk.dangXemXay = () => thanh.dangXemTruoc(); // TC_D06D6: menu 🔨 Xây chạm 1 lần -> ô trái xem trước công trình (dt3d_vung.js), giữ nút menu
 uiDk.xemNguon = n => { thanh.xem(() => ttNguon(n)); denChon.dat({ x: n.x, z: n.z, r: n.loai === "bui_trai_cay" ? 0.7 : 0.9 }); }; // TC_D06C2e: vòng sáng dưới cây / mỏ
 if (vung) {
   const loiBanCu = uiDk.loiBan; // chạm người của bạn: xem thông số (không ra lệnh được)
@@ -470,3 +482,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 21/11/2026 - BƯỚC: KC_09A (tải sẵn chung/am_thanh.js cho trang trận)
 // 25/11/2026 - BƯỚC: TC_D05C0a (sổ tướng: tải nền tướng của bé + MỌI tướng của sổ; trang trận xin được tuong / ky_nang / hieu_ung; be.thoiKy)
 // 25/11/2026 - BƯỚC: TC_D06D4 (điện thoại viết số tài nguyên gọn từ 10.000: 12,3K / 2,5M)
+// 26/11/2026 - BƯỚC: TC_D06D6 (ô đang xem gọn: nông dân chỉ ❤️; Thủ lĩnh ❤️ + công / thủ / nhanh / pháp; móc xemXay cho menu Xây)
