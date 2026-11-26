@@ -15,6 +15,8 @@
 //     đó; tới nơi hỏi máy chủ (catDo) -> đồ bay lên ô tài nguyên trên thanh, kho tăng (không quá sức chứa: kho đầy thì vẫn cầm,
 //     báo bé). Bé giao việc khác giữa chừng: đồ vẫn cầm, lần sau nông dân cất đồ về kho thì cất luôn.
 //     Máy chủ báo chưa tới (đường máy chủ tính thẳng) thì hỏi lại sau.
+//   - TC_D06D6b (người dùng 26/11/2026): bé giao lấy tài nguyên KHÁC loại khi đang cầm đồ rơi tài nguyên -> VỨT (mất, mayChu.vutDo),
+//     đi thẳng tới việc mới; cùng loại thì giữ; vật phẩm túi đồ vẫn mang về kho trước.
 // HÀM KHAI RA:
 //   taoDoRoi(the) -> { them(ds, dv?), nap(), moc }
 //     the = { ctx, cam, canvas, lang, diaHinh, mayChu, ten, tenMinh?, cauHinh, baoGoiY, capNhatKho?, oKho?(ma), lop, dangChon?(),
@@ -43,7 +45,7 @@ export function taoDoRoi(the) {
   const raManHinh = (x, y, z) => { vt.set(x, y, z).project(cam.camera); return [(vt.x + 1) / 2 * canvas.clientWidth, (1 - vt.y) / 2 * canvas.clientHeight, vt.z < 1]; };
   const gio = () => mayChu.gio();
   const giamDong = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let soNhat = 0, soLoi = 0, soCat = 0;
+  let soNhat = 0, soLoi = 0, soCat = 0, soVut = 0; // TC_D06D6b: soVut
   const xongViec = dv => { viec.delete(dv); delete dv.dangNhatDo; }; // dangNhatDo: nút 🧑‍🌾 (dt3d_nong_dan.js) không tính là rảnh
 
   // nhịp nhặt (giây / cái) = nhịp làm của nguồn cùng loại tài nguyên (cau_hinh.json lang.nguon)
@@ -288,11 +290,22 @@ export function taoDoRoi(the) {
       const v = { dv: su.dv, hang: [], luc: Date.now(), dangDi: null, giai: "ve", dungLai: true };
       xongViec(su.dv); viec.set(su.dv, v); veKho(v, su.ct);
     }
-    // TC_D06C6: bé giao việc (chặt, đào...) khi nông dân đang cầm đồ rơi loại khác: cất đồ trước, xong mới đi làm
+    // Bé giao việc (chặt, đào...) khi nông dân đang cầm đồ rơi loại khác. TC_D06D6b (người dùng 26/11/2026, thay luật TC_D06C6
+    // "cất đồ trước"): đồ rơi TÀI NGUYÊN loại khác VỨT luôn (mất, máy chủ kc_dt_vut_do), đi thẳng tới việc mới; cùng loại thì giữ.
+    // Vật phẩm (túi đồ, không phải tài nguyên) vẫn mang về kho trước như cũ.
     if (su.loai === "giao_viec" && su.dv && su.n) {
       const v0 = viec.get(su.dv);
       if (v0 && v0.giai !== "truoc") { thoiNhat(v0); xongViec(su.dv); }
-      const cm = camTheo.get(su.dv);
+      let cm = camTheo.get(su.dv);
+      const laTn = d => !d.nhom || d.nhom === "tai_nguyen";
+      const vut = cm ? [...cm.ds.values()].filter(d => laTn(d) && d.ma !== su.n.taiNguyen) : [];
+      if (vut.length && su.dv.idMayChu != null) {
+        for (const d of vut) boCam(su.dv, d.id);
+        soVut += vut.length;
+        if (mayChu.vutDo) mayChu.vutDo(ten, su.dv.idMayChu, su.n.taiNguyen).catch(() => null);
+        baoGoiY("🗑️ " + su.dv.ten + " bỏ " + vut.map(d => d.so + " " + (d.bieuTuong || "")).join(" ").trim() + ".");
+        cm = camTheo.get(su.dv);
+      }
       if (cm && !viec.has(su.dv) && [...cm.ds.values()].some(d => d.ma !== su.n.taiNguyen)) {
         const v = { dv: su.dv, hang: [], luc: Date.now(), dangDi: null, giai: "ve", sau: su.n, dungLai: true };
         viec.set(su.dv, v); veKho(v);
@@ -381,7 +394,7 @@ export function taoDoRoi(the) {
     moc: {
       ds: () => [...ds.values()].map(m => ({ ...m.d, hien: !m.el.hidden })),
       cam: () => [...camTheo].map(([dv, c]) => ({ dv: dv.idMayChu, ten: dv.ten, ds: [...c.ds.values()].map(d => ({ id: d.id, ma: d.ma, so: d.so })) })),
-      cham, soNhat: () => soNhat, soLoi: () => soLoi, soCat: () => soCat, msNhat,
+      cham, soNhat: () => soNhat, soLoi: () => soLoi, soCat: () => soCat, soVut: () => soVut, cam: dv => { const c = camTheo.get(dv); return c ? [...c.ds.values()].map(d => ({ id: d.id, ma: d.ma, so: d.so })) : []; }, msNhat,
       viec: () => [...viec.values()].map(v => ({ dv: v.dv.idMayChu, ten: v.dv.ten, hang: v.hang.slice(), dangDi: v.dangDi, giai: v.giai }))
     }
   };
@@ -389,3 +402,4 @@ export function taoDoRoi(the) {
 // 06/11/2026 - BƯỚC: TC_D06C4 (14:1x: bé khác thấy đồ nhưng không nhặt được; 14:28: lời báo ngắn gọn "Đây không phải đồ của bạn")
 // 06/11/2026 23:5x - BƯỚC: TC_D06C5 (đồ sát đất, nhỏ 1/4; nhặt mất thời gian như thu tài nguyên; cầm trên tay mang về kho)
 // 07/11/2026 - BƯỚC: TC_D06C6 (mỗi chuyến một loại, cất đồ thu hoạch trước khi nhặt, chạm Lều / kho để cất, giao việc khác thì cất trước)
+// 26/11/2026 - BƯỚC: TC_D06D6b (giao lấy tài nguyên khác: vứt đồ rơi tài nguyên đang cầm, moc soVut / cam)

@@ -69,7 +69,7 @@
 //     (du_lieu/roi_do.json; không có = không rơi). quaiThang(ten, id, dan) = quaiKet(..., "be", ...) + chỉ khi chính người đó đang giữ
 //     quái thì gieo đồ (dt_roi_do.js gieo): đồ NẰM TRÊN ĐẤT chỗ quái, chỉ bé thắng thấy, mất sau giayMat giây -> thêm { roi[] }.
 //     nhatDo(ten, id, dv): nông dân tới sát món đồ nhặt -> CẦM TRÊN TAY (TC_D06C5). catDo(ten, dv): nông dân cầm đồ tới Lều / kho -> kho (không quá
-//     sức chứa) / túi đồ. nongDanMienPhi(ten): làng hết nông dân -> tặng 1 người. doRoiDs(ten): đồ trên đất trong vùng (của bé + bé khác) + đồ bé đang cầm.
+//     sức chứa) / túi đồ. TC_D06D6b: vutDo(ten, dv, giu): vứt đồ rơi tài nguyên đang cầm trừ loại giu. nongDanMienPhi(ten): làng hết nông dân -> tặng 1 người. doRoiDs(ten): đồ trên đất trong vùng (của bé + bé khác) + đồ bé đang cầm.
 //     bangRoiDo() -> { ok, vatPham, quai, macDinh }.
 //   TC_D06C7a (07/11/2026): vaoVung / layQuanh trả lanhDia [{ chu, mat (base64, BD.maHoaLanhDia) }] lãnh địa của MỌI bé; quái không đứng trên ô cổng;
 //     quái đã có mà bị rào kín vẫn sống trong vùng rào (không bị dọn), chỉ không sinh mới trong lãnh địa.
@@ -723,6 +723,18 @@
         luu();
         return { ok: true, cat, kho: khoCua(be), gio: bay };
       },
+      // TC_D06D6b (người dùng 26/11/2026): giao lấy tài nguyên khác -> vứt mọi đồ rơi TÀI NGUYÊN đang cầm trừ loại giu (mất luôn,
+      // không vào kho); vật phẩm (túi đồ) giữ. -> { ok, vut: [{ id, ma, so }] } | { ok: false, ma: khong_phai_nguoi }
+      async vutDo(ten, dv, giu) {
+        const t = tenChuan(ten), be = tt.be[t];
+        if (!be) return { ok: false, lyDo: "Con chưa vào thung lũng." };
+        const nd = tt.donVi.find(u => u.id === Number(dv) && u.chu === t && u.loai === "nong_dan");
+        if (!nd) return { ok: false, ma: "khong_phai_nguoi", lyDo: "Chỉ nông dân của con mới làm được." };
+        const laTn = d => ((opt.roiDo && opt.roiDo.vatPham[d.ma]) || { nhom: "tai_nguyen" }).nhom === "tai_nguyen";
+        const vut = (tt.doRoi || []).filter(d => d.camDv === nd.id && laTn(d) && d.ma !== giu);
+        if (vut.length) { tt.doRoi = tt.doRoi.filter(d => !vut.includes(d)); luu(); }
+        return { ok: true, vut: vut.map(d => ({ id: d.id, ma: d.ma, so: d.so })) };
+      },
       // TC_D06C5 (người dùng 06/11/2026: "tài khoản không còn nông dân thì có một nông dân miễn phí"): bé đã có Lều trại xong mà
       // không còn nông dân nào -> máy chủ tặng một người ở ô quanh Lều (không trả giá). -> { ok, donVi: { id, x, z } } | { ok: false, ma: con_nong_dan | chua_co_leu }
       async nongDanMienPhi(ten) {
@@ -1311,3 +1323,4 @@
 // 11/11/2026 - BƯỚC: KC_06B2 (kho: câu kho giả cho trận quái, máy chủ giả chấm)
 // 12/11/2026 - BƯỚC: KC_06B3 (truLuot kèm số trận + mã kiểm câu; truTra tự chấm câu phòng thủ theo mã câu)
 // 20/11/2026 - BƯỚC: TC_D34B (ôn sau trận giả: ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc, _ttThu); sửa 12:xx: đồng hồ + luật 💎 mới
+// 26/11/2026 - BƯỚC: TC_D06D6b (vutDo: giao lấy tài nguyên khác thì vứt đồ rơi đang cầm)
