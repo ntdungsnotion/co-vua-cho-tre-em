@@ -80,7 +80,7 @@ const diaHinh = taoDiaHinh(ctx, moHinh, phan === "dia_hinh" || phan === "cong_tr
 if (phan === "cong_trinh") taoCongTrinh(ctx, moHinh, diaHinh, banDo, cam.huong);
 if (phan === "tai_nguyen") taoTaiNguyen(ctx, moHinh, diaHinh, lang);
 if (phan === "nhan_vat") {
-  const boNv = taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam: loai => cauHinh.lang.nguon[loai].nhipLam });
+  const boNv = taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam: loai => cauHinh.lang.nguon[loai].nhipLam, coNongDan: () => ((cauHinh.banDo || {}).nongDan || {}).co });
   const huong = Math.atan2(cam.huong.x, cam.huong.z); // nhìn về phía camera
   const dv = (x, z, them) => Object.assign({ ten: "", x, z, huongMuon: huong, trangThai: "dung", duong: [], viec: null, mang: { loai: null, so: 0 }, chay: false, ranh: false }, them);
   ["nhan", "quy", "tien"].forEach((cl, k) => boNv.tao(dv(5 + k * 2, 5 - k * 0.0), "thu_linh", NV.chuanHoa({ chungLoai: cl, gioi: k === 1 ? "nu" : "nam", mauDa: k, mauToc: k + 1, mauAo: k + 2 })));
@@ -96,3 +96,4 @@ ctx.khiDo(so => { $("xFps").textContent = so.fps + " khung/giây · " + so.lenhV
 window.__xem = { xong: true, fps: 0, phan };
 ctx.batDau(cam.camera);
 // 23/10/2026 19:00 - BƯỚC: TC_D02A
+// 27/11/2026 11:xx - BƯỚC: TC_D06D9 (cỡ nông dân = cauHinh.banDo.nongDan.co)

@@ -1039,7 +1039,7 @@
       // TC_D05C0c: &banNhap=1 = ▶ Xem thử của Quản trị › 🛡️ Tướng (trang này nằm trong khung phủ): lấy BẢN ĐANG SỬA của trang cha
       const banNhap = ten => { try { const f = window.parent !== window && window.parent.QDTT_banNhap; return f ? f(ten) : null; } catch (e) { return null; } };
       const napTep = NHUNG ? (ten => hoiKho("cauHinh", { ten }).then(k => (k && k.ok && k.ch) || null)) : TS.get("banNhap") === "1" ? banNhap : null;
-      const thu = () => window.KC_DT_SAN3D.tao($("san3d"), { napTep }).then(s => {
+      const thu = () => window.KC_DT_SAN3D.tao($("san3d"), { napTep, coNongDan: () => chTran && chTran.nongDan && chTran.nongDan.co }).then(s => {
         san3d = s; $("canvas").classList.add("an"); $("dangTai").classList.add("an");
         batNutChieu(); // TC_D06D3: nút 🔊 bỏ khỏi trận, bé chỉnh tiếng ở ⚙️ Cài đặt màn Thung lũng
         if (T) { san3d.datTran({ hoSo: hoSoBe(), quai: chon.quai, chu: chuQuai, doiThu: chon.doiThu }); if (T.dangLuot()) san3d.nghi(T.luot().tanCong === "quai"); }
@@ -1094,3 +1094,4 @@
 <!-- 26/11/2026 - BƯỚC: TC_D05C0b2 (trận công trình: &doiGioi / &doiDoi -> đối thủ là tướng thật của chủ) -->
 <!-- 26/11/2026 - BƯỚC: TC_D05C0c (&banNhap=1: ▶ Xem thử của Quản trị › 🛡️ Tướng dùng bản đang sửa của trang cha;
      27/11: chiêu dài ở đòn thường / chí mạng -> lượt sau chờ chiêu diễn xong) -->
+<!-- 27/11/2026 11:xx - BƯỚC: TC_D06D9 (sân 3D nhận coNongDan = nongDan.co của cài đặt trận) -->

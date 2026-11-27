@@ -145,7 +145,7 @@ const congTrinhVe = taoCongTrinh(ctx, moHinh, diaHinh, banDo, cam.huong, lang);
 let chayBd = null; // TC_D06C7e
 try { if (window.KC_DT_TRU_TRAN) chayBd = taoChay({ ctx, lang, cauHinh, doCao: diaHinh.doCao, hinhCt: id => congTrinhVe.hinhCt(id) }); } catch (e) { console.warn("Chưa dựng được lửa cháy", e); }
 const taiNguyen = taoTaiNguyen(ctx, moHinh, diaHinh, lang);
-const boNv = taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam: loai => CH.nguon[loai].nhipLam, tuongBd });
+const boNv = taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, { nhipLam: loai => CH.nguon[loai].nhipLam, tuongBd, coNongDan: () => ((cauHinh.banDo || {}).nongDan || {}).co }); // TC_D06D9: cỡ nông dân (Quản trị)
 ctx.moiKhung(dt => boNv.capNhat(dt));
 const goiY = $("d3GoiY");
 const baoGoiY = chu => { goiY.textContent = chu; };
@@ -471,6 +471,7 @@ window.__dt3d = { fps: 0, lenhVe: 0, tamGiac: 0, taiMs: 0, soByte, doHoa, soNong
   tiengChon: () => amChon && { goi: amChon.thongKe().daGoi, noi: amChon.daNoi() }, // TC_D06D2
   caiDat: () => caiDat && { mo: caiDat.dangMo(), tieng: amChon && { bat: amChon.dangBat(), to: amChon.toTieng(), nhac: amChon.nhacBat(), toNhac: amChon.toNhac() }, doHoa }, // TC_D06D3
   toanManHinh: () => tmh && { hoTro: tmh.hoTro, bat: tmh.batChon(), dang: tmh.dangToan() }, // TC_D06D7
+  coNongDan: () => boNv.dsHinh.filter(h => h.vaiTro === "nong_dan" && h.goc).map(h => +h.goc.scale.x.toFixed(4)), // TC_D06D9: cỡ hình nông dân (kịch bản thử)
   denChieu: () => { const o = denChon.dangChieu(); return o ? (o.isObject3D ? "vat" : "diem") : null; },
   chamNguon: (x, z, y) => cam.chieu(x, diaHinh.doCao(x, z) + (y || 0.5), z),
   tenThuLinh: () => dvTl.ten,
@@ -536,3 +537,4 @@ else baoGoiY("Chạm nông dân, rồi chạm cây hoặc mỏ để giao việc
 // 26/11/2026 - BƯỚC: TC_D06D8 (công trình đang sụp giữ dòng đếm ngược; nối uiDk.boXem)
 // 26/11/2026 - BƯỚC: TC_D05C0b2 (Thủ lĩnh trên bản đồ là tướng thật: màn tải chờ sổ tướng + bộ động tác + tướng của bé;
 //              dt3d_tuong_ban_do.js; tải nền theo thứ tự bé -> bạn cùng vùng -> còn lại; móc __dt3d.tuongTl / hinhTl)
+// 27/11/2026 11:xx - BƯỚC: TC_D06D9 (cỡ nông dân = cauHinh.banDo.nongDan.co; móc __dt3d.coNongDan cho kịch bản thử)

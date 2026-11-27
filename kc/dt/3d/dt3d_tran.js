@@ -45,6 +45,9 @@ import { OutputPass } from "../../thu_vien/three/postprocessing/OutputPass.js";
 
 const duongDan = p => new URL(p, import.meta.url).href;
 const X_BE = -1.55, X_QUAI = 1.55, TI_BE = 1.45, TI_QUAI = 1.25, CAO_TUONG = 1.85;
+// TC_D06D9: nông dân trong trận: cỡ mặc định (× Thủ lĩnh KayKit; số thật ở cau_hinh_tran_dau.json nongDan.co) + giây từ lúc vung tới lúc gậy chạm
+// (2H_Melee_Attack_Chop dài 1,63 giây: giơ gậy tới 0,60, nện xuống thấp nhất ~0,78-0,80; đo bằng xương tay handslot.r)
+const CO_ND_TRAN = 0.8, T_NEN_GAY = 0.78;
 const HUONG_BE = Math.PI / 2 - 0.6, HUONG_QUAI = -Math.PI / 2 + 0.85;
 // TC_D05C0a: KHÔNG còn phong cách chiêu theo tộc trong mã. Màu, tên chiêu, cách diễn, chiêu kết liễu lấy từ SỔ TƯỚNG
 // (dt/dt_tuong.js: mẫu tướng + kỹ năng + trình diễn). Chỉ giữ màu dự phòng khi sổ thiếu hẳn một ô (mất mạng / dữ liệu hỏng).
@@ -59,8 +62,11 @@ function anhTron(ve, co = 64) { const cv = document.createElement("canvas"); cv.
 
 // napTep(ten) -> Promise<json>: file sổ tướng ĐÃ trộn phần Quản trị sửa (trang trận trong khung nhờ bản đồ, xem thu_tran_dau.html).
 // Không đưa vào: đọc file mặc định (trang thử đứng riêng).
-async function tao(vungVe, { nhe, napTep } = {}) {
+async function tao(vungVe, { nhe, napTep, coNongDan } = {}) {
   nhe = nhe != null ? nhe : docDoHoa() === "nhe";
+  // TC_D06D9: cỡ nông dân trong trận (coNongDan: số hoặc hàm, đọc lúc dựng nông dân; trang trận: cau_hinh_tran_dau.json nongDan.co)
+  let coNdTran = CO_ND_TRAN;
+  const docCoNd = () => { const c = +(typeof coNongDan === "function" ? coNongDan() : coNongDan); coNdTran = c > 0 ? c : CO_ND_TRAN; };
   // tướng người thật (TC_D05B1): SỔ TƯỚNG CHUNG (TC_D05C0a, dt/dt_tuong.js) chọn mẫu; chỉ tải file của tướng đang đấu
   // (mỗi file ~1 MB, đã tải sẵn ở nền khi mở game - dt3d_luu_san.js), nhớ lại khi đấu tiếp. Lỗi thì dùng Thủ lĩnh KayKit như cũ.
   const boNhoTuong = {};
@@ -156,14 +162,24 @@ async function tao(vungVe, { nhe, napTep } = {}) {
   }
   function dungKayKit(hoSo) {
     if (hBe) boNv.xoa(hBe);
+    docCoNd();
+    if (hoSo.nongDan && tuong) { canh.remove(tuong.vo); tuong = null; } // TC_D06D9: trận nông dân sau trận Thủ lĩnh trên cùng sân
     hBe = boNv.tao(dvBe, hoSo.nongDan ? "nong_dan" : "thu_linh", hoSo);
-    hBe.vo.scale.setScalar(TI_BE);
-    hBe.vuKhiMacDinh = "1H_Axe"; if (hBe.vuKhi["1H_Axe"]) hBe.vuKhi["1H_Axe"].visible = true;
+    // TC_D06D9: nông dân cầm GẬY (dt3d_nhan_vat.js taoGay), cỡ = TI_BE × coNongDan (cau_hinh_tran_dau.json nongDan.co, Quản trị sửa được);
+    // hình gốc nông dân đã nhân cỡ Thung Lũng (opt.coNongDan của boNv = 1 ở sân đấu) nên ở đây chỉ nhân số của trận
+    const vk = hoSo.nongDan && hBe.vuKhi.gay ? "gay" : "1H_Axe";
+    hBe.vo.scale.setScalar(TI_BE * (hoSo.nongDan ? coNdTran : 1));
+    caoBe = 1.5 * TI_BE * (hoSo.nongDan ? coNdTran : 1);
+    hBe.vuKhiMacDinh = hBe.vuKhiTran = vk; for (const k in hBe.vuKhi) hBe.vuKhi[k].visible = k === vk;
     vlBe = []; hBe.goc.traverse(o => { if (o.isMesh && o.material.emissive && vlBe.indexOf(o.material) < 0) vlBe.push(o.material); });
   }
   // động tác theo kiểu (dt3d_tuong.js); Thủ lĩnh KayKit dự phòng thì đổi sang tên động tác KayKit
   const KAYKIT = { thu: ["Blocking"], do: ["Block"], chem: ["1H_Melee_Attack_Slice_Diagonal"], chemLon: ["1H_Melee_Attack_Slice_Diagonal"], phep: ["Spellcast_Shoot"], trung: ["Hit_A"], ne: ["Dodge_Backward"], thua: ["Hit_B"], mung: ["Cheer", "Cheer"] };
-  const dien = (kieu, xong) => { if (tuong) tuong.dien(kieu, xong); else if (hBe && KAYKIT[kieu]) boNv.dien(hBe, KAYKIT[kieu], null, xong, HUONG_BE); };
+  // TC_D06D9 (người dùng 27/11/2026: "nông dân chỉ có 1 chiêu duy nhất là 2 tay cầm gậy nện từ trên xuống"): mọi đòn của nông dân
+  // (thường / chí mạng) = 2H_Melee_Attack_Chop (hai tay giơ gậy qua đầu, nện xuống), không phép, không chiêu của Thủ lĩnh
+  const KAYKIT_DAN = Object.assign({}, KAYKIT, { chem: ["2H_Melee_Attack_Chop"], chemLon: ["2H_Melee_Attack_Chop"], phep: ["2H_Melee_Attack_Chop"], phepLon: ["2H_Melee_Attack_Chop"] });
+  const dien = (kieu, xong) => { const bo = laNongDan ? KAYKIT_DAN : KAYKIT;
+    if (tuong) tuong.dien(kieu, xong); else if (hBe && bo[kieu]) boNv.dien(hBe, bo[kieu], null, xong, HUONG_BE); };
   const voBe = () => tuong ? tuong.vo : hBe && hBe.vo;
 
   // --- quái ---
@@ -456,8 +472,8 @@ async function tao(vungVe, { nhe, napTep } = {}) {
       const hs = NV.chuanHoa(hoSo || {});
       if (hoSo && hoSo.tuong) hs.tuong = hoSo.tuong; // chuanHoa (dùng chung) không biết trường tuong
       if (hoSo && hoSo.nongDan) hs.nongDan = true; // TC_D06C2b
+      laNongDan = !!hs.nongDan; // TC_D05E (TC_D06D9: đặt TRƯỚC dungBe để động tác đứng đầu trận đúng bộ của nông dân)
       dungBe(hs);
-      laNongDan = !!hs.nongDan; // TC_D05E: nông dân đánh quái không có chiêu kết liễu của Thủ lĩnh
       ve = taoVe(hs); // TC_D05C0a: màu + chiêu theo mẫu tướng của sổ (nông dân: theo Thủ lĩnh cùng tộc, không kết liễu)
       if (haoQuang) canh.remove(haoQuang.nhom);
       haoQuang = hu.taoHaoQuang(ve.mau);
@@ -471,6 +487,8 @@ async function tao(vungVe, { nhe, napTep } = {}) {
     },
     nghi(bat) { bong.visible = !!bat; },
     dienBe(kieu) { dien(kieu); }, // TC_D05C0b1: cho kịch bản thử (vd "di", "chay" của tướng); trận không gọi
+    // TC_D06D9: kịch bản thử đọc hình bé / nông dân trên sân: cỡ, động tác KayKit đang diễn, vũ khí đang hiện
+    trangBe() { const v = voBe(); return { co: v ? +v.scale.x.toFixed(4) : 0, tuong: !!tuong, dongTac: hBe && hBe.dongTac, vuKhi: hBe ? Object.keys(hBe.vuKhi).filter(k => hBe.vuKhi[k].visible) : [] }; },
     demTuong() { let n = 0; canh.traverse(o => { if (o.name === "mixamorigHips") n++; }); return n; }, // TC_D05C0b2: kịch bản thử đếm tướng thật trên sân
     // KC_06B2: pha tụ lực lúc chờ máy chủ chấm; vai "danh" | "thu" -> tay cầm { bung(), tan(), manh(), choMang(b) }
     tuLuc(vai) { return taoTuLuc(vai); },
@@ -515,7 +533,23 @@ async function tao(vungVe, { nhe, napTep } = {}) {
           them(0.35, q => { qn.position.x = X_QUAI + Math.sin(q * Math.PI) * 0.45; qn.scale.set(TI_QUAI * (1 + Math.sin(q * Math.PI) * 0.18), TI_QUAI * (1 - Math.sin(q * Math.PI) * 0.18), TI_QUAI); });
         };
         const manh = k.chiMang || laKetLieu;
-        if (phep) { // đứng tại chỗ bắn cầu phép (vd Tiên tộc)
+        if (laNongDan && !tuong) { // TC_D06D9: nông dân lao tới, hai tay nện gậy từ trên xuống (mọi đòn, mọi tộc; chí mạng = nện mạnh hơn)
+          dien("chem");
+          const tamDanh = 0.8 + 0.6 * coNdTran; // dừng cách quái bằng tầm gậy (người nhỏ thì gậy ngắn, đứng gần hơn)
+          them(0.3, p => { dvBe.x = X_BE + (X_QUAI - tamDanh - X_BE) * Math.sin(p * Math.PI / 2); });
+          them(0.01, () => {
+            const p = tamQuai(), dat = V(X_QUAI - 0.4, 0.05, 0.25);
+            if (trung) {
+              quai.chop(0.3); am.trung(p.x, manh); vaCham(V(p.x - 0.1, p.y + 0.25, p.z), "#ffe2a8", manh);
+              hu.khoi(dat, "#cdbf9c", manh ? 12 : 7, manh ? 0.9 : 0.6, false);
+              hu.songXung(V(X_QUAI - 0.3, 0, 0.1), "#d8c9a8", manh ? 2.2 : 1.4, manh ? 0.6 : 0.45);
+              hu.rung(manh ? 0.07 : 0.035, manh ? 0.35 : 0.2);
+              them(0.35, q => { const s = Math.sin(q * Math.PI); qn.position.x = X_QUAI + s * 0.3; qn.scale.set(TI_QUAI * (1 + s * 0.24), TI_QUAI * (1 - s * 0.3), TI_QUAI * (1 + s * 0.24)); });
+            } else if (ne) quaiNe();
+            else { am.hut(dat.x); hu.khoi(dat, "#cdbf9c", 6, 0.6, false); hu.songXung(V(dat.x, 0, 0.2), "#d8c9a8", 1, 0.35); }
+          }, T_NEN_GAY);
+          them(0.35, p => { dvBe.x = X_QUAI - tamDanh + (X_BE - X_QUAI + tamDanh) * p; }, T_NEN_GAY + 0.45);
+        } else if (phep) { // đứng tại chỗ bắn cầu phép (vd Tiên tộc)
           dien(manh ? "phepLon" : "phep");
           them(0.01, () => {
             const tu = V(dvBe.x + 0.45, caoBe * 0.7, 0.25), den = tamQuai();
@@ -689,3 +723,5 @@ window.dispatchEvent(new Event("dt-san3d"));
 // 26/11/2026 - BƯỚC: TC_D05C0b2 (đối thủ trận công trình = tướng thật của chủ qua sổ tướng, doiThu { chungLoai, gioi, thoiKy };
 //              lỗi file thì Thủ lĩnh KayKit; san.demTuong() cho kịch bản thử)
 // 27/11/2026 - BƯỚC: TC_D05C0c (ô đòn nào cũng diễn được mọi kỹ năng: đòn đang ra = kết liễu | chí mạng | thường, diễn theo hàm vẽ; chiêu vùng / chiêu thêm ở đòn thường)
+// 27/11/2026 11:xx - BƯỚC: TC_D06D9 (nông dân: mọi đòn = hai tay nện gậy 2H_Melee_Attack_Chop, gậy chạm lúc T_NEN_GAY; cỡ = TI_BE × coNongDan
+//              (cau_hinh_tran_dau.json nongDan.co, Quản trị sửa); san.trangBe() cho kịch bản thử)
