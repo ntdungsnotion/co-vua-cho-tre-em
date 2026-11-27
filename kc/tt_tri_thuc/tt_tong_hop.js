@@ -290,7 +290,7 @@
         ketThuc: id => rpc("kc_tt_ket_thuc", { p_luot: id }).then(r => Object.assign({ ok: !!r.thanhCong }, r)),
         chuoi: id => rpc("kc_tt_chuoi_luot", { p_luot: id }),  // KC_03C7b: 🔥 chuỗi ngày ở màn kết quả
         danhHieu: rpc,                                           // KC_08F2: màn chúc mừng lên sao / danh hiệu
-        rpc                                                      // KC_11D: hộp 🙋 phản hồi lượt ⛔ (kc_bb_phan_hoi)
+        rpc                                                      // KC_11D: bé kháng nghị lượt ⛔ (chung/khang_nghi.js -> kc_kn_gui)
       };
       const kqMan = await goc.KC_TT.moLuot({
         luot: l, goi, tieuDe: "🌈 " + ten, phuDe: n + " câu · thưởng × " + soVi(+l.heSo || heSo()) + (kq.tiep ? " · chơi tiếp" : ""), nutKet: "🎯 Về Thử Thách",

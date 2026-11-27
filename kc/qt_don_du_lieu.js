@@ -30,14 +30,15 @@
     ["nhat_ky.giu_luot_ngay", "giu_luot_ngay", "📒 Lượt trả lời chi tiết (Sổ Ghi Nhớ)", "tiến độ học của bé không bao giờ bị xoá"],
     ["don.roi_do_ngay", "roi_do_ngay", "🎁 Lịch sử quái rơi đồ", ""],
     ["don.qt_lich_su_ngay", "qt_lich_su_ngay", "🎛️ Lịch sử sửa Thông số Đấu Trường", "luôn giữ 20 lần sửa gần nhất"],
-    ["don.bb_nghi_ngo_ngay", "bb_nghi_ngo_ngay", "📮 Nhật ký lượt chọn vội (chống bấm bừa)", "giữ lượt bé đã gửi mà chưa xử lý; sổ cấp thưởng không xoá"] // KC_11D
+    ["don.bb_nghi_ngo_ngay", "bb_nghi_ngo_ngay", "🦉 Nhật ký lượt chọn vội (chống bấm bừa)", "giữ lượt bé đã gửi mà chưa xử lý"], // KC_11D
+    ["don.khang_nghi_ngay", "khang_nghi_ngay", "📮 Kháng nghị của bé", "giữ kháng nghị bé đã gửi mà chưa xử lý; sổ cấp thưởng không xoá"] // KC_11D
   ];
   // Mục trong kết quả dọn
   var MUC = {
     tin_da_xem: "💡 Tin bé đã xem", tin_chua_xem: "💡 Tin bé chưa xem", cau_be_bi_loai: "🙈 Câu của bé bị loại",
     lich_su_cau: "📜 Lịch sử câu", dem_luot: "🔢 Đếm lượt mỗi ngày", phieu_kiem: "🔍 Phiếu kiểm câu (quá 1 ngày)",
     nhat_ky_chan: "📓 Nhật ký chặn", luot_tra_loi: "📒 Lượt trả lời", roi_do: "🎁 Rơi đồ", thong_so_dt: "🎛️ Thông số Đấu Trường",
-    bb_nghi_ngo: "📮 Lượt chọn vội" // KC_11D
+    bb_nghi_ngo: "🦉 Lượt chọn vội", khang_nghi: "📮 Kháng nghị" // KC_11D
   };
   // Tên dễ hiểu của bảng
   var TEN_BANG = {
@@ -47,7 +48,7 @@
     kc_don_nhat_ky: "Nhật ký dọn", kc_the_nho: "Thẻ nhớ (Kho tri thức)", kc_dt_cong_trinh: "Công trình Đấu Trường",
     kc_dt_o: "Ô bản đồ Đấu Trường", kc_dt_don_vi: "Nông dân / Thủ lĩnh", kc_dt_quai: "Quái Đấu Trường",
     lich_su_tran: "Lịch sử ván Cờ Vua", lich_su_doi_qua: "Lịch sử đổi quà", tai_khoan: "Tài khoản",
-    kc_bb_nghi_ngo: "Lượt chọn vội (chống bấm bừa)", kc_cap_thuong: "Sổ cấp thưởng cho bé" // KC_11D
+    kc_bb_nghi_ngo: "Lượt chọn vội (chống bấm bừa)", kc_khang_nghi: "Kháng nghị của bé", kc_cap_thuong: "Sổ cấp thưởng cho bé" // KC_11D
   };
   var CO_VUA = { lich_su_tran: 1, lich_su_doi_qua: 1 };
   var daMo = false, dangTai = false, kqXem = null;
@@ -171,4 +172,4 @@
   window.QDD = { mo: mo, tai: tai, daMo: function () { return daMo; } };
 })();
 // 17/11/2026 - BƯỚC: KC_07
-// 27/11/2026 - BƯỚC: KC_11D (số ngày giữ nhật ký lượt chọn vội 📮, mặc định 120)
+// 27/11/2026 - BƯỚC: KC_11D (số ngày giữ nhật ký lượt chọn vội + kháng nghị của bé, mặc định 120)

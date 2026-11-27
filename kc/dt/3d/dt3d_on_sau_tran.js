@@ -70,7 +70,7 @@ export function ganOnSauTran({ mayChu, be, baoGoiY, goc = "" }) {
                chuoi: id => (typeof mayChu.ttChuoi === "function" ? mayChu.ttChuoi(id) : null), // KC_03C7b: 🔥 chuỗi ngày
                // KC_08F2: màn chúc mừng lên sao / danh hiệu (chung/danh_hieu.js)
                danhHieu: typeof mayChu.goiDanhHieu === "function" ? (ham, ts) => mayChu.goiDanhHieu(ham, ts) : null,
-               // KC_11D: hộp 🙋 phản hồi lượt ⛔ (chung/bb_phan_hoi.js -> kc_bb_phan_hoi)
+               // KC_11D: bé kháng nghị lượt ⛔ (chung/khang_nghi.js -> kc_kn_gui)
                rpc: typeof mayChu.goiPhanHoi === "function" ? (ham, ts) => mayChu.goiPhanHoi(ham, ts) : null }
       });
     } catch (e) { console.warn("Màn ôn lỗi", e); }

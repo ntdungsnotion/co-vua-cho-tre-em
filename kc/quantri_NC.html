@@ -59,7 +59,7 @@
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
-       CẬP NHẬT: 27/11/2026 - KC_11D: Quản trị chung › 🎁 Cấp thưởng cho bé (dùng chung) + 📮 Bé phản hồi (qt_bam_bua.js, SQL KC_11D).
+       CẬP NHẬT: 27/11/2026 - KC_11D: Quản trị chung › 🎁 Cấp thưởng cho bé (qt_cap_thuong.js) + 📮 Bé kháng nghị (qt_khang_nghi.js), 2 module chung (SQL KC_11D).
        CẬP NHẬT: 24/11/2026 22:xx - KC_08F1: Quản trị chung › 🎯 Trình độ (qt_trinh_do.js + .css: các bé, đồ thị, đặt lại môn, thông số, đối soát).
        CẬP NHẬT: 24/11/2026 - KC_GB1: Quản trị chung › ⏱️ Tính giờ trả lời (qt_gio_bai.js: mọi thông số công thức giờ bài + xem thử + đối chiếu máy chủ).
        CẬP NHẬT: 24/11/2026 - KC_03C4b: 📚 Theo môn thêm khối 🔊 Âm thanh Theo môn (#qtmAmGoc, qt_kho_tieng.js nhánh "tm", tt_tri_thuc/tt_theo_mon_am.js).
@@ -544,9 +544,9 @@
         <button class="adminNutManHinh qtMuc" data-manhinh="cauhinhchung" type="button">⚙️ Cấu hình chung</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="giobai-chung" type="button">⏱️ Tính giờ trả lời</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="trinhdo" type="button">🎯 Trình độ</button>
-        <!-- KC_11D 27/11/2026: cấp thưởng cho bé (chức năng riêng, dùng chung) + bé phản hồi lượt chọn vội (qt_bam_bua.js) -->
+        <!-- KC_11D 27/11/2026: 2 module chung: cấp thưởng cho bé (qt_cap_thuong.js) + bé kháng nghị mọi tính năng (qt_khang_nghi.js) -->
         <button class="adminNutManHinh qtMuc" data-manhinh="capthuong" type="button">🎁 Cấp thưởng cho bé</button>
-        <button class="adminNutManHinh qtMuc" data-manhinh="bbphanhoi" type="button">📮 Bé phản hồi</button>
+        <button class="adminNutManHinh qtMuc" data-manhinh="khangnghi" type="button">📮 Bé kháng nghị</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotu" type="button">📖 Kho từ vựng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khocau" type="button">❓ Kho câu hỏi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotrithuc" type="button">📚 Kho tri thức</button>
@@ -898,16 +898,16 @@
     <section class="adminManHinh" id="manhinh-capthuong"> <!-- KC_11D -->
       <div class="adminKhoi">
         <h3>🎁 Cấp Thưởng Cho Bé (dùng chung cả app)</h3>
-        <p class="adminGhiChu">Người lớn tặng hoặc bù 💎 / 🪙 cho một bé: bù thưởng bị cắt oan (từ 📮 Bé phản hồi), thưởng chăm học, sửa lỗi của app... Cộng ngay vào túi bé, không tính vào trần 💎 mỗi ngày bé tự kiếm. Bé thấy thẻ ở khối 📬 Cô Cú báo trên Trang chủ và bấm 🎁 Nhận.</p>
+        <p class="adminGhiChu">Người lớn tặng hoặc bù 💎 / 🪙 cho một bé: chấp nhận kháng nghị (từ 📮 Bé kháng nghị), thưởng chăm học, sửa lỗi của app... Cộng ngay vào túi bé, không tính vào trần 💎 mỗi ngày bé tự kiếm. Bé thấy thẻ ở khối 📬 Cô Cú báo trên Trang chủ và bấm 🎁 Nhận.</p>
       </div>
-      <div id="qbbCtGoc"></div>
+      <div id="qctGoc"></div>
     </section>
 
-    <section class="adminManHinh" id="manhinh-bbphanhoi"> <!-- KC_11D -->
+    <section class="adminManHinh" id="manhinh-khangnghi"> <!-- KC_11D -->
       <div class="adminKhoi">
-        <h3>📮 Bé Phản Hồi (chống bấm bừa)</h3>
-        <p class="adminGhiChu">Lượt bé bị Cô Cú kết luận "chọn vội" nên không có thưởng. Bé thấy oan thì tự viết lý do (trong 3 ngày). Xem lời bé + từng câu (giây, số lần chạm thừa, dấu hiệu), rồi ✅ Trả thưởng (mở 🎁 Cấp thưởng với số thưởng lẽ ra) hoặc ↩️ Giữ nguyên kèm lời nhắn. Kết quả hiện ở Trang chủ của bé.</p>
-        <div id="qbbPhGoc"></div>
+        <h3>📮 Bé Kháng Nghị (chung mọi tính năng)</h3>
+        <p class="adminGhiChu">Bé thấy một quyết định của app chưa đúng (vd lượt bị Cô Cú kết luận "chọn vội" nên không có thưởng) thì tự viết lý do trong hạn. Xem lời bé + chi tiết, rồi ✅ Chấp nhận (việc có bù thưởng thì mở 🎁 Cấp thưởng điền sẵn số bù) hoặc ↩️ Giữ nguyên kèm lời nhắn. Kết quả hiện ở khối 📬 Cô Cú báo trên Trang chủ của bé.</p>
+        <div id="qknGoc"></div>
       </div>
     </section>
 
@@ -1813,7 +1813,8 @@
   <script src="chung/gio_bai.js"></script>  <!-- KC_GB1: module giờ bài chung (xem thử) -->
   <script src="qt_gio_bai.js"></script>     <!-- KC_GB1: ⏱️ Tính giờ trả lời -->
   <script src="qt_trinh_do.js"></script>    <!-- KC_08F1: 🎯 Trình độ -->
-  <script src="qt_bam_bua.js"></script>     <!-- KC_11D: 🎁 Cấp thưởng cho bé + 📮 Bé phản hồi -->
+  <script src="qt_cap_thuong.js"></script>  <!-- KC_11D: 🎁 Cấp thưởng cho bé (module chung) -->
+  <script src="qt_khang_nghi.js"></script>  <!-- KC_11D: 📮 Bé kháng nghị (module chung) -->
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
 </body>

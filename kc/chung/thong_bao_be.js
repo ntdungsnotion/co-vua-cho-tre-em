@@ -2,11 +2,13 @@
    FILE: chung/thong_bao_be.js
    CHỨC NĂNG: KHỐI "📬 CÔ CÚ BÁO" Ở TRANG CHỦ CỦA BÉ: thông báo cho bé DÙNG CHUNG toàn app (KC_11D).
               Máy chủ: bảng kc_be_thong_bao (KC_06F1) với loại "tc_*" = tin của Trang chủ; RPC kc_tb_trang_chu (tin chưa xem)
-              + kc_tb_da_xem (Nhận / Con hiểu rồi / Thôi ạ). Mỗi thẻ một việc, mới nhất trên cùng (Thiet_Ke_Chong_Bam_Bua.md 5.4):
-                tc_bb_cho_be     📚 bài chưa có thưởng vì chọn vội -> [🙋 Gửi phản hồi] [Thôi ạ] (hộp chung/bb_phan_hoi.js)
-                tc_bb_cho_xem    💌 con đã kể "…", thầy cô đang xem lại (tự thay khi có kết quả)
-                tc_bb_tra_thuong 🎉 thầy cô xem lại: con làm thật! +💎 +🪙 + lời nhắn -> [🎁 Nhận] (kim cương rơi)
-                tc_bb_giu_nguyen 🦉 lần sau đọc kỹ nhé + lời nhắn -> [Con hiểu rồi]
+              + kc_tb_da_xem (Nhận / Con hiểu rồi / Thôi ạ). Mỗi thẻ một việc, mới nhất trên cùng.
+              Tin BÉ KHÁNG NGHỊ (module chung, Thiet_Ke_Khang_Nghi.md): chữ do tính năng gửi kèm trong duLieu
+              (ten, bieuTuong, chuMo, chuChapNhan, chuGiu, cauHoi) nên tính năng mới không phải sửa file này:
+                tc_kn_cho_be     chuMo + "Con thấy chưa đúng?" -> [🙋 Gửi phản hồi] [Thôi ạ] (hộp chung/khang_nghi.js)
+                tc_kn_cho_xem    💌 con đã kể "…", thầy cô đang xem lại (tự thay khi có kết quả)
+                tc_kn_chap_nhan  🎉 chuChapNhan (+💎 +🪙 nếu được bù) + lời nhắn -> [🎁 Nhận] (kim cương rơi) hoặc [Vâng ạ]
+                tc_kn_giu_nguyen 🦉 chuGiu + lời nhắn -> [Con hiểu rồi]
                 tc_cap_thuong    🎁 thầy cô tặng con (Quản trị › 🎁 Cấp thưởng cho bé) + lý do + lời nhắn -> [🎁 Nhận]
               Loại tc_* khác sau này: hiện duLieu.chu (+ bieuTuong) và nút [Đã xem]; thêm cách vẽ riêng ở VE.
               Không có tin / chưa chạy SQL / mất mạng: khối tự ẩn.
@@ -14,7 +16,7 @@
                 rpc(tenHam, thamSo) -> Promise (trang tự thêm p_ten / p_ma_phien);
                 khiNhan({ kc, vang, diemSo, viVang }): bé vừa bấm 🎁 Nhận (trang chạy hiệu ứng + cập nhật số).
    ĐIỆN THOẠI: thẻ 1 cột, nút to ≥ 44 px xếp dưới chữ. MÁY TÍNH (≥ 700 px): hình to bên trái, nút bên phải.
-   PHỤ THUỘC: chung/bb_phan_hoi.js (hộp phản hồi; thiếu thì không có nút 🙋), chung/loc_ten.js (tuỳ chọn).
+   PHỤ THUỘC: chung/khang_nghi.js (hộp kháng nghị; thiếu thì không có nút 🙋), chung/loc_ten.js (tuỳ chọn).
    BƯỚC: KC_11D · NGÀY: 27/11/2026
    ================================================================ */
 (function (goc) {
@@ -56,11 +58,7 @@
   }
 
   const ngay = iso => { const d = new Date(iso); return isNaN(d) ? "" : ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2); };
-  // "bài Toán ngày 27/11" / "bài ôn sau trận ngày 27/11" / "bài 🌈 Tổng hợp ngày 27/11"
-  function tenBai(d) {
-    const ten = d.noi === "on_sau_tran" ? "ôn sau trận" : d.noi === "tong_hop" ? "🌈 Tổng hợp" : (d.monTen || "Thử Thách");
-    return "bài " + ten + (d.lucLuot ? " ngày " + ngay(d.lucLuot) : "");
-  }
+  const tenViec = d => d.ten || "việc này";   // "bài Toán ngày 27/11" (tính năng gửi kèm)
   const hoaDau = s => s.charAt(0).toUpperCase() + s.slice(1);
   function soThuong(d) {
     const s = tao("div", "tbbSo");
@@ -71,18 +69,20 @@
   const nhan = chu => tao("p", "tbbNhan", "“" + chu + "” – Thầy cô");
 
   // Mỗi loại: { hinh, vui?, ve(giua, d), nut: [[chữ, lớp, việc]] } với việc = "phan_hoi" | "nhan" | "xem"
+  const coThuong = d => (+d.kc > 0 || +d.vang > 0);
   const VE = {
-    tc_bb_cho_be: d => ({ hinh: d.monBieuTuong || "📚",
-      chu: [["tbbChinh", hoaDau(tenBai(d)) + " chưa có thưởng vì con chọn vội. Con thấy chưa đúng?"],
+    tc_kn_cho_be: d => ({ hinh: d.bieuTuong || "📮",
+      chu: [["tbbChinh", (d.chuMo || hoaDau(tenViec(d)) + " có kết quả con chưa vui.") + " Con thấy chưa đúng?"],
             d.han ? ["tbbPhu", "Con gửi được tới hết ngày " + ngay(d.han) + "."] : null],
       nut: [["🙋 Gửi phản hồi", "chinh", "phan_hoi"], ["Thôi ạ", "phu", "xem"]] }),
-    tc_bb_cho_xem: d => ({ hinh: "💌",
-      chu: [["", "Con đã kể: “" + (d.loiBe || "") + "”."], ["tbbPhu", "Thầy cô đang xem lại " + tenBai(d) + " nhé!"]], nut: [] }),
-    tc_bb_tra_thuong: d => ({ hinh: "🎉", vui: true,
-      chu: [["tbbChinh", "Thầy cô xem lại " + tenBai(d) + " rồi: con làm thật! Con được"], ["so"], d.loiNhan ? ["nhan", d.loiNhan] : null],
-      nut: [["🎁 Nhận", "vang", "nhan"]] }),
-    tc_bb_giu_nguyen: d => ({ hinh: "🦉",
-      chu: [["", "Thầy cô xem lại " + tenBai(d) + ", thấy nhiều câu con bấm liên tục. Lần sau mình đọc kỹ nhé, Cô Cú tin con làm được! 💪"],
+    tc_kn_cho_xem: d => ({ hinh: "💌",
+      chu: [["", "Con đã kể: “" + (d.loiBe || "") + "”."], ["tbbPhu", "Thầy cô đang xem lại " + tenViec(d) + " nhé!"]], nut: [] }),
+    tc_kn_chap_nhan: d => ({ hinh: "🎉", vui: true,
+      chu: [["tbbChinh", (d.chuChapNhan || "Thầy cô xem lại " + tenViec(d) + " rồi: con đúng!") + (coThuong(d) ? " Con được" : "")],
+            coThuong(d) ? ["so"] : null, d.loiNhan ? ["nhan", d.loiNhan] : null],
+      nut: [coThuong(d) ? ["🎁 Nhận", "vang", "nhan"] : ["Vâng ạ", "chinh", "xem"]] }),
+    tc_kn_giu_nguyen: d => ({ hinh: "🦉",
+      chu: [["", d.chuGiu || "Thầy cô xem lại " + tenViec(d) + " rồi, lần này mình giữ nguyên nhé. Cô Cú tin con! 💪"],
             d.loiNhan ? ["nhan", d.loiNhan] : null],
       nut: [["Con hiểu rồi", "chinh", "xem"]] }),
     tc_cap_thuong: d => ({ hinh: "🎁", vui: true,
@@ -101,7 +101,7 @@
     function taiLai() {
       return Promise.resolve().then(() => rpc("kc_tb_trang_chu", {})).then(kq => {
         if (!kq || !kq.thanhCong) { vung.hidden = true; vung.innerHTML = ""; return null; }
-        if (kq.phanHoi) soHop = Object.assign(soHop, kq.phanHoi);
+        if (kq.khangNghi) soHop = Object.assign(soHop, kq.khangNghi);
         ve(kq.tin || []);
         return kq;
       }, () => { vung.hidden = true; return null; });
@@ -129,7 +129,7 @@
         else giua.appendChild(tao("p", c[0], c[1]));
       });
       the.appendChild(giua);
-      const nutDs = m.nut.filter(n => n[2] !== "phan_hoi" || (goc.KC_BB_PHAN_HOI && soHop.bat !== false && d.luot));
+      const nutDs = m.nut.filter(n => n[2] !== "phan_hoi" || (goc.KC_KHANG_NGHI && soHop.bat !== false && d.nguon && d.thamChieu));
       if (nutDs.length) {
         const hang = tao("div", "tbbNut");
         nutDs.forEach(n => {
@@ -150,7 +150,9 @@
 
     function bam(viec, t, the, hang) {
       if (viec === "phan_hoi") {
-        goc.KC_BB_PHAN_HOI.moHop({ rpc, luot: t.duLieu.luot, moTa: hoaDau(tenBai(t.duLieu)), toiThieu: soHop.toiThieu, toiDa: soHop.toiDa })
+        const d = t.duLieu;
+        goc.KC_KHANG_NGHI.moHop({ rpc, nguon: d.nguon, thamChieu: d.thamChieu, cauHoi: d.cauHoi, moTa: d.ten ? hoaDau(d.ten) : "",
+                                  toiThieu: soHop.toiThieu, toiDa: soHop.toiDa })
           .then(r => { if (r && r.daGui) taiLai(); });
         return;
       }

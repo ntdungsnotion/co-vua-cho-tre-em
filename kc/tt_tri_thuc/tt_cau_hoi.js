@@ -23,7 +23,7 @@
               }) -> Promise<{ ketQua | null, dong: "xong" | "bo" | "loi" | "phan_hoi" | ma của nutThem, bamBua }>
               KC_11B: bamBua = kết luận chống bấm bừa trên máy (chỉ ghi). ketQua.bamBua của máy chủ { ketLuan: "bua", catThuong: true }
               -> màn ⛔ (nút 🙋 thay nút kết; goi.phanHoi(luotId, ketQua) nếu trang có; KC_11D: không có thì goi.rpc(tenHam, thamSo) +
-              chung/bb_phan_hoi.js mở hộp bé tự viết lý do ngay trong màn; thiếu cả hai thì dong = "phan_hoi").
+              chung/khang_nghi.js (bé kháng nghị, module chung, nguồn "bb") mở hộp bé tự viết lý do ngay trong màn; thiếu cả hai thì dong = "phan_hoi").
    CẦN NẠP TRƯỚC: chung/gio_bai.js (KC_GIO_BAI: trừ 💎 theo giờ, module chung toàn app);
               chung/bam_bua.js (KC_BAM_BUA, KC_11B; thiếu thì không ghi chạm).
    BƯỚC: TC_D34B (phần 2: dùng module giờ chung); KC_03C4 (nutThem, loiMoDau, 🪙 xu vàng mỗi câu đúng); KC_03C4b (sanKhau);
@@ -572,11 +572,13 @@
         const ph = tao("button", "ttNut tiep ttBbPhanHoi", "🙋 Con có suy nghĩ thật mà!"); ph.type = "button";
         ph.addEventListener("click", () => {
           if (goi && typeof goi.phanHoi === "function") { try { goi.phanHoi(luot.id, k); return; } catch (e) { /* đóng màn */ } }
-          // KC_11D: hộp bé tự viết lý do dùng chung (chung/bb_phan_hoi.js) qua goi.rpc của trang. Gửi xong: nút thành "💌 Đã gửi",
-          // "Thôi ạ" thành nút kết thường ngày; kết quả Cô Cú báo ở Trang chủ (📬). Bé đóng hộp không gửi: màn vẫn như cũ.
-          const PH = goc.KC_BB_PHAN_HOI;
-          if (PH && goi && typeof goi.rpc === "function") {
-            PH.moHop({ rpc: goi.rpc, luot: luot.id, cha: goc0, moTa: (k.monTen ? "Bài " + k.monTen : t.tieuDe) + " vừa rồi" }).then(r => {
+          // KC_11D: BÉ KHÁNG NGHỊ (module chung chung/khang_nghi.js, nguồn "bb", tham chiếu = mã lượt; máy chủ đã tự mở kháng nghị khi
+          // cắt thưởng) qua goi.rpc của trang. Gửi xong: nút thành "💌 Đã gửi", "Thôi ạ" thành nút kết thường ngày; kết quả Cô Cú
+          // báo ở Trang chủ (📬). Bé đóng hộp không gửi: màn vẫn như cũ.
+          const KN = goc.KC_KHANG_NGHI;
+          if (KN && goi && typeof goi.rpc === "function") {
+            KN.moHop({ rpc: goi.rpc, nguon: "bb", thamChieu: luot.id, cha: goc0, cauHoi: "Con kể Cô Cú nghe nhé, sao con chọn nhanh vậy?",
+                       moTa: (k.monTen ? "Bài " + k.monTen : t.tieuDe) + " vừa rồi" }).then(r => {
               if (!r || !r.daGui) return;
               ph.disabled = true; ph.textContent = "💌 Đã gửi Cô Cú"; ph.className = "ttNut ttNutPhu ttBbPhanHoi";
               thoi.textContent = t.nutKet; thoi.className = "ttNut tiep ttBbThoi"; hang.appendChild(thoi); thoi.focus({ preventScroll: true });
@@ -744,4 +746,4 @@
 // 27/11/2026 - BƯỚC: TC_D34D (KC_TT.hoi: hộp hỏi 2 nút dùng chung; xacNhanDong: ✕ hỏi lại trước khi thoát, đồng hồ dừng lúc hỏi)
 // 27/11/2026 - BƯỚC: KC_11B (chống bấm bừa: ghi chạm vùng đáp án chỉ trên máy, trả bamBua khi đóng; màn ⛔ khi máy chủ báo ketQua.bamBua cắt thưởng: nút 🙋 thay nút nhận)
 // 27/11/2026 - BƯỚC: KC_11C (gửi hanhVi kèm traLoi cho máy chủ; bong bóng Cô Cú nhắc khi 2 câu liền bấm dồn / chạm tức thì, tối đa 2 lần, không chặn bấm)
-// 27/11/2026 - BƯỚC: KC_11D (nút 🙋 ở màn ⛔ mở hộp bé tự viết lý do chung/bb_phan_hoi.js qua goi.rpc; gửi xong nút thành "💌 Đã gửi")
+// 27/11/2026 - BƯỚC: KC_11D (nút 🙋 ở màn ⛔ mở hộp bé kháng nghị chung/khang_nghi.js (nguồn "bb") qua goi.rpc; gửi xong nút thành "💌 Đã gửi")
