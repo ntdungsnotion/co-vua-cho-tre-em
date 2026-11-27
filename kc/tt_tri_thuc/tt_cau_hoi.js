@@ -9,7 +9,8 @@
               khung câu giữa ≤ 760 px, đáp án lưới 2 × 2, phím 1-6 trả lời ngay (chạm là chấm, tự sang câu).
    DÙNG:      KC_TT.moLuot({
                 luot,                    // kc_tt_luot_json của máy chủ: { id, tong, viTri, daTraLoi, cau, ketQua }
-                goi: { traLoi(luotId, viTri, chon, giay), ketThuc(luotId),     // trả { ok, ... } như dt_may_chu_sb.js
+                goi: { traLoi(luotId, viTri, chon, giay, hanhVi), ketThuc(luotId),     // trả { ok, ... } như dt_may_chu_sb.js
+                                                 // KC_11C: hanhVi { thua, thuaDon, som, an, nguongD3 } -> RPC p_hanh_vi (null: không có module)
                        chuoi(luotId) },  // KC_03C7b, tuỳ chọn: RPC kc_tt_chuoi_luot -> dòng 🔥 ở màn kết quả
                 tieuDe, phuDe, batBuoc (true: không có nút ✕), nutKet ("Về thung lũng"),
                 xacNhanDong ({ tieuDe, chu, co, khong }, TC_D34D: ✕ / Esc hỏi lại trước khi đóng; không có thì đóng luôn),
@@ -105,6 +106,30 @@
         return r.width > 0 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
       }) : null;
       const bbMo = () => { if (bbGhi) bbGhi.mo(luc0); };
+      // KC_11C (đặc tả 5.1): NHẮC NHẸ, KHÔNG CHẶN BẤM. sau_lien (2) câu liền có D1 / D2 -> bong bóng Cô Cú giay_hien giây,
+      // tối đa toi_da (2) lần mỗi lượt; lần sau phải đủ sau_lien câu MỚI kể từ lần nhắc trước. Bé lớp ≤ 3: máy đọc lời nhắc
+      // (trừ khi câu kế là câu nghe / Theo môn đang đọc bình luận thành tiếng, để tiếng không đè nhau). Nơi tắt nhắc
+      // (noi.<cheDo>.nhac = false) thì không hiện. Cấu hình: mặc định KC_BAM_BUA.MAC_DINH (Quản trị ở KC_11E).
+      let bbNhacTu = 0, bbDaNhac = 0, bbBongBong = null;
+      function bbXetNhac(kq) {
+        if (!BB || !bbDs.length || dong) return false;
+        const ch = BB.cauHinh(), noi = ch.noi && ch.noi[luot.cheDo];
+        if (noi && noi.nhac === false) return false;
+        const toiDa = Math.max(0, +ch.nhac.toi_da || 0);
+        if (bbDaNhac >= toiDa || !BB.canNhac(bbDs.slice(bbNhacTu), ch)) return false;
+        const ds = Array.isArray(ch.nhac.chu) ? ch.nhac.chu : [];
+        const chu = String(ds[Math.min(bbDaNhac, ds.length - 1)] || "Cô Cú nhắc con nhé! Mình đọc kỹ câu hỏi rồi hãy chọn nha 😊");
+        bbDaNhac++; bbNhacTu = bbDs.length;
+        if (bbBongBong) bbBongBong.remove();
+        const b = tao("div", "ttBbNhac"); b.setAttribute("role", "status"); b.setAttribute("aria-live", "polite");
+        b.append(tao("span", "ttBbNhacCu", "🦉"), tao("p", "", chu));
+        goc0.appendChild(b); bbBongBong = b;
+        setTimeout(() => { b.classList.add("het"); setTimeout(() => { b.remove(); if (bbBongBong === b) bbBongBong = null; }, 350); }, Math.max(1, +ch.nhac.giay_hien || 2.5) * 1000);
+        const A = AM();
+        const docDuoc = A && t.lop != null && t.lop <= 3 && !(kq && kq.cau && coAmThanh(kq.cau)) && !(sk && skAm.nhip().binhLuanThanhTieng);
+        if (docDuoc) { try { A.doc(chu.replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, ""), { lang: "vi-VN" }); } catch (e) { /* bỏ qua */ } }
+        return true;
+      }
       $(".ttTieuDe b").textContent = t.tieuDe;
       $(".ttTieuDe small").textContent = t.phuDe || "";
       $(".ttDong").hidden = !!t.batBuoc;
@@ -296,7 +321,8 @@
         if (skAm) skAm.dungTicTac();
         let kq = null;
         for (let lan = 0; lan < 3; lan++) {
-          try { kq = await goi.traLoi(luot.id, viTri, chon, giay); } catch (e) { kq = null; }
+          // KC_11C: gửi kèm hành vi bấm (số chạm thừa / dồn / sớm, ẩn trang, ngưỡng D3 của câu) cho máy chủ ghi + kết luận lượt
+          try { kq = await goi.traLoi(luot.id, viTri, chon, giay, bbHv ? Object.assign({ nguongD3: bbNguong }, bbHv) : null); } catch (e) { kq = null; }
           if (kq && (kq.ok || (kq.ma && kq.ma !== "mang"))) break;
           coCu("Mạng đang chập chờn, con đợi chút nhé");
           await ngu(1000 * (lan + 1));
@@ -333,9 +359,11 @@
       function nhanCham(kq) {
         dangGui = false;
         const dung = !!kq.dung;
-        const keNghe = !!(kq.cau && coAmThanh(kq.cau)) || !!(sk && skAm.nhip().binhLuanThanhTieng); // KC_03C4b: bình luận đọc thành tiếng thay lời khen // câu kế là câu nghe: không nói lời khen / động viên (câu nghe tự đọc ngay, lời sẽ đè lên) (người dùng 21/11/2026)
+        let keNghe = !!(kq.cau && coAmThanh(kq.cau)) || !!(sk && skAm.nhip().binhLuanThanhTieng); // KC_03C4b: bình luận đọc thành tiếng thay lời khen // câu kế là câu nghe: không nói lời khen / động viên (câu nghe tự đọc ngay, lời sẽ đè lên) (người dùng 21/11/2026)
         daTraLoi[viTri] = { dung, hoiLai: !!(cau && cau.hoiLai) };
         if (bbHv) bbDs.push({ hanhVi: bbHv, giay: bbGiay, nguongD3: bbNguong, dung, soDapAn: (cau.dapAn || []).length, hoiLai: !!(cau && cau.hoiLai), o: chon });
+        const nhac = bbXetNhac(kq); // KC_11C: 2 câu liền bấm dồn / chạm tức thì -> Cô Cú nhắc (không khen câu này)
+        if (nhac) keNghe = true;
         veDongHo();
         daCham = kq;
         tong = Number.isInteger(kq.tong) ? kq.tong : tong;
@@ -363,6 +391,7 @@
           ph.appendChild(p);
           tieng.tram(t.lop, keNghe); coCu(kq.hoiLai ? "Lát nữa Cô Cú hỏi lại để con nhớ nhé" : "Không sao, mình nhớ lần sau nhé");
         }
+        if (nhac) { coCu("Con đọc kỹ rồi hãy chọn nhé!"); tuThe = "dung"; } // máy tính: cột Cô Cú không khen câu bấm dồn (lời nhắc ở bong bóng)
         veCham();
         if (sk) { binhLuan(kq, dung, dap); return; }
         setTimeout(tiep, dung ? 700 : 1300);
@@ -701,3 +730,4 @@
 // 25/11/2026 - BƯỚC: KC_08F2 (goi.danhHieu = rpc: màn kết quả gọi KC_DANH_HIEU.xet, chúc mừng lên sao / danh hiệu)
 // 27/11/2026 - BƯỚC: TC_D34D (KC_TT.hoi: hộp hỏi 2 nút dùng chung; xacNhanDong: ✕ hỏi lại trước khi thoát, đồng hồ dừng lúc hỏi)
 // 27/11/2026 - BƯỚC: KC_11B (chống bấm bừa: ghi chạm vùng đáp án chỉ trên máy, trả bamBua khi đóng; màn ⛔ khi máy chủ báo ketQua.bamBua cắt thưởng: nút 🙋 thay nút nhận)
+// 27/11/2026 - BƯỚC: KC_11C (gửi hanhVi kèm traLoi cho máy chủ; bong bóng Cô Cú nhắc khi 2 câu liền bấm dồn / chạm tức thì, tối đa 2 lần, không chặn bấm)

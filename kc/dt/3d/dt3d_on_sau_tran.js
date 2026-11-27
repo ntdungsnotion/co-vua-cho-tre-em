@@ -66,7 +66,7 @@ export function ganOnSauTran({ mayChu, be, baoGoiY, goc = "" }) {
         luot, tieuDe: "📚 Ôn lại trận vừa rồi", phuDe: "", batBuoc: false, nutKet: "🎁 Nhận thưởng",
         xacNhanDong: { tieuDe: "Thoát bài ôn?", chu: "Thoát bây giờ thì không nhận 💎 của bài này.", co: "🚪 Thoát", khong: "↩ Ôn tiếp" },
         goc, lop: Number.isFinite(+be.lop) ? +be.lop : null, hoSo: be.hoSo || null,
-        goi: { traLoi: (id, viTri, chon, giay) => mayChu.ttTraLoi(id, viTri, chon, giay), ketThuc: id => mayChu.ttKetThuc(id),
+        goi: { traLoi: (id, viTri, chon, giay, hanhVi) => mayChu.ttTraLoi(id, viTri, chon, giay, hanhVi), ketThuc: id => mayChu.ttKetThuc(id),
                chuoi: id => (typeof mayChu.ttChuoi === "function" ? mayChu.ttChuoi(id) : null), // KC_03C7b: 🔥 chuỗi ngày
                // KC_08F2: màn chúc mừng lên sao / danh hiệu (chung/danh_hieu.js)
                danhHieu: typeof mayChu.goiDanhHieu === "function" ? (ham, ts) => mayChu.goiDanhHieu(ham, ts) : null }
@@ -103,3 +103,4 @@ export function ganOnSauTran({ mayChu, be, baoGoiY, goc = "" }) {
 // 24/11/2026 - BƯỚC: KC_03C7b (goi.chuoi: dòng 🔥 chuỗi ngày sau màn ôn)
 // 25/11/2026 - BƯỚC: KC_08F2 (goi.danhHieu: màn chúc mừng lên sao / danh hiệu sau màn ôn)
 // 27/11/2026 - BƯỚC: TC_D34D (ôn không bắt buộc: bảng mời Ôn ngay / Để sau, ✕ thoát mất thưởng, mayChu.ttOnBo)
+// 27/11/2026 - BƯỚC: KC_11C (traLoi chuyển hanhVi cho mayChu.ttTraLoi: chống bấm bừa)

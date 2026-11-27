@@ -264,8 +264,10 @@
       async ttLuotDang() { return goiTt("kc_tt_luot_dang", {}); },
       // TC_D34D: bé bỏ lượt ôn (lyDo 'de_sau' = bảng mời, 'thoat' = ✕ giữa chừng) -> { ok, bo }
       async ttOnBo(luot, lyDo) { return goiTt("kc_tt_on_sau_tran_bo", { p_luot: luot, p_ly_do: lyDo === "thoat" ? "thoat" : "de_sau" }); },
-      async ttTraLoi(luot, viTri, chon, giay) {
-        return goiTt("kc_tt_tra_loi", { p_luot: luot, p_vi_tri: viTri, p_chon: chon, p_giay: Number.isFinite(giay) ? Math.round(giay * 100) / 100 : null });
+      // KC_11C: hanhVi (chống bấm bừa: thua, thuaDon, som, an, nguongD3) gửi kèm khi có
+      async ttTraLoi(luot, viTri, chon, giay, hanhVi) {
+        return goiTt("kc_tt_tra_loi", Object.assign({ p_luot: luot, p_vi_tri: viTri, p_chon: chon, p_giay: Number.isFinite(giay) ? Math.round(giay * 100) / 100 : null },
+          hanhVi && typeof hanhVi === "object" ? { p_hanh_vi: hanhVi } : {}));
       },
       async ttKetThuc(luot) { return goiTt("kc_tt_ket_thuc", { p_luot: luot }); },
       // KC_03C7b: chuỗi ngày sau lượt -> { ok, thanhCong, chuoi, ngayMoi, thuong } (màn kết quả, KC_TT.veChuoi)
@@ -310,3 +312,4 @@
 // 26/11/2026 - BƯỚC: TC_D06D6b (vutDo: kc_dt_vut_do)
 // 26/11/2026 - BƯỚC: TC_D05C0b2 (thuLinhVung: kc_dt_thu_linh_vung)
 // 27/11/2026 - BƯỚC: TC_D34D (ttOnBo: kc_tt_on_sau_tran_bo)
+// 27/11/2026 - BƯỚC: KC_11C (ttTraLoi gửi kèm p_hanh_vi khi có: chống bấm bừa)
