@@ -274,6 +274,7 @@ function qdttVeTuong() {
       + qdttO("tuong", g.concat("cao"), "Chiều cao (m, 1,85 = người lớn)", "so")
       + qdttO("tuong", g.concat("an"), "Ẩn tướng (không dùng được nữa)", "bool")
       + '<div class="qdTenCon">⚔️ 3 đòn tự động trong trận</div>'
+      + '<p class="adminGhiChu qdttNho">Ô nào cũng gán được mọi kỹ năng trong kho. Chiêu dài (phủ vùng, có camera) ở đòn thường thì mỗi lần trúng diễn trọn chiêu (~3 giây).</p>'
       + qdttO("tuong", g.concat(["kyNang", "thuong"]), "Đòn thường", "chon", { lc: lcKn })
       + qdttO("tuong", g.concat(["kyNang", "chiMang"]), "Đòn chí mạng", "chonNull", { lc: lcKn, dau: "— không có" })
       + qdttO("tuong", g.concat(["kyNang", "ketLieu"]), "Đòn kết liễu", "chonNull", { lc: lcKn, dau: "— dùng đòn chí mạng" })

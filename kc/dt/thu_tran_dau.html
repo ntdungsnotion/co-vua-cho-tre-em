@@ -807,7 +807,8 @@
       if (k.ketThuc) { ketThucLuc = bayGio(); setTimeout(() => { if (san3d) san3d.ketThuc(k.ketThuc.thang); }, msDien ? msDien + 150 : 700); setTimeout(() => moKetThuc(k.ketThuc), msDien ? msDien + 2050 : 2600); }
       else { // tự sang lượt sau (người dùng 29/10/2026); bé sai / không trả lời thì đọc lời giải lâu hơn
         const beDung = k.beChon != null && cauNay.dung.indexOf(k.beChon) >= 0;
-        henTiep = setTimeout(moLuotMoi, (beDung ? chTran.latBaiGiay.dung : chTran.latBaiGiay.sai) * 1000);
+        // TC_D05C0c: đòn thường / chí mạng có thể là chiêu dài (chiêu vùng...) -> chờ chiêu diễn xong rồi mới sang lượt
+        henTiep = setTimeout(moLuotMoi, Math.max((beDung ? chTran.latBaiGiay.dung : chTran.latBaiGiay.sai) * 1000, msDien ? msDien + 400 : 0));
       }
     }
 
@@ -1091,4 +1092,5 @@
 <!-- 21/11/2026 - BƯỚC: KC_09A (đọc câu nghe qua chung/am_thanh.js: chữa câu nghe im trong trận) -->
 <!-- 26/11/2026 - BƯỚC: TC_D06D5 (chốt chiều cao sân bằng px: thanh địa chỉ ẩn / hiện không làm câu hỏi nhảy, sân 3D không chớp đen) -->
 <!-- 26/11/2026 - BƯỚC: TC_D05C0b2 (trận công trình: &doiGioi / &doiDoi -> đối thủ là tướng thật của chủ) -->
-<!-- 26/11/2026 - BƯỚC: TC_D05C0c (&banNhap=1: ▶ Xem thử của Quản trị › 🛡️ Tướng dùng bản đang sửa của trang cha) -->
+<!-- 26/11/2026 - BƯỚC: TC_D05C0c (&banNhap=1: ▶ Xem thử của Quản trị › 🛡️ Tướng dùng bản đang sửa của trang cha;
+     27/11: chiêu dài ở đòn thường / chí mạng -> lượt sau chờ chiêu diễn xong) -->
