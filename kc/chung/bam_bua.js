@@ -29,7 +29,7 @@
   "use strict";
   const dong = o => { Object.values(o).forEach(v => { if (v && typeof v === "object") dong(v); }); return Object.freeze(o); };
   const MAC_DINH = dong({
-    che_do: "chi_ghi", // KC_11C: máy chủ chỉ ghi, chưa cắt thưởng; KC_11D (bé có đường phản hồi) đổi "day_du" (đặc tả mục 13)
+    che_do: "day_du", // KC_11D: bé đã có đường phản hồi + admin bù thưởng -> cắt thưởng lượt ⛔ (= kc_bb_mac_dinh() máy chủ)
     phan_hoi: { bat: true, han_phan_hoi_ngay: 3, do_dai_loi_toi_thieu: 5, do_dai_loi: 200,
                 mau_tra_thuong: "Con làm thật rồi, Cô Cú xin lỗi con nhé!", mau_giu_nguyen: "Lần sau mình đọc kỹ từng câu nhé!" },
     cham: { giay_don: 1.0, cham_thua_toi_thieu: 2, giay_tuc_thi: 0.4 },
@@ -184,3 +184,4 @@
 })(typeof window !== "undefined" ? window : globalThis);
 // 27/11/2026 - BƯỚC: KC_11B (lõi chống bấm bừa: bộ ghi chạm, D1 / D2 / D3, kết luận lượt; chưa gửi máy chủ)
 // 27/11/2026 - BƯỚC: KC_11C (mặc định che_do chi_ghi như máy chủ kc_bb_mac_dinh, KC_11D đổi day_du)
+// 27/11/2026 - BƯỚC: KC_11D (mặc định che_do day_du: bật cắt thưởng cùng lúc với máy chủ)

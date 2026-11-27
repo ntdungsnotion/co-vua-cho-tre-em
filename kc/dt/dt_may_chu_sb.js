@@ -277,6 +277,11 @@
         if (ham !== "kc_td_danh_hieu_be" && ham !== "kc_td_danh_hieu_da_xem") return { ok: false, thanhCong: false };
         return goiTt(ham, thamSo || {});
       },
+      // KC_11D: bé kháng nghị lượt ⛔ bấm bừa (module chung chung/khang_nghi.js; chỉ RPC kc_kn_gui)
+      async goiPhanHoi(ham, thamSo) {
+        if (ham !== "kc_kn_gui") return { ok: false, thanhCong: false };
+        return goiTt(ham, thamSo || {});
+      },
       async monChuDe() {
         let kq; try { kq = await opt.goiRpc("kc_mon_chu_de", {}); } catch (e) { kq = null; }
         return kq && kq.thanhCong === true ? Object.assign({ ok: true }, kq) : { ok: false, ma: "mang" };
@@ -313,3 +318,4 @@
 // 26/11/2026 - BƯỚC: TC_D05C0b2 (thuLinhVung: kc_dt_thu_linh_vung)
 // 27/11/2026 - BƯỚC: TC_D34D (ttOnBo: kc_tt_on_sau_tran_bo)
 // 27/11/2026 - BƯỚC: KC_11C (ttTraLoi gửi kèm p_hanh_vi khi có: chống bấm bừa)
+// 27/11/2026 - BƯỚC: KC_11D (goiPhanHoi: RPC kc_kn_gui cho hộp kháng nghị 🙋 ở màn ôn)

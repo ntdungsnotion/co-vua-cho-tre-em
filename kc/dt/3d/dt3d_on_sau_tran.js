@@ -69,7 +69,9 @@ export function ganOnSauTran({ mayChu, be, baoGoiY, goc = "" }) {
         goi: { traLoi: (id, viTri, chon, giay, hanhVi) => mayChu.ttTraLoi(id, viTri, chon, giay, hanhVi), ketThuc: id => mayChu.ttKetThuc(id),
                chuoi: id => (typeof mayChu.ttChuoi === "function" ? mayChu.ttChuoi(id) : null), // KC_03C7b: 🔥 chuỗi ngày
                // KC_08F2: màn chúc mừng lên sao / danh hiệu (chung/danh_hieu.js)
-               danhHieu: typeof mayChu.goiDanhHieu === "function" ? (ham, ts) => mayChu.goiDanhHieu(ham, ts) : null }
+               danhHieu: typeof mayChu.goiDanhHieu === "function" ? (ham, ts) => mayChu.goiDanhHieu(ham, ts) : null,
+               // KC_11D: bé kháng nghị lượt ⛔ (chung/khang_nghi.js -> kc_kn_gui)
+               rpc: typeof mayChu.goiPhanHoi === "function" ? (ham, ts) => mayChu.goiPhanHoi(ham, ts) : null }
       });
     } catch (e) { console.warn("Màn ôn lỗi", e); }
     if (kq && kq.dong === "bo") await boLuot(luot, "thoat"); // TC_D34D: ✕ giữa chừng = bỏ lượt, mất thưởng
@@ -104,3 +106,4 @@ export function ganOnSauTran({ mayChu, be, baoGoiY, goc = "" }) {
 // 25/11/2026 - BƯỚC: KC_08F2 (goi.danhHieu: màn chúc mừng lên sao / danh hiệu sau màn ôn)
 // 27/11/2026 - BƯỚC: TC_D34D (ôn không bắt buộc: bảng mời Ôn ngay / Để sau, ✕ thoát mất thưởng, mayChu.ttOnBo)
 // 27/11/2026 - BƯỚC: KC_11C (traLoi chuyển hanhVi cho mayChu.ttTraLoi: chống bấm bừa)
+// 27/11/2026 - BƯỚC: KC_11D (goi.rpc = mayChu.goiPhanHoi: hộp 🙋 bé phản hồi lượt ⛔)
