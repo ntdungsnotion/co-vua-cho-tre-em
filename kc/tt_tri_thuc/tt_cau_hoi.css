@@ -273,6 +273,26 @@
 .ttBbPhanHoi { white-space: normal; }
 @media (max-width: 520px) { .ttKqBua .ttHangNut { flex-direction: column; align-items: stretch; width: 100%; } .ttBbPhanHoi { order: -1; } }
 @media (min-width: 900px) { .ttBbTieuDe { font-size: 2rem; } .ttBbChu { font-size: 1.2rem; } }
+/* ---------------- KC_11C: bong bóng Cô Cú nhắc (không chặn bấm: pointer-events none, nằm trên đầu, không che đáp án) ---------------- */
+.ttBbNhac { position: fixed; z-index: 6; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 10px); transform: translateX(-50%);
+  width: min(92vw, 460px); box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  border-radius: 18px; background: #fff6dc; color: #2a1d05; box-shadow: 0 6px 22px rgba(0,0,0,.35); pointer-events: none;
+  animation: ttBbVao .35s cubic-bezier(.3,1.5,.5,1); transition: opacity .3s, transform .3s; }
+.ttMan .ttBbNhac p { margin: 0; flex: 1; font-size: 1.02rem; line-height: 1.35; font-weight: 600; color: #2a1d05; }
+.ttBbNhacCu { font-size: 2rem; line-height: 1; }
+.ttBbNhac.het { opacity: 0; transform: translate(-50%, -8px); }
+.ttMan.ketQua .ttBbNhac { display: none; }
+@keyframes ttBbVao { from { opacity: 0; transform: translate(-50%, -12px) scale(.9); } to { opacity: 1; transform: translateX(-50%); } }
+@media (min-width: 900px) {
+  /* máy tính: cạnh cột Cô Cú bên trái, trên cùng; khung câu giữa không bị che */
+  .ttBbNhac { left: 24px; top: 24px; transform: none; width: 300px; }
+  .ttBbNhac.het { transform: translateY(-8px); }
+  .ttMan .ttBbNhac p { font-size: 1.1rem; }
+  @keyframes ttBbVaoMt { from { opacity: 0; transform: translateY(-12px) scale(.9); } to { opacity: 1; transform: none; } }
+  .ttBbNhac { animation-name: ttBbVaoMt; }
+}
+@media (prefers-reduced-motion: reduce) { .ttBbNhac { animation: none; } }
+/* 27/11/2026 - BƯỚC: KC_11C (bong bóng Cô Cú nhắc khi 2 câu liền bấm dồn / chạm tức thì) */
 /* 27/11/2026 - BƯỚC: TC_D34D (hộp hỏi 2 nút: mời ôn sau trận, hỏi lại khi thoát) */
 /* 27/11/2026 - BƯỚC: KC_11B (màn kết quả lượt ⛔ bấm bừa: nút 🙋 phản hồi thay nút nhận) */
 /* 24/11/2026 - BƯỚC: KC_03C4b (pha đọc câu, hiện 4 đáp án, bình luận + nút bỏ qua) */
