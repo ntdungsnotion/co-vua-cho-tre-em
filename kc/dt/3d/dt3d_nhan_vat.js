@@ -149,6 +149,29 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, opt = {}) {
     return nhom;
   }
 
+  // TC_D06D9: GẬY GỖ của nông dân trong trận (người dùng 27/11/2026: "2 tay cầm gậy nện từ trên xuống"): đặt cùng chỗ cầm với
+  // rìu hai tay (động tác 2H_Melee_Attack_Chop của KayKit cầm hai tay ở cán), cán dài bằng rìu, đầu gậy to hơn (gậy nện)
+  function taoGay(riu) {
+    const g = riu.geometry; g.computeBoundingBox();
+    const bb = g.boundingBox, kt = bb.getSize(new THREE.Vector3()), tam = bb.getCenter(new THREE.Vector3());
+    const truc = kt.x >= kt.y && kt.x >= kt.z ? "x" : (kt.y >= kt.z ? "y" : "z");
+    const huong = new THREE.Vector3(); huong[truc] = Math.sign(tam[truc]) || 1;
+    const L = kt[truc] * 1.05, r = L * 0.028;
+    const nhom = new THREE.Group(), trong = new THREE.Group();
+    const can = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.9, L * 0.8, 7), vl("#8a5a2b")); can.position.y = L * 0.28;
+    const dau = new THREE.Mesh(new THREE.CylinderGeometry(r * 2.1, r * 1.5, L * 0.3, 8), vl("#6b4422")); dau.position.y = L * 0.8;
+    const bit = new THREE.Mesh(new THREE.SphereGeometry(r * 2.1, 8, 6), vl("#6b4422")); bit.position.y = L * 0.95; bit.scale.y = 0.6;
+    can.castShadow = dau.castShadow = bit.castShadow = !nhe;
+    trong.add(can, dau, bit);
+    trong.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), huong);
+    nhom.add(trong);
+    nhom.position.copy(riu.position); nhom.quaternion.copy(riu.quaternion); nhom.scale.copy(riu.scale);
+    riu.parent.add(nhom); nhom.visible = false;
+    return nhom;
+  }
+  // TC_D06D9: cỡ nông dân (× hình gốc). opt.coNongDan: số hoặc hàm trả số (Quản trị › Thông số › Số làng / bản đồ › banDo.nongDan.co)
+  const coNongDan = () => { const c = +(typeof opt.coNongDan === "function" ? opt.coNongDan() : opt.coNongDan); return c > 0 ? c : 1; };
+
   const dsHinh = [];
   const vlTrung = new THREE.MeshBasicMaterial({ visible: false });
   const hinhTrung = new THREE.CylinderGeometry(0.6, 0.6, 1.5, 8).translate(0, 0.75, 0);
@@ -198,8 +221,9 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, opt = {}) {
     });
     phuKienChungLoai(xuongDau, hoSo, laThuLinh, mauDa, mauToc);
     if (!laThuLinh && vuKhi["1H_Axe"]) vuKhi.xien = taoXien(vuKhi["1H_Axe"]);
+    if (!laThuLinh && vuKhi["2H_Axe"]) vuKhi.gay = taoGay(vuKhi["2H_Axe"]); // TC_D06D9
     const doMang = laThuLinh ? null : taoDoMang(xuongNguc, xuongTay);
-    goc.scale.setScalar(TI_NV * (laThuLinh ? 1.12 : 1));
+    goc.scale.setScalar(TI_NV * (laThuLinh ? 1.12 : vaiTro === "nong_dan" ? coNongDan() : 1)); // TC_D06D9: nông dân nhỏ lại cho cân với tướng
     const vo = new THREE.Group(); vo.add(goc);
     const trung = new THREE.Mesh(hinhTrung, vlTrung); vo.add(trung);
     vo.position.set(dv.x, diaHinh.doCaoDi(dv.x, dv.z), dv.z);
@@ -336,10 +360,12 @@ export function taoBoNhanVat(ctx, glbNv, moHinh, diaHinh, NV, opt = {}) {
     themDongTac(clip) { clipTran = clip; for (const h of dsHinh) if (h.tron) for (const c of clip) if (!h.dt[c.name]) h.dt[c.name] = h.tron.clipAction(c); },
     dien(h, ds, khiDoi, khiXong, huong) {
       if (!h.tron) { if (khiXong) khiXong(); return; } // tướng thật / đang tải: không có động tác KayKit
-      hienVuKhi(h, "1H_Axe"); if (h.vuKhi["1H_Axe"]) h.vuKhi["1H_Axe"].visible = true; h.dien = { ds, i: 0, t: 0, khiDoi, khiXong, huong };
+      const vk = h.vuKhiTran || "1H_Axe"; // TC_D06D9: nông dân trong trận cầm gậy (h.vuKhiTran = "gay")
+      hienVuKhi(h, vk); if (h.vuKhi[vk]) h.vuKhi[vk].visible = true; h.dien = { ds, i: 0, t: 0, khiDoi, khiXong, huong };
     }
   };
 }
 // 28/10/2026 19:05 - BƯỚC: TC_D03B2; 29/10/2026 - TC_D05; 30/10/2026 17:30 - TC_D06C1 (động tác "danh")
 // 26/11/2026 - BƯỚC: TC_D05C0b2 (Thủ lĩnh tướng thật: tao(..., tuong) qua opt.tuongBd = dt3d_tuong_ban_do.js; chờ tải thì chưa hiện;
 //              Đi / Chạy tua theo tốc độ thật; mức hoạt ảnh theo khung hình, tối đa dayDu tướng chạy đủ)
+// 27/11/2026 11:xx - BƯỚC: TC_D06D9 (gậy gỗ taoGay theo chỗ cầm rìu hai tay; h.vuKhiTran cho dien; opt.coNongDan = cỡ nông dân)
