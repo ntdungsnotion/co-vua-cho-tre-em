@@ -75,7 +75,11 @@ function tcVeCoCuBao(tk) {
     rpc: rpc,
     khiNhan: function (kq) {
       var kc = Number(kq.kc) || 0, vang = Number(kq.vang) || 0;
-      if (typeof kq.diemSo === "number") { tk.diemSo = kq.diemSo; kcLuuPhien(tk); tcVeKimCuong(kq.diemSo, true); }
+      // Máy chủ đã cộng lúc thầy cô cấp (số trên chip đã gồm phần này): cho số chạy từ (số − phần thưởng) lên để bé thấy 💎 vào túi
+      if (typeof kq.diemSo === "number") {
+        tk.diemSo = kq.diemSo; kcLuuPhien(tk);
+        tcVeKimCuong(Math.max(0, kq.diemSo - kc), false); tcVeKimCuong(kq.diemSo, true);
+      }
       if (typeof kq.viVang === "number" && typeof kcVeVang === "function") kcVeVang(kq.viVang);
       if (kc > 0) tcMuaKimCuong(Math.min(24, 6 + kc * 2));
       var chu = [];
