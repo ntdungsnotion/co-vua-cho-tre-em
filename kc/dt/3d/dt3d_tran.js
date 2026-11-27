@@ -80,7 +80,8 @@ async function tao(vungVe, { nhe, napTep } = {}) {
     return {
       mau: mau.chinh || D.mau, mau2: mau.phu || D.mau2, mauThu: mau.thu || D.mauThu, mauNangLuong: mau.nangLuong || D.mauNangLuong,
       tuLucCao: m.tuLucCao || D.tuLucCao, phongThu: m.phongThu || D.phongThu,
-      phep: !!(c.thuong && c.thuong.loai === "phep"), thuong: c.thuong, chiMang: c.chiMang, ketLieu: c.ketLieu
+      // TC_D05C0c: phep (tụ lực ở tay, đứng bắn) theo HÀM VẼ của đòn thường (chem / vet_x = lao tới, còn lại đứng), không theo loai
+      phep: !(c.thuong && c.thuong.td && ["chem", "vet_x"].indexOf(c.thuong.td.ham) >= 0), thuong: c.thuong, chiMang: c.chiMang, ketLieu: c.ketLieu
     };
   }
   const ctx = taoCanh(vungVe, { nhe });
@@ -433,13 +434,14 @@ async function tao(vungVe, { nhe, napTep } = {}) {
   // chiêu lớn khi chí mạng: kỹ năng chiMang của mẫu tướng, vẽ theo hàm trình diễn của nó (TC_D05C0a; trước là theo tộc)
   // Hàm trình diễn mà sổ tướng được gọi (KC_DT_TUONG.HO_TRO.ham): chem, cau_phep (đòn thường, trong ketQua),
   // vet_x, cot_lua, set (ở đây), chieu_them (san.chieuThem), chieu_vung (san.chieuVung).
-  function chieuLon(p) {
-    const k = ve.chiMang, td = (k && k.td) || { ham: "vet_x" }, mau = td.mau || ve.mau;
+  // TC_D05C0c: nhận kỹ năng đang ra (ô nào cũng được); hàm chem / cau_phep chỉ có chữ + tiếng, không vẽ thêm
+  function chieuLon(p, kn) {
+    const td = (kn && kn.td) || {}, mau = td.mau || ve.mau;
     if (td.chu) hu.chuChieu(td.chu, V(0, 2.4, 0.4), mau);
-    if (k) am.chieu(k.ma); // TC_D05F: mỗi chiêu một tiếng (Quản trị › Âm thanh), khoá = mã kỹ năng
+    if (kn) am.chieu(kn.ma); // TC_D05F: mỗi chiêu một tiếng (Quản trị › Âm thanh), khoá = mã kỹ năng
     if (td.ham === "cot_lua") { hu.cotLua(V(p.x, 0, 0), td.co || 0.9); am.thachNo(p.x, td.amNo || 0.7); }
     else if (td.ham === "set") { hu.set(V(p.x, 0, 0), td.mauSet || ve.mau2); am.thachNo(p.x, td.amNo || 0.5); }
-    else { // vet_x: hai vệt chéo chữ X
+    else if (td.ham === "vet_x") { // hai vệt chéo chữ X
       hu.vetChem(p, ve.mau2, { r: 1.25, day: 0.5, tu: 2.5, den: -0.7, xoayY: 0, giay: 0.32, sang: 2 });
       them(0.01, () => { am.chem(p.x); hu.vetChem(p, mau, { r: 1.25, day: 0.5, tu: 0.65, den: -2.55, xoayY: 0, giay: 0.32, sang: 2 }); }, 0.1);
       them(0.01, () => { hu.songXung(V(p.x, 0, 0), mau, 2.6, 0.7); hu.chop(p, ve.mau2, 2.6, 0.35, 0.5); }, 0.18);
@@ -481,26 +483,40 @@ async function tao(vungVe, { nhe, napTep } = {}) {
       // TC_D05E (người dùng 25/11/2026 chọn "đòn kết liễu"): đòn đúng của Thủ lĩnh hạ được đối thủ -> chiêu KẾT LIỄU của
       // mẫu tướng (TC_D05C0a: kyNang.ketLieu trong sổ tướng; Nhân tộc = ⚡ Plasma Beam, camera điện ảnh); chí mạng thường vẫn là chiêu chiMang.
       // Trả { giay, trung } để trang chờ chiêu diễn xong mới kết thúc trận / hiện số trừ máu đúng lúc tia chạm.
-      const tdKl = ve.ketLieu && ve.ketLieu.td;
-      if (k.tanCong === "be" && trung && k.ketThuc && k.ketThuc.thang === "be" && tdKl && tdKl.ham === "chieu_them" && !laNongDan) {
-        const c = ct && ct.ds.find(x => x.ma === tdKl.ma);
-        const giay = c ? san.chieuThem(tdKl.ma) : 0;
+      // TC_D05C0c (người dùng 27/11/2026: "đòn thường hay bất kỳ đòn nào mình muốn gán kỹ năng nào trong kho cũng được"):
+      // ĐÒN ĐANG RA = kết liễu (đòn đúng hạ được đối thủ, có gán, không phải nông dân) | chí mạng (có gán) | thường.
+      // Diễn theo HÀM VẼ của kỹ năng đó, ô nào cũng diễn được mọi hàm:
+      //   chieu_them / chieu_vung: chiêu dài (chỉ khi trúng; trượt thì diễn kiểu đi của đòn thường), trả { giay, trung }
+      //   chem / vet_x: lao tới;  cau_phep: đứng bắn cầu phép;  cot_lua / set: kiểu đi của đòn thường (đòn thường cũng vậy -> đứng bắn)
+      //   vet_x / cot_lua / set vẽ thêm lúc trúng (chieuLon); chí mạng / kết liễu luôn có chữ + tiếng tên chiêu.
+      const laKetLieu = k.tanCong === "be" && trung && k.ketThuc && k.ketThuc.thang === "be" && !laNongDan && !!ve.ketLieu;
+      const don = laKetLieu ? ve.ketLieu : (k.chiMang && ve.chiMang) || ve.thuong;
+      const tdDon = (don && don.td) || {};
+      if (k.tanCong === "be" && trung && !laNongDan && (tdDon.ham === "chieu_them" || tdDon.ham === "chieu_vung")) { // nông dân không ra chiêu dài của Thủ lĩnh
+        let giay = 0, tTrung = 0;
+        if (tdDon.ham === "chieu_them") { const c = ct && ct.ds.find(x => x.ma === tdDon.ma); giay = c ? san.chieuThem(tdDon.ma) : 0; tTrung = c && c.trung; }
+        else { giay = san.chieuVung(don.ma); if (giay) them(0.01, () => { quai.chop(0.3); vaCham(tamQuai(), ve.mau, k.chiMang); }, giay * 0.6); }
         if (giay) {
-          if (haoQuang) haoQuang.bat(2);
-          return { giay, trung: c.trung || giay * 0.6 };
+          if (haoQuang && (laKetLieu || k.chiMang)) haoQuang.bat(2);
+          return { giay, trung: tTrung || giay * 0.6 };
         }
       }
       if (k.tanCong === "be") {
+        const KIEU_DI = { chem: "canChien", vet_x: "canChien", cau_phep: "phep" };
+        const tdThuong = (ve.thuong && ve.thuong.td) || {};
+        const phep = (KIEU_DI[tdDon.ham] || KIEU_DI[tdThuong.ham] || "phep") === "phep";
+        const veThem = ["vet_x", "cot_lua", "set"].indexOf(tdDon.ham) >= 0 || (don && don !== ve.thuong);
         const quaiNe = () => { am.ne(X_QUAI); hu.gio(V(qn.position.x, 0, 0.1), 1); noLapLanh(qn.position.clone(), "#bfeaff"); them(0.45, p => { qn.position.x = X_QUAI + Math.sin(p * Math.PI) * 0.9; qn.position.y = Math.sin(p * Math.PI) * 0.55; }); };
         const trungDon = p => {
           quai.chop(0.3); am.trung(p.x, k.chiMang); vaCham(p, ve.mau, k.chiMang);
-          const tdThuong = ve.thuong && ve.thuong.td;
-          if (tdThuong && tdThuong.khoiKhiTrung) hu.khoi(p, tdThuong.khoiKhiTrung, 6, 0.5);
-          if (k.chiMang) chieuLon(p);
+          const khoi = tdDon.khoiKhiTrung || tdThuong.khoiKhiTrung;
+          if (khoi) hu.khoi(p, khoi, 6, 0.5);
+          if (veThem) chieuLon(p, don); // TC_D05C0c: theo đòn đang ra (trước: chỉ khi chí mạng)
           them(0.35, q => { qn.position.x = X_QUAI + Math.sin(q * Math.PI) * 0.45; qn.scale.set(TI_QUAI * (1 + Math.sin(q * Math.PI) * 0.18), TI_QUAI * (1 - Math.sin(q * Math.PI) * 0.18), TI_QUAI); });
         };
-        if (ve.phep) { // kỹ năng thường loại phép (trình diễn cau_phep, vd Tiên tộc): đứng tại chỗ bắn cầu phép
-          dien(k.chiMang ? "phepLon" : "phep");
+        const manh = k.chiMang || laKetLieu;
+        if (phep) { // đứng tại chỗ bắn cầu phép (vd Tiên tộc)
+          dien(manh ? "phepLon" : "phep");
           them(0.01, () => {
             const tu = V(dvBe.x + 0.45, caoBe * 0.7, 0.25), den = tamQuai();
             if (ne) den.x += 1.8; else if (!trung) den.set(den.x - 0.5, 0.05, 0.3);
@@ -508,8 +524,8 @@ async function tao(vungVe, { nhe, napTep } = {}) {
             hu.phong(tu, den, { mau: ve.mau, mau2: "#ffffff", giay: 0.32, co: 0.3, cong: 0.25, khiToi: p => { if (trung) trungDon(p); else if (!ne) { am.hut(p.x); hu.khoi(p, "#9aa7b5", 5, 0.6, false); } } });
           }, 0.22);
           if (ne) them(0.01, quaiNe, 0.36);
-        } else { // kỹ năng thường cận chiến (trình diễn chem, vd Nhân / Quỷ tộc): lao tới chém
-          dien(k.chiMang ? "chemLon" : "chem");
+        } else { // lao tới chém (vd Nhân / Quỷ tộc)
+          dien(manh ? "chemLon" : "chem");
           const tamDanh = tuong ? 1.45 : 1.15; // tướng người thật tay dài + kiếm: dừng xa quái hơn
           them(0.28, p => { dvBe.x = X_BE + (X_QUAI - tamDanh - X_BE) * Math.sin(p * Math.PI / 2); });
           them(0.01, () => { am.chem(dvBe.x); hu.vetChem(V(dvBe.x + 0.5, caoBe * 0.52, 0.35), ve.mau, { r: 0.9, giay: 0.3, nghieng: -0.15 }); }, 0.2);
@@ -672,3 +688,4 @@ window.dispatchEvent(new Event("dt-san3d"));
 // 25/11/2026 - BƯỚC: TC_D05C0b1 (san.dienBe(kieu) cho kịch bản thử đi / chạy của tướng)
 // 26/11/2026 - BƯỚC: TC_D05C0b2 (đối thủ trận công trình = tướng thật của chủ qua sổ tướng, doiThu { chungLoai, gioi, thoiKy };
 //              lỗi file thì Thủ lĩnh KayKit; san.demTuong() cho kịch bản thử)
+// 27/11/2026 - BƯỚC: TC_D05C0c (ô đòn nào cũng diễn được mọi kỹ năng: đòn đang ra = kết liễu | chí mạng | thường, diễn theo hàm vẽ; chiêu vùng / chiêu thêm ở đòn thường)
