@@ -19,8 +19,11 @@
                 loiMoDau (Cô Cú nói ở câu đầu, mặc định "Mình cùng ôn lại nhé!"),
                 sanKhau ({ am: KC_TM_AM }, KC_03C4b Theo môn: đọc câu xong mới hiện 4 đáp án + nhạc lúc đọc, tích tắc lúc chờ,
                          bình luận đúng / sai + lời giải + nút "⏭ Bỏ qua"; không có thì như cũ)
-              }) -> Promise<{ ketQua | null, dong: "xong" | "bo" | "loi" | ma của nutThem }>
-   CẦN NẠP TRƯỚC: chung/gio_bai.js (KC_GIO_BAI: trừ 💎 theo giờ, module chung toàn app).
+              }) -> Promise<{ ketQua | null, dong: "xong" | "bo" | "loi" | "phan_hoi" | ma của nutThem, bamBua }>
+              KC_11B: bamBua = kết luận chống bấm bừa trên máy (chỉ ghi). ketQua.bamBua của máy chủ { ketLuan: "bua", catThuong: true }
+              -> màn ⛔ (nút 🙋 thay nút kết; goi.phanHoi(luotId, ketQua) nếu trang có, không thì dong = "phan_hoi").
+   CẦN NẠP TRƯỚC: chung/gio_bai.js (KC_GIO_BAI: trừ 💎 theo giờ, module chung toàn app);
+              chung/bam_bua.js (KC_BAM_BUA, KC_11B; thiếu thì không ghi chạm).
    BƯỚC: TC_D34B (phần 2: dùng module giờ chung); KC_03C4 (nutThem, loiMoDau, 🪙 xu vàng mỗi câu đúng); KC_03C4b (sanKhau);
               KC_03C7 (Tổng hợp: 💎 đang chạy × heSo của lượt, khoản "🌈 Thưởng Tổng hợp × 1,5");
               KC_03C7b (dòng 🔥 chuỗi ngày ở màn kết quả: goi.chuoi + KC_TT.veChuoi dùng chung cho Tốc độ / Chinh phục)
@@ -90,6 +93,18 @@
         '</div>';
       doc.body.appendChild(goc0);
       const $ = s => goc0.querySelector(s);
+      // KC_11B: chống bấm bừa (chung/bam_bua.js, Hướng Dẫn 1.8B) — CHỈ GHI TRÊN MÁY: đếm chạm vào vùng đáp án (kể cả lúc nút tắt),
+      // không gửi máy chủ, không hiện gì, không đổi cách chấm. Kết luận trả kèm khi đóng màn (bamBua). Thiếu module: bỏ qua.
+      const BB = goc.KC_BAM_BUA || null;
+      const bbGhi = BB ? BB.taoBoGhi() : null, bbDs = [];
+      let bbHv = null, bbPhim = false, bbGiay = 0, bbNguong = 0;
+      const bbGo = bbGhi ? BB.ganVung(goc0, bbGhi, e => {
+        if (goc0.classList.contains("ketQua")) return false;
+        const v = goc0.querySelector(".ttCau .ttDap"); if (!v) return false;
+        const r = v.getBoundingClientRect();
+        return r.width > 0 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      }) : null;
+      const bbMo = () => { if (bbGhi) bbGhi.mo(luc0); };
       $(".ttTieuDe b").textContent = t.tieuDe;
       $(".ttTieuDe small").textContent = t.phuDe || "";
       $(".ttDong").hidden = !!t.batBuoc;
@@ -164,6 +179,11 @@
 
       function veCau() {
         daCham = null; chon = -1; dangGui = false;
+        if (bbGhi) {
+          bbGhi.cauMoi(); bbHv = null; bbPhim = false; bbNguong = 0;
+          // ngưỡng D3 = 30 % giờ bé giỏi của câu (giờ bài chung); Theo môn đọc câu ở pha riêng nên chỉ tính phần đáp án
+          try { if (goc.KC_GIO_BAI) bbNguong = BB.nguongD3(goc.KC_GIO_BAI.tinh([{ noiDung: sk ? "" : cau.noiDung, dapAn: cau.dapAn || [], muc: cau.muc || "vua", coHinh: !sk && !!(cau.hinh || cau.hinhChu) }], t.lop).p90.gioi); } catch (e) { bbNguong = 0; }
+        }
         const s = $(".ttCau"); s.innerHTML = ""; s.classList.remove("daCham");
         if (cau && cau.monBieuTuong) { $(".ttMonBt").textContent = cau.monBieuTuong; $(".ttMonTen").textContent = cau.monTen || ""; }
         veCham();
@@ -199,7 +219,7 @@
         coCu(viTri === 0 ? t.loiMoDau : ["Con làm được mà!", "Cố lên nào!", "Đọc kỹ rồi chọn nhé!"][viTri % 3]);
         tuThe = "dung";
         if (sk) { docTruoc(s, ds); return; }
-        luc0 = performance.now();
+        luc0 = performance.now(); bbMo();
         chayDh(true);
         if (coAmThanh(cau)) setTimeout(() => { if (!dong) docTo(cau, t.lop, t.goc); }, 250); // câu nghe: tự đọc
       }
@@ -252,13 +272,14 @@
         dd.ds.querySelectorAll(".ttDa").forEach(b => { b.disabled = false; });
         skAm.phat("hienDapAn");
         coCu("Con chọn đáp án nào?");
-        luc0 = performance.now();
+        luc0 = performance.now(); bbMo();
         chayDh(true);
         skAm.batTicTac();
       }
 
-      function chonDa(i) {
+      function chonDa(i, quaPhim) {
         if (daCham || dangGui) return;
+        bbPhim = !!quaPhim;
         chon = i; // người dùng 20/11/2026: chạm đáp án là chấm luôn (không có nút Trả lời)
         goc0.querySelectorAll(".ttDa").forEach(b => b.classList.toggle("chon", Number(b.dataset.i) === i));
         guiDa();
@@ -270,6 +291,7 @@
         const bChon = goc0.querySelector('.ttDa[data-i="' + chon + '"]'); if (bChon) bChon.classList.add("cho");
         goc0.querySelectorAll(".ttDa").forEach(b => { b.disabled = true; });
         const giay = Math.round((performance.now() - luc0) / 100) / 10, tBat = performance.now();
+        if (bbGhi && !bbHv) { bbHv = bbGhi.chon(tBat, { phim: bbPhim }); bbGiay = giay; } // KC_11B: lần chọn đầu của câu (Thử lại không tính lại)
         chayDh(false);
         if (skAm) skAm.dungTicTac();
         let kq = null;
@@ -313,6 +335,7 @@
         const dung = !!kq.dung;
         const keNghe = !!(kq.cau && coAmThanh(kq.cau)) || !!(sk && skAm.nhip().binhLuanThanhTieng); // KC_03C4b: bình luận đọc thành tiếng thay lời khen // câu kế là câu nghe: không nói lời khen / động viên (câu nghe tự đọc ngay, lời sẽ đè lên) (người dùng 21/11/2026)
         daTraLoi[viTri] = { dung, hoiLai: !!(cau && cau.hoiLai) };
+        if (bbHv) bbDs.push({ hanhVi: bbHv, giay: bbGiay, nguongD3: bbNguong, dung, soDapAn: (cau.dapAn || []).length, hoiLai: !!(cau && cau.hoiLai), o: chon });
         veDongHo();
         daCham = kq;
         tong = Number.isInteger(kq.tong) ? kq.tong : tong;
@@ -425,6 +448,8 @@
 
       function veKetQua(k) {
         goc0.classList.add("ketQua"); chayDh(false); $(".ttDongHo").hidden = true;
+        // KC_11B (đặc tả chống bấm bừa 5.2): máy chủ (từ KC_11C) báo lượt bấm bừa bị cắt thưởng -> màn ⛔ riêng
+        if (k.bamBua && k.bamBua.ketLuan === "bua" && k.bamBua.catThuong === true) { veKetQuaBua(k); return; }
         const s = $(".ttCau"); s.innerHTML = "";
         const n = k.soCauGoc || 0, d = k.dungGoc || 0, ty = n ? d / n : 0;
         const kq = tao("div", "ttKq");
@@ -497,6 +522,45 @@
         if (goc.matchMedia && goc.matchMedia("(pointer: fine)").matches) setTimeout(() => (nutPhu[0] || nut).focus({ preventScroll: true }), 700);
       }
 
+      /* KC_11B: MÀN KẾT QUẢ LƯỢT ⛔ BẤM BỪA (Thiet_Ke_Chong_Bam_Bua.md 5.2). Không rương, không 💎 bay, không màu đỏ.
+         Người dùng 27/11/2026: "nút nhận quà đổi thành nút phản hồi" -> chỗ nút kết (t.nutKet) là nút chính 🙋;
+         "Thôi ạ" (nút phụ) đóng màn như nút kết cũ. 🙋: goi.phanHoi(luotId, ketQua) nếu trang có (hộp viết lý do, KC_11D),
+         không có thì đóng màn với dong = "phan_hoi". Chuỗi ngày 🔥 vẫn hiện (vẫn tính, người dùng chốt). */
+      function veKetQuaBua(k) {
+        const s = $(".ttCau"); s.innerHTML = "";
+        const n = k.soCauGoc || 0, d = k.dungGoc || 0;
+        const kq = tao("div", "ttKq ttKqBua");
+        kq.appendChild(tao("div", "ttBbCu", "🦉"));
+        kq.appendChild(tao("h2", "ttBbTieuDe", "Lần này con chọn vội quá!"));
+        kq.appendChild(tao("p", "ttBbChu", "Cô Cú thấy con bấm liên tục mà chưa kịp đọc câu, nên lượt này chưa có thưởng."));
+        kq.appendChild(tao("p", "ttBbChu", "Lượt sau con đọc kỹ từng câu rồi chọn là có 💎 ngay nhé! 💪"));
+        if (n) kq.appendChild(tao("p", "ttBbDiem", "Con đúng " + d + " / " + n + " câu"));
+        if (goi && typeof goi.chuoi === "function") { try { veChuoi(kq, Promise.resolve(goi.chuoi(luot.id))); } catch (e) { /* bỏ qua */ } }
+        const hang = tao("div", "ttHangNut");
+        const thoi = tao("button", "ttNut ttNutPhu ttBbThoi", "Thôi ạ"); thoi.type = "button";
+        thoi.addEventListener("click", () => dongMan("xong", k));
+        const ph = tao("button", "ttNut tiep ttBbPhanHoi", "🙋 Con có suy nghĩ thật mà!"); ph.type = "button";
+        ph.addEventListener("click", () => {
+          if (goi && typeof goi.phanHoi === "function") { try { goi.phanHoi(luot.id, k); return; } catch (e) { /* đóng màn */ } }
+          dongMan("phan_hoi", k);
+        });
+        const nutPhu = (t.nutThem || []).map(x => { const b = tao("button", "ttNut ttNutPhu", x.chu); b.type = "button"; b.addEventListener("click", () => dongMan(x.ma, k)); return b; });
+        let bang = null;
+        if (lichSu.length) {
+          const xem = tao("button", "ttNut ttNutPhu", "📖 Xem lại đáp án"); xem.type = "button"; xem.setAttribute("aria-expanded", "false");
+          bang = veXemLai(); bang.hidden = true;
+          xem.addEventListener("click", () => { bang.hidden = !bang.hidden; xem.setAttribute("aria-expanded", String(!bang.hidden)); xem.textContent = bang.hidden ? "📖 Xem lại đáp án" : "📖 Ẩn đáp án"; if (!bang.hidden) bang.scrollIntoView({ block: "start", behavior: "smooth" }); });
+          hang.appendChild(xem);
+        }
+        nutPhu.forEach(b => hang.appendChild(b));
+        hang.appendChild(thoi); hang.appendChild(ph);
+        kq.appendChild(hang); if (bang) kq.appendChild(bang);
+        s.appendChild(kq);
+        coCu("Lần sau mình đọc kỹ nhé, Cô Cú tin con! 💪");
+        tuThe = "dung";
+        if (goc.matchMedia && goc.matchMedia("(pointer: fine)").matches) setTimeout(() => thoi.focus({ preventScroll: true }), 700);
+      }
+
       function veXemLai() {
         const bang = tao("ol", "ttXemLai");
         lichSu.forEach((x, i) => {
@@ -530,7 +594,7 @@
         if (docDang && !docDang.xong && (e.key === " " || e.key === "Enter")) { e.preventDefault(); skAm.mo(); hienDa(docDang); return; }
         if (blDang && (e.key === " " || e.key === "Enter")) { if (doc.activeElement && doc.activeElement.classList && doc.activeElement.classList.contains("ttBoQua")) return; e.preventDefault(); blDang.sang(); return; }
         const so = Number(e.key);
-        if (Number.isInteger(so) && so >= 1 && so <= 6 && !daCham) { const b = goc0.querySelector('.ttDa[data-i="' + (so - 1) + '"]'); if (b && !b.disabled) { e.preventDefault(); chonDa(so - 1); } return; }
+        if (Number.isInteger(so) && so >= 1 && so <= 6 && !daCham) { const b = goc0.querySelector('.ttDa[data-i="' + (so - 1) + '"]'); if (b && !b.disabled) { e.preventDefault(); chonDa(so - 1, true); } return; }
         if (e.key === "Escape" && !t.batBuoc) boMan();
       }
       doc.addEventListener("keydown", phim, true);
@@ -544,9 +608,13 @@
         doc.removeEventListener("keydown", phim, true);
         if (hoiDong) hoiDong.tat();
         dungDoc();
+        if (bbGo) bbGo();
         goc0.classList.add("tat");
         setTimeout(() => goc0.remove(), 250);
-        xong({ ketQua, dong: lyDo });
+        // KC_11B: bamBua = kết luận trên máy (chỉ ghi, chưa ai dùng; máy chủ KC_11C mới là chuẩn) + từng câu
+        let bamBua = null;
+        try { if (BB && bbDs.length) bamBua = Object.assign(BB.ketLuan(bbDs), { ds: bbDs }); } catch (e) { bamBua = null; }
+        xong({ ketQua, dong: lyDo, bamBua });
       }
 
       // bắt đầu
@@ -632,3 +700,4 @@
 // 24/11/2026 - BƯỚC: KC_03C4: nutThem ("▶ Chơi tiếp N câu" của Theo môn), loiMoDau; 🪙 xu vàng mỗi câu đúng (chép đúng phần KC_03C2 chưa merge)
 // 25/11/2026 - BƯỚC: KC_08F2 (goi.danhHieu = rpc: màn kết quả gọi KC_DANH_HIEU.xet, chúc mừng lên sao / danh hiệu)
 // 27/11/2026 - BƯỚC: TC_D34D (KC_TT.hoi: hộp hỏi 2 nút dùng chung; xacNhanDong: ✕ hỏi lại trước khi thoát, đồng hồ dừng lúc hỏi)
+// 27/11/2026 - BƯỚC: KC_11B (chống bấm bừa: ghi chạm vùng đáp án chỉ trên máy, trả bamBua khi đóng; màn ⛔ khi máy chủ báo ketQua.bamBua cắt thưởng: nút 🙋 thay nút nhận)

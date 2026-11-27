@@ -262,6 +262,18 @@
   .ttHoiBt { font-size: 3.2rem; } .ttHoiTieuDe { font-size: 1.7rem; } .ttHoiChu { font-size: 1.2rem; }
   .ttHoiNut { flex-direction: row; } .ttHoiNut .ttNut { flex: 1; min-width: 0; }
 }
+/* ---------------- KC_11B: màn kết quả lượt ⛔ bấm bừa (không rương, không đỏ; nút 🙋 thay nút nhận) ---------------- */
+.ttKqBua { gap: 8px; padding-top: 10px; max-width: 560px; margin: 0 auto; }
+.ttBbCu { font-size: 4.2rem; line-height: 1; animation: ttBbLac 2.4s ease-in-out infinite; }
+@keyframes ttBbLac { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg) translateY(-4px); } }
+.ttBbTieuDe { margin: 4px 0 0; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.6rem; color: var(--tt-vang); line-height: 1.2; }
+.ttBbChu { margin: 0; font-size: 1.05rem; line-height: 1.45; color: var(--tt-sang); }
+.ttBbDiem { margin: 2px 0 0; color: var(--tt-nhat); font-size: .95rem; }
+.ttKqBua .ttHangNut { margin-top: 6px; }
+.ttBbPhanHoi { white-space: normal; }
+@media (max-width: 520px) { .ttKqBua .ttHangNut { flex-direction: column; align-items: stretch; width: 100%; } .ttBbPhanHoi { order: -1; } }
+@media (min-width: 900px) { .ttBbTieuDe { font-size: 2rem; } .ttBbChu { font-size: 1.2rem; } }
 /* 27/11/2026 - BƯỚC: TC_D34D (hộp hỏi 2 nút: mời ôn sau trận, hỏi lại khi thoát) */
+/* 27/11/2026 - BƯỚC: KC_11B (màn kết quả lượt ⛔ bấm bừa: nút 🙋 phản hồi thay nút nhận) */
 /* 24/11/2026 - BƯỚC: KC_03C4b (pha đọc câu, hiện 4 đáp án, bình luận + nút bỏ qua) */
 /* 24/11/2026 - BƯỚC: KC_03C7b (dòng 🔥 chuỗi ngày ở màn kết quả) */
