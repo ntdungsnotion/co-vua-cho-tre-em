@@ -1240,6 +1240,14 @@
         return { ok: true, can: true, luot: ttJson(ttTaoLuot(tra.filter(x => !x.dung).length)) };
       },
       async ttLuotDang() { return { ok: true, luot: ttGia.luot.filter(x => x.trangThai === "dang").map(ttJson) }; },
+      // TC_D34D: bé bỏ lượt ôn (Để sau / ✕), như SQL kc_tt_on_sau_tran_bo
+      async ttOnBo(id, lyDo) {
+        const l = ttGia.luot.find(x => x.id === id);
+        if (!l) return { ok: false, ma: "luot" };
+        if (l.trangThai !== "dang") return { ok: true, bo: false, ma: "da_xong" };
+        l.trangThai = "bo"; l.beBo = lyDo === "thoat" ? "thoat" : "de_sau";
+        return { ok: true, bo: true };
+      },
       async ttTraLoi(id, viTri, chon, giay) {
         const l = ttGia.luot.find(x => x.id === id);
         if (!l) return { ok: false, ma: "luot" };
@@ -1331,3 +1339,4 @@
 // 20/11/2026 - BƯỚC: TC_D34B (ôn sau trận giả: ttOnTao / ttLuotDang / ttTraLoi / ttKetThuc, _ttThu); sửa 12:xx: đồng hồ + luật 💎 mới
 // 26/11/2026 - BƯỚC: TC_D06D6b (vutDo: giao lấy tài nguyên khác thì vứt đồ rơi đang cầm)
 // 26/11/2026 - BƯỚC: TC_D05C0b2 (thuLinhVung: tộc / giới / đời Thủ lĩnh các bé cùng vùng)
+// 27/11/2026 - BƯỚC: TC_D34D (ttOnBo: bé bỏ lượt ôn sau trận, Để sau / ✕)

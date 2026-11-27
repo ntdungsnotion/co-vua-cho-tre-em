@@ -240,5 +240,28 @@
 @keyframes ttChuoiNo { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 @media (min-width: 900px) { .ttChuoiKq { max-width: 480px; } .ttChuoiBt { font-size: 2.4rem; } }
 @media (prefers-reduced-motion: reduce) { .ttChuoiBt, .ttChuoiKq.thuong { animation: none; } }
+/* TC_D34D: hộp hỏi 2 nút (KC_TT.hoi): bảng mời ôn sau trận (phủ cả trang) + hỏi lại khi bấm ✕ trong màn ôn (phủ màn ôn) */
+.ttHoi { --tt-dem: #14204a; --tt-vang: #ffc24b; --tt-sang: #fff6dc; --tt-xanh: #3ddc84; /* bảng mời nằm ngoài .ttMan: khai lại màu nút */
+  position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box;
+  background: rgba(8,14,40,.62); font-family: "Be Vietnam Pro", system-ui, sans-serif; -webkit-tap-highlight-color: transparent; animation: ttVao .2s ease-out; }
+.ttHoi.ttHoiTrang { position: fixed; z-index: 65; }
+.ttHoi.tat { opacity: 0; transition: opacity .18s; }
+.ttHoiHop { width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px 18px 18px; box-sizing: border-box;
+  border-radius: 22px; border: 2px solid rgba(255,194,75,.6); background: linear-gradient(180deg, #2b3d86, #14204a); color: #fff6dc; text-align: center;
+  box-shadow: 0 14px 40px rgba(0,0,0,.45); }
+.ttHoiBt { font-size: 2.6rem; line-height: 1; }
+.ttHoiTieuDe { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.35rem; color: #ffc24b; line-height: 1.2; }
+.ttHoiChu { margin: 0; font-size: 1.05rem; line-height: 1.4; color: #dfe5ff; }
+.ttHoiChu b { color: #fff; }
+.ttHoiNut { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 8px; }
+.ttHoiNut .ttNut { min-width: 0; width: 100%; }
+.ttNut.ttHoiPhu { background: rgba(255,246,220,.12); color: #fff6dc; box-shadow: inset 0 0 0 2px rgba(255,246,220,.35); font-size: 1.15rem; }
+.ttNut.ttHoiPhu:active { box-shadow: inset 0 0 0 2px rgba(255,246,220,.35); }
+@media (min-width: 900px) {
+  .ttHoiHop { max-width: 480px; padding: 26px 28px 24px; gap: 10px; }
+  .ttHoiBt { font-size: 3.2rem; } .ttHoiTieuDe { font-size: 1.7rem; } .ttHoiChu { font-size: 1.2rem; }
+  .ttHoiNut { flex-direction: row; } .ttHoiNut .ttNut { flex: 1; min-width: 0; }
+}
+/* 27/11/2026 - BƯỚC: TC_D34D (hộp hỏi 2 nút: mời ôn sau trận, hỏi lại khi thoát) */
 /* 24/11/2026 - BƯỚC: KC_03C4b (pha đọc câu, hiện 4 đáp án, bình luận + nút bỏ qua) */
 /* 24/11/2026 - BƯỚC: KC_03C7b (dòng 🔥 chuỗi ngày ở màn kết quả) */
