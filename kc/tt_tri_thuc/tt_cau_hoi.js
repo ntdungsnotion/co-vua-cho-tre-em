@@ -12,6 +12,7 @@
                 goi: { traLoi(luotId, viTri, chon, giay), ketThuc(luotId),     // trả { ok, ... } như dt_may_chu_sb.js
                        chuoi(luotId) },  // KC_03C7b, tuỳ chọn: RPC kc_tt_chuoi_luot -> dòng 🔥 ở màn kết quả
                 tieuDe, phuDe, batBuoc (true: không có nút ✕), nutKet ("Về thung lũng"),
+                xacNhanDong ({ tieuDe, chu, co, khong }, TC_D34D: ✕ / Esc hỏi lại trước khi đóng; không có thì đóng luôn),
                 goc (tiền tố đường dẫn hình câu, vd "" ở kc/, "../" ở kc/dt/), lop (lớp bé: ≤ 3 có 🔊 đọc câu),
                 hoSo (ngoại hình bé, chung/nv_ve.js: có thì vẽ bé cổ vũ ở cột trái máy tính),
                 nutThem ([{ chu, ma }]: nút thêm ở màn kết quả, bấm thì đóng màn với dong = ma; KC_03C4 "▶ Chơi tiếp N câu"),
@@ -92,7 +93,21 @@
       $(".ttTieuDe b").textContent = t.tieuDe;
       $(".ttTieuDe small").textContent = t.phuDe || "";
       $(".ttDong").hidden = !!t.batBuoc;
-      $(".ttDong").addEventListener("click", () => dongMan("bo", null));
+      $(".ttDong").addEventListener("click", () => boMan());
+      // TC_D34D: xacNhanDong ({ tieuDe, chu, co, khong }) -> ✕ / Esc hỏi lại trước khi đóng (vd ôn sau trận: thoát là mất 💎).
+      // Đồng hồ bài dừng lúc hỏi, chạy tiếp khi bé chọn ở lại. Đang ở màn kết quả thì đóng luôn.
+      let hoiDong = null;
+      function boMan() {
+        if (dong || hoiDong) return;
+        if (!t.xacNhanDong || goc0.classList.contains("ketQua")) { dongMan("bo", null); return; }
+        const dangChay = dhChay; chayDh(false);
+        hoiDong = hoi(Object.assign({ cha: goc0, bieuTuong: "🚪", co: "🚪 Thoát", khong: "↩ Ôn tiếp", nutChinh: "khong" }, t.xacNhanDong));
+        hoiDong.hua.then(kq => {
+          hoiDong = null;
+          if (kq === "co") { dongMan("bo", null); return; }
+          if (dangChay && !dong) { luc0 = performance.now(); chayDh(true); }
+        });
+      }
 
       // bé cổ vũ (máy tính)
       const cv = $(".ttBe"), NV = goc.KC_NV;
@@ -510,13 +525,13 @@
 
       // ---------------- Phím (máy tính) ----------------
       function phim(e) {
-        if (dong || e.altKey || e.ctrlKey || e.metaKey) return;
+        if (dong || hoiDong || e.altKey || e.ctrlKey || e.metaKey) return;
         if (goc0.classList.contains("ketQua")) { if (e.key === "Enter") { const n = goc0.querySelector(".ttKq .ttNut"); if (n && doc.activeElement !== n) { e.preventDefault(); n.click(); } } return; }
         if (docDang && !docDang.xong && (e.key === " " || e.key === "Enter")) { e.preventDefault(); skAm.mo(); hienDa(docDang); return; }
         if (blDang && (e.key === " " || e.key === "Enter")) { if (doc.activeElement && doc.activeElement.classList && doc.activeElement.classList.contains("ttBoQua")) return; e.preventDefault(); blDang.sang(); return; }
         const so = Number(e.key);
         if (Number.isInteger(so) && so >= 1 && so <= 6 && !daCham) { const b = goc0.querySelector('.ttDa[data-i="' + (so - 1) + '"]'); if (b && !b.disabled) { e.preventDefault(); chonDa(so - 1); } return; }
-        if (e.key === "Escape" && !t.batBuoc) dongMan("bo", null);
+        if (e.key === "Escape" && !t.batBuoc) boMan();
       }
       doc.addEventListener("keydown", phim, true);
 
@@ -527,6 +542,7 @@
         if (blDang) { blDang.hen.forEach(clearTimeout); blDang = null; }
         if (skAm) { skAm.dungNhac(); skAm.dungTicTac(); }
         doc.removeEventListener("keydown", phim, true);
+        if (hoiDong) hoiDong.tat();
         dungDoc();
         goc0.classList.add("tat");
         setTimeout(() => goc0.remove(), 250);
@@ -569,7 +585,44 @@
     }).catch(() => o.remove());
   }
 
-  goc.KC_TT = { moLuot, veChuoi, _tieng: tieng };
+  /* TC_D34D: HỘP HỎI 2 NÚT dùng chung (bảng mời ôn sau trận, hỏi lại trước khi thoát màn ôn).
+     hoi({ cha (mặc định body), bieuTuong, tieuDe, chu, co, khong, nutChinh ("co" | "khong") }) -> { hua: Promise<"co" | "khong" | "tat">, tat() }
+     Esc / chạm nền = "khong"; tat() đóng lặng (vd trận khác vừa mở). Điện thoại: 2 nút xếp dọc; máy tính: cạnh nhau. */
+  function hoi(tc) {
+    const t = Object.assign({ cha: doc.body, bieuTuong: "", tieuDe: "", chu: "", co: "Có", khong: "Không" }, tc || {});
+    let xong, daDong = false;
+    const hua = new Promise(r => { xong = r; });
+    const o = tao("div", "ttHoi" + (t.cha === doc.body ? " ttHoiTrang" : ""));
+    o.setAttribute("role", "alertdialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-label", t.tieuDe || t.chu);
+    const hop = tao("div", "ttHoiHop");
+    if (t.bieuTuong) hop.appendChild(tao("div", "ttHoiBt", t.bieuTuong));
+    if (t.tieuDe) hop.appendChild(tao("b", "ttHoiTieuDe", t.tieuDe));
+    if (t.chu) hop.appendChild(tao("p", "ttHoiChu", t.chu));
+    const hang = tao("div", "ttHoiNut");
+    // nutChinh: "co" (mặc định) | "khong" — nút nổi bật (xanh, đứng trước, được chọn sẵn); vd hỏi thoát thì "↩ Ôn tiếp" nổi bật
+    const chinhKhong = t.nutChinh === "khong";
+    const nCo = tao("button", (chinhKhong ? "ttNut ttHoiPhu" : "ttNut tiep") + " ttHoiCo", t.co);
+    const nKhong = tao("button", (chinhKhong ? "ttNut tiep" : "ttNut ttHoiPhu") + " ttHoiKhong", t.khong);
+    nCo.type = nKhong.type = "button";
+    if (chinhKhong) { hang.appendChild(nKhong); hang.appendChild(nCo); } else { hang.appendChild(nCo); hang.appendChild(nKhong); }
+    hop.appendChild(hang); o.appendChild(hop);
+    function dongHoi(kq) {
+      if (daDong) return; daDong = true;
+      doc.removeEventListener("keydown", phimHoi, true);
+      o.classList.add("tat"); setTimeout(() => o.remove(), 200);
+      xong(kq);
+    }
+    function phimHoi(e) { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); dongHoi("khong"); } }
+    nCo.addEventListener("click", () => dongHoi("co"));
+    nKhong.addEventListener("click", () => dongHoi("khong"));
+    o.addEventListener("click", e => { if (e.target === o) dongHoi("khong"); });
+    doc.addEventListener("keydown", phimHoi, true);
+    t.cha.appendChild(o);
+    setTimeout(() => { try { (chinhKhong ? nKhong : nCo).focus({ preventScroll: true }); } catch (e) { /* bỏ qua */ } }, 30);
+    return { hua, tat: () => dongHoi("tat") };
+  }
+
+  goc.KC_TT = { moLuot, veChuoi, hoi, _tieng: tieng };
 })(typeof window !== "undefined" ? window : globalThis);
 // 20/11/2026 - BƯỚC: TC_D34B (khối câu hỏi + màn kết quả dùng chung, màn ôn sau trận Đấu Trường)
 // 20/11/2026 12:xx - BƯỚC: TC_D34B sửa (người dùng): đồng hồ đếm ngược + 💎 còn nhận giảm dần, khoản Tối đa / Sai / Thời gian
@@ -578,3 +631,4 @@
 // 24/11/2026 - BƯỚC: KC_03C4b: sanKhau (Theo môn): đọc câu xong mới hiện 4 đáp án, nhạc lúc đọc, tích tắc lúc chờ, bình luận + nút bỏ qua
 // 24/11/2026 - BƯỚC: KC_03C4: nutThem ("▶ Chơi tiếp N câu" của Theo môn), loiMoDau; 🪙 xu vàng mỗi câu đúng (chép đúng phần KC_03C2 chưa merge)
 // 25/11/2026 - BƯỚC: KC_08F2 (goi.danhHieu = rpc: màn kết quả gọi KC_DANH_HIEU.xet, chúc mừng lên sao / danh hiệu)
+// 27/11/2026 - BƯỚC: TC_D34D (KC_TT.hoi: hộp hỏi 2 nút dùng chung; xacNhanDong: ✕ hỏi lại trước khi thoát, đồng hồ dừng lúc hỏi)

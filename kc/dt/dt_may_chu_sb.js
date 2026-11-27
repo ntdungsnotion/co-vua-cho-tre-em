@@ -262,6 +262,8 @@
       //   ttKetThuc(luot) -> { ok, cu, ketQua: { soCauGoc, dungGoc, khoan, kc, vang, catTran, khongPhaiBe, tienBo, thuocMoi ... } }
       async ttOnTao(tuLuc) { return goiTt("kc_tt_on_sau_tran_tao", { p_tu_luc: tuLuc || null }); },
       async ttLuotDang() { return goiTt("kc_tt_luot_dang", {}); },
+      // TC_D34D: bé bỏ lượt ôn (lyDo 'de_sau' = bảng mời, 'thoat' = ✕ giữa chừng) -> { ok, bo }
+      async ttOnBo(luot, lyDo) { return goiTt("kc_tt_on_sau_tran_bo", { p_luot: luot, p_ly_do: lyDo === "thoat" ? "thoat" : "de_sau" }); },
       async ttTraLoi(luot, viTri, chon, giay) {
         return goiTt("kc_tt_tra_loi", { p_luot: luot, p_vi_tri: viTri, p_chon: chon, p_giay: Number.isFinite(giay) ? Math.round(giay * 100) / 100 : null });
       },
@@ -307,3 +309,4 @@
 // 25/11/2026 - BƯỚC: KC_08F2 (goiDanhHieu: RPC kc_td_danh_hieu_be / kc_td_danh_hieu_da_xem cho màn chúc mừng)
 // 26/11/2026 - BƯỚC: TC_D06D6b (vutDo: kc_dt_vut_do)
 // 26/11/2026 - BƯỚC: TC_D05C0b2 (thuLinhVung: kc_dt_thu_linh_vung)
+// 27/11/2026 - BƯỚC: TC_D34D (ttOnBo: kc_tt_on_sau_tran_bo)
