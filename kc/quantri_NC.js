@@ -4,8 +4,8 @@
 //   - menu thanh bên trên điện thoại (nút ☰ mở, bấm nền mờ / ✕ / chọn mục thì đóng);
 //   - dòng "Nhóm › Mục" cho biết đang ở đâu;
 //   - ghi #tên-màn-hình lên địa chỉ: tải lại trang vẫn ở đúng mục, gửi link được;
-//   - màn hình Tổng quan: số quà chờ trao, ý tưởng mới, số tài khoản.
-// BƯỚC: KC_00D-1 - NGÀY: 17/10/2026
+//   - màn hình Tổng quan: số quà chờ trao, thư chờ 🦉 Cô Cú (KC_12D2, thay "ý tưởng mới"), số tài khoản.
+// BƯỚC: KC_00D-1 - NGÀY: 17/10/2026 · SỬA: KC_12D2 28/11/2026 (thẻ thư chờ Cô Cú)
 // PHỤ THUỘC: ../admin_NC.js nạp TRƯỚC (adminTaiKhoan, adminGoiRpc, apiGoiRpc,
 //   adminChuyenManHinh, sự kiện "adminDaChuyenManHinh"). File này KHÔNG xác thực
 //   lại: admin_NC.js đã chặn người không phải admin (adminTaiKhoan = null).
@@ -123,11 +123,11 @@ function qtTaiTongQuan() {
     qtGhiSo("tqQuaChoTrao", so, "tqTheQua");
   });
 
-  adminGoiRpc("admin_lay_y_tuong", {}).then(function (ph) {
-    if (!ph || !ph.thanhCong) { qtGhiSo("tqYTuongMoi", null, "tqTheYTuong"); return; }
-    var so = (ph.danhSachYTuong || []).filter(function (yt) { return yt.trangThai === "moi"; }).length;
-    qtGhiSo("tqYTuongMoi", so, "tqTheYTuong");
-  });
+  // KC_12D2: thư chờ Cô Cú (ý tưởng, kháng nghị, bé trả lời) thay "ý tưởng mới chưa xem"; thẻ dẫn sang 🦉 Hộp Cô Cú
+  apiGoiRpc("kc_thu_dem", { p_ten: adminTaiKhoan.tenDangNhap, p_ma_phien: adminTaiKhoan.maPhien || "" }).then(function (ph) {
+    if (!ph || !ph.thanhCong || !ph.coCu) { qtGhiSo("tqYTuongMoi", null, "tqTheYTuong"); return; }
+    qtGhiSo("tqYTuongMoi", Number(ph.coCu.cho) || 0, "tqTheYTuong");
+  }, function () { qtGhiSo("tqYTuongMoi", null, "tqTheYTuong"); });
 
   apiGoiRpc("lay_xep_hang", {}).then(function (ph) {
     if (!ph || !ph.thanhCong) { qtGhiSo("tqSoTaiKhoan", null); return; }

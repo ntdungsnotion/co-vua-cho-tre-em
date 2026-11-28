@@ -4,11 +4,11 @@
 //   27/11/2026: "Kháng nghị của bé nên là module riêng vì nhiều chức năng app dùng đến"). Đặc tả: Thiet_Ke_Khang_Nghi.md.
 //   - Lọc theo trạng thái (Chờ xử lý / Chưa phản hồi / Đã xử lý / Quá hạn / Tất cả) và nguồn (🦉 Chọn vội, ...). Số chờ xử lý trên tên mục.
 //   - Mỗi kháng nghị: bé, việc, lời bé tự viết, hạn, bù đề xuất; phần CHI TIẾT do tính năng vẽ (chung/kn_chi_tiet.js, KC_12D1; chưa có thì bảng khoá / giá trị).
-//   - Có bù đề xuất (💎 / 🪙): ✅ Chấp nhận = mở 🎁 Cấp thưởng cho bé (qt_cap_thuong.js) điền sẵn; không có: ✅ Chấp nhận + lời nhắn.
-//     ↩️ Giữ nguyên + lời nhắn (mẫu của tính năng, rồi mẫu chung). Kết quả về 📬 Hòm thư của bé.
+//   - XỬ LÝ (✅ Chấp nhận + bù / ↩️ Giữ nguyên) chỉ còn ở 🦉 Hộp Cô Cú (KC_12D2 bỏ chỗ trùng, sau khi kháng nghị thật xử lý đạt ở
+//     đó): mỗi thẻ có nút "🦉 Xử lý trong Hộp Cô Cú" (homthu_NC.html?loai=khang_nghi&be=…). Ở đây còn: lọc, số đếm, chi tiết, cài đặt.
 //   - ⚙️ Cài đặt chung: bật / tắt, hạn (ngày), số chữ tối thiểu / tối đa, lời nhắn mẫu.
-// RPC: kc_kn_admin_ds, kc_kn_admin_xu_ly, kc_kn_admin_luu_cau_hinh (SQL repo_rieng supabase_kc11d_phan_hoi.sql).
-// PHỤ THUỘC: ../admin_NC.js (adminGoiRpc, adminBaoTin), qt_cap_thuong.js (QT_CAP_THUONG.moGan), khung adminManHinh trong quantri_NC.html.
+// RPC: kc_kn_admin_ds, kc_kn_admin_luu_cau_hinh (SQL repo_rieng supabase_kc11d_phan_hoi.sql).
+// PHỤ THUỘC: ../admin_NC.js (adminGoiRpc, adminBaoTin), khung adminManHinh trong quantri_NC.html.
 // ĐIỆN THOẠI: thẻ xếp dọc, bảng chi tiết cuộn ngang. MÁY TÍNH: như cũ, rộng hơn.
 // BƯỚC: KC_11D - NGÀY: 27/11/2026
 // ================================================================
@@ -122,43 +122,14 @@
     var ct = window.KC_KN_CHI_TIET ? KC_KN_CHI_TIET.ve(k.nguon, k.chiTiet || {}) : chiTietMacDinh(k.chiTiet || {}); ct.hidden = true;
     xem.addEventListener("click", function () { ct.hidden = !ct.hidden; });
     hang.appendChild(xem);
+    // KC_12D2: bỏ chỗ trùng: ✅ Chấp nhận (+ bù) / ↩️ Giữ nguyên làm trong 🦉 Hộp Cô Cú (cùng hàm máy chủ), ở đây chỉ dẫn sang
     var mo = ["cho_be", "be_gui", "het_han"].indexOf(k.trangThai) >= 0;
-    var nhanDuoc = !k.capThuong && (mo || (coBu && k.trangThai === "giu_nguyen"));
-    var khung = tao("div", "qknXuLy"); khung.hidden = true;
-    var nhan = tao("label", "", ""), ta = tao("textarea"); ta.maxLength = 300;
-    var ok = tao("button", "adminNut", ""); ok.type = "button"; ok.style.marginTop = "6px";
-    khung.append(nhan, ta, ok);
-    var viec = "";
-    function moKhung(v) {
-      viec = v; khung.hidden = false;
-      nhan.textContent = "Lời nhắn cho bé (hiện ở thẻ " + (v === "chap_nhan" ? "🎉" : "🦉") + " trong 📬 Hòm thư)";
-      ta.value = v === "chap_nhan" ? (d.mauChapNhan || r.cauHinh.mau_chap_nhan || "") : (d.mauGiuNguyen || r.cauHinh.mau_giu_nguyen || "");
-      ok.textContent = v === "chap_nhan" ? "✅ Xác nhận chấp nhận" : "↩️ Xác nhận giữ nguyên";
-    }
-    if (nhanDuoc) {
-      var cn = tao("button", "adminNut adminNutThanhCong", coBu ? "✅ Chấp nhận + bù thưởng" : "✅ Chấp nhận"); cn.type = "button";
-      cn.addEventListener("click", function () {
-        if (coBu && window.QT_CAP_THUONG) {
-          window.QT_CAP_THUONG.moGan({ id: k.id, be: k.be, ten: d.ten || k.thamChieu, kc: +dx.kc || 0, vang: +dx.vang || 0,
-                                        loiNhan: d.mauChapNhan || r.cauHinh.mau_chap_nhan || "", chuChapNhan: d.chuChapNhan, quayVe: MAN });
-        } else moKhung("chap_nhan");
-      });
-      hang.appendChild(cn);
-    }
-    if (mo) {
-      var giu = tao("button", "adminNut adminNutPhu", "↩️ Giữ nguyên"); giu.type = "button";
-      giu.addEventListener("click", function () { moKhung("giu_nguyen"); });
-      hang.appendChild(giu);
-    }
-    ok.addEventListener("click", function () {
-      ok.disabled = true;
-      goi("kc_kn_admin_xu_ly", { p_id: k.id, p_ket_qua: viec, p_loi_nhan: ta.value.trim() }).then(function (kq) {
-        ok.disabled = false;
-        adminBaoTin(kq.thanhCong ? (viec === "chap_nhan" ? "✅ Đã chấp nhận" : "↩️ Đã giữ nguyên") + ", bé nhận lời nhắn ở 📬 Hòm thư" : "❌ " + (kq.thongBao || "Chưa lưu được"), !!kq.thanhCong);
-        if (kq.thanhCong) { S.daDem = false; tai(); }
-      });
-    });
-    the.append(hang, khung, ct);
+    var conViec = !k.capThuong && (mo || (coBu && k.trangThai === "giu_nguyen"));
+    var sang = tao("a", "adminNut" + (conViec ? "" : " adminNutPhu"), conViec ? "🦉 Xử lý trong Hộp Cô Cú" : "🦉 Xem thư trong Hộp Cô Cú");
+    sang.href = "homthu_NC.html?loai=khang_nghi&loc=tat_ca&be=" + encodeURIComponent(k.be || "");
+    sang.style.textDecoration = "none";
+    hang.appendChild(sang);
+    the.append(hang, ct);
     return the;
   }
 
@@ -201,3 +172,4 @@
 })();
 // 27/11/2026 - BƯỚC: KC_11D (Quản trị chung › 📮 Bé kháng nghị: hộp thư chung mọi tính năng)
 // 28/11/2026 - BƯỚC: KC_12D1 (phần chi tiết theo nguồn chuyển sang chung/kn_chi_tiet.js, dùng chung với Hộp Cô Cú)
+// 28/11/2026 - BƯỚC: KC_12D2 (bỏ nút ✅ / ↩️: xử lý trong 🦉 Hộp Cô Cú)

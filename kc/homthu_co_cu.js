@@ -13,9 +13,14 @@
    RPC (trang thêm p_ten_admin + p_ma_phien_admin; máy chủ kiem_tra_admin ở MỌI hàm):
      kc_thu_admin_ds, kc_thu_admin_xem, kc_thu_admin_tra_loi, kc_thu_admin_dat, kc_thu_admin_xoa (SQL kc12b);
      kc_kn_admin_ds, kc_kn_admin_xu_ly, kc_ct_admin_cap (SQL kc11d).
-   CHỮ do người viết: luôn textContent. KHÔNG có ở KC_12D1: ✉️ / 📢 viết thư mới, ⚙️ Cài đặt hòm thư (KC_12D2).
+   KC_12D2: ✉️ VIẾT THƯ (#cc-viet, cột thư): gửi cho một / vài bé (chọn từ danh sách kc_admin_lay_danh_sach_tre) = thư ✉️
+     (tuỳ chọn 🙋 Chờ con trả lời, 👨‍👩‍👧 Phụ huynh cũng thấy) hoặc 📢 tin chung cho tất cả bé / tất cả phụ huynh / mọi người.
+     Bấm Gửi → hỏi máy chủ số người (kc_thu_admin_viet p_chi_dem) → hộp "Gửi cho N người?" → gửi với p_ma (mã lần gửi tạo lúc
+     mở khung: bấm lại không gửi 2 lần). Thư có bé: nút "✉️ Viết thư cho bé này". Ô lọc tên bé có gợi ý tên.
+     Đường dẫn ?loai=…&be=… (Quản trị › 💡 / 📮 dẫn sang) mở sẵn bộ lọc.
+   CHỮ do người viết: luôn textContent. ⚙️ Cài đặt hòm thư ở Quản trị › 📬 Hòm thư (qt_hom_thu.js).
    ĐIỆN THOẠI: danh sách, chạm mở thư toàn màn hình. MÁY TÍNH (≥ 900 px): hai cột (homthu.css + phần .cc* cuối file đó).
-   BƯỚC: KC_12D1 · NGÀY: 28/11/2026
+   BƯỚC: KC_12D1 · NGÀY: 28/11/2026 · SỬA: KC_12D2 28/11/2026
    ================================================================ */
 (function () {
   "use strict";
@@ -29,7 +34,7 @@
   const LOC = [["cho_co_cu", "🦉", "Chờ Cô Cú", "choCoCu"], ["cho_be", "⏳", "Chờ bé", "choBe"], ["xong", "✅", "Đã xong", "xong"], ["tat_ca", "📚", "Tất cả", "tatCa"]];
 
   let tk = null, cheDo = "cc", S = { loc: "cho_co_cu", loai: "", be: "", tim: "" }, ds = [], tiep = null, dem = {}, cauHinh = {};
-  let dangTai = 0, moId = null;
+  let dangTai = 0, moId = null, dsBe = null, hoiBe = null, vietSan = null;
 
   const rpcA = (ham, ts) => kcGoiRpc(ham, Object.assign({ p_ten_admin: tk.tenDangNhap, p_ma_phien_admin: tk.maPhien || "" }, ts || {}))
     .then(kq => kq || { thanhCong: false, thongBao: "Máy chủ không trả lời" });
@@ -179,6 +184,7 @@
   }
   function theoDuongDan() {
     if (cheDo !== "cc") return;
+    if (location.hash === "#cc-viet") { hienViet(); return; }
     const m = /^#cc-(\d+)$/.exec(location.hash);
     if (m) hienThu(Number(m[1])); else dongThu();
   }
@@ -292,6 +298,11 @@
   // ---------- việc của Cô Cú ----------
   function veViec(kq) {
     const t = kq.thu, vung = tao("div", "htViec ccViec");
+    if (t.be) {   // KC_12D2: viết thư mới cho đúng bé của thư này
+      const h = tao("div", "ccHangNut"), v = tao("button", "htNut phu", "✉️ Viết thư cho bé " + t.be); v.type = "button";
+      v.addEventListener("click", () => moViet({ be: [t.be] }));
+      h.appendChild(v); vung.appendChild(h);
+    }
     if (t.loai === "y_tuong" || t.loai === "co_cu") {
       vung.appendChild(veTraLoi(t));
       const hang = tao("div", "ccHangNut");
@@ -456,6 +467,211 @@
     vung.appendChild(the);
   }
 
+  // ================================================================
+  // ✉️ / 📢 VIẾT THƯ MỚI (KC_12D2). Máy chủ tự lập danh sách người nhận, tự kiểm quyền / độ dài / số người tối đa.
+  // ================================================================
+  const DOI_TUONG = [
+    ["be", "✉️", "Một hoặc vài bé", "Thư ✉️ riêng cho bé được chọn"],
+    ["tat_ca_be", "📢", "Tất cả các bé", "Tin chung"],
+    ["tat_ca_phu_huynh", "📢", "Tất cả phụ huynh", "Tin chung"],
+    ["tat_ca", "📢", "Mọi người", "Tin chung cho mọi bé + phụ huynh"]
+  ];
+
+  // danh sách tên bé (gợi ý ô lọc + chọn người nhận); hỏi máy chủ một lần mỗi lần mở trang
+  function layDsBe() {
+    if (dsBe) return Promise.resolve(dsBe);
+    if (hoiBe) return hoiBe;
+    hoiBe = rpcA("kc_admin_lay_danh_sach_tre").then(kq => {
+      hoiBe = null;
+      if (!kq.thanhCong) return [];
+      dsBe = (kq.danhSachTre || []).map(b => ({ ten: b.tenDangNhap, ph: b.phuHuynh || [] }));
+      const dl = $("ccDsBe");
+      if (dl) { dl.innerHTML = ""; dsBe.forEach(b => { const o = document.createElement("option"); o.value = b.ten; dl.appendChild(o); }); }
+      return dsBe;
+    });
+    return hoiBe;
+  }
+
+  function moViet(san) {
+    vietSan = san || null;
+    if (location.hash === "#cc-viet") { hienViet(); return; }
+    location.hash = "#cc-viet";
+  }
+
+  function hienViet() {
+    moId = "viet";
+    const san = vietSan || {}; vietSan = null;
+    $("ccTrang").querySelector(".htKhung").classList.add("coThu");
+    $("ccDs").querySelectorAll(".htMucThu.dangMo").forEach(x => x.classList.remove("dangMo"));
+    const cot = $("ccCotThu");
+    if (!matchMedia("(min-width: 900px)").matches) { try { cot.scrollIntoView({ block: "start" }); } catch (e) { /* bỏ qua */ } }
+    cot.innerHTML = "";
+    const dau = tao("div", "htDauThu");
+    dau.appendChild(veLui());
+    dau.appendChild(tao("span", "htHinhTo", "✉️"));
+    const giua = tao("div", "htDauGiua");
+    giua.appendChild(tao("h2", "", "Viết thư của Cô Cú"));
+    giua.appendChild(tao("p", "htPhu", "Bé và phụ huynh chỉ thấy “🦉 Cô Cú”, không thấy tên bạn."));
+    dau.appendChild(giua);
+    cot.appendChild(dau);
+
+    const than = tao("div", "htThan ccViet");
+    const ma = maMoi();               // mã lần gửi: bấm Gửi lại (mạng chậm) không thành 2 thư
+    let doiTuong = "be";
+    const chon = new Set((san.be || []).filter(Boolean));
+
+    // --- gửi cho ---
+    const nhom = tao("fieldset", "ccDoiTuong");
+    nhom.appendChild(tao("legend", "ccNhan", "Gửi cho"));
+    DOI_TUONG.forEach(x => {
+      const l = tao("label", "ccDtMuc"), r = tao("input"); r.type = "radio"; r.name = "ccDt"; r.value = x[0]; r.checked = x[0] === doiTuong;
+      const chu = tao("span", "");
+      chu.append(tao("b", "", x[1] + " " + x[2]), tao("small", "", x[3]));
+      l.append(r, chu);
+      r.addEventListener("change", () => { if (r.checked) { doiTuong = x[0]; veTheoDoiTuong(); } });
+      nhom.appendChild(l);
+    });
+    than.appendChild(nhom);
+
+    // --- chọn bé ---
+    const khungBe = tao("div", "ccChonBe");
+    khungBe.appendChild(tao("p", "ccNhan", "Chọn bé nhận thư"));
+    const daChon = tao("div", "ccDaChon"); daChon.setAttribute("aria-live", "polite");
+    const oTim = tao("input", "htO ccOSo"); oTim.type = "search"; oTim.placeholder = "🔎 Tìm tên bé…"; oTim.setAttribute("aria-label", "Tìm tên bé");
+    const dsChon = tao("div", "ccDsChon"); dsChon.appendChild(tao("p", "htGhi", "Đang tải danh sách bé…"));
+    khungBe.append(daChon, oTim, dsChon);
+    than.appendChild(khungBe);
+
+    // --- tuỳ chọn (chỉ thư cho bé) ---
+    const tuy = tao("div", "ccTuyChon");
+    const hop = (chu, ghi) => { const l = tao("label", "ccHop"), c = tao("input"); c.type = "checkbox"; const s = tao("span", ""); s.append(tao("b", "", chu), tao("small", "", ghi)); l.append(c, s); tuy.appendChild(l); return c; };
+    const oCho = hop("🙋 Chờ con trả lời", "Bé thấy thư ở “Con cần làm” và viết lời đáp ngay trong thư.");
+    const oPh = hop("👨‍👩‍👧 Phụ huynh của bé cũng thấy", "Thêm thư vào hòm của phụ huynh đang liên kết với bé.");
+    oCho.checked = !!san.choTraLoi;
+    than.appendChild(tuy);
+
+    // --- tiêu đề + nội dung ---
+    const max = Math.max(50, +cauHinh.do_dai_loi_co_cu || 1000);
+    const lTd = tao("label", "ccNhan", "Tiêu đề (bé thấy ở danh sách thư)");
+    const oTd = tao("input", "htO ccOSo"); oTd.maxLength = 120; oTd.placeholder = "Ví dụ: Cô Cú khen con chăm học"; oTd.id = "ccVietTd"; lTd.htmlFor = oTd.id;
+    oTd.value = san.tieuDe || "";
+    const lNd = tao("label", "ccNhan", "Nội dung");
+    const oNd = tao("textarea", "htO"); oNd.rows = 5; oNd.maxLength = max; oNd.id = "ccVietNd"; lNd.htmlFor = oNd.id;
+    oNd.placeholder = "Ví dụ: Tuần này con ôn bài đều lắm. Cô Cú tự hào về con!";
+    const dem = tao("span", "htDem", "0 / " + max);
+    oNd.addEventListener("input", () => { dem.textContent = oNd.value.length + " / " + max; loi.textContent = ""; });
+    oTd.addEventListener("input", () => { loi.textContent = ""; });
+    than.append(lTd, oTd, lNd, oNd, dem);
+
+    const loi = tao("p", "htLoiViet"); loi.setAttribute("role", "alert");
+    const hang = tao("div", "ccHangNut ccHangGui");
+    const gui = tao("button", "htNut chinh", "📨 Gửi thư…"); gui.type = "button";
+    const thoi = tao("button", "htNut phu", "Thôi"); thoi.type = "button";
+    thoi.addEventListener("click", () => { if (location.hash === "#cc-viet") history.back(); else dongThu(); });
+    hang.append(gui, thoi);
+    than.append(loi, hang);
+    cot.appendChild(than);
+
+    function veDaChon() {
+      daChon.innerHTML = "";
+      if (!chon.size) { daChon.appendChild(tao("span", "htGhi", "Chưa chọn bé nào.")); return; }
+      chon.forEach(ten => {
+        const c = tao("button", "ccChip ccChipBo", "👧 " + ten + " ✕"); c.type = "button"; c.setAttribute("aria-label", "Bỏ chọn " + ten);
+        c.addEventListener("click", () => { chon.delete(ten); veDaChon(); veDsChon(); });
+        daChon.appendChild(c);
+      });
+    }
+    function veDsChon() {
+      if (!dsBe) return;
+      dsChon.innerHTML = "";
+      const tim = oTim.value.trim().toLowerCase();
+      const hop2 = dsBe.filter(b => !tim || b.ten.toLowerCase().indexOf(tim) >= 0);
+      if (!dsBe.length) { dsChon.appendChild(tao("p", "htGhi", "Không tải được danh sách bé.")); return; }
+      if (!hop2.length) { dsChon.appendChild(tao("p", "htGhi", "Không có bé nào tên như vậy.")); return; }
+      hop2.forEach(b => {
+        const l = tao("label", "ccBeMuc"), c = tao("input"); c.type = "checkbox"; c.checked = chon.has(b.ten);
+        c.addEventListener("change", () => { if (c.checked) chon.add(b.ten); else chon.delete(b.ten); veDaChon(); });
+        l.append(c, tao("span", "", b.ten + (b.ph.length ? " · 👨‍👩‍👧 " + b.ph.length : "")));
+        dsChon.appendChild(l);
+      });
+    }
+    function veTheoDoiTuong() {
+      const laBe = doiTuong === "be";
+      khungBe.hidden = tuy.hidden = !laBe;
+      dau.querySelector(".htHinhTo").textContent = laBe ? "✉️" : "📢";
+      loi.textContent = "";
+    }
+    oTim.addEventListener("input", veDsChon);
+    veDaChon(); veTheoDoiTuong();
+    layDsBe().then(() => { if (moId === "viet") veDsChon(); });
+
+    gui.addEventListener("click", () => {
+      loi.textContent = "";
+      const laBe = doiTuong === "be";
+      const td = oTd.value.trim(), nd = oNd.value.trim();
+      if (laBe && !chon.size) { loi.textContent = "Chọn ít nhất một bé nhận thư."; return; }
+      if (!td) { loi.textContent = "Cần có tiêu đề."; oTd.focus(); return; }
+      if (!nd) { loi.textContent = "Cần có nội dung thư."; oNd.focus(); return; }
+      const ts = {
+        p_doi_tuong: laBe ? { be: Array.from(chon) } : { [doiTuong]: true },
+        p_tieu_de: td, p_chu: nd,
+        p_cho_tra_loi: laBe && oCho.checked, p_ph_thay: laBe && oPh.checked
+      };
+      gui.disabled = true;
+      rpcA("kc_thu_admin_viet", Object.assign({ p_chi_dem: true }, ts)).then(kq => {
+        gui.disabled = false;
+        if (!kq.thanhCong) { loi.textContent = "❌ " + chuLoiViet(kq); return; }
+        hoiGui(kq.soNguoi, kq.loai, ts, () => rpcA("kc_thu_admin_viet", Object.assign({ p_ma: ma }, ts)).then(r => {
+          if (!r.thanhCong) { loi.textContent = "❌ " + chuLoiViet(r); return false; }
+          bao(r.trungLap ? "Thư này đã gửi rồi, Cô Cú không gửi lại lần 2." : "📨 Đã gửi cho " + soVN(r.soNguoi) + " người.", true);
+          if (typeof window.kcCapNhatHomThu === "function") kcCapNhatHomThu();
+          S.loc = "tat_ca"; veMuc(); taiDs(false);
+          history.replaceState({ ccThu: 1 }, "", "#cc-" + r.thuId);
+          hienThu(Number(r.thuId));
+          return true;
+        }));
+      });
+    });
+    (chon.size ? oTd : nhom.querySelector("input")).focus();
+  }
+
+  function chuLoiViet(kq) {
+    const t = kq.thongBao || "";
+    const toiDa = /Toi da (\d+)/i.exec(t);   // số của máy chủ lúc gửi (cài đặt có thể vừa đổi)
+    if (kq.soNguoi && toiDa) return "Thư này tới " + soVN(kq.soNguoi) + " người, quá mức tối đa " + soVN(toiDa[1])
+      + " người mỗi thư. Muốn gửi thì nâng mức ở ⚙️ Cài đặt hòm thư.";
+    if (/Khong co tai khoan/i.test(t)) return "Không có tài khoản: " + t.replace(/^.*:\s*/, "");
+    if (/Khong co ai nhan/i.test(t)) return "Không có ai nhận thư này.";
+    if (/Tieu de/i.test(t)) return "Tiêu đề cần 1-120 ký tự.";
+    if (/Noi dung/i.test(t)) return "Nội dung quá dài (tối đa " + soVN(cauHinh.do_dai_loi_co_cu || 1000) + " ký tự).";
+    return t || "Chưa gửi được";
+  }
+
+  function hoiGui(so, loai, ts, lam) {
+    const man = tao("div", "htMan"); man.setAttribute("role", "dialog"); man.setAttribute("aria-modal", "true"); man.setAttribute("aria-label", "Xác nhận gửi thư");
+    const hop = tao("div", "htHopXoa");
+    hop.appendChild(tao("div", "htCuTo", loai === "tin" ? "📢" : "✉️"));
+    hop.appendChild(tao("h3", "", "Gửi cho " + soVN(so) + " người?"));
+    const dt = ts.p_doi_tuong.be ? ts.p_doi_tuong.be.join(", ") + (ts.p_ph_thay ? " + phụ huynh" : "")
+      : (DOI_TUONG.find(x => ts.p_doi_tuong[x[0]]) || [])[2];
+    hop.appendChild(tao("p", "", "“" + ts.p_tieu_de + "” · " + dt + (ts.p_cho_tra_loi ? " · 🙋 chờ con trả lời" : "")));
+    const hang = tao("div", "htHangNut");
+    const thoi = tao("button", "htNut phu", "Thôi"); thoi.type = "button";
+    const ok = tao("button", "htNut chinh", "📨 Gửi"); ok.type = "button";
+    hang.append(thoi, ok); hop.appendChild(hang); man.appendChild(hop);
+    const dong = () => { man.remove(); document.removeEventListener("keydown", phim); };
+    const phim = e => { if (e.key === "Escape" && !ok.disabled) dong(); };
+    document.addEventListener("keydown", phim);
+    man.addEventListener("click", e => { if (e.target === man && !ok.disabled) dong(); });
+    thoi.addEventListener("click", dong);
+    ok.addEventListener("click", () => {
+      ok.disabled = thoi.disabled = true; ok.textContent = "Đang gửi…";
+      Promise.resolve(lam()).then(dong, dong);
+    });
+    document.body.appendChild(man);
+    ok.focus();
+  }
+
   // ---------- 🗑 / ⛔ xoá ----------
   function veXoa(t) {
     const hang = tao("div", "ccHangNut ccXoa");
@@ -512,6 +728,17 @@
     $("ccBoLoc").addEventListener("click", () => { oLoai.value = ""; oBe.value = ""; oTim.value = ""; loc(); });
     $("ccMuc").querySelectorAll("[role=tab]").forEach(b => b.addEventListener("click", () => { S.loc = b.dataset.loc; veMuc(); taiDs(false); }));
     $("ccThem").addEventListener("click", () => taiDs(true));
+    $("ccVietNut").addEventListener("click", () => moViet(null));
+    // KC_12D2: Quản trị › 💡 / 📮 dẫn sang với ?loai=…&be=…&loc=…
+    try {
+      const q = new URLSearchParams(location.search);
+      if (q.get("loai") && [...oLoai.options].some(o => o.value === q.get("loai"))) oLoai.value = q.get("loai");
+      if (q.get("be")) oBe.value = q.get("be").slice(0, 60);
+      if (LOC.some(l => l[0] === q.get("loc"))) S.loc = q.get("loc");
+      S.loai = oLoai.value; S.be = oBe.value.trim();
+      $("ccBoLoc").hidden = !(S.loai || S.be);
+    } catch (e) { /* bỏ qua */ }
+    oBe.addEventListener("focus", () => layDsBe(), { once: true });
   }
 
   document.addEventListener("kcHomThuDem", e => { const kq = e.detail || {}; if (tk && kq.coCu) veSoChuyen(kq.coCu.cho); });
@@ -529,10 +756,10 @@
     let lucAn = 0;
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") lucAn = Date.now();
-      else if (cheDo === "cc" && lucAn && Date.now() - lucAn > 30000) { taiDs(false); if (moId) hienThu(moId); }
+      else if (cheDo === "cc" && lucAn && Date.now() - lucAn > 30000) { taiDs(false); if (typeof moId === "number") hienThu(moId); }
     });
     const h = location.hash;
-    if (/^#cc-\d+$/.test(h) && !(history.state && history.state.ccThu)) {
+    if (/^#cc-(\d+|viet)$/.test(h) && !(history.state && history.state.ccThu)) {
       history.replaceState(null, "", location.pathname + location.search);
       history.pushState({ ccThu: 1 }, "", h);
     }
@@ -541,3 +768,4 @@
   });
 })();
 // 28/11/2026 - BƯỚC: KC_12D1 (tạo mới: 🦉 Hộp Cô Cú cho admin trong trang Hòm thư)
+// 28/11/2026 - BƯỚC: KC_12D2 (✉️ / 📢 viết thư mới, gợi ý tên bé, bộ lọc từ đường dẫn, nút ⚙️ Cài đặt hòm thư)
