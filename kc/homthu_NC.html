@@ -11,12 +11,14 @@
                   Lối vào: nút 📬 trên thanh đầu mọi trang (kc_auth.js). Máy chủ: RPC kc_thu_* (SQL kc12b).
                   Bé: Cần con xem · Đã xong · Tất cả; mở thư = hội thoại với Cô Cú 🦉, 🔊 đọc cho con nghe,
                   🎁 Nhận, 🙋 gửi phản hồi kháng nghị, trả lời (thư được phép), 🗑 xoá (hỏi lại).
-                  Phụ huynh: thêm thanh chọn con. Admin: hộp thư riêng + lối tạm sang Quản trị (Hộp Cô Cú ở KC_12D).
+                  Phụ huynh: thêm thanh chọn con.
+                  Admin (KC_12D1, homthu_co_cu.js): thanh chuyển 🦉 Hộp Cô Cú / 📬 Thư riêng; Hộp Cô Cú có 4 mục + lọc
+                  loại / bé / tìm chữ, trả lời ý tưởng, xử lý kháng nghị trong thư, xoá khỏi hộp / xoá hẳn.
                   Điện thoại: danh sách, chạm mở thư toàn màn hình (‹ quay lại, nút Back của máy cũng quay lại).
                   Máy tính (≥ 900 px): hai cột, danh sách 360 px + thư bên phải.
        BƯỚC: KC_12C1 · NGÀY: 28/11/2026
        PHỤ THUỘC: kc_style.css, homthu.css, kc_config.js, kc_api.js, kc_auth.js, chung/am_thanh.js,
-                  chung/khang_nghi.js, homthu.js.
+                  chung/khang_nghi.js, homthu.js, chung/kn_chi_tiet.js + homthu_co_cu.js (KC_12D1, 28/11/2026).
        ================================================================ -->
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -57,9 +59,49 @@
   </div>
 
   <div id="kcNoiDungCanDangNhap" style="display:none;">
+    <!-- KC_12D1 - Admin: chuyển 🦉 Hộp Cô Cú / 📬 Thư riêng (homthu_co_cu.js hiện thanh này) -->
+    <div id="ccChuyen" class="ccChuyen" role="group" aria-label="Chọn hộp thư" hidden>
+      <button type="button" data-che="cc" aria-pressed="true">🦉 Hộp Cô Cú <b class="ccSoChuyen" hidden></b></button>
+      <button type="button" data-che="rieng" aria-pressed="false">📬 Thư riêng</button>
+    </div>
+
+    <!-- KC_12D1 - 🦉 HỘP CÔ CÚ (chỉ admin) -->
+    <main id="ccTrang" class="htTrang ccTrang" hidden>
+      <div class="ccLocHang">
+        <select id="ccLoai" aria-label="Loại thư">
+          <option value="">Mọi loại thư</option>
+          <option value="y_tuong">💡 Ý tưởng</option>
+          <option value="khang_nghi">📮 Kháng nghị</option>
+          <option value="cap_thuong">🎁 Cấp thưởng</option>
+          <option value="co_cu">✉️ Thư Cô Cú</option>
+          <option value="tin">📢 Tin chung</option>
+        </select>
+        <input id="ccBe" type="text" placeholder="Tên bé" aria-label="Lọc theo tên bé" autocomplete="off">
+        <input id="ccTim" type="search" placeholder="Tìm chữ trong thư" aria-label="Tìm chữ trong thư" autocomplete="off">
+        <button id="ccLoc" class="htNut chinh" type="button">🔎 Lọc</button>
+        <button id="ccBoLoc" class="htNut phu" type="button" hidden>✕ Bỏ lọc</button>
+      </div>
+      <div class="htKhung">
+        <section class="htCotDs" aria-label="Danh sách thư Hộp Cô Cú">
+          <div id="ccMuc" class="htMuc ccMuc" role="tablist" aria-label="Mục Hộp Cô Cú">
+            <button type="button" role="tab" data-loc="cho_co_cu" aria-selected="true">🦉 Chờ Cô Cú <span class="ccSo"></span></button>
+            <button type="button" role="tab" data-loc="cho_be" aria-selected="false">⏳ Chờ bé <span class="ccSo"></span></button>
+            <button type="button" role="tab" data-loc="xong" aria-selected="false">✅ Đã xong <span class="ccSo"></span></button>
+            <button type="button" role="tab" data-loc="tat_ca" aria-selected="false">📚 Tất cả <span class="ccSo"></span></button>
+          </div>
+          <div id="ccDs" class="htDs" aria-live="polite"></div>
+          <button id="ccThem" class="htThem" type="button" hidden>Xem thêm thư cũ</button>
+        </section>
+        <section id="ccCotThu" class="htCotThu" aria-label="Thư đang mở">
+          <div class="htTrongThu">
+            <div class="htCuTo" aria-hidden="true">🦉</div>
+            <p>Chọn một thư để đọc và xử lý.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
     <main id="htTrang" class="htTrang">
-      <!-- Admin: lối tạm sang Quản trị (Hộp Cô Cú làm ở KC_12D) -->
-      <div id="htCoCu" class="htCoCu" hidden></div>
       <!-- Phụ huynh: chọn con -->
       <div id="htChonCon" class="htChonCon" role="group" aria-label="Chọn con" hidden></div>
 
@@ -90,6 +132,8 @@
   <script src="chung/am_thanh.js"></script>
   <script src="chung/khang_nghi.js"></script>
   <script src="homthu.js"></script>
+  <script src="chung/kn_chi_tiet.js"></script> <!-- KC_12D1: chi tiết kháng nghị (chung với Quản trị › 📮) -->
+  <script src="homthu_co_cu.js"></script>      <!-- KC_12D1: 🦉 Hộp Cô Cú (chỉ admin) -->
 
 <script src="kc_luot_truy_cap.js"></script>
 </body>
