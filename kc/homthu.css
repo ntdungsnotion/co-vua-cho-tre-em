@@ -52,6 +52,7 @@
 .ccVietTrang[hidden] { display: none; }
 .ccVietKhung { max-width: 820px; margin: 0 auto; background: #fff; border: 2px solid var(--mau-vien); border-radius: 20px; overflow: hidden; box-shadow: var(--do-bong); }
 .htMuc.ccMuc { grid-template-columns: repeat(5, 1fr); }
+@media (min-width: 900px) { .htMuc.ccMuc { grid-template-columns: repeat(3, 1fr); } }   /* cột danh sách 360 px: 3 + 2 cho chữ khỏi gãy */
 .ccViet { display: grid; gap: 6px; }
 .ccViet [hidden] { display: none !important; }
 .ccDoiTuong { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
