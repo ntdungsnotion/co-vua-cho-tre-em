@@ -259,7 +259,7 @@ function chqHoi(loai, vp) {
   chqEl("chqHopTieuDe").textContent = (laAvatar ? "Mua avatar \"" : "Đổi \"") + (vp.ten || (laAvatar ? "Avatar" : "Quà")) + "\"?";
   chqEl("chqHopLoi").textContent = laAvatar
     ? "Con dùng " + (Number(vp.giaVang) || 0) + " 🪙 xu vàng. Mua xong avatar hiện ngay ở mọi nơi trong app!"
-    : "Con dùng " + (Number(vp.giaKimCuong) || 0) + " 💎 để đổi món quà này. Bố mẹ / thầy cô sẽ trao quà tận tay con nhé!";
+    : "Con dùng " + (Number(vp.giaKimCuong) || 0) + " 💎 để đổi món quà này. Bố mẹ sẽ trao quà tận tay cho con nhé!";
   chqEl("chqHopKhong").hidden = false;
   chqEl("chqHopKhong").textContent = "Để sau";
   chqEl("chqHopCo").textContent = laAvatar ? "🪙 Mua luôn!" : "🎁 Đổi luôn!";
@@ -322,7 +322,7 @@ function chqBamCo() {
     }
     if (typeof kq.diemMoi === "number") kcCapNhatTui({ diemSo: kq.diemMoi });
     chqVeSoDu(true);
-    chqChucMung("🎉 Đổi quà thành công!", "\"" + (vp.ten || "Quà") + "\" đang chờ được trao. Con nhớ báo bố mẹ / thầy cô nhé!");
+    chqChucMung("🎉 Đổi quà thành công!", "\"" + (vp.ten || "Quà") + "\" đang chờ được trao. Con nhớ báo bố mẹ nhé!");
     chqTai();
   });
 }

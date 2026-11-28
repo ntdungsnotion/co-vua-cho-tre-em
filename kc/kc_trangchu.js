@@ -57,13 +57,13 @@ function tcVeTrangChu(tk) {
     tcTaiQua(tk);
     // KC_08F2: 🏅 danh hiệu mỗi môn (+ màn chúc mừng nếu vừa lên sao mà chưa xem)
     if (window.KC_DANH_HIEU) KC_DANH_HIEU.veKhoi(tcLay("tcDanhHieu"));
-    // KC_11D: 📬 Cô Cú báo (phản hồi bài chọn vội, thầy cô cấp thưởng; chung/thong_bao_be.js)
+    // KC_12C2: 📬 Cần con xem (thư trong Hòm thư; chung/thong_bao_be.js)
     tcVeCoCuBao(tk);
   }
 }
 
 // ================================================================
-// PHẦN 2B: 📬 CÔ CÚ BÁO (KC_11D) - thông báo cho bé dùng chung; 🎁 Nhận: kim cương rơi, số nhảy
+// PHẦN 2B: 📬 CẦN CON XEM (KC_12C2) - thư chưa đọc / chờ con làm, đọc từ Hòm thư; chạm thẻ mở thư
 // ================================================================
 
 function tcVeCoCuBao(tk) {
@@ -71,22 +71,7 @@ function tcVeCoCuBao(tk) {
   var rpc = function (ham, ts) {
     return kcGoiRpc(ham, Object.assign({ p_ten: tk.tenDangNhap, p_ma_phien: tk.maPhien || "" }, ts || {}));
   };
-  KC_THONG_BAO_BE.veKhoi(tcLay("tcCoCuBao"), {
-    rpc: rpc,
-    khiNhan: function (kq) {
-      var kc = Number(kq.kc) || 0, vang = Number(kq.vang) || 0;
-      // Máy chủ đã cộng lúc thầy cô cấp (số trên chip đã gồm phần này): cho số chạy từ (số − phần thưởng) lên để bé thấy 💎 vào túi
-      if (typeof kq.diemSo === "number") {
-        tk.diemSo = kq.diemSo; kcLuuPhien(tk);
-        tcVeKimCuong(Math.max(0, kq.diemSo - kc), false); tcVeKimCuong(kq.diemSo, true);
-      }
-      if (typeof kq.viVang === "number" && typeof kcVeVang === "function") kcVeVang(kq.viVang);
-      if (kc > 0) tcMuaKimCuong(Math.min(24, 6 + kc * 2));
-      var chu = [];
-      if (kc > 0) chu.push(kc + " 💎"); if (vang > 0) chu.push(vang + " 🪙");
-      tcHienLoiQua("🎉 Con nhận được " + (chu.join(" + ") || "quà") + "!");
-    }
-  });
+  KC_THONG_BAO_BE.veKhoi(tcLay("tcCoCuBao"), { rpc: rpc, duongHomThu: "kc/homthu_NC.html" });
 }
 
 // ================================================================
@@ -332,3 +317,4 @@ document.addEventListener("kcSanSang", function (su) {
 // 15/10/2026 - BƯỚC: KC_00C-2
 // 25/11/2026 - BƯỚC: KC_08F2 (khối 🏅 Danh hiệu của con: KC_DANH_HIEU.veKhoi)
 // 27/11/2026 - BƯỚC: KC_11D (khối 📬 Cô Cú báo: KC_THONG_BAO_BE.veKhoi + 🎁 Nhận cập nhật 💎 / 🪙)
+// 28/11/2026 - BƯỚC: KC_12C2 (khối 📬 Cần con xem đọc từ Hòm thư; 🎁 Nhận chuyển vào thư)

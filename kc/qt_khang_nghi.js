@@ -5,7 +5,7 @@
 //   - Lọc theo trạng thái (Chờ xử lý / Chưa phản hồi / Đã xử lý / Quá hạn / Tất cả) và nguồn (🦉 Chọn vội, ...). Số chờ xử lý trên tên mục.
 //   - Mỗi kháng nghị: bé, việc, lời bé tự viết, hạn, bù đề xuất; phần CHI TIẾT do tính năng vẽ (CHI_TIET[nguon]; chưa có thì bảng khoá / giá trị).
 //   - Có bù đề xuất (💎 / 🪙): ✅ Chấp nhận = mở 🎁 Cấp thưởng cho bé (qt_cap_thuong.js) điền sẵn; không có: ✅ Chấp nhận + lời nhắn.
-//     ↩️ Giữ nguyên + lời nhắn (mẫu của tính năng, rồi mẫu chung). Kết quả về 📬 Trang chủ của bé.
+//     ↩️ Giữ nguyên + lời nhắn (mẫu của tính năng, rồi mẫu chung). Kết quả về 📬 Hòm thư của bé.
 //   - ⚙️ Cài đặt chung: bật / tắt, hạn (ngày), số chữ tối thiểu / tối đa, lời nhắn mẫu.
 // RPC: kc_kn_admin_ds, kc_kn_admin_xu_ly, kc_kn_admin_luu_cau_hinh (SQL repo_rieng supabase_kc11d_phan_hoi.sql).
 // PHỤ THUỘC: ../admin_NC.js (adminGoiRpc, adminBaoTin), qt_cap_thuong.js (QT_CAP_THUONG.moGan), khung adminManHinh trong quantri_NC.html.
@@ -153,7 +153,7 @@
     var viec = "";
     function moKhung(v) {
       viec = v; khung.hidden = false;
-      nhan.textContent = "Lời nhắn cho bé (hiện ở thẻ " + (v === "chap_nhan" ? "🎉" : "🦉") + " Trang chủ)";
+      nhan.textContent = "Lời nhắn cho bé (hiện ở thẻ " + (v === "chap_nhan" ? "🎉" : "🦉") + " trong 📬 Hòm thư)";
       ta.value = v === "chap_nhan" ? (d.mauChapNhan || r.cauHinh.mau_chap_nhan || "") : (d.mauGiuNguyen || r.cauHinh.mau_giu_nguyen || "");
       ok.textContent = v === "chap_nhan" ? "✅ Xác nhận chấp nhận" : "↩️ Xác nhận giữ nguyên";
     }
@@ -176,7 +176,7 @@
       ok.disabled = true;
       goi("kc_kn_admin_xu_ly", { p_id: k.id, p_ket_qua: viec, p_loi_nhan: ta.value.trim() }).then(function (kq) {
         ok.disabled = false;
-        adminBaoTin(kq.thanhCong ? (viec === "chap_nhan" ? "✅ Đã chấp nhận" : "↩️ Đã giữ nguyên") + ", bé nhận lời nhắn ở 📬 Trang chủ" : "❌ " + (kq.thongBao || "Chưa lưu được"), !!kq.thanhCong);
+        adminBaoTin(kq.thanhCong ? (viec === "chap_nhan" ? "✅ Đã chấp nhận" : "↩️ Đã giữ nguyên") + ", bé nhận lời nhắn ở 📬 Hòm thư" : "❌ " + (kq.thongBao || "Chưa lưu được"), !!kq.thanhCong);
         if (kq.thanhCong) { S.daDem = false; tai(); }
       });
     });

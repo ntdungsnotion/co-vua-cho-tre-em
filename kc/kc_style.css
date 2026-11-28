@@ -382,6 +382,10 @@ a.kcTuiLink:hover { background: rgba(255, 255, 255, 0.32); }
   border-radius: var(--bo-tron-nho);
   padding: 10px 14px;
 }
+/* KC_12C2 (28/11/2026): mỗi ý tưởng là một thư, chạm vào mở thư trong Hòm thư */
+.kcytDongLienKet { display: block; text-decoration: none; color: inherit; }
+.kcytDongLienKet:hover, .kcytDongLienKet:focus-visible { box-shadow: 0 0 0 2px var(--mau-chinh); }
+.kcytXemThem { display: flex; justify-content: center; align-items: center; min-height: 44px; font-weight: bold; text-decoration: none; }
 .kcytDongNoiDung { margin: 0 0 8px; color: var(--mau-chu); white-space: pre-wrap; }
 .kcytDongMeta {
   display: flex;

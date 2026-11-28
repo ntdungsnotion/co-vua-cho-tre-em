@@ -582,7 +582,7 @@
               if (!r || !r.daGui) return;
               ph.disabled = true; ph.textContent = "💌 Đã gửi Cô Cú"; ph.className = "ttNut ttNutPhu ttBbPhanHoi";
               thoi.textContent = t.nutKet; thoi.className = "ttNut tiep ttBbThoi"; hang.appendChild(thoi); thoi.focus({ preventScroll: true });
-              coCu("Cô Cú sẽ báo con ở Trang chủ nhé! 💌");
+              coCu("Cô Cú sẽ báo con ở 📬 Hòm thư nhé! 💌");
             });
             return;
           }

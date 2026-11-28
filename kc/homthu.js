@@ -440,7 +440,13 @@
       if (document.visibilityState === "hidden") lucAn = Date.now();
       else if (lucAn && Date.now() - lucAn > 30000) { taiDs(false); if (moId) hienThu(moId); }
     });
+    const moThang = location.hash;
+    if (/^#thu-\d+$/.test(moThang) && !(history.state && history.state.htThu)) {
+      history.replaceState(null, "", location.pathname + location.search);
+      history.pushState({ htThu: 1 }, "", moThang);
+    }
     taiDs(false).then(theoDuongDan);
   });
 })();
 // 28/11/2026 - BƯỚC: KC_12C1 (tạo mới: trang Hòm thư bé / phụ huynh)
+// 28/11/2026 - BƯỚC: KC_12C2 (mở thẳng một thư thì ‹ / Back về danh sách thư)
