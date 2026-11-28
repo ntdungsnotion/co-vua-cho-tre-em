@@ -4,6 +4,8 @@
 //   9 man hinh: Vat Pham | Doi Thuong | Y Tuong | Cau Hinh Chung |
 //               Cap Do May | Loi Dong Vien | Giong Doc | Ho So Tre | Don Kho Anh
 // BUOC: NC_06A-2 (nang cap tu NC_09B) - NGAY: 12/07/2026 21:00
+// CAP NHAT: 28/11/2026 23:xx - BUOC: KC_00D2-C1: bo danh sach "Ho So Cac Be" (gop vao 👥 Tai khoan, kc/qt_tai_khoan.js);
+//   adminMoHoSoTre khong tu chuyen man hinh (qt_tai_khoan.js boc ham).
 // CAP NHAT: 28/11/2026 - BUOC: KC_00D2-R: Ho So Tre goi lay_ho_so BAN QUAN TRI qua adminGoiRpc (may chu kiem ma phien
 //   quan tri that); ban cu chi nhan ten bi thu quyen (SQL repo rieng supabase_kc00d2_r2_khoa_ban_cu.sql).
 // CAP NHAT: 25/11/2026 06:xx - BUOC: KC_05: man hinh vat pham chia 2 che do (adminApCheDoVatPham):
@@ -361,7 +363,7 @@ function adminChuyenManHinh(ten, nutBam) {
   if (ten === "capdo")        adminTaiCapDo();
   if (ten === "loidongvien")  adminTaiLoiDongVien();
   if (ten === "giongdoc")     adminTaiGiongDoc();
-  if (ten === "hosotre")      adminTaiDanhSachTre();   // NC_06A-2
+  // KC_00D2-C1: "hosotre" gop vao 👥 Tai khoan (kc/qt_tai_khoan.js tu tai khi mo man "taikhoan")
   // "donkho" KHONG tu quet: viec quet doc toan bo kho + CSDL, va la man hinh
   // co rui ro xoa nham -> chi chay khi quan tri chu dong bam nut "Quet Kho".
 }
@@ -1826,8 +1828,6 @@ function adminAvatarNho(av) {
     : '<span style="margin-right:6px;">' + (av ? adminThoat(av) : "🙂") + "</span>";
 }
 
-var adminChoTraoTheoBe = {};   // tên bé -> số quà đổi thưởng đang "chờ trao"
-
 /** Đếm quà đổi thưởng đang chờ trao theo từng bé (từ admin_lay_lich_su) */
 function adminDemChoTrao(ph) {
   var dem = {};
@@ -1845,8 +1845,9 @@ function adminOQuaChuaNhan(soTang, soChoTrao) {
   return phan.length ? phan.join(" ") : (soTang === null ? "—" : "0");
 }
 
+// KC_00D2-C1 (28/11/2026): danh sach cac be da GOP vao Quan tri > 👥 Tai khoan (kc/qt_tai_khoan.js).
+//   O day chi con khoi ho so chi tiet 1 be (#khoiChiTietTre), qt_tai_khoan.js chuyen khoi nay vao man Tai khoan.
 function adminDungManHinhHoSoTre() {
-  adminEl("btnLamMoiHoSoTre").addEventListener("click", adminTaiDanhSachTre);
   // Thanh tieu muc cua ho so chi tiet
   var nut = document.querySelectorAll(".htNutTieuMuc");
   for (var i = 0; i < nut.length; i++) {
@@ -1861,104 +1862,15 @@ function adminChonTieuMucHoSo(ten) {
   for (var j = 0; j < muc.length; j++) muc[j].style.display = muc[j].getAttribute("data-tieumuc") === ten ? "" : "none";
 }
 
-function adminNutXemHoSo(ten) {
-  return '<button class="adminNut adminNutPhu" data-hoso="' + adminThoat(ten) + '" type="button">👦 Xem hồ sơ</button>';
-}
-
-function adminGanNutXemHoSo() {
-  var nut = adminEl("bangDanhSachTre").querySelectorAll("[data-hoso]");
-  for (var i = 0; i < nut.length; i++) {
-    nut[i].addEventListener("click", function () { adminMoHoSoTre(this.getAttribute("data-hoso")); });
-  }
-}
-
-function adminTaiDanhSachTre() {
-  var bang = adminEl("bangDanhSachTre");
-  bang.innerHTML = '<tr><td colspan="7" class="adminDangTai">Đang tải...</td></tr>';
-  adminEl("htCanSql").style.display = "none";
-  // Quà chưa nhận = quà được tặng chưa bấm nhận (kc_qua_tang) + quà đổi thưởng còn
-  // "chờ trao" (admin_lay_lich_su) - sửa lỗi người dùng báo 17/10/2026 (Aibiet67).
-  Promise.all([
-    adminGoiRpc("kc_admin_lay_danh_sach_tre", {}),
-    adminGoiRpc("admin_lay_lich_su", {})
-  ]).then(function (kq) {
-    var ph = kq[0];
-    adminChoTraoTheoBe = adminDemChoTrao(kq[1]);
-    if (adminLaThieuHamSql(ph)) return adminTaiDanhSachTreTam();
-    if (!ph.thanhCong) {
-      adminXuLyLoi(ph);
-      bang.innerHTML = '<tr><td colspan="7" class="adminRong">Không tải được danh sách.</td></tr>';
-      return;
-    }
-    var ds = ph.danhSachTre || [];
-    if (ds.length === 0) {
-      bang.innerHTML = '<tr><td colspan="7" class="adminRong">Chưa có tài khoản bé nào.</td></tr>';
-      return;
-    }
-    var html = "";
-    ds.forEach(function (t) {
-      var ph2 = (t.phuHuynh || []).map(adminThoat).join(", ");
-      html +=
-        "<tr>" +
-          "<td>" + adminAvatarNho(t.avatarDaChon) + "<strong>" + adminThoat(t.tenDangNhap) + "</strong></td>" +
-          "<td>" + (t.diemSo || 0) + " 💎</td>" +
-          "<td>" + (t.kimCuongHomNay || 0) + "</td>" +
-          "<td>" + adminOQuaChuaNhan(t.soQuaChuaNhan || 0, adminChoTraoTheoBe[t.tenDangNhap] || 0) + "</td>" +
-          "<td>" + (ph2 || '<span class="adminGhiChu">chưa liên kết</span>') + "</td>" +
-          "<td>" + (t.lanChoiCuoi ? adminDinhDangGio(t.lanChoiCuoi) : "—") + "</td>" +
-          "<td>" + adminNutXemHoSo(t.tenDangNhap) + "</td>" +
-        "</tr>";
-    });
-    bang.innerHTML = html;
-    adminGanNutXemHoSo();
-  });
-}
-
-/** SQL KC_00D-1B chua chay: danh sach tam tu lay_xep_hang (chi ten + kim cuong) */
-function adminTaiDanhSachTreTam() {
-  var bang = adminEl("bangDanhSachTre");
-  var bao = adminEl("htCanSql");
-  bao.innerHTML = ADMIN_TIN_CAN_SQL_KC00D1B;
-  bao.style.display = "";
-  apiGoiRpc("lay_xep_hang", {}).then(function (ph) {
-    if (!ph.thanhCong) {
-      adminXuLyLoi(ph);
-      bang.innerHTML = '<tr><td colspan="7" class="adminRong">Không tải được danh sách.</td></tr>';
-      return;
-    }
-    var ds = ph.danhSachXepHang || [];
-    if (ds.length === 0) {
-      bang.innerHTML = '<tr><td colspan="7" class="adminRong">Chưa có tài khoản nào.</td></tr>';
-      return;
-    }
-    var html = "";
-    ds.forEach(function (t) {
-      html +=
-        "<tr>" +
-          "<td><strong>" + adminThoat(t.tenDangNhap) + "</strong></td>" +
-          "<td>" + t.diemSo + " 💎</td>" +
-          "<td>—</td>" +
-          "<td>" + adminOQuaChuaNhan(null, adminChoTraoTheoBe[t.tenDangNhap] || 0) + "</td>" +
-          '<td colspan="2" class="adminGhiChu">cần chạy SQL</td>' +
-          "<td>" + adminNutXemHoSo(t.tenDangNhap) + "</td>" +
-        "</tr>";
-    });
-    bang.innerHTML = html;
-    adminGanNutXemHoSo();
-  });
-}
-
 /**
- * Mo ho so chi tiet cua 1 be. Goi duoc tu 2 noi:
- *   - Nut "Xem ho so" trong man hinh Ho so cac be.
- *   - Nut "Xem ho so" trong khoi Nguoi So Huu (man hinh Cua hang) -> ham nay
- *     tu CHUYEN sang man hinh Ho so cac be truoc khi tai.
+ * Mo ho so chi tiet cua 1 be (cac tieu muc Thong tin chung, Co Vua, Meo Con...). Goi tu:
+ *   - danh sach 👥 Tai khoan (kc/qt_tai_khoan.js, chi tai khoan be);
+ *   - nut "Xem ho so" trong khoi Nguoi So Huu (man hinh Cua hang).
+ *   KC_00D2-C1: qt_tai_khoan.js BOC ham nay (chuyen sang man 👥 Tai khoan + tai khoi tai khoan) nen ham nay
+ *   khong tu chuyen man hinh nua.
  * Tai SONG SONG 2 nguon: ho so chung (RPC admin moi) + ho so Co Vua (lay_ho_so).
  */
 function adminMoHoSoTre(ten) {
-  var nutManHinh = document.querySelector('.adminNutManHinh[data-manhinh="hosotre"]');
-  if (nutManHinh) adminChuyenManHinh("hosotre", nutManHinh);
-
   var khoi = adminEl("khoiChiTietTre");
   khoi.style.display = "block";
   adminChonTieuMucHoSo("chung");
@@ -1985,7 +1897,6 @@ function adminMoHoSoTre(ten) {
     }
     if (!hsChung && !thieuSql) adminXuLyLoi(chung);
     adminVeChiTietTre(ten, hsChung, hsCoVua, thieuSql);
-    khoi.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 

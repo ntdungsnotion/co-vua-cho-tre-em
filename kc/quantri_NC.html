@@ -7,6 +7,8 @@
 
   <!-- ================================================================
        FILE: quantri_NC.html
+       CẬP NHẬT: 28/11/2026 23:xx - BƯỚC: KC_00D2-C1: 👥 Tài khoản thành màn thật (danh sách + hồ sơ + nhật ký,
+                 qt_tai_khoan.js/.css); 👦 Hồ sơ các bé gộp vào đó (bỏ khỏi thanh bên).
        CHỨC NĂNG: TRANG QUẢN TRỊ CHUNG CHO TOÀN APP (HƯỚNG DẪN 3.13) - chỉ admin.
                   Thay trang Quản Trị Cờ Vua cũ (admin_NC.html nay chỉ chuyển hướng
                   về đây). Thanh bên chia nhóm:
@@ -89,6 +91,7 @@
   <link rel="stylesheet" href="qt_kho_tri_thuc.css"> <!-- KC_03B1 -->
   <link rel="stylesheet" href="kc_hoc_cua_be.css"> <!-- KC_03B3 -->
   <link rel="stylesheet" href="qt_trinh_do.css"> <!-- KC_08F1 -->
+  <link rel="stylesheet" href="qt_tai_khoan.css"> <!-- KC_00D2-C1 -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -550,8 +553,8 @@
       <div class="qtNhom qtNhomChung">
         <div class="qtTenNhom">Quản trị chung</div>
         <button class="adminNutManHinh qtMuc dangChon" data-manhinh="tongquan" type="button">📊 Tổng quan</button>
-        <button class="adminNutManHinh qtMuc" data-manhinh="taikhoan" type="button">👥 Tài khoản <span class="qtSapCo">sắp có</span></button>
-        <button class="adminNutManHinh qtMuc" data-manhinh="hosotre" type="button">👦 Hồ sơ các bé</button>
+        <!-- KC_00D2-C1 28/11/2026: 👦 Hồ sơ các bé gộp vào 👥 Tài khoản (qt_tai_khoan.js) -->
+        <button class="adminNutManHinh qtMuc" data-manhinh="taikhoan" type="button">👥 Tài khoản</button>
         <!-- KC_05 25/11/2026: MỘT cửa hàng quà thật chung toàn app (HƯỚNG DẪN 3.13); dùng chung màn hình vật phẩm, lọc loại 'qua' -->
         <button class="adminNutManHinh qtMuc" data-manhinh="quachung" type="button">🛍️ Cửa hàng chung</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="doithuong" type="button">📦 Đổi thưởng</button>
@@ -643,8 +646,8 @@
           <a class="qtTheTongQuan" href="homthu_NC.html" id="tqTheYTuong">
             <span class="qtSoTongQuan" id="tqYTuongMoi">…</span><span>🦉 thư chờ Cô Cú (ý tưởng, kháng nghị, bé trả lời)</span>
           </a>
-          <button class="qtTheTongQuan" data-den="hosotre" type="button">
-            <span class="qtSoTongQuan" id="tqSoTaiKhoan">…</span><span>👦 tài khoản có hồ sơ</span>
+          <button class="qtTheTongQuan" data-den="taikhoan" type="button">
+            <span class="qtSoTongQuan" id="tqSoTaiKhoan">…</span><span>👥 tài khoản</span>
           </button>
           <div class="qtTheTongQuan qtTheSapCo">
             <span class="qtSoTongQuan">—</span><span>💎 kim cương các bé nhận hôm nay <span class="qtSapCo">sắp có</span></span>
@@ -656,15 +659,71 @@
 
     <!-- KC_00D-1 - MÀN HÌNH: TÀI KHOẢN (sắp có - KC_00D-2) -->
     <section class="adminManHinh" id="manhinh-taikhoan">
-      <div class="adminKhoi qtSapCoKhoi">
-        <div class="qtHinhLon">👥</div>
-        <h3>Tài khoản: sắp có</h3>
-        <p class="adminGhiChu">Bước sau (KC_00D-2): xem mọi tài khoản (bé, phụ huynh, quản trị), đổi vai trò,
-          đặt lại mật khẩu, xem và sửa liên kết bố mẹ với con. Hiện vẫn xem thành tích các bé ở mục 👦 Hồ sơ các bé.</p>
+      <!-- KC_00D2-C1 28/11/2026: danh sách mọi tài khoản (trái) + hồ sơ một tài khoản (phải); điện thoại: danh sách
+           rồi hồ sơ toàn màn hình. Mã: qt_tai_khoan.js + qt_tai_khoan.css; RPC kc_tk_admin_* (repo riêng SQL kc00d2_c1). -->
+      <div class="tkKhung" id="tkKhung">
+        <div class="adminKhoi tkCotDs">
+          <h3>👥 Tài khoản</h3>
+          <p class="tkDem" id="tkDem">Đang tải...</p>
+          <div class="tkCanhBao" id="tkTrung" hidden></div>
+          <div class="adminGhiChu htCanSql" id="tkCanSql" hidden></div>
+          <div class="tkLoc">
+            <input type="search" id="tkTim" placeholder="🔍 Tìm tên đăng nhập hoặc tên hiển thị" autocomplete="off" maxlength="60">
+            <select id="tkVai" aria-label="Vai">
+              <option value="">Mọi vai</option><option value="tre">👦 Bé</option>
+              <option value="phu_huynh">👪 Phụ huynh</option><option value="admin">🛠️ Quản trị</option>
+            </select>
+            <select id="tkLocThem" aria-label="Lọc">
+              <option value="">Mọi trạng thái</option><option value="chua_phu_huynh">Bé chưa có phụ huynh</option>
+              <option value="con_phien">🟢 Còn phiên</option><option value="khong_phien">⚪ Không còn phiên</option>
+              <option value="chua_tung">✨ Chưa từng đăng nhập</option>
+            </select>
+            <button class="adminNut adminNutPhu" id="tkLamMoi" type="button" title="Tải lại">🔄</button>
+          </div>
+          <div class="tkDs" id="tkDs" role="list"></div>
+          <div class="tkTrang" id="tkTrang"></div>
+        </div>
+
+        <div class="tkCotHs" id="tkCotHs">
+          <div class="adminKhoi tkTrong" id="tkTrong">
+            <div class="qtHinhLon">👈</div>
+            <p class="adminGhiChu">Chọn một tài khoản ở danh sách để xem hồ sơ.</p>
+          </div>
+          <div id="tkHoSo" hidden>
+            <button class="adminNut adminNutPhu tkVe" id="tkVe" type="button">← Danh sách</button>
+            <div class="adminKhoi" id="tkKhoiTk"></div>
+            <!-- khối hồ sơ chi tiết một bé (#khoiChiTietTre, admin_NC.js) được qt_tai_khoan.js chuyển vào đây -->
+            <div id="tkChoHoSoBe"></div>
+            <div class="adminKhoi tkThaoTac" id="tkThaoTac">
+              <h3>🛠️ Thao tác với tài khoản</h3>
+              <p class="adminGhiChu">Chỉ quản trị thấy khu này. Mọi thay đổi được ghi vào 📜 nhật ký bên dưới.</p>
+              <label class="tkO"><span>Tên hiển thị <small id="tkDemTen"></small></span>
+                <input type="text" id="tkTenHienThi" maxlength="30" placeholder="Để trống = dùng tên đăng nhập"></label>
+              <label class="tkO"><span>Ghi chú quản trị <small id="tkDemGhiChu"></small></span>
+                <textarea id="tkGhiChu" rows="3" maxlength="500" placeholder="Chỉ quản trị thấy. Không ghi thông tin cá nhân không cần thiết."></textarea></label>
+              <label class="tkO"><span>Lý do (không bắt buộc, ghi vào nhật ký)</span>
+                <input type="text" id="tkLyDo" maxlength="300"></label>
+              <p><button class="adminNut" id="tkLuu" type="button">💾 Lưu</button> <span class="tkTb" id="tkTb"></span></p>
+              <p class="adminGhiChu tkSapCo">🔑 Đặt lại mật khẩu · 🚪 Đăng xuất mọi máy: <span class="qtSapCo">sắp có</span>
+                · 🔒 Khóa · 🔗 Sửa liên kết: <span class="qtSapCo">sắp có</span></p>
+            </div>
+            <div class="adminKhoi">
+              <h3>📜 Nhật ký của tài khoản này</h3>
+              <div id="tkNhatKyMot"></div>
+            </div>
+          </div>
+        </div>
       </div>
-      <!-- KC_00D2-B1 28/11/2026: số máy + hạn phiên đăng nhập (khóa kc_phien_*, qt_phien.js) -->
+
+      <div class="tkDuoi">
       <div class="adminKhoi">
-        <h3>🔐 Phiên đăng nhập</h3>
+        <h3>📜 Nhật ký thao tác (mọi tài khoản)</h3>
+        <p class="adminGhiChu">Ai đã sửa gì, lúc nào. Chỉ đọc. Không bao giờ ghi mật khẩu hay mã đăng nhập.</p>
+        <div id="tkNhatKyTatCa"></div>
+      </div>
+      <!-- KC_00D2-B1 28/11/2026: số máy + hạn phiên đăng nhập (khóa kc_phien_*, qt_phien.js); KC_00D2-C1: + khóa kc_tk_* -->
+      <div class="adminKhoi">
+        <h3>🔐 Phiên đăng nhập và ⚙️ thông số tài khoản</h3>
         <p class="adminGhiChu">
           Mỗi tài khoản chỉ đăng nhập cùng lúc trên số máy dưới đây (bé 1, phụ huynh 3, quản trị 3). Đăng nhập thêm một máy
           thì máy lâu nhất chưa dùng bị cho ra, và máy đó thấy câu "Tài khoản con đang đăng nhập trên máy khác".
@@ -683,6 +742,7 @@
             </tbody>
           </table>
         </div>
+      </div>
       </div>
     </section>
 
@@ -1457,31 +1517,10 @@
     <!-- Danh sách + Thông tin chung: RPC kc_admin_lay_danh_sach_tre, kc_admin_lay_ho_so_chung -->
     <!-- (SQL repo riêng supabase_kc00d1b_ho_so_chung.sql). Tiểu mục Cờ Vua: RPC lay_ho_so cũ. -->
     <!-- ============================================================ -->
-    <section class="adminManHinh" id="manhinh-hosotre">
-      <div class="adminKhoi">
-        <h3>👦 Hồ Sơ Các Bé</h3>
-        <p class="adminGhiChu">
-          Danh sách chỉ có <strong>thông tin chung</strong> của mỗi bé. Bấm <strong>Xem hồ sơ</strong> để mở chi tiết:
-          phần <strong>Thông tin chung</strong> (tài khoản, kim cương, quà) và từng tiểu mục riêng (Cờ Vua, Giải Cứu Mèo Con...).
-        </p>
-        <button class="adminNut adminNutPhu" id="btnLamMoiHoSoTre" type="button">🔄 Làm Mới</button>
-        <div id="htCanSql" class="adminGhiChu htCanSql" style="display:none;"></div>
-        <div class="adminCuonNgang" style="margin-top:10px;">
-          <table class="adminBang">
-            <thead>
-              <tr>
-                <th>Bé</th><th>💎 Kim cương</th><th>💎 Tự kiếm hôm nay</th><th>🎁 Quà chưa nhận</th>
-                <th>Phụ huynh</th><th>Lần chơi cuối</th><th style="width:130px;"></th>
-              </tr>
-            </thead>
-            <tbody id="bangDanhSachTre">
-              <tr><td colspan="7" class="adminDangTai">Đang tải...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Chi tiết 1 bé: hiện sau khi bấm "Xem hồ sơ" -->
+    <!-- KC_00D2-C1 28/11/2026: danh sách "👦 Hồ sơ các bé" đã gộp vào 👥 Tài khoản. Khối chi tiết một bé dưới đây
+         (admin_NC.js adminMoHoSoTre / adminVeChiTietTre, qt_ghi_nho.js) được qt_tai_khoan.js chuyển vào #tkChoHoSoBe. -->
+    <div id="tkNguonHoSoBe" hidden>
+      <!-- Chi tiết 1 bé -->
       <div class="adminKhoi" id="khoiChiTietTre" style="display:none;">
         <h3 id="tieuDeChiTietTre">📄 Hồ Sơ Chi Tiết</h3>
         <div id="htAvatarVaTen" style="margin-bottom:10px;"></div>
@@ -1609,7 +1648,7 @@
           </p>
         </div>
       </div>
-    </section>
+    </div>
 
     <!-- ============================================================ -->
     <!-- TC_T03B - MÀN HÌNH: KHO TỪ VỰNG (qt_kho_tu.js). Sửa kc/tu_vung/kho_tu.json +
@@ -1883,6 +1922,7 @@
   <script src="qt_bam_bua.js"></script>     <!-- KC_11E: 🧠 Chống bấm bừa -->
   <script src="qt_hom_thu.js"></script>     <!-- KC_12D1: nút 📬 Hòm thư trên thanh đầu -->
   <script src="qt_phien.js"></script>       <!-- KC_00D2-B1: 🔐 Phiên đăng nhập trong 👥 Tài khoản -->
+  <script src="qt_tai_khoan.js"></script>   <!-- KC_00D2-C1: 👥 Tài khoản (danh sách + hồ sơ + nhật ký) -->
 
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
