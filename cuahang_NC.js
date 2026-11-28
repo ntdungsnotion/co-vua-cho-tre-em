@@ -2,6 +2,7 @@
 // FILE: cuahang_NC.js
 // CHỨC NĂNG: Cửa hàng đổi vật phẩm bằng kim cương cho trẻ (NC_06B)
 // NGÀY: 11/07/2026 - BƯỚC: NC_06B
+// CẬP NHẬT: 28/11/2026 - BƯỚC: KC_00D2-R: lay_ho_so + doi_vat_pham GỬI KÈM p_ma_phien (máy chủ chỉ nhận mã phiên thật).
 // CẬP NHẬT: 25/11/2026 06:xx - BƯỚC: KC_05: KHÔNG còn bán quà thật (loai 'qua'): quà thật
 //   chỉ ở Cửa Hàng Quà CHUNG toàn app kc/cuahang_NC.html (HƯỚNG DẪN KC 3.13). Khối
 //   "Quà Con Đã Đổi" thay bằng lối sang cửa hàng chung (vẫn liệt kê quà đã đổi).
@@ -98,7 +99,7 @@ function chTaiDuLieu() {
   document.getElementById("chDangTai").style.display = "block";
 
   Promise.all([
-    apiGoiRpc("lay_ho_so", { p_ten: chTaiKhoan.tenDangNhap }),
+    apiGoiRpc("lay_ho_so", { p_ten: chTaiKhoan.tenDangNhap, p_ma_phien: chTaiKhoan.maPhien }),
     apiGoiRpc("lay_danh_sach_vat_pham", {})
   ]).then(function (ketQua) {
     var kqHoSo = ketQua[0] || {};
@@ -384,7 +385,8 @@ function chXacNhanDoi(vp, tt) {
 
   apiGoiRpc("doi_vat_pham", {
     p_ten: chTaiKhoan.tenDangNhap,
-    p_vat_pham_id: vp.id
+    p_vat_pham_id: vp.id,
+    p_ma_phien: chTaiKhoan.maPhien
   }).then(function (kq) {
     chDangXuLy = false;
     kq = kq || {};

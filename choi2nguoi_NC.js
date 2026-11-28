@@ -5,6 +5,8 @@
 // SỬA: 11/07/2026 16:05 - BƯỚC: NC_06B: avatar cao cấp (URL ảnh) ở thẻ người chơi
 //   (bản thân + đối thủ) hiển thị bằng <img> thay vì in URL thành chữ - hàm
 //   c2nVeAvatarVao (HƯỚNG DẪN 4.6).
+// SỬA: 28/11/2026 - BƯỚC: KC_00D2-R: 6 RPC phòng (tao_phong, xin_vao_phong, tra_loi_xin_vao,
+//   gui_nuoc_di, ket_thuc_phong, huy_phong) GỬI KÈM p_ma_phien; máy chủ chỉ nhận mã phiên thật.
 // QUY ƯỚC TÊN HÀM/BIẾN: tất cả bắt đầu bằng "c2n" (choi-2-nguoi) để tránh xung đột
 //
 // PHỤ THUỘC:
@@ -379,7 +381,7 @@ function c2nTaoPhong() {
   var nut = document.getElementById("c2nBtnTaoPhong");
   if (nut) nut.disabled = true;
 
-  apiGoiRpc("tao_phong", { p_ten: c2nTaiKhoan.tenDangNhap, p_ten_phong: tenPhong })
+  apiGoiRpc("tao_phong", { p_ten: c2nTaiKhoan.tenDangNhap, p_ten_phong: tenPhong, p_ma_phien: c2nTaiKhoan.maPhien })
     .then(function (kq) {
       if (nut) nut.disabled = false;
       if (!kq || !kq.thanhCong) {
@@ -392,7 +394,7 @@ function c2nTaoPhong() {
 }
 
 function c2nXinVaoPhong(idPhong) {
-  apiGoiRpc("xin_vao_phong", { p_id: idPhong, p_ten: c2nTaiKhoan.tenDangNhap })
+  apiGoiRpc("xin_vao_phong", { p_id: idPhong, p_ten: c2nTaiKhoan.tenDangNhap, p_ma_phien: c2nTaiKhoan.maPhien })
     .then(function (kq) {
       if (!kq || !kq.thanhCong) {
         c2nBaoTin((kq && kq.thongBao) || "Không xin vào được phòng này", false);
@@ -536,7 +538,8 @@ function c2nTraLoiXinVao(dongY) {
   apiGoiRpc("tra_loi_xin_vao", {
     p_id: c2nPhong.id,
     p_ten_chu: c2nTaiKhoan.tenDangNhap,
-    p_dong_y: dongY
+    p_dong_y: dongY,
+    p_ma_phien: c2nTaiKhoan.maPhien
   }).then(function (kq) {
     if (!kq || !kq.thanhCong) {
       c2nBaoTin((kq && kq.thongBao) || "Không trả lời được", false);
@@ -549,7 +552,7 @@ function c2nTraLoiXinVao(dongY) {
 
 function c2nHuyPhong() {
   if (!c2nPhong) { c2nVeSanh(); return; }
-  apiGoiRpc("huy_phong", { p_id: c2nPhong.id, p_ten: c2nTaiKhoan.tenDangNhap })
+  apiGoiRpc("huy_phong", { p_id: c2nPhong.id, p_ten: c2nTaiKhoan.tenDangNhap, p_ma_phien: c2nTaiKhoan.maPhien })
     .then(function (kq) {
       if (kq && kq.thanhCong) c2nBaoTin(kq.thongBao || "Đã rời phòng", true);
       c2nVeSanh();
@@ -775,7 +778,8 @@ function c2nGuiNuocDi(oTu, oDen) {
     p_ten: c2nTaiKhoan.tenDangNhap,
     p_nuoc: uci,
     p_fen_moi: c2nGame.fen(),
-    p_luot_moi: c2nGame.turn()
+    p_luot_moi: c2nGame.turn(),
+    p_ma_phien: c2nTaiKhoan.maPhien
   }).then(function (kq) {
     c2nDangGuiNuoc = false;
 
@@ -910,7 +914,8 @@ function c2nGoiKetThuc(ketQua) {
   apiGoiRpc("ket_thuc_phong", {
     p_id: c2nPhong.id,
     p_ten: c2nTaiKhoan.tenDangNhap,
-    p_ket_qua: ketQua
+    p_ket_qua: ketQua,
+    p_ma_phien: c2nTaiKhoan.maPhien
   }).then(function (kq) {
     if (!kq || !kq.thanhCong) {
       c2nDaGoiKetThuc = false;
