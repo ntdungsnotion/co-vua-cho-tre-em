@@ -3,6 +3,7 @@
 // CHỨC NĂNG: Logic CỬA HÀNG CHUNG TOÀN APP (kc/cuahang_NC.html), 2 ngăn:
 //   🎁 Quà thật (đổi bằng 💎) + 🙂 Avatar chung (mua bằng 🪙 xu vàng).
 // BƯỚC: KC_05 - NGÀY: 25/11/2026 06:xx
+// SỬA: 28/11/2026 - BƯỚC: KC_00D2-R: lay_ho_so + doi_vat_pham gửi kèm p_ma_phien (máy chủ chỉ nhận mã phiên thật).
 // CẬP NHẬT: 25/11/2026 07:xx - KC_05A: ngăn 🙂 Avatar (avatar chung bán bằng xu vàng; avatar miễn phí vẫn ở Cờ Vua).
 // TIỀN TỐ: chq - tránh trùng "ch" của cuahang_NC.js (Cờ Vua).
 //
@@ -95,7 +96,7 @@ function chqTai() {
   var ten = tk.tenDangNhap;
   Promise.all([
     kcGoiRpc("lay_danh_sach_vat_pham", {}),
-    kcGoiRpc("lay_ho_so", { p_ten: ten }),
+    kcGoiRpc("lay_ho_so", { p_ten: ten, p_ma_phien: tk.maPhien || "" }),
     kcGoiRpc("kc_avatar_chung_ds", { p_ten: ten, p_ma_phien: tk.maPhien || "" })
   ]).then(function (kq) {
     var ds = kq[0] || {}, hs = kq[1] || {}, av = kq[2] || {};
@@ -311,7 +312,7 @@ function chqBamCo() {
     return;
   }
 
-  kcGoiRpc("doi_vat_pham", { p_ten: tk.tenDangNhap, p_vat_pham_id: vp.id }).then(function (kq) {
+  kcGoiRpc("doi_vat_pham", { p_ten: tk.tenDangNhap, p_vat_pham_id: vp.id, p_ma_phien: tk.maPhien || "" }).then(function (kq) {
     chqDangDoi = false;
     kq = kq || {};
     if (!kq.thanhCong) {

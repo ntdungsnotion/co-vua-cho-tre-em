@@ -5,6 +5,9 @@
 //             tru_diem_goi_y, lay_thong_tin_ca_nhan, lay_ho_so, cap_nhat_avatar,
 //             cap_nhat_trang_bi, lay_lich_su_tran, lay_thong_ke_doi_thu, lay_bo_co)
 // BUOC: NC_09 (nang cap tu NC_05) - NGAY: 11/07/2026
+//       KC_00D2-R (28/11/2026): cac ham ghi / doc ho so cua chinh tre GUI KEM p_ma_phien (apiMaPhien),
+//              may chu chi nhan ma phien that (SQL repo rieng supabase_kc00d2_r1_ham_co_phien.sql).
+//              lay_thong_tin_ca_nhan, lay_xep_hang, lay_cau_hinh, lay_bo_co van cong khai (khong gui ma).
 //       NC_05: them 6 ham cho "Thanh Thong Tin Tren Cung" + "Trang Tai Khoan".
 //       NC_09: them apiLayBoCo() - lay danh sach bo quan co (du lieu tung quan) de
 //              taikhoan_NC.js cho tre CHON bo, va board.js PHAN GIAI ma dinh danh
@@ -58,6 +61,24 @@ function apiGoiRpc(tenHam, thamSo) {
 }
 
 /**
+ * KC_00D2-R: ma phien cua tai khoan dang dang nhap tren the nay (sessionStorage chung
+ * "coVuaTaiKhoanDangNhap", app.js / kc_auth.js ghi). Chi tra ma khi DUNG ten dang goi;
+ * khong co thi tra "" (may chu tu choi, trang hien thong bao nhu loi thuong).
+ */
+function apiMaPhien(tenDangNhap) {
+  try {
+    var p = JSON.parse(sessionStorage.getItem("coVuaTaiKhoanDangNhap") || "null");
+    if (p && p.maPhien && p.tenDangNhap === tenDangNhap) return p.maPhien;
+  } catch (e) { /* che do an danh chan sessionStorage */ }
+  // Du phong: trang chinh Co Vua giu tai khoan trong bien appTaiKhoanDangNhap (app.js)
+  if (typeof appTaiKhoanDangNhap !== "undefined" && appTaiKhoanDangNhap &&
+      appTaiKhoanDangNhap.tenDangNhap === tenDangNhap && appTaiKhoanDangNhap.maPhien) {
+    return appTaiKhoanDangNhap.maPhien;
+  }
+  return "";
+}
+
+/**
  * Ham dang ky tai khoan moi
  * Tra ve Promise: { thanhCong, thongBao, duLieuTaiKhoan }
  * (duLieuTaiKhoan gom: tenDangNhap, level, diemSo, avatarDaChon, vaiTro,
@@ -84,7 +105,8 @@ function apiCapNhatDiem(tenDangNhap, ketQua, levelMay) {
   return apiGoiRpc("cap_nhat_diem", {
     p_ten: tenDangNhap,
     p_ket_qua: ketQua,
-    p_level_may: levelMay
+    p_level_may: levelMay,
+    p_ma_phien: apiMaPhien(tenDangNhap)
   });
 }
 
@@ -122,7 +144,7 @@ function apiLayCauHinh() {
  * Tra ve Promise: { thanhCong, thongBao, diemMoi }
  */
 function apiTruDiemGoiY(tenDangNhap) {
-  return apiGoiRpc("tru_diem_goi_y", { p_ten: tenDangNhap });
+  return apiGoiRpc("tru_diem_goi_y", { p_ten: tenDangNhap, p_ma_phien: apiMaPhien(tenDangNhap) });
 }
 
 /**
@@ -144,7 +166,7 @@ function apiLayThongTinCaNhan(tenDangNhap) {
  * CHINH MINH), lichSuTran (mang 50 tran gan nhat)
  */
 function apiLayHoSo(tenDangNhap) {
-  return apiGoiRpc("lay_ho_so", { p_ten: tenDangNhap });
+  return apiGoiRpc("lay_ho_so", { p_ten: tenDangNhap, p_ma_phien: apiMaPhien(tenDangNhap) });
 }
 
 /**
@@ -152,7 +174,7 @@ function apiLayHoSo(tenDangNhap) {
  * Tra ve Promise: { thanhCong, thongBao, avatarDaChon }
  */
 function apiCapNhatAvatar(tenDangNhap, avatarMoi) {
-  return apiGoiRpc("cap_nhat_avatar", { p_ten: tenDangNhap, p_avatar: avatarMoi });
+  return apiGoiRpc("cap_nhat_avatar", { p_ten: tenDangNhap, p_avatar: avatarMoi, p_ma_phien: apiMaPhien(tenDangNhap) });
 }
 
 /**
@@ -165,7 +187,8 @@ function apiCapNhatTrangBi(tenDangNhap, loai, maDinhDanh) {
   return apiGoiRpc("cap_nhat_trang_bi", {
     p_ten: tenDangNhap,
     p_loai: loai,
-    p_ma: maDinhDanh
+    p_ma: maDinhDanh,
+    p_ma_phien: apiMaPhien(tenDangNhap)
   });
 }
 
@@ -174,7 +197,7 @@ function apiCapNhatTrangBi(tenDangNhap, loai, maDinhDanh) {
  * Tra ve Promise: { thanhCong, thongBao, lichSuTran }
  */
 function apiLayLichSuTran(tenDangNhap) {
-  return apiGoiRpc("lay_lich_su_tran", { p_ten: tenDangNhap });
+  return apiGoiRpc("lay_lich_su_tran", { p_ten: tenDangNhap, p_ma_phien: apiMaPhien(tenDangNhap) });
 }
 
 /**
@@ -184,7 +207,7 @@ function apiLayLichSuTran(tenDangNhap) {
  * Sap mac dinh (may chu tu sap): so tran THANG giam dan -> tong tran giam dan.
  */
 function apiLayThongKeDoiThu(tenDangNhap) {
-  return apiGoiRpc("lay_thong_ke_doi_thu", { p_ten: tenDangNhap });
+  return apiGoiRpc("lay_thong_ke_doi_thu", { p_ten: tenDangNhap, p_ma_phien: apiMaPhien(tenDangNhap) });
 }
 
 /**

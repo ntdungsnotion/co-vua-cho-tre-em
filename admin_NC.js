@@ -4,6 +4,8 @@
 //   9 man hinh: Vat Pham | Doi Thuong | Y Tuong | Cau Hinh Chung |
 //               Cap Do May | Loi Dong Vien | Giong Doc | Ho So Tre | Don Kho Anh
 // BUOC: NC_06A-2 (nang cap tu NC_09B) - NGAY: 12/07/2026 21:00
+// CAP NHAT: 28/11/2026 - BUOC: KC_00D2-R: Ho So Tre goi lay_ho_so BAN QUAN TRI qua adminGoiRpc (may chu kiem ma phien
+//   quan tri that); ban cu chi nhan ten bi thu quyen (SQL repo rieng supabase_kc00d2_r2_khoa_ban_cu.sql).
 // CAP NHAT: 25/11/2026 06:xx - BUOC: KC_05: man hinh vat pham chia 2 che do (adminApCheDoVatPham):
 //   "quachung" = Cua Hang Qua CHUNG toan app (chi loai 'qua'), "vatpham" = do trong game Co Vua.
 // CAP NHAT: 25/11/2026 07:xx - BUOC: KC_05A: Cua hang chung them AVATAR CHUNG ban bang xu vang (kc_avatar_chung,
@@ -1970,7 +1972,7 @@ function adminMoHoSoTre(ten) {
 
   Promise.all([
     adminGoiRpc("kc_admin_lay_ho_so_chung", { p_tre: ten }),
-    apiGoiRpc("lay_ho_so", { p_ten: ten })
+    adminGoiRpc("lay_ho_so", { p_ten: ten })   // KC_00D2-R: ban quan tri (p_ten_admin + p_ma_phien_admin + p_ten)
   ]).then(function (kq) {
     var chung = kq[0], coVua = kq[1];
     var hsCoVua = coVua && coVua.thanhCong ? (coVua.hoSo || {}) : null;
