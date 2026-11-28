@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hòm thư - Kids Challenge</title>
+
+  <!-- ================================================================
+       FILE: homthu_NC.html
+       CHỨC NĂNG: TRANG 📬 HÒM THƯ cho bé + phụ huynh (Thiet_Ke_Hom_Thu.md bản 1.1, mục 9.2 / 9.3).
+                  Lối vào: nút 📬 trên thanh đầu mọi trang (kc_auth.js). Máy chủ: RPC kc_thu_* (SQL kc12b).
+                  Bé: Cần con xem · Đã xong · Tất cả; mở thư = hội thoại với Cô Cú 🦉, 🔊 đọc cho con nghe,
+                  🎁 Nhận, 🙋 gửi phản hồi kháng nghị, trả lời (thư được phép), 🗑 xoá (hỏi lại).
+                  Phụ huynh: thêm thanh chọn con. Admin: hộp thư riêng + lối tạm sang Quản trị (Hộp Cô Cú ở KC_12D).
+                  Điện thoại: danh sách, chạm mở thư toàn màn hình (‹ quay lại, nút Back của máy cũng quay lại).
+                  Máy tính (≥ 900 px): hai cột, danh sách 360 px + thư bên phải.
+       BƯỚC: KC_12C1 · NGÀY: 28/11/2026
+       PHỤ THUỘC: kc_style.css, homthu.css, kc_config.js, kc_api.js, kc_auth.js, chung/am_thanh.js,
+                  chung/khang_nghi.js, homthu.js.
+       ================================================================ -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kc_style.css">
+  <link rel="stylesheet" href="homthu.css">
+
+  <!-- THƯ VIỆN NGOÀI - ngoại lệ đã chốt, nạp từ CDN chính hãng (Sổ Tay D8) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header id="headerChinh">
+    <h1>📬 Hòm thư</h1>
+    <div id="trangThaiDangNhap">
+      <span id="kcTenNguoiChoi"></span>
+      <a class="kcNutLienKet" href="quantri_NC.html" data-chi-admin style="display:none;">🛠️ Quản trị</a>
+      <button id="kcNutDangXuat" class="kcNutDangXuat" type="button" style="display:none;">Đăng xuất</button>
+    </div>
+  </header>
+
+  <nav class="kcThanhTab" aria-label="Chuyển mảng">
+    <a class="kcTab" href="../index.html"><span class="kcTabIcon">🏠</span> Trang chủ</a>
+    <a class="kcTab" href="hoctap_NC.html"><span class="kcTabIcon">📚</span> Học Tập</a>
+    <a class="kcTab" href="khampha_NC.html"><span class="kcTabIcon">🧭</span> Khám Phá</a>
+    <a class="kcTab" href="trochoi_NC.html"><span class="kcTabIcon">🎮</span> Trò Chơi</a>
+    <a class="kcTab" href="thuthach_NC.html"><span class="kcTabIcon">🎯</span> Thử Thách</a>
+  </nav>
+
+  <div id="kcChuaDangNhap" style="display:none;">
+    <h2>Con đăng nhập nhé!</h2>
+    <p>Một tài khoản dùng chung cho cả Cờ Vua và Thử Thách - Học Tập - Khám Phá. Đã đăng nhập bên Cờ Vua thì không cần đăng nhập lại.</p>
+    <input class="kcODangNhap" id="kcOTen" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+    <input class="kcODangNhap" id="kcOMatKhau" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+    <button id="kcNutDangNhap" type="button">Đăng nhập</button>
+    <div id="kcThongBaoDangNhap"></div>
+  </div>
+
+  <div id="kcNoiDungCanDangNhap" style="display:none;">
+    <main id="htTrang" class="htTrang">
+      <!-- Admin: lối tạm sang Quản trị (Hộp Cô Cú làm ở KC_12D) -->
+      <div id="htCoCu" class="htCoCu" hidden></div>
+      <!-- Phụ huynh: chọn con -->
+      <div id="htChonCon" class="htChonCon" role="group" aria-label="Chọn con" hidden></div>
+
+      <div class="htKhung">
+        <section class="htCotDs" aria-label="Danh sách thư">
+          <div class="htMuc" role="tablist" aria-label="Mục thư">
+            <button type="button" role="tab" data-loc="can_xem" aria-selected="true">📬 <span data-chu-be="Cần con xem" data-chu-ph="Cần xem">Cần con xem</span></button>
+            <button type="button" role="tab" data-loc="xong" aria-selected="false">✅ Đã xong</button>
+            <button type="button" role="tab" data-loc="tat_ca" aria-selected="false">📚 Tất cả</button>
+          </div>
+          <div id="htDs" class="htDs" aria-live="polite"></div>
+          <button id="htThem" class="htThem" type="button" hidden>Xem thêm thư cũ</button>
+        </section>
+
+        <section id="htCotThu" class="htCotThu" aria-label="Thư đang mở">
+          <div class="htTrongThu">
+            <div class="htCuTo" aria-hidden="true">🦉</div>
+            <p>Con chạm vào một thư để đọc nhé!</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="kc_config.js"></script>
+  <script src="kc_api.js"></script>
+  <script src="kc_auth.js"></script>
+  <script src="chung/am_thanh.js"></script>
+  <script src="chung/khang_nghi.js"></script>
+  <script src="homthu.js"></script>
+
+<script src="kc_luot_truy_cap.js"></script>
+</body>
+</html>

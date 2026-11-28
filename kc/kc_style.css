@@ -6,6 +6,7 @@
               xanh cờ vua) để trẻ phân biệt ngay đây là "khu vui chơi" khác.
    BƯỚC: KC_00
    NGÀY: 17/07/2026
+   CẬP NHẬT: KC_12C1 - 28/11/2026: nút 📬 Hòm thư trên thanh đầu (.kcNutHomThu, điện thoại chỉ biểu tượng + số).
    CẬP NHẬT: KC_00E - 15/10/2026: thêm GIAO DIỆN MÁY TÍNH (>= 1024px) ở cuối file.
    CẬP NHẬT: KC_00B - 14/10/2026 21:57: thêm THANH TAB CHUNG (.kcThanhTab)
              dưới header của mọi trang - chuyển qua lại Cờ Vua / Học Tập /
@@ -126,6 +127,32 @@ a.kcTuiLink:hover { background: rgba(255, 255, 255, 0.32); }
   background-color: #ffffff;
   color: var(--mau-chinh-dam);
 }
+
+/* KC_12C1 (28/11/2026): nút 📬 Hòm thư trên thanh đầu (kc_auth.js kcVeNutHomThu, Thiet_Ke_Hom_Thu.md 9.0).
+   Điện thoại (cạnh hẹp < 600 px, hoặc màn cảm ứng nằm ngang thấp < 500 px) chỉ 📬 + số; máy tính bảng / máy tính có chữ.
+   KHÔNG lấy "màn cảm ứng" làm dấu hiệu điện thoại: máy tính bảng cũng cảm ứng (bài học TC_D06D10). */
+.kcNutHomThu {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; min-width: 44px; box-sizing: border-box; padding: 6px 16px; position: relative;
+}
+.kcNutHomThu[aria-current="page"] { background-color: #ffffff; color: var(--mau-chinh-dam); }
+.kcHtHinh { font-size: 1.3rem; line-height: 1; display: inline-block; }
+.kcHtSo {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; padding: 0 6px; box-sizing: border-box; border-radius: 999px;
+  background: #ff3b30; color: #ffffff; font-size: 0.8rem; line-height: 1; box-shadow: 0 0 0 2px #ffffff;
+}
+.kcHtSo[hidden] { display: none; }
+.kcNutHomThu.kcHtRung .kcHtHinh { animation: kcHtRung 0.6s ease-in-out 3; }
+@keyframes kcHtRung { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-14deg) scale(1.1); } 75% { transform: rotate(14deg) scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .kcNutHomThu.kcHtRung .kcHtHinh { animation: none; } }
+@media (max-width: 599px), (pointer: coarse) and (max-height: 499px) {
+  .kcNutHomThu .kcHtChu { display: none; }
+  .kcNutHomThu { padding: 6px 12px; }
+  /* số đỏ nằm góc trên phải biểu tượng cho gọn */
+  .kcNutHomThu .kcHtSo { position: absolute; top: -6px; right: -6px; }
+}
+@media (min-width: 1024px) { .kcHtHinh { font-size: 1.4rem; } }
 
 /* ================================================================
    THANH TAB CHUNG (KC_00B) - chuyển giữa các mảng như 1 ứng dụng
