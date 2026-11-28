@@ -204,6 +204,9 @@ function appDangNhapThanhCong(duLieuTaiKhoan) {
  * Xóa trạng thái đăng nhập, ẩn thanh thông tin, ẩn menu Quản Trị, quay về Tab Đăng Nhập
  */
 function appXuLyDangXuat() {
+  // KC_00D2-B2: bao may chu ket thuc phien; cho xong (toi da 2 giay) roi moi chuyen trang, keo yeu cau bi huy
+  var tk = appTaiKhoanDangNhap;
+  var choMayChu = (tk && window.KC_PHIEN) ? window.KC_PHIEN.ketThuc(tk.tenDangNhap, tk.maPhien) : Promise.resolve();
   appTaiKhoanDangNhap = null;
   appThongTinHienThi = null;
   appXoaPhienDangNhap();
@@ -211,9 +214,20 @@ function appXuLyDangXuat() {
   appAnThanhThongTin();
   appCapNhatMenuTheoVaiTro(null);
   // KC_00C-1: đăng xuất -> về Trang chủ chung (đăng nhập lại ở đó)
-  if (appCoTheLuuPhien()) { window.location.replace(APP_TRANG_CHU); return; }
+  if (appCoTheLuuPhien()) { choMayChu.then(function () { window.location.replace(APP_TRANG_CHU); }); return; }
   appChuyenTab("auth");
 }
+
+/**
+ * KC_00D2-B2: phien khong dung duoc nua (kc/chung/phien.js da xoa khoa phien va hien hop bao).
+ * Quen tai khoan dang giu trong trang de khong ham nao ghi lai phien cu.
+ */
+document.addEventListener("kcMatPhien", function () {
+  appTaiKhoanDangNhap = null;
+  appThongTinHienThi = null;
+  appCapNhatGiaoDienHeader();
+  appCapNhatMenuTheoVaiTro(null);
+});
 
 /** KC_00C-1: trình duyệt có cho dùng sessionStorage không (chế độ riêng tư có thể chặn) */
 function appCoTheLuuPhien() {
@@ -311,6 +325,7 @@ function appLamMoiThanhThongTin() {
   if (!appTaiKhoanDangNhap) return;
 
   apiLayThongTinCaNhan(appTaiKhoanDangNhap.tenDangNhap).then(function (ketQua) {
+    if (!appTaiKhoanDangNhap) return; // KC_00D2-B2: da dang xuat / mat phien trong luc cho
     if (ketQua && ketQua.thanhCong && ketQua.thongTin) {
       var tt = ketQua.thongTin;
 

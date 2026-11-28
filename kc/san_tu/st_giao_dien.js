@@ -247,6 +247,8 @@
     am.tamDung();
     hienLop("manTamDung");
   }
+  // KC_00D2-B2: mất phiên giữa màn -> tạm dừng sau hộp báo; kim cương chưa cất vẫn nằm trong hàng chờ
+  document.addEventListener("kcMatPhien", tamDung);
   function tiepTuc() {
     if (!g || g.trangThai !== "tamDung") return;
     am.mo(); am.tiepTuc();

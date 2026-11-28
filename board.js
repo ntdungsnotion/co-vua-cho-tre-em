@@ -1103,7 +1103,7 @@ function boardKiemTraKetThuc() {
   } else {
     laHoa = true;
     ketQua = "hoa";
-    thongBao = "Ván cờ HÒA! Bạn nhận kim cương khích lệ.";
+    thongBao = "Ván cờ HÒA!"; // KC_00D2-B2: so kim cuong chi hien khi may chu da cong (khung ket qua)
   }
 
   boardCapNhatThongTinLuot(thongBao, laHoa ? "Hòa cờ" : "Kết thúc");
@@ -1118,8 +1118,10 @@ function boardKiemTraKetThuc() {
  */
 function boardGuiKetQuaLenMayChu(ketQua, laHoa, thongBaoThangThua) {
   var taiKhoan = (typeof appLayTaiKhoanDangNhap === "function") ? appLayTaiKhoanDangNhap() : null;
+  // KC_00D2-B2: khong gui duoc thi noi ro la kim cuong van nay chua duoc cong
+  var chuaCong = " ⚠️ Chưa gửi được kết quả, kim cương ván này chưa được cộng.";
   if (!taiKhoan) {
-    boardHienKhungKetQua(thongBaoThangThua, laHoa, ketQua, null);
+    boardHienKhungKetQua(thongBaoThangThua + chuaCong, laHoa, ketQua, null);
     return;
   }
 
@@ -1135,7 +1137,7 @@ function boardGuiKetQuaLenMayChu(ketQua, laHoa, thongBaoThangThua) {
       }
       boardDienLuaChonCapDoMay(); // Lên cấp -> mở thêm cấp máy mới
     } else {
-      boardHienKhungKetQua(thongBaoThangThua, laHoa, ketQua, null);
+      boardHienKhungKetQua(thongBaoThangThua + chuaCong, laHoa, ketQua, null);
     }
   });
 }

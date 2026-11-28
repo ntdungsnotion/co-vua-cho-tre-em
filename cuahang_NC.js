@@ -83,6 +83,7 @@ function chDocPhien() {
 /** Ghi lại phiên sau khi kim cương thay đổi để Trang Chính hiển thị đúng */
 function chLuuPhien() {
   try {
+    if (!sessionStorage.getItem(CH_KHOA_PHIEN)) return; // KC_00D2-B2: da mat phien thi khong ghi lai
     sessionStorage.setItem(CH_KHOA_PHIEN, JSON.stringify(chTaiKhoan));
   } catch (loi) { /* trình duyệt chặn sessionStorage -> bỏ qua */ }
 }

@@ -908,7 +908,8 @@
       if (k && typeof k.cap === "number") { datCapBe(k.cap); if (typeof k.capToiDa === "number") capToiDa = k.capToiDa; }
       if (mucGui.ketQua !== "thang") { taiThanhTich(); return; }
       const thuong = thuongCap(CT.capCuaMuc(mucGui.muc) || 1);
-      if (!k) oKc.textContent = "Mạng đang chập chờn, " + thuong + " kim cương của ván này sẽ tự vào kho khi có mạng nhé.";
+      if (!k && !r.loiMang) oKc.textContent = "Con đăng nhập lại nhé, " + thuong + " kim cương của ván này đang được giữ lại.";   // KC_00D2-B2: mất phiên
+      else if (!k) oKc.textContent = "Mạng đang chập chờn, " + thuong + " kim cương của ván này sẽ tự vào kho khi có mạng nhé.";
       else if (k.hopLe === false || k.thanhCong === false) oKc.textContent = "Ván này máy chủ chưa ghi nhận được, con chơi ván khác nhé.";
       else oKc.textContent = loiKimCuong(k);
       taiThanhTich();

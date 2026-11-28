@@ -120,6 +120,7 @@ function c2nDocPhienDangNhap() {
 /** Ghi lại phiên sau khi kim cương/EXP thay đổi để trang chính hiển thị đúng */
 function c2nLuuPhienDangNhap() {
   try {
+    if (!sessionStorage.getItem(C2N_KHOA_PHIEN)) return; // KC_00D2-B2: da mat phien thi khong ghi lai
     sessionStorage.setItem(C2N_KHOA_PHIEN, JSON.stringify(c2nTaiKhoan));
   } catch (loi) { /* trình duyệt chặn sessionStorage -> bỏ qua */ }
 }
@@ -1045,3 +1046,11 @@ function c2nHieuUngPhaoHoa() {
 
 // Chạy hàm khởi tạo ngay khi toàn bộ HTML đã được dựng xong
 document.addEventListener("DOMContentLoaded", c2nKhoiTao);
+// KC_00D2-B2: mat phien (kc/chung/phien.js da hien hop bao) -> ngung hoi may chu, ngung nghe phong
+document.addEventListener("kcMatPhien", function () {
+  c2nDungPollingSanh();
+  c2nRoiKenhSanh();
+  c2nDungPollingPhong();
+  c2nRoiKenhPhong();
+  if (c2nHenLuoiAnToan) { clearTimeout(c2nHenLuoiAnToan); c2nHenLuoiAnToan = null; }
+});
