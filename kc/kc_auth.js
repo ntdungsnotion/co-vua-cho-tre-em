@@ -14,6 +14,8 @@
 // CẬP NHẬT: KC_05 (25/11/2026 06:xx) - ô 💎 trên túi là link tới Cửa Hàng Quà chung (KC_DUONG_CUA_HANG).
 // CẬP NHẬT: KC_12C1 (28/11/2026 08:xx) - nút 📬 Hòm thư trên thanh đầu (kcVeNutHomThu, kcCapNhatHomThu):
 //           "Xin chào, [tên]" · 📬 Hòm thư (số) · 🛠️ Quản trị · Đăng xuất (Thiet_Ke_Hom_Thu.md mục 9.0).
+// CẬP NHẬT: KC_00D2-B1 (28/11/2026 20:xx) - hỏi máy chủ phiên còn dùng được không (kc_phien_xem: mở trang, quay lại
+//           thẻ, mỗi 60 giây); bị đăng nhập máy khác / hết hạn thì đăng xuất + hộp báo (PHẦN 4B).
 // LỊCH SỬ: KC_00 (17/07/2026) - bản đầu, dùng khóa phiên RIÊNG.
 // PHỤ THUỘC: kc_config.js, kc_api.js phải nạp TRƯỚC file này.
 //
@@ -118,6 +120,7 @@ function kcAuthKhoiTao() {
 }
 
 function kcBaoSanSang(daDangNhap) {
+  if (daDangNhap) kcPhienHen(true);
   setTimeout(function () {
     document.dispatchEvent(new CustomEvent("kcSanSang", {
       detail: { daDangNhap: daDangNhap, taiKhoan: kcTaiKhoanHienTai }
@@ -218,11 +221,106 @@ function kcGanSuKienDangXuat() {
 }
 
 function kcDangXuat() {
+  kcPhienDung();
   kcXoaPhien();
   kcTaiKhoanHienTai = null;
   kcThongTinCaNhan = null;
   kcHienChuaDangNhap();
 }
+
+// ================================================================
+// PHẦN 4B (KC_00D2-B1, 28/11/2026): PHIÊN CÒN DÙNG ĐƯỢC KHÔNG (Thiet_Ke_Tai_Khoan.md mục 4)
+//   Máy chủ giữ mỗi lần đăng nhập một phiên (bảng kc_phien); bé 1 máy, phụ huynh 3, quản trị 3 (chỉnh ở Quản trị
+//   › 👥 Tài khoản). Trang hỏi kc_phien_xem khi mở trang, khi quay lại thẻ và mỗi giayHoi giây (mặc định 60) lúc
+//   thẻ đang hiện. Máy chủ trả conDung=false thì đăng xuất + báo; mất mạng / máy chủ chưa có hàm thì KHÔNG làm gì.
+// ================================================================
+var kcPhienHenGio = null;
+var kcPhienGiay = 60;
+var kcPhienLanCuoi = 0;
+var KC_DUONG_TRANG_CHU = (function () {
+  try {
+    var s = document.currentScript && document.currentScript.src;
+    if (s) return s.replace(/kc\/kc_auth\.js(\?.*)?$/, "index.html");
+  } catch (e) { /* bỏ qua */ }
+  return "../index.html";
+})();
+
+function kcPhienDung() {
+  if (kcPhienHenGio) { clearTimeout(kcPhienHenGio); kcPhienHenGio = null; }
+}
+
+/** Hẹn lần hỏi kế tiếp; ngay = hỏi luôn bây giờ. */
+function kcPhienHen(ngay) {
+  kcPhienDung();
+  if (ngay) { kcPhienKiem(); return; }
+  kcPhienHenGio = setTimeout(kcPhienKiem, kcPhienGiay * 1000);
+}
+
+function kcPhienKiem() {
+  kcPhienDung();
+  var tk = kcTaiKhoanHienTai;
+  if (!tk || !tk.tenDangNhap) return;
+  if (document.visibilityState === "hidden") return;   // quay lại thẻ thì hỏi tiếp (visibilitychange)
+  kcPhienLanCuoi = Date.now();
+  kcGoiRpc("kc_phien_xem", { p_ten: tk.tenDangNhap, p_ma_phien: tk.maPhien || "" }).then(function (kq) {
+    if (kcTaiKhoanHienTai !== tk) return;               // đã đăng xuất / đổi người trong lúc chờ
+    if (kq && kq.thanhCong && kq.conDung === false) { kcBaoMatPhien(kq.lyDo, tk.vaiTro); return; }
+    if (kq && kq.thanhCong && Number(kq.giayHoi) >= 15) kcPhienGiay = Number(kq.giayHoi);
+    kcPhienHen(false);
+  });
+}
+
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "visible" && kcTaiKhoanHienTai && Date.now() - kcPhienLanCuoi > 5000) kcPhienHen(true);
+});
+
+/** Phiên không dùng được nữa: đăng xuất (cả Cờ Vua, chung khóa phiên) + hộp báo. */
+function kcBaoMatPhien(lyDo, vaiTro) {
+  var laBe = vaiTro !== "phu_huynh" && vaiTro !== "admin";
+  var tieuDe, loi;
+  if (lyDo === "may_khac") {
+    tieuDe = laBe ? "Tài khoản con đang đăng nhập trên máy khác" : "Tài khoản của bạn đang đăng nhập trên máy khác";
+    loi = laBe ? "Con đăng nhập lại ở máy này để chơi tiếp nhé!" : "Đăng nhập lại để dùng tiếp trên máy này.";
+  } else {
+    tieuDe = laBe ? "Con đăng nhập lại nhé!" : "Bạn đăng nhập lại nhé!";
+    loi = laBe ? "Lâu rồi con chưa vào, con đăng nhập lại để chơi tiếp nhé." : "Phiên đăng nhập đã hết hạn.";
+  }
+  kcDangXuat();
+  try { document.dispatchEvent(new CustomEvent("kcMatPhien", { detail: { lyDo: lyDo } })); } catch (e) { /* bỏ qua */ }
+
+  var cu = document.getElementById("kcHopMatPhien");
+  if (cu) cu.remove();
+  var nen = document.createElement("div");
+  nen.id = "kcHopMatPhien";
+  nen.setAttribute("role", "alertdialog");
+  nen.setAttribute("aria-modal", "true");
+  nen.setAttribute("aria-labelledby", "kcHopMatPhienTieuDe");
+  nen.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:rgba(20,30,50,.55);display:flex;" +
+    "align-items:center;justify-content:center;padding:16px;box-sizing:border-box;";
+  var hop = document.createElement("div");
+  hop.style.cssText = "background:#fff;color:#223;border-radius:18px;max-width:420px;width:100%;padding:24px 20px;" +
+    "text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3);font-size:1.05rem;line-height:1.45;";
+  hop.innerHTML = '<div style="font-size:3rem;line-height:1;" aria-hidden="true">' + (lyDo === "may_khac" ? "📱" : "🔑") + "</div>" +
+    '<h2 id="kcHopMatPhienTieuDe" style="margin:10px 0 6px;font-size:1.25rem;"></h2><p style="margin:0 0 18px;"></p>' +
+    '<button type="button" style="font:inherit;font-weight:bold;border:0;border-radius:999px;padding:12px 26px;' +
+    'background:#2e7dd7;color:#fff;cursor:pointer;min-height:44px;">🔑 Đăng nhập lại</button>';
+  hop.querySelector("h2").textContent = tieuDe;
+  hop.querySelector("p").textContent = loi;
+  nen.appendChild(hop);
+  document.body.appendChild(nen);
+  var nut = hop.querySelector("button");
+  nut.addEventListener("click", function () {
+    var oTen = document.getElementById("kcOTen");
+    if (document.getElementById("kcChuaDangNhap") && oTen) {
+      nen.remove();
+      try { window.scrollTo(0, 0); oTen.focus(); } catch (e) { /* bỏ qua */ }
+    } else {
+      location.href = KC_DUONG_TRANG_CHU;              // trang không có khối đăng nhập (vd Thung Lũng): về Trang chủ
+    }
+  });
+  try { nut.focus(); } catch (e) { /* bỏ qua */ }
+}
+window.kcBaoMatPhien = kcBaoMatPhien;
 
 // ================================================================
 // PHẦN 5: HIỆN/ẨN GIAO DIỆN THEO TRẠNG THÁI
