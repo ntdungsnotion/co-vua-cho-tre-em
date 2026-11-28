@@ -14,6 +14,8 @@
                   Phụ huynh: thêm thanh chọn con.
                   Admin (KC_12D1, homthu_co_cu.js): thanh chuyển 🦉 Hộp Cô Cú / 📬 Thư riêng; Hộp Cô Cú có 4 mục + lọc
                   loại / bé / tìm chữ, trả lời ý tưởng, xử lý kháng nghị trong thư, xoá khỏi hộp / xoá hẳn.
+                  KC_12D2: ✉️ Viết thư (chọn bé / 📢 tin chung, hỏi "Gửi cho N người?"), gợi ý tên bé ở ô lọc,
+                  nút ⚙️ Cài đặt hòm thư (sang Quản trị › 📬 Hòm thư).
                   Điện thoại: danh sách, chạm mở thư toàn màn hình (‹ quay lại, nút Back của máy cũng quay lại).
                   Máy tính (≥ 900 px): hai cột, danh sách 360 px + thư bên phải.
        BƯỚC: KC_12C1 · NGÀY: 28/11/2026
@@ -67,6 +69,11 @@
 
     <!-- KC_12D1 - 🦉 HỘP CÔ CÚ (chỉ admin) -->
     <main id="ccTrang" class="htTrang ccTrang" hidden>
+      <!-- KC_12D2: ✉️ / 📢 viết thư mới (mở ở cột thư, #cc-viet) + ⚙️ Cài đặt hòm thư (Quản trị › 📬) -->
+      <div class="ccDauHang">
+        <button id="ccVietNut" class="htNut vang" type="button">✉️ Viết thư</button>
+        <a id="ccCaiDat" class="htNut phu" href="quantri_NC.html#homthu">⚙️ Cài đặt hòm thư</a>
+      </div>
       <div class="ccLocHang">
         <select id="ccLoai" aria-label="Loại thư">
           <option value="">Mọi loại thư</option>
@@ -76,7 +83,8 @@
           <option value="co_cu">✉️ Thư Cô Cú</option>
           <option value="tin">📢 Tin chung</option>
         </select>
-        <input id="ccBe" type="text" placeholder="Tên bé" aria-label="Lọc theo tên bé" autocomplete="off">
+        <input id="ccBe" type="text" placeholder="Tên bé" aria-label="Lọc theo tên bé" autocomplete="off" list="ccDsBe">
+        <datalist id="ccDsBe"></datalist>
         <input id="ccTim" type="search" placeholder="Tìm chữ trong thư" aria-label="Tìm chữ trong thư" autocomplete="off">
         <button id="ccLoc" class="htNut chinh" type="button">🔎 Lọc</button>
         <button id="ccBoLoc" class="htNut phu" type="button" hidden>✕ Bỏ lọc</button>

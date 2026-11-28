@@ -59,6 +59,8 @@
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
+       CẬP NHẬT: 28/11/2026 - KC_12D2: Quản trị chung › 📬 Hòm thư (⚙️ cài đặt, qt_hom_thu.js); 💡 Ý tưởng chỉ còn xem (xử lý ở
+                 🦉 Hộp Cô Cú, ẩn cột nút); thẻ Tổng quan "🦉 thư chờ Cô Cú"; 📮 kháng nghị xử lý ở Hộp Cô Cú.
        CẬP NHẬT: 28/11/2026 - KC_12D1: nút 📬 Hòm thư trên thanh đầu (qt_hom_thu.js, số = thư chờ Cô Cú) dẫn sang 🦉 Hộp Cô Cú;
                  chi tiết kháng nghị theo tính năng nạp từ chung/kn_chi_tiet.js (dùng chung với Hộp Cô Cú).
        CẬP NHẬT: 27/11/2026 - KC_11D: Quản trị chung › 🎁 Cấp thưởng cho bé (qt_cap_thuong.js) + 📮 Bé kháng nghị (qt_khang_nghi.js), 2 module chung (SQL KC_11D).
@@ -492,6 +494,14 @@
       .qtgPhai { position: sticky; top: 12px; }
     }
     @media (max-width: 480px) { .qtgForm { grid-template-columns: 1fr; } }
+    /* KC_12D2: thẻ Tổng quan dạng liên kết + 💡 chỉ còn xem (xử lý ở 🦉 Hộp Cô Cú: ẩn cột nút của bảng admin_NC.js) */
+    a.qtTheTongQuan { text-decoration: none; }
+    a.qtTheTongQuan:hover { border-color: var(--mau-chinh); }
+    #manhinh-ytuong .adminBang th:nth-child(7), #bangYTuong td:nth-child(7) { display: none; }
+    .qtDanCoCu { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: #fff8e6; border: 2px solid var(--mau-phu);
+      border-radius: var(--bo-tron); padding: 10px 12px; margin: 8px 0 10px; }
+    .qtDanCoCu p { margin: 0; flex: 1 1 240px; }
+    .qtDanCoCu .adminNut { text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
   </style>
 </head>
 <body class="qtTrang">
@@ -551,6 +561,8 @@
         <!-- KC_11D 27/11/2026: 2 module chung: cấp thưởng cho bé (qt_cap_thuong.js) + bé kháng nghị mọi tính năng (qt_khang_nghi.js) -->
         <button class="adminNutManHinh qtMuc" data-manhinh="capthuong" type="button">🎁 Cấp thưởng cho bé</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khangnghi" type="button">📮 Bé kháng nghị</button>
+        <!-- KC_12D2: ⚙️ Cài đặt hòm thư (qt_hom_thu.js); thư xử lý ở 🦉 Hộp Cô Cú (nút 📬 trên thanh đầu) -->
+        <button class="adminNutManHinh qtMuc" data-manhinh="homthu" type="button">📬 Hòm thư</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotu" type="button">📖 Kho từ vựng</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khocau" type="button">❓ Kho câu hỏi</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotrithuc" type="button">📚 Kho tri thức</button>
@@ -624,9 +636,10 @@
           <button class="qtTheTongQuan" data-den="doithuong" id="tqTheQua" type="button">
             <span class="qtSoTongQuan" id="tqQuaChoTrao">…</span><span>🎁 quà đang chờ trao tận tay</span>
           </button>
-          <button class="qtTheTongQuan" data-den="ytuong" id="tqTheYTuong" type="button">
-            <span class="qtSoTongQuan" id="tqYTuongMoi">…</span><span>💡 ý tưởng mới chưa xem</span>
-          </button>
+          <!-- KC_12D2: thay "💡 ý tưởng mới chưa xem": mọi thư chờ (ý tưởng, kháng nghị, bé trả lời) xử lý ở 🦉 Hộp Cô Cú -->
+          <a class="qtTheTongQuan" href="homthu_NC.html" id="tqTheYTuong">
+            <span class="qtSoTongQuan" id="tqYTuongMoi">…</span><span>🦉 thư chờ Cô Cú (ý tưởng, kháng nghị, bé trả lời)</span>
+          </a>
           <button class="qtTheTongQuan" data-den="hosotre" type="button">
             <span class="qtSoTongQuan" id="tqSoTaiKhoan">…</span><span>👦 tài khoản có hồ sơ</span>
           </button>
@@ -869,6 +882,11 @@
         <p class="adminGhiChu">
           Ý tưởng gửi từ trang Học Tập / Khám Phá (NC_07). Ý tưởng <strong>mới</strong> luôn xếp trên cùng.
         </p>
+        <!-- KC_12D2: bỏ chỗ trùng: trả lời / đánh dấu đã xem làm ở 🦉 Hộp Cô Cú (bảng dưới chỉ để xem lại) -->
+        <div class="qtDanCoCu">
+          <p>💡 Trả lời bé hoặc đánh dấu đã xem ở <strong>🦉 Hộp Cô Cú</strong>: bé nhận lời Cô Cú ngay trong 📬 Hòm thư. Bảng dưới chỉ để xem lại.</p>
+          <a class="adminNut" href="homthu_NC.html?loai=y_tuong">🦉 Mở Hộp Cô Cú › 💡</a>
+        </div>
         <button class="adminNut adminNutPhu" id="btnLamMoiYTuong" type="button">🔄 Làm Mới</button>
         <div class="adminCuonNgang" style="margin-top:10px;">
           <table class="adminBang">
@@ -910,8 +928,16 @@
     <section class="adminManHinh" id="manhinh-khangnghi"> <!-- KC_11D -->
       <div class="adminKhoi">
         <h3>📮 Bé Kháng Nghị (chung mọi tính năng)</h3>
-        <p class="adminGhiChu">Bé thấy một quyết định của app chưa đúng (vd lượt bị Cô Cú kết luận "chọn vội" nên không có thưởng) thì tự viết lý do trong hạn. Xem lời bé + chi tiết, rồi ✅ Chấp nhận (việc có bù thưởng thì mở 🎁 Cấp thưởng điền sẵn số bù) hoặc ↩️ Giữ nguyên kèm lời nhắn. Kết quả hiện ở khối 📬 Cô Cú báo trên Trang chủ của bé.</p>
+        <p class="adminGhiChu">Bé thấy một quyết định của app chưa đúng (vd lượt bị Cô Cú kết luận "chọn vội" nên không có thưởng) thì tự viết lý do trong hạn. Ở đây xem danh sách, số đếm, chi tiết và cài đặt. <strong>✅ Chấp nhận (+ bù thưởng) / ↩️ Giữ nguyên làm trong 🦉 Hộp Cô Cú</strong> (nút trên mỗi thẻ). Kết quả về 📬 Hòm thư của bé.</p>
         <div id="qknGoc"></div>
+      </div>
+    </section>
+
+    <section class="adminManHinh" id="manhinh-homthu"> <!-- KC_12D2 -->
+      <div class="adminKhoi">
+        <h3>📬 Hòm Thư (dùng chung cả app)</h3>
+        <p class="adminGhiChu">Thư của bé (ý tưởng, kháng nghị, lời trả lời) và thư / tin Cô Cú gửi đều đọc, xử lý và viết ở <strong>🦉 Hộp Cô Cú</strong> (nút 📬 trên thanh đầu). Ở đây chỉ là cài đặt. Ô viền cam là số đã khác mặc định.</p>
+        <div id="qhtGoc"></div>
       </div>
     </section>
 
