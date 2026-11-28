@@ -12,6 +12,8 @@
 // CẬP NHẬT: KC_00D-1 (17/10/2026) - thuộc tính data-chi-admin (nút "Quản trị").
 // CẬP NHẬT: KC_03C2 (23/11/2026 23:xx) - túi 💎 + 🪙 xu vàng trên thanh trên (kcVeTui, kcCapNhatTui).
 // CẬP NHẬT: KC_05 (25/11/2026 06:xx) - ô 💎 trên túi là link tới Cửa Hàng Quà chung (KC_DUONG_CUA_HANG).
+// CẬP NHẬT: KC_12C1 (28/11/2026 08:xx) - nút 📬 Hòm thư trên thanh đầu (kcVeNutHomThu, kcCapNhatHomThu):
+//           "Xin chào, [tên]" · 📬 Hòm thư (số) · 🛠️ Quản trị · Đăng xuất (Thiet_Ke_Hom_Thu.md mục 9.0).
 // LỊCH SỬ: KC_00 (17/07/2026) - bản đầu, dùng khóa phiên RIÊNG.
 // PHỤ THUỘC: kc_config.js, kc_api.js phải nạp TRƯỚC file này.
 //
@@ -230,6 +232,9 @@ function kcHienChuaDangNhap() {
   var tui = document.getElementById("kcTui");
   if (tui) tui.remove();
   kcTuiDaLayVang = false;
+  var nutHt = document.getElementById("kcNutHomThu");
+  if (nutHt) nutHt.remove();
+  kcHtLanCuoi = 0;
   var khoiChua = document.getElementById("kcChuaDangNhap");
   var khoiCan = document.getElementById("kcNoiDungCanDangNhap");
   if (khoiChua) khoiChua.style.display = "block";
@@ -256,7 +261,77 @@ function kcHienDaDangNhap(taiKhoan) {
 
   kcApDungHienThiTheoVaiTro(taiKhoan.vaiTro);
   kcVeTui(taiKhoan);
+  kcVeNutHomThu(taiKhoan);
 }
+
+// ================================================================
+// KC_12C1 (28/11/2026): NÚT 📬 HÒM THƯ TRÊN THANH ĐẦU mọi trang có #trangThaiDangNhap (Thiet_Ke_Hom_Thu.md 9.0)
+//   Đặt ngay sau "Xin chào, [tên]". Số đỏ: bé / phụ huynh = thư chưa đọc; admin = thư chờ Cô Cú (kc_thu_dem).
+//   Điện thoại chỉ 📬 + số (CSS kc_style.css: .kcHtChu ẩn khi màn hẹp < 600 px hoặc điện thoại nằm ngang);
+//   máy tính bảng / máy tính có cả chữ. Trang Hòm thư gọi kcCapNhatHomThu() sau khi bé đọc / xoá thư.
+//   Chưa chạy SQL kc12b / mất mạng: nút vẫn hiện, không có số.
+// ================================================================
+var KC_DUONG_HOM_THU = (function () {
+  try {
+    var s = document.currentScript && document.currentScript.src;
+    if (s) return s.replace(/kc_auth\.js(\?.*)?$/, "homthu_NC.html");
+  } catch (e) { /* bỏ qua */ }
+  return "homthu_NC.html";
+})();
+var kcHtLanCuoi = 0;   // lúc hỏi số gần nhất (kcHienDaDangNhap chạy 2 lần liền khi mở trang: chỉ hỏi 1 lần)
+
+function kcVeNutHomThu(taiKhoan) {
+  var cha = document.getElementById("trangThaiDangNhap");
+  var nut = document.getElementById("kcNutHomThu");
+  if (!cha || !taiKhoan) { if (nut) nut.remove(); return; }
+  if (!nut) {
+    nut = document.createElement("a");
+    nut.id = "kcNutHomThu";
+    nut.className = "kcNutLienKet kcNutHomThu";
+    nut.href = KC_DUONG_HOM_THU;
+    nut.setAttribute("aria-label", "Hòm thư");
+    nut.innerHTML = '<span class="kcHtHinh" aria-hidden="true">📬</span><span class="kcHtChu">Hòm thư</span><b class="kcHtSo" hidden></b>';
+    if (/homthu_NC\.html$/.test(location.pathname)) nut.setAttribute("aria-current", "page");
+    var ten = document.getElementById("kcTenNguoiChoi");
+    if (ten && ten.parentNode === cha) cha.insertBefore(nut, ten.nextSibling);
+    else cha.appendChild(nut);
+  }
+  if (Date.now() - kcHtLanCuoi > 3000) kcCapNhatHomThu();
+}
+
+/** Hỏi máy chủ số trên nút 📬 (hoặc đặt thẳng: kcCapNhatHomThu(so)). */
+function kcCapNhatHomThu(so) {
+  if (typeof so === "number") { kcVeSoHomThu(so); return; }
+  var tk = kcTaiKhoanHienTai;
+  if (!tk || !tk.tenDangNhap || !document.getElementById("kcNutHomThu")) return;
+  kcHtLanCuoi = Date.now();
+  kcGoiRpc("kc_thu_dem", { p_ten: tk.tenDangNhap, p_ma_phien: tk.maPhien || "" }).then(function (kq) {
+    if (!kq || !kq.thanhCong) { kcVeSoHomThu(0); return; }
+    var n = (tk.vaiTro === "admin" && kq.coCu) ? Number(kq.coCu.cho) || 0 : Number(kq.chuaDoc) || 0;
+    kcVeSoHomThu(n, tk.vaiTro === "admin");
+    document.dispatchEvent(new CustomEvent("kcHomThuDem", { detail: kq }));
+  });
+}
+
+function kcVeSoHomThu(n, laAdmin) {
+  var nut = document.getElementById("kcNutHomThu");
+  if (!nut) return;
+  var b = nut.querySelector(".kcHtSo");
+  n = Math.max(0, Number(n) || 0);
+  var cu = Number(b.textContent) || 0;
+  b.textContent = n > 99 ? "99+" : String(n);
+  b.hidden = n === 0;
+  nut.setAttribute("aria-label", "Hòm thư" + (n ? ", " + n + (laAdmin ? " thư chờ Cô Cú" : " thư mới") : ""));
+  nut.title = n ? (laAdmin ? n + " thư đang chờ Cô Cú" : "Con có " + n + " thư mới") : "Hòm thư";
+  nut.classList.toggle("coThu", n > 0);
+  if (n > cu) { nut.classList.remove("kcHtRung"); void nut.offsetWidth; nut.classList.add("kcHtRung"); }
+}
+window.kcCapNhatHomThu = kcCapNhatHomThu;
+
+// Quay lại tab / mở lại app: hỏi lại số (có thư mới trong lúc đi chơi trang khác)
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "visible" && kcTaiKhoanHienTai && Date.now() - kcHtLanCuoi > 30000) kcCapNhatHomThu();
+});
 
 // ================================================================
 // KC_03C2 (23/11/2026): TÚI 💎 + 🪙 XU VÀNG TRÊN THANH TRÊN mọi trang /kc/

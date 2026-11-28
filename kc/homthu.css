@@ -1,0 +1,149 @@
+/* ================================================================
+   FILE: homthu.css - giao diện trang 📬 Hòm thư (homthu_NC.html, homthu.js)
+   ĐIỆN THOẠI (< 900 px): danh sách; mở thư thì thư thay chỗ danh sách (nút ‹ quay lại). Nút ≥ 44 px.
+   MÁY TÍNH (≥ 900 px): hai cột: danh sách 360 px + thư bên phải (cột thư dính khi cuộn).
+   BƯỚC: KC_12C1 · NGÀY: 28/11/2026
+   ================================================================ */
+.htTrang { max-width: 1200px; margin: 0 auto; padding: 14px 12px 40px; box-sizing: border-box; }
+.htCuTo { font-size: 3rem; line-height: 1; }
+
+/* admin: lối tạm sang Quản trị */
+.htCoCu { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; background: #fff6d6; border: 2px solid #ffd27a;
+  border-radius: var(--bo-tron); padding: 12px 14px; margin-bottom: 14px; }
+.htCoCu[hidden] { display: none; }
+.htCoCu .htCuTo { font-size: 2.2rem; }
+.htCoCu p { flex: 1 1 260px; margin: 0; line-height: 1.45; }
+
+/* phụ huynh: chọn con */
+.htChonCon { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; }
+.htChonCon[hidden] { display: none; }
+.htNutCon { flex: 0 0 auto; min-height: 44px; padding: 8px 16px; border-radius: 999px; border: 2px solid var(--mau-vien);
+  background: #fff; color: var(--mau-chinh-dam); font: inherit; font-weight: 700; cursor: pointer; }
+.htNutCon[aria-pressed="true"] { background: var(--mau-chinh); border-color: var(--mau-chinh); color: #fff; }
+
+/* mục: Cần con xem · Đã xong · Tất cả */
+.htMuc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--mau-chinh-nhat); border-radius: 16px; padding: 5px; margin-bottom: 12px; }
+.htMuc button { min-height: 46px; border: 0; border-radius: 12px; background: transparent; font: inherit; font-weight: 700;
+  font-size: 0.92rem; color: var(--mau-chinh-dam); cursor: pointer; line-height: 1.2; padding: 4px; }
+.htMuc button[aria-selected="true"] { background: #fff; box-shadow: 0 2px 8px rgba(75, 47, 176, 0.15); }
+
+/* danh sách */
+.htDs { display: grid; gap: 8px; }
+.htCho { text-align: center; color: var(--mau-chu-nhat); padding: 22px 8px; margin: 0; }
+.htRong { text-align: center; padding: 28px 10px; color: var(--mau-chu-nhat); background: #fff; border-radius: var(--bo-tron); border: 2px dashed var(--mau-vien); }
+.htRong p { margin: 10px 0 0; font-size: 1.05rem; }
+.htMucThu { display: grid; grid-template-columns: 48px 1fr auto; gap: 10px; align-items: center; width: 100%; text-align: left;
+  min-height: 64px; padding: 10px 12px; border: 2px solid var(--mau-vien); border-radius: 16px; background: #fff;
+  font: inherit; color: var(--mau-chu); cursor: pointer; box-sizing: border-box; }
+.htMucThu:hover { border-color: var(--mau-chinh); }
+.htMucThu.chuaDoc { border-color: #ffb800; background: #fffbea; }
+.htMucThu.chuaDoc .htTieuDe { font-weight: 700; }
+.htMucThu.dangMo { border-color: var(--mau-chinh); box-shadow: 0 0 0 3px var(--mau-chinh-nhat); }
+.htHinh { font-size: 2rem; line-height: 1; text-align: center; }
+.htGiua { min-width: 0; display: grid; gap: 4px; }
+.htTieuDe { overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
+.htPhu { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; margin: 0; font-size: 0.82rem; }
+.htNhan { border-radius: 999px; padding: 2px 9px; font-weight: 700; white-space: nowrap; }
+.htNhan.can { background: #ffe1e1; color: #b3261e; }
+.htNhan.moi { background: #fff0b8; color: #7a4b00; }
+.htNhan.dang { background: #e6f0ff; color: #1f4fa8; }
+.htNhan.xong { background: #e3f7ec; color: #1d7a4b; }
+.htCon { color: var(--mau-chu-nhat); }
+.htGio { font-size: 0.78rem; color: var(--mau-chu-nhat); white-space: nowrap; align-self: start; padding-top: 4px; }
+.htThem { display: block; margin: 12px auto 0; min-height: 44px; padding: 8px 18px; border-radius: 999px; border: 2px solid var(--mau-vien);
+  background: #fff; color: var(--mau-chinh-dam); font: inherit; font-weight: 700; cursor: pointer; }
+.htThem[hidden] { display: none; }
+
+/* cột thư */
+.htCotThu { background: #fff; border: 2px solid var(--mau-vien); border-radius: var(--bo-tron); overflow: hidden; display: flex; flex-direction: column; }
+.htTrongThu { text-align: center; color: var(--mau-chu-nhat); padding: 50px 16px; }
+.htDauThu { display: flex; gap: 10px; align-items: center; padding: 10px 12px; background: var(--mau-chinh-nhat); border-bottom: 2px solid var(--mau-vien); }
+.htLui { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #fff; color: var(--mau-chinh-dam);
+  font-size: 1.8rem; line-height: 1; cursor: pointer; padding: 0 0 4px; }
+.htHinhTo { font-size: 2.2rem; line-height: 1; }
+.htDauGiua { flex: 1 1 auto; min-width: 0; }
+.htDauGiua h2 { margin: 0 0 4px; font-size: 1.1rem; line-height: 1.3; color: var(--mau-chinh-dam); overflow-wrap: anywhere; }
+.htDauNut { display: flex; gap: 6px; flex: 0 0 auto; }
+.htNutTron { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--mau-vien); background: #fff; font-size: 1.3rem; cursor: pointer; }
+.htNutTron.dangDoc { background: var(--mau-phu); border-color: var(--mau-phu); animation: htNhip 1s ease-in-out infinite; }
+.htNutTron.xoa:hover { border-color: var(--mau-that-bai); }
+@keyframes htNhip { 50% { transform: scale(1.1); } }
+
+.htThan { padding: 14px 12px; }
+.htQua { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+.htQua b { background: #fff4cc; border: 2px solid #ffd27a; border-radius: 999px; padding: 4px 14px; font-size: 1.2rem; color: #7a4b00; }
+.htHoiThoai { display: grid; gap: 10px; }
+.htSuKien { text-align: center; margin: 0; }
+.htSuKien span { display: inline-block; background: #f4f1fb; color: #4b3f78; border-radius: 12px; padding: 6px 12px; line-height: 1.4; font-size: 0.92rem; }
+.htLoi { display: flex; gap: 8px; align-items: flex-end; }
+.htLoi.toi { justify-content: flex-end; }
+.htAi { font-size: 1.8rem; line-height: 1; flex: 0 0 auto; }
+.htBong { max-width: 82%; border-radius: 18px; padding: 8px 12px 6px; background: #f1ecff; }
+.htLoi.cocu .htBong { background: #fff3cf; border-bottom-left-radius: 6px; }
+.htLoi.nguoi .htBong { border-bottom-left-radius: 6px; }
+.htLoi.toi .htBong { background: var(--mau-chinh); color: #fff; border-bottom-right-radius: 6px; }
+.htBong p { margin: 0; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1.02rem; }
+.htTen { display: block; font-weight: 700; font-size: 0.82rem; color: #8a5a00; margin-bottom: 2px; }
+.htGioLoi { display: block; text-align: right; font-size: 0.72rem; opacity: 0.7; margin-top: 2px; }
+
+/* việc trong thư */
+.htViec { display: grid; gap: 10px; padding: 12px; border-top: 2px solid var(--mau-vien); background: #fcfbff; }
+.htGhi { margin: 0; text-align: center; color: var(--mau-chu-nhat); font-size: 0.9rem; }
+.htNut { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 10px 18px; border: 0;
+  border-radius: 14px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; box-sizing: border-box; }
+.htNut.chinh { background: var(--mau-chinh); color: #fff; }
+.htNut.vang { background: linear-gradient(135deg, #ffcf3f, #ff9f1a); color: #4a2a00; font-size: 1.1rem; }
+.htNut.phu { background: var(--mau-chinh-nhat); color: var(--mau-chinh-dam); }
+.htNut.do { background: var(--mau-that-bai); color: #fff; }
+.htNut:disabled { opacity: 0.55; cursor: default; }
+.htViet { display: grid; gap: 6px; }
+.htO { width: 100%; box-sizing: border-box; border: 2px solid var(--mau-vien); border-radius: 14px; padding: 10px 12px; font: inherit; font-size: 1rem; resize: vertical; min-height: 84px; }
+.htO:focus { outline: none; border-color: var(--mau-chinh); }
+.htVietDuoi { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.htDem { font-size: 0.82rem; color: var(--mau-chu-nhat); }
+.htLoiViet { margin: 0; color: #b3261e; font-weight: 600; min-height: 0; }
+.htLoiViet:empty { display: none; }
+
+/* hộp hỏi xoá */
+.htMan { position: fixed; inset: 0; background: rgba(30, 20, 60, 0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+.htHopXoa { background: #fff; border-radius: 20px; padding: 20px 18px 16px; width: min(420px, 100%); text-align: center; box-shadow: var(--do-bong); }
+.htHopXoa h3 { margin: 8px 0 6px; color: var(--mau-chinh-dam); }
+.htHopXoa p { margin: 0 0 16px; line-height: 1.5; }
+.htHangNut { display: flex; gap: 10px; justify-content: center; }
+.htHangNut .htNut { flex: 1 1 0; }
+
+/* báo nhỏ + kim cương rơi */
+.htBao { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 30px); opacity: 0; transition: all 0.3s; z-index: 1100;
+  background: #2b2640; color: #fff; border-radius: 999px; padding: 10px 18px; font-weight: 700; max-width: calc(100vw - 32px); text-align: center; pointer-events: none; }
+.htBao.vui { background: linear-gradient(135deg, #7b5cf0, #4b2fb0); }
+.htBao.hien { opacity: 1; transform: translate(-50%, 0); }
+.htHat { position: fixed; top: -40px; z-index: 1200; pointer-events: none; animation: htRoi 2.2s ease-in forwards; }
+@keyframes htRoi { to { transform: translateY(110vh) rotate(260deg); opacity: 0.3; } }
+
+/* ĐIỆN THOẠI: mở thư thì ẩn danh sách */
+@media (max-width: 899px) {
+  .htKhung.coThu .htCotDs { display: none; }
+  .htKhung:not(.coThu) .htCotThu { display: none; }
+  .htKhung.coThu ~ * { display: none; }
+}
+@media (max-width: 480px) {
+  .htTrang { padding: 10px 8px 32px; }
+  .htMuc button { font-size: 0.85rem; }
+  .htThan { padding: 12px 8px; }
+  .htBong { max-width: 88%; }
+}
+
+/* MÁY TÍNH: hai cột */
+@media (min-width: 900px) {
+  .htKhung { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; }
+  .htCotThu { position: sticky; top: 12px; max-height: calc(100vh - 24px); }
+  .htThan { overflow-y: auto; flex: 1 1 auto; padding: 18px 20px; }
+  .htLui { display: none; }
+  .htDauThu { padding: 12px 18px; }
+  .htDauGiua h2 { font-size: 1.25rem; }
+  .htViec { padding: 14px 20px; }
+  .htViec .htNut.vang, .htViec > .htNut { justify-self: start; }
+}
+@media (min-width: 1024px) {
+  .htTrang { padding: 22px 24px 48px; }
+}
