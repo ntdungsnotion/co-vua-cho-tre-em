@@ -8,6 +8,7 @@
 //       KC_00D2-R (28/11/2026): cac ham ghi / doc ho so cua chinh tre GUI KEM p_ma_phien (apiMaPhien),
 //              may chu chi nhan ma phien that (SQL repo rieng supabase_kc00d2_r1_ham_co_phien.sql).
 //              lay_thong_tin_ca_nhan, lay_xep_hang, lay_cau_hinh, lay_bo_co van cong khai (khong gui ma).
+//       KC_00D2-B2 (28/11/2026): may chu tra ma 'dang_nhap' thi goi KC_PHIEN.kiemNgay() (hop bao ngay).
 //       NC_05: them 6 ham cho "Thanh Thong Tin Tren Cung" + "Trang Tai Khoan".
 //       NC_09: them apiLayBoCo() - lay danh sach bo quan co (du lieu tung quan) de
 //              taikhoan_NC.js cho tre CHON bo, va board.js PHAN GIAI ma dinh danh
@@ -50,7 +51,10 @@ function apiGoiRpc(tenHam, thamSo) {
           thongBao: "Loi may chu: " + phanHoi.error.message
         };
       }
-      return phanHoi.data;
+      // KC_00D2-B2: may chu tu choi vi phien -> hoi ngay phien con dung duoc khong (kc/chung/phien.js)
+      var du = phanHoi.data;
+      if (du && (du.ma === "dang_nhap" || du.ma === "phien_het_han") && window.KC_PHIEN) window.KC_PHIEN.kiemNgay();
+      return du;
     })
     .catch(function (loi) {
       return {

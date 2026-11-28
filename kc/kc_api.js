@@ -19,7 +19,10 @@ function kcGoiRpc(tenHam, thamSo) {
     if (ketQua.error) {
       return { thanhCong: false, thongBao: "Không kết nối được máy chủ, con thử lại nhé." };
     }
-    return ketQua.data;
+    var du = ketQua.data;
+    // KC_00D2-B2: máy chủ từ chối vì phiên -> hỏi ngay phiên còn dùng được không (chung/phien.js)
+    if (du && (du.ma === "dang_nhap" || du.ma === "phien_het_han") && window.KC_PHIEN) window.KC_PHIEN.kiemNgay();
+    return du;
   }).catch(function () {
     return { thanhCong: false, thongBao: "Không kết nối được máy chủ, con thử lại nhé." };
   });
