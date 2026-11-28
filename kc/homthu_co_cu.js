@@ -13,10 +13,11 @@
    RPC (trang thêm p_ten_admin + p_ma_phien_admin; máy chủ kiem_tra_admin ở MỌI hàm):
      kc_thu_admin_ds, kc_thu_admin_xem, kc_thu_admin_tra_loi, kc_thu_admin_dat, kc_thu_admin_xoa (SQL kc12b);
      kc_kn_admin_ds, kc_kn_admin_xu_ly, kc_ct_admin_cap (SQL kc11d).
-   KC_12D2: ✉️ VIẾT THƯ (#cc-viet, cột thư): gửi cho một / vài bé (chọn từ danh sách kc_admin_lay_danh_sach_tre) = thư ✉️
+   KC_12D2: ✉️ VIẾT THƯ = MÀN RIÊNG trên thanh chuyển (🦉 Hộp Cô Cú · ✉️ Viết thư · 📬 Thư riêng; #viet), KHÔNG lẫn với đọc thư
+     (người dùng 28/11/2026). Gửi cho một / vài bé (chọn từ danh sách kc_admin_lay_danh_sach_tre) = thư ✉️
      (tuỳ chọn 🙋 Chờ con trả lời, 👨‍👩‍👧 Phụ huynh cũng thấy) hoặc 📢 tin chung cho tất cả bé / tất cả phụ huynh / mọi người.
      Bấm Gửi → hỏi máy chủ số người (kc_thu_admin_viet p_chi_dem) → hộp "Gửi cho N người?" → gửi với p_ma (mã lần gửi tạo lúc
-     mở khung: bấm lại không gửi 2 lần). Thư có bé: nút "✉️ Viết thư cho bé này". Ô lọc tên bé có gợi ý tên.
+     vẽ khung: bấm lại không gửi 2 lần) → sang 🦉 mở thư vừa gửi. Bản nháp giữ khi chuyển màn. Ô lọc tên bé có gợi ý tên.
      Đường dẫn ?loai=…&be=… (Quản trị › 💡 / 📮 dẫn sang) mở sẵn bộ lọc.
    CHỮ do người viết: luôn textContent. ⚙️ Cài đặt hòm thư ở Quản trị › 📬 Hòm thư (qt_hom_thu.js).
    ĐIỆN THOẠI: danh sách, chạm mở thư toàn màn hình. MÁY TÍNH (≥ 900 px): hai cột (homthu.css + phần .cc* cuối file đó).
@@ -31,10 +32,11 @@
   const KET_QUA = { chap_nhan: "chấp nhận", giu_nguyen: "giữ nguyên", het_han: "quá hạn", da_xem: "đã xem", tra_loi: "đã trả lời" };
   const VIEC = { gui_ly_do: "chờ bé gửi phản hồi", nhan: "chờ bé bấm 🎁 Nhận", tra_loi: "chờ bé trả lời", xu_ly: "chờ Cô Cú" };
   const TEN_TT_KN = { be_gui: "💌 Bé đã gửi, chờ xử lý", cho_be: "⏳ Bé chưa phản hồi", chap_nhan: "✅ Đã chấp nhận", giu_nguyen: "↩️ Giữ nguyên", het_han: "⌛ Quá hạn" };
-  const LOC = [["cho_co_cu", "🦉", "Chờ Cô Cú", "choCoCu"], ["cho_be", "⏳", "Chờ bé", "choBe"], ["xong", "✅", "Đã xong", "xong"], ["tat_ca", "📚", "Tất cả", "tatCa"]];
+  const LOC = [["cho_co_cu", "🦉", "Chờ Cô Cú", "choCoCu"], ["cho_be", "⏳", "Chờ bé", "choBe"], ["xong", "✅", "Đã xong", "xong"], ["tat_ca", "📚", "Tất cả", "tatCa"],
+               ["da_gui", "📤", "Đã gửi", "daGui"]];   // KC_12D2: thư ✉️ / 📢 Cô Cú viết (SQL kc12d2: loc 'da_gui', dem.daGui, soDaDoc)
 
   let tk = null, cheDo = "cc", S = { loc: "cho_co_cu", loai: "", be: "", tim: "" }, ds = [], tiep = null, dem = {}, cauHinh = {};
-  let dangTai = 0, moId = null, dsBe = null, hoiBe = null, vietSan = null;
+  let dangTai = 0, moId = null, dsBe = null, hoiBe = null;
 
   const rpcA = (ham, ts) => kcGoiRpc(ham, Object.assign({ p_ten_admin: tk.tenDangNhap, p_ma_phien_admin: tk.maPhien || "" }, ts || {}))
     .then(kq => kq || { thanhCong: false, thongBao: "Máy chủ không trả lời" });
@@ -68,15 +70,17 @@
   const hinhCua = (loai, d) => (d && d.bieuTuong) || HINH_LOAI[loai] || "📬";
 
   // ================================================================
-  // CHẾ ĐỘ: 🦉 Hộp Cô Cú / 📬 Thư riêng
+  // CHẾ ĐỘ: 🦉 Hộp Cô Cú (đọc + xử lý) / ✉️ Viết thư (màn riêng, KC_12D2) / 📬 Thư riêng
   // ================================================================
   function datCheDo(m) {
     cheDo = m;
     $("ccTrang").hidden = m !== "cc";
-    $("htTrang").hidden = m === "cc";
+    $("ccVietTrang").hidden = m !== "viet";
+    $("htTrang").hidden = m !== "rieng";
     $("ccChuyen").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.che === m)));
     const h = location.hash;
-    if ((m === "cc" && /^#thu-/.test(h)) || (m !== "cc" && /^#cc-/.test(h))) history.replaceState(null, "", location.pathname + location.search);
+    if (m === "viet") { if (h !== "#viet") history.replaceState(null, "", location.pathname + location.search + "#viet"); hienViet(false); }
+    else if ((m === "cc" && /^#(thu-|viet)/.test(h)) || (m === "rieng" && /^#(cc-|viet)/.test(h))) history.replaceState(null, "", location.pathname + location.search);
     if (m === "cc") theoDuongDan();
   }
 
@@ -124,7 +128,8 @@
       const rong = tao("div", "htRong");
       rong.appendChild(tao("div", "htCuTo", S.loc === "cho_co_cu" ? "🎉" : "🦉"));
       rong.appendChild(tao("p", "", S.loai || S.be || S.tim ? "Không có thư nào khớp bộ lọc."
-        : S.loc === "cho_co_cu" ? "Không còn thư nào chờ Cô Cú. Tuyệt!" : "Chưa có thư nào ở mục này."));
+        : S.loc === "cho_co_cu" ? "Không còn thư nào chờ Cô Cú. Tuyệt!"
+        : S.loc === "da_gui" ? "Cô Cú chưa gửi thư nào. Bấm ✉️ Viết thư ở trên để gửi." : "Chưa có thư nào ở mục này."));
       vung.appendChild(rong);
     }
     ds.forEach(t => vung.appendChild(veMucThu(t)));
@@ -143,6 +148,7 @@
     if (t.be) phu.appendChild(tao("span", "htCon", "👧 " + t.be));
     else if (t.soNguoi > 1) phu.appendChild(tao("span", "htCon", "👥 " + soVN(t.soNguoi) + " người"));
     if (t.be && t.beConGiu === false) phu.appendChild(tao("span", "ccDaXoa", "🗑 bé đã xoá"));
+    if (S.loc === "da_gui" && t.soDaDoc != null && t.soNguoi > 0) phu.appendChild(tao("span", "htCon", "👀 " + soVN(t.soDaDoc) + "/" + soVN(t.soNguoi) + " đã đọc"));
     giua.appendChild(phu);
     b.appendChild(giua);
     b.appendChild(tao("span", "htGio", gio(t.capNhat)));
@@ -184,7 +190,6 @@
   }
   function theoDuongDan() {
     if (cheDo !== "cc") return;
-    if (location.hash === "#cc-viet") { hienViet(); return; }
     const m = /^#cc-(\d+)$/.exec(location.hash);
     if (m) hienThu(Number(m[1])); else dongThu();
   }
@@ -298,11 +303,6 @@
   // ---------- việc của Cô Cú ----------
   function veViec(kq) {
     const t = kq.thu, vung = tao("div", "htViec ccViec");
-    if (t.be) {   // KC_12D2: viết thư mới cho đúng bé của thư này
-      const h = tao("div", "ccHangNut"), v = tao("button", "htNut phu", "✉️ Viết thư cho bé " + t.be); v.type = "button";
-      v.addEventListener("click", () => moViet({ be: [t.be] }));
-      h.appendChild(v); vung.appendChild(h);
-    }
     if (t.loai === "y_tuong" || t.loai === "co_cu") {
       vung.appendChild(veTraLoi(t));
       const hang = tao("div", "ccHangNut");
@@ -492,22 +492,16 @@
     return hoiBe;
   }
 
-  function moViet(san) {
-    vietSan = san || null;
-    if (location.hash === "#cc-viet") { hienViet(); return; }
-    location.hash = "#cc-viet";
-  }
-
-  function hienViet() {
-    moId = "viet";
-    const san = vietSan || {}; vietSan = null;
-    $("ccTrang").querySelector(".htKhung").classList.add("coThu");
-    $("ccDs").querySelectorAll(".htMucThu.dangMo").forEach(x => x.classList.remove("dangMo"));
-    const cot = $("ccCotThu");
-    if (!matchMedia("(min-width: 900px)").matches) { try { cot.scrollIntoView({ block: "start" }); } catch (e) { /* bỏ qua */ } }
+  // Màn ✉️ Viết thư RIÊNG (tách khỏi đọc thư, người dùng 28/11/2026: "2 cái này tách ra để khỏi rối"). Vẽ một lần; chuyển sang
+  // 🦉 / 📬 rồi quay lại vẫn còn bản nháp. moi = true: vẽ lại khung trắng (sau khi gửi / 🧹 Viết lại từ đầu).
+  let vietDaVe = false;
+  function hienViet(moi) {
+    if (vietDaVe && !moi) return;
+    vietDaVe = true;
+    const san = {};
+    const cot = $("ccVietKhung");
     cot.innerHTML = "";
     const dau = tao("div", "htDauThu");
-    dau.appendChild(veLui());
     dau.appendChild(tao("span", "htHinhTo", "✉️"));
     const giua = tao("div", "htDauGiua");
     giua.appendChild(tao("h2", "", "Viết thư của Cô Cú"));
@@ -566,8 +560,11 @@
     const loi = tao("p", "htLoiViet"); loi.setAttribute("role", "alert");
     const hang = tao("div", "ccHangNut ccHangGui");
     const gui = tao("button", "htNut chinh", "📨 Gửi thư…"); gui.type = "button";
-    const thoi = tao("button", "htNut phu", "Thôi"); thoi.type = "button";
-    thoi.addEventListener("click", () => { if (location.hash === "#cc-viet") history.back(); else dongThu(); });
+    const thoi = tao("button", "htNut phu", "🧹 Viết lại từ đầu"); thoi.type = "button";
+    thoi.addEventListener("click", () => {
+      if ((oTd.value.trim() || oNd.value.trim() || chon.size) && !window.confirm("Xoá hết những gì đang viết?")) return;
+      hienViet(true);
+    });
     hang.append(gui, thoi);
     than.append(loi, hang);
     cot.appendChild(than);
@@ -603,7 +600,7 @@
     }
     oTim.addEventListener("input", veDsChon);
     veDaChon(); veTheoDoiTuong();
-    layDsBe().then(() => { if (moId === "viet") veDsChon(); });
+    layDsBe().then(() => { if (cot.contains(dsChon)) veDsChon(); });
 
     gui.addEventListener("click", () => {
       loi.textContent = "";
@@ -625,14 +622,14 @@
           if (!r.thanhCong) { loi.textContent = "❌ " + chuLoiViet(r); return false; }
           bao(r.trungLap ? "Thư này đã gửi rồi, Cô Cú không gửi lại lần 2." : "📨 Đã gửi cho " + soVN(r.soNguoi) + " người.", true);
           if (typeof window.kcCapNhatHomThu === "function") kcCapNhatHomThu();
+          hienViet(true);                       // khung viết trắng cho lần sau
           S.loc = "tat_ca"; veMuc(); taiDs(false);
-          history.replaceState({ ccThu: 1 }, "", "#cc-" + r.thuId);
-          hienThu(Number(r.thuId));
+          datCheDo("cc");                       // sang 🦉 Hộp Cô Cú, mở thư vừa gửi
+          moThu(Number(r.thuId));
           return true;
         }));
       });
     });
-    (chon.size ? oTd : nhom.querySelector("input")).focus();
   }
 
   function chuLoiViet(kq) {
@@ -728,7 +725,6 @@
     $("ccBoLoc").addEventListener("click", () => { oLoai.value = ""; oBe.value = ""; oTim.value = ""; loc(); });
     $("ccMuc").querySelectorAll("[role=tab]").forEach(b => b.addEventListener("click", () => { S.loc = b.dataset.loc; veMuc(); taiDs(false); }));
     $("ccThem").addEventListener("click", () => taiDs(true));
-    $("ccVietNut").addEventListener("click", () => moViet(null));
     // KC_12D2: Quản trị › 💡 / 📮 dẫn sang với ?loai=…&be=…&loc=…
     try {
       const q = new URLSearchParams(location.search);
@@ -759,13 +755,14 @@
       else if (cheDo === "cc" && lucAn && Date.now() - lucAn > 30000) { taiDs(false); if (typeof moId === "number") hienThu(moId); }
     });
     const h = location.hash;
-    if (/^#cc-(\d+|viet)$/.test(h) && !(history.state && history.state.ccThu)) {
+    if (/^#cc-\d+$/.test(h) && !(history.state && history.state.ccThu)) {
       history.replaceState(null, "", location.pathname + location.search);
       history.pushState({ ccThu: 1 }, "", h);
     }
-    datCheDo(/^#thu-\d+$/.test(h) ? "rieng" : "cc");
+    datCheDo(/^#thu-\d+$/.test(h) ? "rieng" : h === "#viet" ? "viet" : "cc");
     taiDs(false);
   });
 })();
 // 28/11/2026 - BƯỚC: KC_12D1 (tạo mới: 🦉 Hộp Cô Cú cho admin trong trang Hòm thư)
 // 28/11/2026 - BƯỚC: KC_12D2 (✉️ / 📢 viết thư mới, gợi ý tên bé, bộ lọc từ đường dẫn, nút ⚙️ Cài đặt hòm thư)
+// 28/11/2026 - BƯỚC: KC_12D2 (tách ✉️ Viết thư thành màn riêng trên thanh chuyển, không lẫn với đọc thư)
