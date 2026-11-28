@@ -59,6 +59,8 @@
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
+       CẬP NHẬT: 28/11/2026 - KC_12D1: nút 📬 Hòm thư trên thanh đầu (qt_hom_thu.js, số = thư chờ Cô Cú) dẫn sang 🦉 Hộp Cô Cú;
+                 chi tiết kháng nghị theo tính năng nạp từ chung/kn_chi_tiet.js (dùng chung với Hộp Cô Cú).
        CẬP NHẬT: 27/11/2026 - KC_11D: Quản trị chung › 🎁 Cấp thưởng cho bé (qt_cap_thuong.js) + 📮 Bé kháng nghị (qt_khang_nghi.js), 2 module chung (SQL KC_11D).
        CẬP NHẬT: 24/11/2026 22:xx - KC_08F1: Quản trị chung › 🎯 Trình độ (qt_trinh_do.js + .css: các bé, đồ thị, đặt lại môn, thông số, đối soát).
        CẬP NHẬT: 24/11/2026 - KC_GB1: Quản trị chung › ⏱️ Tính giờ trả lời (qt_gio_bai.js: mọi thông số công thức giờ bài + xem thử + đối chiếu máy chủ).
@@ -505,6 +507,8 @@
     </div>
     <div id="trangThaiDangNhap">
       <span id="adminTenHienThi"></span>
+      <!-- KC_12D1: 📬 Hòm thư -> Hộp Cô Cú (qt_hom_thu.js điền số thư chờ) -->
+      <a id="kcNutHomThu" class="kcNutLienKet kcNutHomThu" href="homthu_NC.html" aria-label="Hòm thư"><span class="kcHtHinh" aria-hidden="true">📬</span><span class="kcHtChu">Hòm thư</span><b class="kcHtSo" hidden></b></a>
       <a class="kcNutLienKet" href="../index.html">⬅️ Về app</a>
     </div>
   </header>
@@ -1814,7 +1818,10 @@
   <script src="qt_gio_bai.js"></script>     <!-- KC_GB1: ⏱️ Tính giờ trả lời -->
   <script src="qt_trinh_do.js"></script>    <!-- KC_08F1: 🎯 Trình độ -->
   <script src="qt_cap_thuong.js"></script>  <!-- KC_11D: 🎁 Cấp thưởng cho bé (module chung) -->
+  <script src="chung/kn_chi_tiet.js"></script> <!-- KC_12D1: chi tiết kháng nghị theo tính năng (chung với Hộp Cô Cú) -->
   <script src="qt_khang_nghi.js"></script>  <!-- KC_11D: 📮 Bé kháng nghị (module chung) -->
+  <script src="qt_hom_thu.js"></script>     <!-- KC_12D1: nút 📬 Hòm thư trên thanh đầu -->
+
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
 </body>

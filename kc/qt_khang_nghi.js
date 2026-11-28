@@ -3,7 +3,7 @@
 // CHỨC NĂNG: Quản trị chung › 📮 BÉ KHÁNG NGHỊ: hộp thư CHUNG cho mọi tính năng mở kháng nghị (KC_11D, module chung; người dùng
 //   27/11/2026: "Kháng nghị của bé nên là module riêng vì nhiều chức năng app dùng đến"). Đặc tả: Thiet_Ke_Khang_Nghi.md.
 //   - Lọc theo trạng thái (Chờ xử lý / Chưa phản hồi / Đã xử lý / Quá hạn / Tất cả) và nguồn (🦉 Chọn vội, ...). Số chờ xử lý trên tên mục.
-//   - Mỗi kháng nghị: bé, việc, lời bé tự viết, hạn, bù đề xuất; phần CHI TIẾT do tính năng vẽ (CHI_TIET[nguon]; chưa có thì bảng khoá / giá trị).
+//   - Mỗi kháng nghị: bé, việc, lời bé tự viết, hạn, bù đề xuất; phần CHI TIẾT do tính năng vẽ (chung/kn_chi_tiet.js, KC_12D1; chưa có thì bảng khoá / giá trị).
 //   - Có bù đề xuất (💎 / 🪙): ✅ Chấp nhận = mở 🎁 Cấp thưởng cho bé (qt_cap_thuong.js) điền sẵn; không có: ✅ Chấp nhận + lời nhắn.
 //     ↩️ Giữ nguyên + lời nhắn (mẫu của tính năng, rồi mẫu chung). Kết quả về 📬 Hòm thư của bé.
 //   - ⚙️ Cài đặt chung: bật / tắt, hạn (ngày), số chữ tối thiểu / tối đa, lời nhắn mẫu.
@@ -49,30 +49,8 @@
   var TEN_TT = { be_gui: "💌 Bé đã gửi, chờ xử lý", cho_be: "⏳ Bé chưa phản hồi", chap_nhan: "✅ Đã chấp nhận", giu_nguyen: "↩️ Giữ nguyên", het_han: "⌛ Quá hạn" };
   var LOC = [["cho", "💌 Chờ xử lý", "cho"], ["chua", "⏳ Chưa phản hồi", "chua"], ["da", "✅ Đã xử lý", "da"], ["het", "⌛ Quá hạn", "het"], ["tat_ca", "Tất cả", "tatCa"]];
 
-  // ---------------- Chi tiết theo nguồn (tính năng mới thêm cách vẽ ở đây; chưa có thì bảng khoá / giá trị) ----------------
-  var CHI_TIET = {
-    // 🦉 Chọn vội (chống bấm bừa): kết luận + bảng từng câu
-    bb: function (ct) {
-      var g = tao("div"), kl = ct.ketLuan || {};
-      g.appendChild(tao("p", "qknPhu", "Câu có dấu hiệu: " + (kl.soDauHieu != null ? kl.soDauHieu : "?") + " / " + (kl.soCauTinh != null ? kl.soCauTinh : "?")
-        + " (bấm dồn D1 " + (kl.d1 || 0) + " · chạm tức thì D2 " + (kl.d2 || 0) + " · nhanh như đoán D3 " + (kl.d3 || 0) + ")"
-        + (kl.oNhieuNhat != null && kl.tyLeO ? " · chọn ô " + (kl.oNhieuNhat + 1) + " ở " + Math.round(kl.tyLeO * 100) + " % câu" : "")));
-      var cuon = tao("div", "adminCuonNgang"), b = tao("table", "qknBang");
-      b.innerHTML = "<thead><tr><th>#</th><th>Câu</th><th>Giây</th><th>Chạm thừa</th><th>Dồn</th><th>Sớm</th><th>Dấu hiệu</th><th>Ô chọn</th><th>Kết quả</th></tr></thead>";
-      var tb = tao("tbody");
-      (ct.cau || []).forEach(function (c, i) {
-        var hv = c.hanhVi || {}, dh = [c.d1 ? "D1" : "", c.d2 ? "D2" : "", c.d3 ? "D3" : ""].filter(Boolean).join(" ");
-        var tr = tao("tr", c.dung ? "" : "sai");
-        [String(i + 1) + (c.hoiLai ? " 🔁" : ""), c.noiDung || "", c.giay != null ? String(Math.round(c.giay * 10) / 10).replace(".", ",") : "",
-          hv.thua != null ? hv.thua : "", hv.thuaDon != null ? hv.thuaDon : "", hv.som != null ? hv.som : "",
-          dh + (hv.an ? " (ẩn trang)" : "") + (c.tinh === false ? " · không tính" : ""), c.o != null ? "ô " + (c.o + 1) + " / " + (c.soDapAn || "?") : "", c.dung ? "✓ đúng" : "✗ sai"]
-          .forEach(function (x, j) { tr.appendChild(tao("td", j === 6 && dh ? "dh" : "", String(x))); });
-        tb.appendChild(tr);
-      });
-      b.appendChild(tb); cuon.appendChild(b); g.appendChild(cuon);
-      return g;
-    }
-  };
+  // ---------------- Chi tiết theo nguồn: module chung chung/kn_chi_tiet.js (KC_12D1; tính năng mới thêm cách vẽ ở đó).
+  //                  Thiếu file chung thì bảng khoá / giá trị.
   function chiTietMacDinh(ct) {
     var cuon = tao("div", "adminCuonNgang"), b = tao("table", "qknBang"), tb = tao("tbody");
     Object.keys(ct || {}).forEach(function (k) {
@@ -141,7 +119,7 @@
 
     var hang = tao("div", "qknNutHang");
     var xem = tao("button", "adminNut adminNutPhu", "🔎 Xem chi tiết"); xem.type = "button";
-    var ct = (CHI_TIET[k.nguon] || chiTietMacDinh)(k.chiTiet || {}); ct.hidden = true;
+    var ct = window.KC_KN_CHI_TIET ? KC_KN_CHI_TIET.ve(k.nguon, k.chiTiet || {}) : chiTietMacDinh(k.chiTiet || {}); ct.hidden = true;
     xem.addEventListener("click", function () { ct.hidden = !ct.hidden; });
     hang.appendChild(xem);
     var mo = ["cho_be", "be_gui", "het_han"].indexOf(k.trangThai) >= 0;
@@ -222,3 +200,4 @@
   }
 })();
 // 27/11/2026 - BƯỚC: KC_11D (Quản trị chung › 📮 Bé kháng nghị: hộp thư chung mọi tính năng)
+// 28/11/2026 - BƯỚC: KC_12D1 (phần chi tiết theo nguồn chuyển sang chung/kn_chi_tiet.js, dùng chung với Hộp Cô Cú)

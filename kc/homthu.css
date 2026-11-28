@@ -3,16 +3,58 @@
    ĐIỆN THOẠI (< 900 px): danh sách; mở thư thì thư thay chỗ danh sách (nút ‹ quay lại). Nút ≥ 44 px.
    MÁY TÍNH (≥ 900 px): hai cột: danh sách 360 px + thư bên phải (cột thư dính khi cuộn).
    BƯỚC: KC_12C1 · NGÀY: 28/11/2026
+   CẬP NHẬT: KC_12D1 · 28/11/2026: phần .cc* cho 🦉 Hộp Cô Cú (admin); bỏ khối tạm .htCoCu.
    ================================================================ */
 .htTrang { max-width: 1200px; margin: 0 auto; padding: 14px 12px 40px; box-sizing: border-box; }
 .htCuTo { font-size: 3rem; line-height: 1; }
 
-/* admin: lối tạm sang Quản trị */
-.htCoCu { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; background: #fff6d6; border: 2px solid #ffd27a;
-  border-radius: var(--bo-tron); padding: 12px 14px; margin-bottom: 14px; }
-.htCoCu[hidden] { display: none; }
-.htCoCu .htCuTo { font-size: 2.2rem; }
-.htCoCu p { flex: 1 1 260px; margin: 0; line-height: 1.45; }
+/* ===== KC_12D1: 🦉 HỘP CÔ CÚ (admin, homthu_co_cu.js) ===== */
+.ccChuyen { display: flex; gap: 8px; max-width: 1200px; margin: 12px auto 0; padding: 0 12px; box-sizing: border-box; }
+.ccChuyen[hidden], .ccTrang[hidden], .htTrang[hidden] { display: none; }
+.ccChuyen button { flex: 1 1 0; min-height: 46px; border-radius: 14px; border: 2px solid var(--mau-vien); background: #fff;
+  color: var(--mau-chinh-dam); font: inherit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.ccChuyen button[aria-pressed="true"] { background: #fff3cf; border-color: #ffb800; color: #6b4200; }
+.ccSoChuyen { background: #e53935; color: #fff; border-radius: 999px; padding: 0 7px; font-size: 0.8rem; line-height: 1.5; }
+.ccSoChuyen[hidden] { display: none; }
+.ccLocHang { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.ccLocHang select, .ccLocHang input { min-height: 44px; border: 2px solid var(--mau-vien); border-radius: 12px; padding: 6px 10px;
+  font: inherit; background: #fff; box-sizing: border-box; flex: 1 1 140px; min-width: 0; }
+.ccLocHang .htNut { min-height: 44px; flex: 0 0 auto; }
+.ccLocHang .htNut[hidden] { display: none; }
+.htMuc.ccMuc { grid-template-columns: repeat(4, 1fr); }
+.htMuc.ccMuc button { font-size: 0.85rem; }
+.ccSo { display: block; font-size: 0.78rem; opacity: 0.75; }
+.ccDaXoa { color: #b3261e; font-weight: 600; }
+.ccTin { background: #f7f4ff; border-radius: 12px; padding: 8px 12px; margin-bottom: 12px; font-size: 0.88rem; color: #4b3f78; }
+.ccTin p { margin: 2px 0; line-height: 1.45; }
+.ccNguoi { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.ccChip { background: #fff; border: 1px solid var(--mau-vien); border-radius: 999px; padding: 2px 10px; font-size: 0.8rem; }
+.ccChip.chua { border-color: #ffb800; background: #fffbea; }
+.htLoi.ccCoCu .htBong .htTen { color: #fff3cf; }
+.ccViec { margin: 14px -12px -14px; }
+.ccHangNut { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ccHangNut .htNut { min-height: 44px; }
+.ccNhan { display: block; font-weight: 700; font-size: 0.9rem; color: var(--mau-chinh-dam); margin: 4px 0 2px; }
+.htO.ccOSo { min-height: 44px; resize: none; }
+.ccXoa { border-top: 1px dashed var(--mau-vien); padding-top: 10px; }
+.ccKnThe { display: grid; gap: 8px; }
+.ccKnDau { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 0; }
+.ccLoiBe { margin: 0; padding: 8px 10px; background: #fffaf0; border-left: 4px solid #ffb800; border-radius: 8px; font-style: italic; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ccKnXuLy { display: grid; gap: 4px; background: #fff; border: 2px solid var(--mau-vien); border-radius: 12px; padding: 10px; }
+.ccKnXuLy[hidden], .ccKnChiTiet[hidden] { display: none; }
+.ccKnChiTiet { background: #fff; border-radius: 10px; padding: 6px; }
+@media (max-width: 480px) { .ccViec { margin: 12px -8px -12px; } }
+@media (max-width: 599px) {
+  .htMuc.ccMuc button { font-size: 0.78rem; padding: 2px; }
+  .ccLocHang .htNut { flex: 1 1 auto; }
+}
+@media (max-width: 899px) {
+  /* thư Hộp Cô Cú mở toàn màn hình: ẩn bộ lọc + thanh chuyển */
+  .ccTrang:has(.htKhung.coThu) .ccLocHang { display: none; }
+}
+@media (min-width: 900px) {
+  .ccViec { margin: 18px -20px -18px; }
+}
 
 /* phụ huynh: chọn con */
 .htChonCon { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; }

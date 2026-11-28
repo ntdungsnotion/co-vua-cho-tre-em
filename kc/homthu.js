@@ -1,6 +1,6 @@
 /* ================================================================
    FILE: homthu.js
-   CHỨC NĂNG: TRANG 📬 HÒM THƯ (homthu_NC.html) cho bé + phụ huynh (+ hộp riêng của admin).
+   CHỨC NĂNG: TRANG 📬 HÒM THƯ (homthu_NC.html) cho bé + phụ huynh (+ hộp riêng của admin; 🦉 Hộp Cô Cú: homthu_co_cu.js).
               Đặc tả: Thiet_Ke_Hom_Thu.md bản 1.1 mục 9.2 / 9.3 (repo riêng). Máy chủ: SQL kc12b.
    RPC (trang tự thêm p_ten + p_ma_phien; máy chủ kiểm quyền ở MỌI thao tác, không có quyền = "khong_co"):
      kc_thu_ds(p_loc, p_be, p_truoc_luc, p_truoc_id)  danh sách tóm tắt 20 thư / trang; trả con (phụ huynh) + tiep
@@ -409,21 +409,7 @@
     taiDs(false);
   }
 
-  // Admin: hộp riêng + lối tạm sang Quản trị (Hộp Cô Cú ở KC_12D). Số do kc_auth.js hỏi (sự kiện kcHomThuDem).
-  document.addEventListener("kcHomThuDem", e => {
-    // dùng kcTaiKhoanHienTai: số có thể về TRƯỚC sự kiện kcSanSang
-    const kq = e.detail || {}, vung = $("htCoCu"), ai = window.kcTaiKhoanHienTai || tk;
-    if (!vung || !ai || ai.vaiTro !== "admin" || !kq.coCu) return;
-    vung.innerHTML = "";
-    vung.appendChild(tao("span", "htCuTo", "🦉"));
-    const p = tao("p", "");
-    p.appendChild(tao("b", "", "Hộp Cô Cú: " + (+kq.coCu.cho || 0) + " thư đang chờ xử lý. "));
-    p.appendChild(document.createTextNode("Trang trả lời thư cho các bé sắp có ở đây; tạm thời xử lý ở Quản trị › 💡 Ý tưởng và 📮 Bé kháng nghị. Dưới đây là hòm thư riêng của tài khoản này."));
-    vung.appendChild(p);
-    const a = tao("a", "htNut chinh", "🛠️ Mở Quản trị"); a.href = "quantri_NC.html";
-    vung.appendChild(a);
-    vung.hidden = false;
-  });
+  // Admin: 🦉 Hộp Cô Cú nằm ở homthu_co_cu.js (KC_12D1); file này chỉ lo hòm riêng của tài khoản (chế độ "📬 Thư riêng").
 
   document.addEventListener("kcSanSang", e => {
     if (!e.detail || !e.detail.daDangNhap) return;
@@ -450,3 +436,4 @@
 })();
 // 28/11/2026 - BƯỚC: KC_12C1 (tạo mới: trang Hòm thư bé / phụ huynh)
 // 28/11/2026 - BƯỚC: KC_12C2 (mở thẳng một thư thì ‹ / Back về danh sách thư)
+// 28/11/2026 - BƯỚC: KC_12D1 (bỏ khối tạm "Hộp Cô Cú: N thư đang chờ"; Hộp Cô Cú thật ở homthu_co_cu.js)
