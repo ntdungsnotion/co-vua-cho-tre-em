@@ -6,7 +6,7 @@
               biểu tượng trên nút, nút lệnh một hàng vuốt ngang.
               Dùng cho trang game kc/dt_thung_lung.html và trang thử kc/dt_thu_3d.html.
    BƯỚC: TC_D02B2b (tách từ <style> của dt_thu_3d.html, TC_D01C..TC_D02B2a)
-   NGÀY: 27/10/2026. Sửa 25/11/2026 TC_D06D4 (ô chung ⚙️ / ⚠️, điện thoại gọn: cuối file). Sửa 14/11/2026 KC_06E2 (🔍 Kiểm tra / 📨 Gửi, lời Cô Cú, 🛡️ chọn tuỳ ý)
+   NGÀY: 27/10/2026. Sửa 28/11/2026 TC_D06D10 (máy tính bảng không dùng luật điện thoại). Sửa 25/11/2026 TC_D06D4 (ô chung ⚙️ / ⚠️, điện thoại gọn: cuối file). Sửa 14/11/2026 KC_06E2 (🔍 Kiểm tra / 📨 Gửi, lời Cô Cú, 🛡️ chọn tuỳ ý)
    ================================================================ */
 :root { --dem: #14204a; --dem2: #1f2f6b; --vang: #ffc24b; --cam: #ff8a3d; --sang: #fff6dc; --nhat: #b9c3ec; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); color: var(--sang);
@@ -101,7 +101,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   .d3Tren { left: 12px; right: 12px; top: 12px; }
   .d3Ten { flex: 0 1 auto; }
 }
-@media (max-width: 600px), (max-height: 500px) {
+@media (max-width: 499px), (max-height: 500px) and (max-device-width: 499px), (max-height: 500px) and (max-device-height: 499px), (max-width: 600px) and (pointer: fine), (max-height: 500px) and (pointer: fine) {
   .d3Ten { display: none; } /* điện thoại: nhường chỗ cho 4 ô tài nguyên */
   .d3Kho { flex: 1 1 auto; justify-content: space-around; gap: 2px; padding: 4px; min-width: 0; }
   .d3Tn { min-width: 0; font-size: .95rem; padding: 4px 2px; }
@@ -158,7 +158,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3BtDong1 i.d3Thap { color: #ff8f8f; }
 .d3BtDan { text-align: right; }
 .d3BtVs { font-family: "Baloo 2", sans-serif; font-weight: 800; color: var(--vang); font-size: .85rem; text-align: center; white-space: nowrap; }
-@media (max-width: 600px), (max-height: 500px) { .d3BangTran { top: calc(62px + env(safe-area-inset-top)); right: 8px; width: calc(100vw - 16px); max-height: calc(100vh - 250px); }
+@media (max-width: 499px), (max-height: 500px) and (max-device-width: 499px), (max-height: 500px) and (max-device-height: 499px), (max-width: 600px) and (pointer: fine), (max-height: 500px) and (pointer: fine) { .d3BangTran { top: calc(62px + env(safe-area-inset-top)); right: 8px; width: calc(100vw - 16px); max-height: calc(100vh - 250px); }
   .d3BtDong1 b { font-size: .92rem; } }
 @media (min-width: 900px) { .d3BangTran { width: 480px; } .d3BtDong1 { min-height: 64px; } .d3BtDong1 b { font-size: 1.1rem; } }
 /* 05/11/2026 - BƯỚC: TC_D06C2d (👥 dân số ở thanh trên, danh sách trận, bong bóng ⚔️ Đánh trên đầu quái) */
@@ -227,7 +227,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 14px rgba(0, 0, 0, .4); animation: d3BiDanhNhay .8s ease-in-out infinite alternate; }
 @keyframes d3BiDanhNhay { to { box-shadow: 0 0 0 5px rgba(255, 90, 90, .45), 0 4px 14px rgba(0, 0, 0, .4); } }
 @media (min-width: 900px) { .d3BiDanh { right: 12px; top: 80px; font-size: 1.1rem; min-height: 50px; } }
-@media (max-width: 600px), (max-height: 500px) { .d3Chung { max-width: 176px; } .d3NdRanh { font-size: 1.1rem; } }
+@media (max-width: 499px), (max-height: 500px) and (max-device-width: 499px), (max-height: 500px) and (max-device-height: 499px), (max-width: 600px) and (pointer: fine), (max-height: 500px) and (pointer: fine) { .d3Chung { max-width: 176px; } .d3NdRanh { font-size: 1.1rem; } }
 @media (prefers-reduced-motion: reduce) { .d3BiDanh { animation: none; } }
 /* TC_D06C6: nút ✕ bỏ chọn (góc trên phải ô đang xem) + nút 👑 tìm Thủ lĩnh */
 .d3BangChon { position: relative; }
@@ -238,7 +238,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3BoChon:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 .d3BoChon[hidden] { display: none; }
 .d3TimTl { font-size: 1.2rem; }
-@media (max-width: 600px), (max-height: 500px) { .d3TimTl { font-size: 1.1rem; } }
+@media (max-width: 499px), (max-height: 500px) and (max-device-width: 499px), (max-height: 500px) and (max-device-height: 499px), (max-width: 600px) and (pointer: fine), (max-height: 500px) and (pointer: fine) { .d3TimTl { font-size: 1.1rem; } }
 /* 07/11/2026 - BƯỚC: TC_D06C6 */
 /* TC_D06C7e: bảng chọn câu khi mua 🛡️ (mỗi câu là một nút to, chạm là chọn) */
 .d3ChonCauDs { list-style: none; padding-left: 0 !important; }
@@ -481,7 +481,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3CauCon .d3CauBe_dat::after { content: none; }
 .d3CbSoi { border-color: #7ee08a !important; box-shadow: 0 0 0 4px rgba(126, 224, 138, .35) !important; animation: d3CbSoi 1.2s ease-in-out 2; }
 @keyframes d3CbSoi { 50% { box-shadow: 0 0 0 8px rgba(126, 224, 138, .15); } }
-@media (max-width: 600px), (max-height: 500px) { .d3BongDen { font-size: 1.15rem; padding: 4px 6px; min-width: 40px; } }
+@media (max-width: 499px), (max-height: 500px) and (max-device-width: 499px), (max-height: 500px) and (max-device-height: 499px), (max-width: 600px) and (pointer: fine), (max-height: 500px) and (pointer: fine) { .d3BongDen { font-size: 1.15rem; padding: 4px 6px; min-width: 40px; } }
 /* 17/11/2026 - BƯỚC: KC_06F2 */
 /* TC_D06D3 (25/11/2026): nút ⚙️ Cài đặt ở thanh trên + bảng cài đặt của bé (dt3d_cai_dat.js):
    🎵 Nhạc nền, 🔊 Âm thanh trận đấu (bật / tắt + to nhỏ), ✨ Chất lượng game (Đẹp / Nhẹ). Máy tính: hộp giữa màn hình;
@@ -513,12 +513,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3CdChon button small { font-family: "Be Vietnam Pro", system-ui, sans-serif; font-weight: 500; font-size: .78rem; color: var(--nhat); }
 .d3CdChon button[aria-checked="true"] { border-color: var(--vang); background: rgba(255, 194, 75, .22); box-shadow: 0 0 0 3px rgba(255, 194, 75, .25); }
 .d3CdBao { margin: 10px 0 0; color: var(--vang); font-weight: 700; text-align: center; }
-@media (max-width: 600px), (max-height: 500px) {
+@media (max-width: 499px), (max-height: 500px) and (max-device-width: 499px), (max-height: 500px) and (max-device-height: 499px), (max-width: 600px) and (pointer: fine), (max-height: 500px) and (pointer: fine) {
   .d3NutCaiDat { font-size: 1.15rem; padding: 4px 6px; min-width: 40px; }
   .d3CaiDat { padding: 8px; }
   .d3CaiDatHop { padding: 12px 12px 14px; }
 }
 /* 25/11/2026 - BƯỚC: TC_D06D3 */
+/* TC_D06D10 (28/11/2026): "điện thoại" = CẠNH NGẮN CỦA MÀN HÌNH THIẾT BỊ < 500, không theo phần trang còn lại. Máy tính bảng Android giá rẻ
+   cầm ngang chỉ còn cao 433 (màn ~601) từng bị bắt nhầm. Máy dùng chuột (pointer: fine) giữ ngưỡng cửa sổ cũ (600 / 500).
+   Mọi luật điện thoại MỚI phải chép đúng dòng @media dài này. iPhone: device-width không đổi khi xoay; Android: có đổi (nên xét cả 2). */
 /* TC_D06D4 (25/11/2026, người dùng: "ở giao diện điện thoại, thung lũng, các nút và chữ quá to, đè lên nhau và che mất không gian
    điều khiển. nên có 1 vị trí cho nút cài đặt và thông báo bị tấn công"):
    - Ô CHUNG #d3OChung ở thanh trên: bình thường ⚙️; nông dân bị tấn công thì nút đỏ ⚠️ (.d3BiDanhO, dt3d_nong_dan.js) hiện THAY ⚙️.
@@ -535,7 +538,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3BiDanhSo { position: absolute; top: -7px; right: -7px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; display: grid; place-items: center;
   background: #fff3d6; color: #a0141c; border: 2px solid #a0141c; font-size: .78rem; font-weight: 800; line-height: 1; box-sizing: border-box; }
 @media (min-width: 900px) { .d3BiDanhO { top: auto; right: auto; min-height: 49px; } }
-@media (max-width: 600px), (max-height: 500px) {
+@media (max-width: 499px), (max-height: 500px) and (max-device-width: 499px), (max-height: 500px) and (max-device-height: 499px), (max-width: 600px) and (pointer: fine), (max-height: 500px) and (pointer: fine) {
   /* thanh trên */
   .d3Tren { top: calc(6px + env(safe-area-inset-top)); left: 6px; right: 6px; gap: 5px; }
   .d3Tren .d3Nut { min-height: 36px; min-width: 38px; height: 36px; padding: 0 6px; font-size: 1rem; border-radius: 12px; box-sizing: border-box; }
@@ -580,7 +583,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 /* TC_D06D4c (26/11/2026, người dùng: "Điện thoại để theo chiều đứng thì đạt, chiều ngang thì không đạt"): điện thoại NẰM NGANG
    (rộng > 600 nhưng cao <= 500) dùng chung luật gọn của điện thoại (các @media ở trên có thêm "(max-height: 500px)"),
    riêng thanh dưới xếp MỘT HÀNG (đang xem | lệnh | chung) cho đỡ tốn chiều cao; hiện lại tên vương quốc nếu đủ chỗ. */
-@media (max-height: 500px) and (min-width: 601px) {
+@media (max-height: 500px) and (min-width: 601px) and (max-device-width: 499px), (max-height: 500px) and (min-width: 601px) and (max-device-height: 499px), (max-height: 500px) and (min-width: 601px) and (pointer: fine) {
   .d3Thanh { grid-template-columns: minmax(180px, 260px) minmax(0, 1fr) auto; grid-template-areas: "chon lenh chung"; align-items: center; }
   .d3Lenh { overflow-x: auto; }
   .d3Lenh.d3Trong { display: flex; }
@@ -593,13 +596,13 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
 .d3Thanh .d3Nut.d3NutMo { opacity: .5; filter: grayscale(.6); }
 .d3Thanh .d3NutMo[aria-pressed="true"] { opacity: .85; }
 [id^="d3Xay_"]:not(#d3Xay_tiep):not(#d3Xay_xoay) { font-size: 1.25rem; }
-@media (max-width: 600px), (max-height: 500px) { [id^="d3Xay_"]:not(#d3Xay_tiep):not(#d3Xay_xoay) { font-size: 1.05rem; padding: 3px 4px; } }
+@media (max-width: 499px), (max-height: 500px) and (max-device-width: 499px), (max-height: 500px) and (max-device-height: 499px), (max-width: 600px) and (pointer: fine), (max-height: 500px) and (pointer: fine) { [id^="d3Xay_"]:not(#d3Xay_tiep):not(#d3Xay_xoay) { font-size: 1.05rem; padding: 3px 4px; } }
 /* 26/11/2026 - BƯỚC: TC_D06D6 */
 /* TC_D06D6c (26/11/2026, người dùng: "Trên điện thoại, bổ sung chức năng thu gọn thanh trên và thanh dưới thành nút"; dt3d_thu_gon.js):
    ▴ cuối ô tài nguyên thu thanh trên còn 💰 (⚙️ / ⚠️, ⚔️, 💡 vẫn hiện); tay nắm ▾ mép trên thu thanh dưới còn 🎛️ góc dưới phải.
    Chỉ khổ điện thoại; máy tính không có nút. */
 #d3MoTren, #d3MoDuoi, .d3ThuGon { display: none; }
-@media (max-width: 600px), (max-height: 500px) {
+@media (max-width: 499px), (max-height: 500px) and (max-device-width: 499px), (max-height: 500px) and (max-device-height: 499px), (max-width: 600px) and (pointer: fine), (max-height: 500px) and (pointer: fine) {
   .d3Kho .d3ThuGon { display: inline-grid; place-items: center; flex: 0 0 auto; width: 18px; height: 28px; margin-left: 1px; padding: 0;
     border: 0; border-left: 1px solid rgba(216, 188, 129, .45); background: none; color: #ffe0a0; font-size: .9rem; cursor: pointer; }
   .d3Thanh { position: relative; }
@@ -615,3 +618,18 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--dem); 
   .d3DuoiGon #d3GoiY { margin-right: 62px; margin-bottom: 8px; }
 }
 /* 26/11/2026 - BƯỚC: TC_D06D6c */
+/* TC_D06D10: MÁY TÍNH BẢNG HẸP cầm đứng (máy thật 601 x 793): giữ cỡ chữ / nút lớn, nhưng không đủ ngang cho một hàng:
+   bỏ tên vương quốc, ô tài nguyên chia đều; thanh dưới 2 hàng (đang xem | nút chung, rồi hàng lệnh). */
+@media (min-width: 500px) and (max-width: 760px) and (min-height: 501px) and (pointer: coarse),
+       (min-width: 601px) and (max-width: 760px) and (min-height: 501px) {
+  .d3Ten { display: none; }
+  .d3Tren { gap: 6px; }
+  .d3Kho { flex: 1 1 auto; justify-content: space-between; gap: 0; min-width: 0; padding: 4px 6px; }
+  .d3Tn { min-width: 0; font-size: 1.05rem; padding: 4px 1px; }
+  .d3Thanh { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "chon chung" "lenh lenh"; }
+  .d3BangChon { grid-area: chon; }
+  .d3Chung { grid-area: chung; max-width: 300px; }
+  .d3Lenh { grid-area: lenh; }
+  .d3Lenh.d3Trong { display: none; }
+}
+/* 28/11/2026 - BƯỚC: TC_D06D10 */
