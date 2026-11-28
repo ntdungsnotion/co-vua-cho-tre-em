@@ -38,6 +38,7 @@
     nhac: { sau_lien: 2, toi_da: 2, giay_hien: 2.5,
             chu: ["Cô Cú nhắc con nhé! Mình đọc kỹ câu hỏi rồi hãy chọn nha 😊", "Con bình tĩnh một chút nhé! Trả lời thật chắc sẽ tốt hơn đấy!"] },
     phu_huynh: { bao_lan: 3, bao_ngay: 7 },
+    thong_ke: { goi_y_so_toi_thieu: 5, goi_y_ty_le: 0.50 }, // KC_11E: Quản trị › 🧠 gợi ý chỉnh số khi kháng nghị được chấp nhận nhiều
     noi: {
       theo_mon: { che_do: null, nhac: true, cat_thuong: true },
       tong_hop: { che_do: null, nhac: true, cat_thuong: true },
@@ -185,3 +186,4 @@
 // 27/11/2026 - BƯỚC: KC_11B (lõi chống bấm bừa: bộ ghi chạm, D1 / D2 / D3, kết luận lượt; chưa gửi máy chủ)
 // 27/11/2026 - BƯỚC: KC_11C (mặc định che_do chi_ghi như máy chủ kc_bb_mac_dinh, KC_11D đổi day_du)
 // 27/11/2026 - BƯỚC: KC_11D (mặc định che_do day_du: bật cắt thưởng cùng lúc với máy chủ)
+// 28/11/2026 - BƯỚC: KC_11E (thêm nhóm thong_ke = kc_bb_mac_dinh(); hộp câu hỏi nhận cấu hình admin sửa qua luot.bb của máy chủ)
