@@ -4,7 +4,8 @@
    MÁY TÍNH (≥ 900 px): hai cột: danh sách 360 px + thư bên phải (cột thư dính khi cuộn).
    BƯỚC: KC_12C1 · NGÀY: 28/11/2026
    CẬP NHẬT: KC_12D1 · 28/11/2026: phần .cc* cho 🦉 Hộp Cô Cú (admin); bỏ khối tạm .htCoCu.
-   CẬP NHẬT: KC_12D2 · 28/11/2026: khung ✉️ / 📢 viết thư (.ccDauHang, .ccViet, .ccDoiTuong, .ccDsChon...).
+   CẬP NHẬT: KC_12D2 · 28/11/2026: khung ✉️ / 📢 viết thư (.ccViet, .ccDoiTuong, .ccDsChon...) là MÀN RIÊNG .ccVietTrang
+             (thanh chuyển 3 màn + ⚙️ .ccCaiDat); Hộp Cô Cú 5 mục (thêm 📤 Đã gửi).
    ================================================================ */
 .htTrang { max-width: 1200px; margin: 0 auto; padding: 14px 12px 40px; box-sizing: border-box; }
 .htCuTo { font-size: 3rem; line-height: 1; }
@@ -44,9 +45,14 @@
 .ccKnXuLy { display: grid; gap: 4px; background: #fff; border: 2px solid var(--mau-vien); border-radius: 12px; padding: 10px; }
 .ccKnXuLy[hidden], .ccKnChiTiet[hidden] { display: none; }
 .ccKnChiTiet { background: #fff; border-radius: 10px; padding: 6px; }
-/* ===== KC_12D2: ✉️ / 📢 viết thư mới ===== */
-.ccDauHang { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-.ccDauHang .htNut { min-height: 44px; flex: 0 0 auto; text-decoration: none; }
+/* ===== KC_12D2: ✉️ Viết thư = MÀN RIÊNG (thanh chuyển 🦉 · ✉️ · 📬 · ⚙️), mục 📤 Đã gửi ===== */
+.ccCaiDat { flex: 0 0 46px; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; border-radius: 14px;
+  border: 2px solid var(--mau-vien); background: #fff; text-decoration: none; font-size: 1.2rem; }
+.ccCaiDat:hover { border-color: var(--mau-chinh); }
+.ccVietTrang[hidden] { display: none; }
+.ccVietKhung { max-width: 820px; margin: 0 auto; background: #fff; border: 2px solid var(--mau-vien); border-radius: 20px; overflow: hidden; box-shadow: var(--do-bong); }
+.htMuc.ccMuc { grid-template-columns: repeat(5, 1fr); }
+@media (min-width: 900px) { .htMuc.ccMuc { grid-template-columns: repeat(3, 1fr); } }   /* cột danh sách 360 px: 3 + 2 cho chữ khỏi gãy */
 .ccViet { display: grid; gap: 6px; }
 .ccViet [hidden] { display: none !important; }
 .ccDoiTuong { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -61,8 +67,9 @@
 .ccDaChon { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; align-items: center; }
 .ccChipBo { min-height: 36px; padding: 4px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; border-color: #ffb800; background: #fffbea; }
 .ccDsChon { max-height: 220px; overflow-y: auto; border: 2px solid var(--mau-vien); border-radius: 12px; background: #fff; padding: 4px;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px; }
-.ccBeMuc { display: flex; gap: 8px; align-items: center; min-height: 44px; padding: 0 8px; border-radius: 8px; cursor: pointer; overflow-wrap: anywhere; }
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 2px; }
+.ccBeMuc { display: flex; gap: 8px; align-items: center; min-height: 44px; padding: 0 8px; border-radius: 8px; cursor: pointer; min-width: 0; }
+.ccBeMuc span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ccBeMuc:hover { background: #f7f4ff; }
 .ccBeMuc input { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--mau-chinh); }
 .ccViet .htDem { justify-self: end; }
@@ -70,12 +77,19 @@
 @media (max-width: 480px) { .ccViec { margin: 12px -8px -12px; } }
 @media (max-width: 599px) {
   .htMuc.ccMuc button { font-size: 0.78rem; padding: 2px; }
-  .ccLocHang .htNut, .ccDauHang .htNut { flex: 1 1 auto; }
+  .ccLocHang .htNut { flex: 1 1 auto; }
   .ccDoiTuong { grid-template-columns: 1fr; }
+  .ccChuyen { gap: 6px; }
+  /* điện thoại: biểu tượng trên, chữ dưới (chữ không gãy 3 dòng) */
+  .ccChuyen button { flex-direction: column; gap: 0; min-height: 54px; padding: 4px 2px; font-size: 0.8rem; line-height: 1.2; position: relative; }
+  .ccChuyen .ccChuChe { white-space: nowrap; }
+  .ccChuyen .ccSoChuyen { position: absolute; top: 3px; right: 6px; }
+  .ccCaiDat { min-height: 54px; }
+  .htMuc.ccMuc { grid-template-columns: repeat(3, 1fr); }   /* 5 mục: 3 + 2 cho chữ khỏi bị bóp */
 }
 @media (max-width: 899px) {
-  /* thư Hộp Cô Cú mở toàn màn hình: ẩn bộ lọc + thanh chuyển */
-  .ccTrang:has(.htKhung.coThu) .ccLocHang, .ccTrang:has(.htKhung.coThu) .ccDauHang { display: none; }
+  /* thư Hộp Cô Cú mở toàn màn hình: ẩn bộ lọc */
+  .ccTrang:has(.htKhung.coThu) .ccLocHang { display: none; }
 }
 @media (min-width: 900px) {
   .ccViec { margin: 18px -20px -18px; }
