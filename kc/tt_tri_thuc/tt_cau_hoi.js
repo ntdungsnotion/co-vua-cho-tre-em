@@ -98,7 +98,10 @@
       // KC_11B: chống bấm bừa (chung/bam_bua.js, Hướng Dẫn 1.8B) — CHỈ GHI TRÊN MÁY: đếm chạm vào vùng đáp án (kể cả lúc nút tắt),
       // không gửi máy chủ, không hiện gì, không đổi cách chấm. Kết luận trả kèm khi đóng màn (bamBua). Thiếu module: bỏ qua.
       const BB = goc.KC_BAM_BUA || null;
-      const bbGhi = BB ? BB.taoBoGhi() : null, bbDs = [];
+      // KC_11E: số admin sửa ở Quản trị › 🧠 đến kèm lượt (luot.bb của kc_tt_luot_json); máy chủ cũ chưa gửi thì dùng mặc định
+      let bbCh = null;
+      try { bbCh = BB ? BB.cauHinh(luot && luot.bb && typeof luot.bb === "object" ? luot.bb : null) : null; } catch (e) { bbCh = BB ? BB.cauHinh() : null; }
+      const bbGhi = BB ? BB.taoBoGhi({ cauHinh: bbCh }) : null, bbDs = [];
       let bbHv = null, bbPhim = false, bbGiay = 0, bbNguong = 0;
       const bbGo = bbGhi ? BB.ganVung(goc0, bbGhi, e => {
         if (goc0.classList.contains("ketQua")) return false;
@@ -114,8 +117,10 @@
       let bbNhacTu = 0, bbDaNhac = 0, bbBongBong = null;
       function bbXetNhac(kq) {
         if (!BB || !bbDs.length || dong) return false;
-        const ch = BB.cauHinh(), noi = ch.noi && ch.noi[luot.cheDo];
+        const ch = bbCh, noi = ch.noi && ch.noi[luot.cheDo];
         if (noi && noi.nhac === false) return false;
+        // KC_11E: chế độ của nơi (máy chủ tính sẵn trong luot.bb.che_do) là "tat" / "chi_ghi" thì không nhắc
+        if (luot.bb && (luot.bb.che_do === "tat" || luot.bb.che_do === "chi_ghi")) return false;
         const toiDa = Math.max(0, +ch.nhac.toi_da || 0);
         if (bbDaNhac >= toiDa || !BB.canNhac(bbDs.slice(bbNhacTu), ch)) return false;
         const ds = Array.isArray(ch.nhac.chu) ? ch.nhac.chu : [];
@@ -208,7 +213,7 @@
         if (bbGhi) {
           bbGhi.cauMoi(); bbHv = null; bbPhim = false; bbNguong = 0;
           // ngưỡng D3 = 30 % giờ bé giỏi của câu (giờ bài chung); Theo môn đọc câu ở pha riêng nên chỉ tính phần đáp án
-          try { if (goc.KC_GIO_BAI) bbNguong = BB.nguongD3(goc.KC_GIO_BAI.tinh([{ noiDung: sk ? "" : cau.noiDung, dapAn: cau.dapAn || [], muc: cau.muc || "vua", coHinh: !sk && !!(cau.hinh || cau.hinhChu) }], t.lop).p90.gioi); } catch (e) { bbNguong = 0; }
+          try { if (goc.KC_GIO_BAI) bbNguong = BB.nguongD3(goc.KC_GIO_BAI.tinh([{ noiDung: sk ? "" : cau.noiDung, dapAn: cau.dapAn || [], muc: cau.muc || "vua", coHinh: !sk && !!(cau.hinh || cau.hinhChu) }], t.lop).p90.gioi, bbCh); } catch (e) { bbNguong = 0; }
         }
         const s = $(".ttCau"); s.innerHTML = ""; s.classList.remove("daCham");
         if (cau && cau.monBieuTuong) { $(".ttMonBt").textContent = cau.monBieuTuong; $(".ttMonTen").textContent = cau.monTen || ""; }
@@ -657,7 +662,7 @@
         setTimeout(() => goc0.remove(), 250);
         // KC_11B: bamBua = kết luận trên máy (chỉ ghi, chưa ai dùng; máy chủ KC_11C mới là chuẩn) + từng câu
         let bamBua = null;
-        try { if (BB && bbDs.length) bamBua = Object.assign(BB.ketLuan(bbDs), { ds: bbDs }); } catch (e) { bamBua = null; }
+        try { if (BB && bbDs.length) bamBua = Object.assign(BB.ketLuan(bbDs, bbCh), { ds: bbDs }); } catch (e) { bamBua = null; }
         xong({ ketQua, dong: lyDo, bamBua });
       }
 
@@ -747,3 +752,4 @@
 // 27/11/2026 - BƯỚC: KC_11B (chống bấm bừa: ghi chạm vùng đáp án chỉ trên máy, trả bamBua khi đóng; màn ⛔ khi máy chủ báo ketQua.bamBua cắt thưởng: nút 🙋 thay nút nhận)
 // 27/11/2026 - BƯỚC: KC_11C (gửi hanhVi kèm traLoi cho máy chủ; bong bóng Cô Cú nhắc khi 2 câu liền bấm dồn / chạm tức thì, tối đa 2 lần, không chặn bấm)
 // 27/11/2026 - BƯỚC: KC_11D (nút 🙋 ở màn ⛔ mở hộp bé kháng nghị chung/khang_nghi.js (nguồn "bb") qua goi.rpc; gửi xong nút thành "💌 Đã gửi")
+// 28/11/2026 - BƯỚC: KC_11E (chống bấm bừa dùng số admin sửa ở Quản trị › 🧠, đến kèm luot.bb; nơi "tat" / "chi_ghi" không nhắc)

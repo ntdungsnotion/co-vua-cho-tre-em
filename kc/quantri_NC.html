@@ -59,6 +59,7 @@
        CẬP NHẬT: 21/10/2026 - TC_02B: ghi chú khóa Caro chơi 2 người (kc_caro_kc_2n_..., kc_caro_2n_so_nuoc_toi_thieu).
        CẬP NHẬT: 21/10/2026 - TC_02A: nhóm "❌ Cờ Caro" trong Trò Chơi, mục Cấu hình (khóa kc_caro_).
        PHỤ THUỘC: kc_style.css, qt_kho_tu.css, ../config.js, ../api.js, ../admin_NC.js, quantri_NC.js, qt_kho_tu.js
+       CẬP NHẬT: 28/11/2026 - KC_11E: Quản trị chung › 🧠 Chống bấm bừa (qt_bam_bua.js: cấu hình + lịch sử + thống kê + tỉ lệ chấp nhận kháng nghị, SQL KC_11E).
        CẬP NHẬT: 28/11/2026 - KC_12D2: Quản trị chung › 📬 Hòm thư (⚙️ cài đặt, qt_hom_thu.js); 💡 Ý tưởng chỉ còn xem (xử lý ở
                  🦉 Hộp Cô Cú, ẩn cột nút); thẻ Tổng quan "🦉 thư chờ Cô Cú"; 📮 kháng nghị xử lý ở Hộp Cô Cú.
        CẬP NHẬT: 28/11/2026 - KC_12D1: nút 📬 Hòm thư trên thanh đầu (qt_hom_thu.js, số = thư chờ Cô Cú) dẫn sang 🦉 Hộp Cô Cú;
@@ -561,6 +562,8 @@
         <!-- KC_11D 27/11/2026: 2 module chung: cấp thưởng cho bé (qt_cap_thuong.js) + bé kháng nghị mọi tính năng (qt_khang_nghi.js) -->
         <button class="adminNutManHinh qtMuc" data-manhinh="capthuong" type="button">🎁 Cấp thưởng cho bé</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khangnghi" type="button">📮 Bé kháng nghị</button>
+        <!-- KC_11E 28/11/2026: module chống bấm bừa (qt_bam_bua.js) -->
+        <button class="adminNutManHinh qtMuc" data-manhinh="bambua" type="button">🧠 Chống bấm bừa</button>
         <!-- KC_12D2: ⚙️ Cài đặt hòm thư (qt_hom_thu.js); thư xử lý ở 🦉 Hộp Cô Cú (nút 📬 trên thanh đầu) -->
         <button class="adminNutManHinh qtMuc" data-manhinh="homthu" type="button">📬 Hòm thư</button>
         <button class="adminNutManHinh qtMuc" data-manhinh="khotu" type="button">📖 Kho từ vựng</button>
@@ -930,6 +933,14 @@
         <h3>📮 Bé Kháng Nghị (chung mọi tính năng)</h3>
         <p class="adminGhiChu">Bé thấy một quyết định của app chưa đúng (vd lượt bị Cô Cú kết luận "chọn vội" nên không có thưởng) thì tự viết lý do trong hạn. Ở đây xem danh sách, số đếm, chi tiết và cài đặt. <strong>✅ Chấp nhận (+ bù thưởng) / ↩️ Giữ nguyên làm trong 🦉 Hộp Cô Cú</strong> (nút trên mỗi thẻ). Kết quả về 📬 Hòm thư của bé.</p>
         <div id="qknGoc"></div>
+      </div>
+    </section>
+
+    <section class="adminManHinh" id="manhinh-bambua"> <!-- KC_11E -->
+      <div class="adminKhoi">
+        <h3>🧠 Chống Bấm Bừa (chung cả app)</h3>
+        <p class="adminGhiChu">Cô Cú nhận ra bé bấm dồn dập hoặc chạm ngay khi đáp án vừa hiện. Lượt có nhiều câu như vậy thì không có thưởng (bé vẫn làm hết bài, không bị trừ gì) và bé được 🙋 kháng nghị. Ở đây chỉnh mọi con số, xem thống kê và tỉ lệ kháng nghị được chấp nhận để biết app có đang bắt oan không.</p>
+        <div id="qbbGoc"></div>
       </div>
     </section>
 
@@ -1846,6 +1857,7 @@
   <script src="qt_cap_thuong.js"></script>  <!-- KC_11D: 🎁 Cấp thưởng cho bé (module chung) -->
   <script src="chung/kn_chi_tiet.js"></script> <!-- KC_12D1: chi tiết kháng nghị theo tính năng (chung với Hộp Cô Cú) -->
   <script src="qt_khang_nghi.js"></script>  <!-- KC_11D: 📮 Bé kháng nghị (module chung) -->
+  <script src="qt_bam_bua.js"></script>     <!-- KC_11E: 🧠 Chống bấm bừa -->
   <script src="qt_hom_thu.js"></script>     <!-- KC_12D1: nút 📬 Hòm thư trên thanh đầu -->
 
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->

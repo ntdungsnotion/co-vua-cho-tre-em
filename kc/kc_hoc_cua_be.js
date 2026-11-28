@@ -16,6 +16,8 @@
 // CẬP NHẬT: 24/11/2026 22:xx - KC_08F1: khối "🎯 Con đang học tới đâu" (đầu cột trái): mỗi môn một dòng chữ "đang làm tốt câu
 //   khoảng lớp N (khá chắc)", lời báo lớp khai lệch trung tính + [✏️ Sửa lớp] [Giữ nguyên], dấu làm kém / tiến bộ đột ngột.
 //   Không số thập phân. RPC kc_td_phu_huynh (SQL supabase_kc08f1_quan_tri.sql). Chỉ người lớn thấy, bé không thấy.
+// CẬP NHẬT: 28/11/2026 - KC_11E: khối "🦉 Con chọn vội" (lượt bị Cô Cú kết luận bấm bừa trong phu_huynh.bao_ngay ngày, bấm xem
+//   từng lượt; tô đậm từ phu_huynh.bao_lan lượt; số 30 ngày cho Hồ sơ bé). RPC kc_bb_phu_huynh (SQL supabase_kc11e_quan_tri_bb.sql).
 // ================================================================
 (function () {
   "use strict";
@@ -90,7 +92,45 @@
       self.d = kq; self.ve();
       self.taiVang(so);
       self.taiTrinhDo(so);
+      self.taiBamBua(so);
     });
+  };
+
+  // KC_11E: lượt con chọn vội (chống bấm bừa) — chỉ thông tin cho người lớn, không thông báo đẩy (đặc tả 5.3).
+  //   RPC kc_bb_phu_huynh (admin hoặc phụ huynh đã liên kết; SQL supabase_kc11e_quan_tri_bb.sql). Máy chủ cũ chưa có: ẩn khối.
+  KhoiHoc.prototype.taiBamBua = function (so) {
+    var self = this;
+    this.goiRpc("kc_bb_phu_huynh").then(function (kq) {
+      if (so !== self.lanTai) return;
+      self.bb = kq && kq.thanhCong ? kq : null;
+      var o = self.k.querySelector(".hcbBamBua");
+      if (o) o.outerHTML = self.veBamBua();
+    });
+  };
+  var TEN_NOI_BB = { theo_mon: "📚 Theo môn", tong_hop: "🌈 Tổng hợp", on_sau_tran: "⚔️ Ôn sau trận", toc_do: "⚡ Tốc độ", chinh_phuc: "🏆 Chinh phục" };
+  var TEN_KN_BB = { cho_be: "con chưa phản hồi", be_gui: "con đã viết lý do, chờ Cô Cú xem", chap_nhan: "✅ Cô Cú đã trả thưởng", giu_nguyen: "↩️ giữ nguyên", het_han: "quá hạn phản hồi" };
+  KhoiHoc.prototype.veBamBua = function () {
+    var b = this.bb;
+    if (!b) return '<section class="hcbKhoi hcbBamBua" hidden></section>';
+    var ds = b.ds || [], n = b.soCat | 0, dam = n >= (b.baoLan || 3);
+    var ngay = b.soNgay === 7 ? "Tuần này" : b.soNgay + " ngày qua";
+    var dau = '<section class="hcbKhoi hcbBamBua' + (dam ? " hcbBbDam" : "") + '"><h4>🦉 Con chọn vội</h4>';
+    if (!ds.length) return dau + '<p>' + ngay + ' con không có lượt nào chọn vội. 👍</p>'
+      + (b.so30 ? '<p class="hcbGhiChu">30 ngày qua: ' + b.so30 + " lượt.</p>" : "") + "</section>";
+    var chu = '<p>' + ngay + ' <strong>' + n + ' lượt con chọn vội (không có thưởng)</strong>'
+      + (ds.length > n ? " và " + (ds.length - n) + " lượt Cô Cú chỉ ghi lại" : "") + ".</p>";
+    if (dam) chu += '<p class="hcbGhiChu">Bố mẹ có thể nhắc con: đọc kỹ câu hỏi rồi mới chọn, làm thật sẽ được nhiều 💎 hơn.</p>';
+    var hang = ds.map(function (x) {
+      var d = new Date(x.luc), h = function (s) { return ("0" + s).slice(-2); };
+      var luc = isNaN(d) ? "" : h(d.getDate()) + "/" + h(d.getMonth() + 1) + " " + h(d.getHours()) + ":" + h(d.getMinutes());
+      var noi = x.noi === "theo_mon" && x.monTen ? (x.monBieuTuong || "📚") + " " + x.monTen : (TEN_NOI_BB[x.noi] || x.noi);
+      var dh = [x.d1 ? "bấm dồn " + x.d1 : "", x.d2 ? "chạm ngay " + x.d2 : "", x.d3 ? "nhanh như đoán " + x.d3 : ""].filter(Boolean).join(", ");
+      return "<li><strong>" + thoat(luc) + "</strong> · " + thoat(noi) + ": " + (x.soDauHieu | 0) + " / " + (x.soCau | 0) + " câu chọn vội"
+        + (dh ? ' <span class="hcbGhiChu">(' + thoat(dh) + ")</span>" : "")
+        + (x.catThuong ? " · không có thưởng" + (x.khangNghi ? " · " + thoat(TEN_KN_BB[x.khangNghi] || x.khangNghi) : "") : " · chỉ ghi, vẫn có thưởng") + "</li>";
+    }).join("");
+    return dau + chu + '<details class="hcbBbXem"><summary>Xem từng lượt</summary><ul class="hcbTdDs">' + hang + "</ul></details>"
+      + '<p class="hcbGhiChu">30 ngày qua: ' + (b.so30 | 0) + ' lượt. Mỗi lượt Cô Cú xét riêng; số này không làm lượt sau bị xét chặt hơn. Con thấy oan thì tự viết lý do, Cô Cú xem lại.</p></section>';
   };
 
   // KC_03C2: 🪙 xu vàng của bé (ví chung toàn app, RPC kc_vi_vang_xem; admin hoặc phụ huynh đã liên kết)
@@ -165,7 +205,7 @@
       + "</span><span class=\"hcbChip\">Năm học " + d.namHoc + "-" + (d.namHoc + 1) + "</span>"
       + '<span class="hcbChip hcbChipNhan">🃏 Đang phải nhớ ' + (d.soThe | 0) + " thẻ · " + (d.soManh | 0) + " mảnh</span>" + this.veVang() + "</div></div>"
       + '<div class="hcbTin"></div>'
-      + '<div class="hcbLuoi"><div class="hcbCot">' + this.veTrinhDo() + this.veHoSo() + this.veNhayCam() + "</div>"
+      + '<div class="hcbLuoi"><div class="hcbCot">' + this.veTrinhDo() + this.veBamBua() + this.veHoSo() + this.veNhayCam() + "</div>"
       + '<div class="hcbCot">' + this.veTheRieng() + this.veGiao() + "</div></div>";
   };
 

@@ -93,3 +93,10 @@
 .hcbBaoLech { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; background: #fff8e1; border: 1.5px solid #ecc86a; }
 .hcbBaoLech p { margin: 0; }
 .hcbBaoLech .hcbHang { margin-top: 8px; }
+/* KC_11E 28/11/2026: khối 🦉 Con chọn vội (chống bấm bừa) */
+.hcbBamBua p { margin: 0 0 6px; }
+.hcbBamBua > p:not(.hcbGhiChu) { color: #2d2550; }
+.hcbBamBua > p:not(.hcbGhiChu) strong { color: #8a4b00; }
+.hcbBamBua.hcbBbDam { border-color: #ecc86a; background: #fffbef; }
+.hcbBbXem summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; color: #5b3fd6; }
+.hcbBbXem .hcbTdDs { margin-bottom: 6px; }
