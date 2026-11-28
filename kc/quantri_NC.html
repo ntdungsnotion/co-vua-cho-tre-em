@@ -662,6 +662,28 @@
         <p class="adminGhiChu">Bước sau (KC_00D-2): xem mọi tài khoản (bé, phụ huynh, quản trị), đổi vai trò,
           đặt lại mật khẩu, xem và sửa liên kết bố mẹ với con. Hiện vẫn xem thành tích các bé ở mục 👦 Hồ sơ các bé.</p>
       </div>
+      <!-- KC_00D2-B1 28/11/2026: số máy + hạn phiên đăng nhập (khóa kc_phien_*, qt_phien.js) -->
+      <div class="adminKhoi">
+        <h3>🔐 Phiên đăng nhập</h3>
+        <p class="adminGhiChu">
+          Mỗi tài khoản chỉ đăng nhập cùng lúc trên số máy dưới đây (bé 1, phụ huynh 3, quản trị 3). Đăng nhập thêm một máy
+          thì máy lâu nhất chưa dùng bị cho ra, và máy đó thấy câu "Tài khoản con đang đăng nhập trên máy khác".
+          <b>Ngày nghỉ</b>: bao nhiêu ngày không dùng app thì phải đăng nhập lại. <b>Ngày tối đa</b>: dù vẫn dùng hằng ngày,
+          sau từng ấy ngày cũng phải đăng nhập lại. Số gõ sai hoặc ngoài khoảng cho phép thì máy chủ dùng số mặc định.
+          Số mới có hiệu lực ngay, không cần ai tải lại trang.
+        </p>
+        <button class="adminNut adminNutPhu" data-lam-moi-cau-hinh type="button">🔄 Làm Mới</button>
+        <div class="adminCuonNgang" style="margin-top:10px;">
+          <table class="adminBang">
+            <thead>
+              <tr><th style="width:26%;">Khóa</th><th style="width:14%;">Giá trị</th><th>Ý nghĩa</th><th style="width:90px;"></th></tr>
+            </thead>
+            <tbody data-nhom-cau-hinh="taikhoan">
+              <tr><td colspan="4" class="adminDangTai">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- ============================================================ -->
@@ -1859,6 +1881,7 @@
   <script src="qt_khang_nghi.js"></script>  <!-- KC_11D: 📮 Bé kháng nghị (module chung) -->
   <script src="qt_bam_bua.js"></script>     <!-- KC_11E: 🧠 Chống bấm bừa -->
   <script src="qt_hom_thu.js"></script>     <!-- KC_12D1: nút 📬 Hòm thư trên thanh đầu -->
+  <script src="qt_phien.js"></script>       <!-- KC_00D2-B1: 🔐 Phiên đăng nhập trong 👥 Tài khoản -->
 
   <script src="qt_ghi_nho.js"></script>      <!-- KC_03A: tiểu mục 📒 Sổ ghi nhớ trong 👦 Hồ sơ các bé -->
   <script src="qt_dt_sap_co.js"></script>    <!-- các mục đặt chỗ trước -->
