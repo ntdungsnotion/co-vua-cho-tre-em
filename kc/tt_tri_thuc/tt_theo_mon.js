@@ -123,7 +123,7 @@
         const lm = tao("div", "tmLuoiMo");
         mo.forEach(m => {
           const o = nut("tmMonMoO"); o.append(tao("span", "", m.bieuTuong || "📘"), tao("span", "", m.ten));
-          o.addEventListener("click", () => coCuNoi("Môn " + m.ten + " cô đang soạn câu, con chờ nhé! 🦉"));
+          o.addEventListener("click", () => coCuNoi("Môn " + m.ten + " Cô Cú đang soạn câu, con chờ nhé! 🦉"));
           lm.appendChild(o);
         });
         ct.appendChild(lm); trai.appendChild(ct);
@@ -254,7 +254,7 @@
       if (!kq.thanhCong || !kq.luot) {
         S.dangChoi = false; if (b0) b0.disabled = false;
         const ma = kq && kq.ma;
-        coCuNoi(ma === "sap_co" ? "Môn này cô đang soạn câu, con chờ nhé! 🦉" : ma === "khong_du_cau" ? "Môn này chưa đủ câu cho con, con chọn môn khác nhé!" :
+        coCuNoi(ma === "sap_co" ? "Môn này Cô Cú đang soạn câu, con chờ nhé! 🦉" : ma === "khong_du_cau" ? "Môn này chưa đủ câu cho con, con chọn môn khác nhé!" :
           ma === "dang_nhap" ? "Con đăng nhập lại nhé." : "Mạng đang chập chờn. Con bấm lại nhé.");
         return;
       }

@@ -2,7 +2,7 @@
 // FILE: kc/qt_cap_thuong.js
 // CHỨC NĂNG: Quản trị chung › 🎁 CẤP THƯỞNG CHO BÉ (KC_11D): chức năng RIÊNG, dùng chung (người dùng 27/11/2026: "Việc quản trị
 //   cấp thưởng cho bé là chức năng riêng. Dùng chức năng này để bù cho bé khi cần").
-//   - Chọn bé, số 💎 / 🪙, lý do (bắt buộc), lời nhắn -> bé nhận ở 📬 Cô Cú báo (Trang chủ). Cộng thẳng, không ăn vào trần ngày
+//   - Chọn bé, số 💎 / 🪙, lý do (bắt buộc), lời nhắn -> bé nhận ở 📬 Hòm thư (Trang chủ có thẻ Cần con xem). Cộng thẳng, không ăn vào trần ngày
 //     bé tự kiếm. Mỗi lần mở form có một mã riêng: bấm 2 lần / mạng gửi lại không cấp 2 lần.
 //   - Gắn kháng nghị (từ 📮 Bé kháng nghị, qt_khang_nghi.js): QT_CAP_THUONG.moGan(kn) điền sẵn bé + số bù đề xuất + lời nhắn mẫu;
 //     cấp xong = CHẤP NHẬN kháng nghị đó (mỗi kháng nghị bù một lần) rồi quay về 📮.
@@ -132,7 +132,7 @@
     function xem() {
       var v = giaTri(), s = [];
       if (v.kc > 0) s.push("+" + soVN(v.kc) + " 💎"); if (v.vang > 0) s.push("+" + soVN(v.vang) + " 🪙");
-      xemTruoc.textContent = "Bé " + (v.be || "…") + " sẽ thấy ở Trang chủ: " + (gan ? "🎉 " + (gan.chuChapNhan || "Thầy cô xem lại rồi: con đúng!") + " Con được " : "🎁 Thầy cô tặng con ")
+      xemTruoc.textContent = "Bé " + (v.be || "…") + " sẽ thấy ở 📬 Hòm thư: " + (gan ? "🎉 " + (gan.chuChapNhan || "Cô Cú xem lại rồi: con đúng!") + " Con được " : "🎁 Cô Cú tặng con ")
         + (s.join(" ") || "…") + (!gan && v.ly ? " · Vì: " + v.ly : "") + (v.ln ? " · “" + v.ln + "”" : "") + "  [🎁 Nhận]";
       var l = kiem(v); nut.disabled = !!l; loi.textContent = l ? "⚠️ " + l : ""; loi.hidden = !l;
     }
@@ -144,7 +144,7 @@
       nut.disabled = true; nut.textContent = "Đang cấp...";
       goi("kc_ct_admin_cap", { p_be: v.be, p_kc: v.kc, p_vang: v.vang, p_ly_do: v.ly, p_loi_nhan: v.ln, p_ma: S.ma, p_khang_nghi: gan ? gan.id : null }).then(function (kq) {
         if (!kq.thanhCong) { nut.disabled = false; nut.textContent = chuNut; adminBaoTin("❌ " + (kq.thongBao || "Chưa cấp được"), false); return; }
-        adminBaoTin(kq.trungLap ? "Lần cấp này đã ghi trước đó (không cấp thêm)" : "✅ Đã cấp " + s.join(" + ") + " cho " + v.be + ". Bé nhận ở 📬 Trang chủ.", true);
+        adminBaoTin(kq.trungLap ? "Lần cấp này đã ghi trước đó (không cấp thêm)" : "✅ Đã cấp " + s.join(" + ") + " cho " + v.be + ". Bé nhận ở 📬 Hòm thư.", true);
         var quayVe = gan && gan.quayVe;
         S.gan = null; S.ma = maMoi();
         if (quayVe) moMan(quayVe); else tai();

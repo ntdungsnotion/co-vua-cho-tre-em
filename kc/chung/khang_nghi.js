@@ -4,9 +4,9 @@
               riêng vì nhiều chức năng app dùng đến"). Bé thấy một quyết định của app chưa đúng (bị cắt thưởng vì chọn vội, câu bị
               chấm sai...) thì TỰ VIẾT lý do (không có lý do viết sẵn): ≥ toiThieu (5) ký tự, ≤ toiDa (200), lọc từ xấu bằng
               chung/loc_ten.js (có thì dùng). Nút Gửi mờ tới khi đủ chữ.
-              Gửi -> RPC kc_kn_gui(nguon, tham_chieu, loi). Xong: "Cô Cú đã gửi cho thầy cô xem lại rồi…". Mỗi việc gửi một lần.
-              Tính năng tự mở kháng nghị ở máy chủ (SQL kc_kn_mo); admin xử lý ở Quản trị › 📮 Bé kháng nghị; kết quả về 📬 Trang chủ.
-              Dùng ở: màn ⛔ chọn vội (tt_tri_thuc/tt_cau_hoi.js, nguồn "bb"), thẻ 📬 Cô Cú báo ở Trang chủ (chung/thong_bao_be.js).
+              Gửi -> RPC kc_kn_gui(nguon, tham_chieu, loi). Xong: "Cô Cú nhận được rồi…". Mỗi việc gửi một lần.
+              Tính năng tự mở kháng nghị ở máy chủ (SQL kc_kn_mo); admin xử lý ở Quản trị › 📮 Bé kháng nghị; kết quả về 📬 Hòm thư.
+              Dùng ở: màn ⛔ chọn vội (tt_tri_thuc/tt_cau_hoi.js, nguồn "bb"), thư kháng nghị trong 📬 Hòm thư (homthu.js).
    DÙNG:      KC_KHANG_NGHI.moHop({ rpc, nguon, thamChieu, cauHoi?, moTa?, toiThieu?, toiDa?, cha? }) -> Promise<{ daGui, loiBe? }>
                 rpc(tenHam, thamSo) -> Promise (trang tự thêm p_ten / p_ma_phien); nguon + thamChieu: việc bị kháng nghị
                 (vd "bb" + mã lượt); cauHoi: câu Cô Cú hỏi (mặc định "Con thấy chưa đúng chỗ nào? Con kể Cô Cú nghe nhé!");
@@ -66,8 +66,8 @@
 
   const LOI_MAY_CHU = {
     ngan: "Con viết thêm vài chữ nữa nhé!", dai: "Con viết ngắn lại một chút nhé!",
-    da_gui: "Con đã gửi cho việc này rồi. Cô Cú báo kết quả ở Trang chủ nhé!", het_han: "Việc này đã quá hạn gửi rồi con ạ.",
-    da_xu_ly: "Thầy cô đã xem việc này rồi. Con xem ở Trang chủ nhé!", tat: "Hiện chưa gửi được, con thử lại sau nhé.",
+    da_gui: "Con đã gửi cho việc này rồi. Cô Cú báo kết quả ở 📬 Hòm thư nhé!", het_han: "Việc này đã quá hạn gửi rồi con ạ.",
+    da_xu_ly: "Cô Cú đã xem việc này rồi. Con xem ở 📬 Hòm thư nhé!", tat: "Hiện chưa gửi được, con thử lại sau nhé.",
     khong_co: "Cô Cú không tìm thấy việc này.", dang_nhap: "Con đăng nhập lại rồi gửi nhé."
   };
 
@@ -114,7 +114,7 @@
         ketQua = { daGui: true, loiBe };
         hop.innerHTML = "";
         const x = tao("div", "knXong");
-        x.append(tao("span", "knCu", "💌"), tao("p", "", "Cô Cú đã gửi cho thầy cô xem lại rồi."), tao("p", "", "Có kết quả Cô Cú báo con ở Trang chủ nhé! 💌"));
+        x.append(tao("span", "knCu", "💌"), tao("p", "", "Cô Cú nhận được rồi, để Cô Cú xem lại nhé."), tao("p", "", "Có kết quả Cô Cú báo con ở 📬 Hòm thư nhé! 💌"));
         hop.appendChild(x);
         const h = tao("div", "knNut"); const ok = tao("button", "knGui", "Vâng ạ"); ok.type = "button";
         ok.addEventListener("click", dong); h.appendChild(ok); hop.appendChild(h);
